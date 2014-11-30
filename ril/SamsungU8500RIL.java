@@ -60,6 +60,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.telephony.Rlog;
 
+
 import com.android.internal.telephony.gsm.SmsBroadcastConfigInfo;
 import com.android.internal.telephony.gsm.SuppServiceNotification;
 import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
@@ -70,6 +71,8 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Runtime;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -186,6 +189,16 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         }
     }
 
+    //@Override
+    public void setCurrentPreferredNetworkType() {
+        if (RILJ_LOGD) riljLog("setCurrentPreferredNetworkType IGNORED");
+        /* Google added this as a fix for crespo loosing network type after
+         * taking an OTA. This messes up the data connection state for us
+         * due to the way we handle network type change (disable data
+         * then change then re-enable).
+         */
+    }
+
     private boolean NeedReconnect()
     {
         ConnectivityManager cm =
@@ -273,15 +286,35 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             mContext.unregisterReceiver(mConnectivityReceiver);
         }
 
+	private void setMobileDataEnabled(Context context, boolean enabled) {
+	    try {
+
+	        final ConnectivityManager conman = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+	        final Class conmanClass = Class.forName(conman.getClass().getName());
+	        final Field iConnectivityManagerField = conmanClass.getDeclaredField("mService");
+	        iConnectivityManagerField.setAccessible(true);
+	        final Object iConnectivityManager = iConnectivityManagerField.get(conman);
+	        final Class iConnectivityManagerClass = Class.forName(iConnectivityManager.getClass().getName());
+	        final Method setMobileDataEnabledMethod = iConnectivityManagerClass.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
+	        setMobileDataEnabledMethod.setAccessible(true);
+
+	        setMobileDataEnabledMethod.invoke(iConnectivityManager, enabled);
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
         public void setPreferedNetworkType(int networkType, Message response)
         {
             Rlog.d(RILJ_LOG_TAG, "Mobile Dataconnection is online setting it down");
             mDesiredNetworkType = networkType;
             mNetworktypeResponse = response;
-            TelephonyManager tm = TelephonyManager.from(mContext);
+            //ConnectivityManager cm =
+            //    (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
             //start listening for the connectivity change broadcast
             startListening();
-            tm.setDataEnabled(false);
+            setMobileDataEnabled(mContext, false);
         }
 
         @Override
@@ -289,10 +322,11 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             switch(msg.what) {
             //networktype was set, now we can enable the dataconnection again
             case MESSAGE_SET_PREFERRED_NETWORK_TYPE:
-                TelephonyManager tm = TelephonyManager.from(mContext);
+                //ConnectivityManager cm =
+                //    (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
                 Rlog.d(RILJ_LOG_TAG, "preferred NetworkType set upping Mobile Dataconnection");
-                tm.setDataEnabled(true);
+                setMobileDataEnabled(mContext, true);
                 //everything done now call back that we have set the networktype
                 AsyncResult.forMessage(mNetworktypeResponse, null, null);
                 mNetworktypeResponse.sendToTarget();
