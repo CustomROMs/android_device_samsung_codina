@@ -1,5 +1,10 @@
 LOCAL_PATH=../../../..
 
+
+PATCHES="art bionic build frameworks/av frameworks/base/ frameworks/native/ frameworks/opt/net/wifi/ \
+	frameworks/opt/telephony/ libcore packages/apps/Bluetooth/ packages/apps/Settings/ packages/services/Telecomm \
+	packages/services/Telephony system/core"
+
 export CL_RED="\033[31m"
 export CL_GRN="\033[32m"
 export CL_YLW="\033[33m"
@@ -61,19 +66,10 @@ echo -e $CL_GRN"get rid of any uncommitted or unstaged changes"$CL_RST
 patches=$PWD
 cd $LOCAL_PATH
 
-pre_clean art
-pre_clean bionic
-pre_clean build
-pre_clean frameworks/av/
-pre_clean frameworks/base/
-pre_clean frameworks/native/
-pre_clean frameworks/opt/net/wifi/
-pre_clean frameworks/opt/telephony/
-pre_clean packages/apps/Bluetooth/
-pre_clean packages/apps/Settings/
-pre_clean packages/services/Telecomm
-pre_clean packages/services/Telephony
-pre_clean system/core
+for i in $PATCHES
+do
+pre_clean $i
+done
 
 cd $patches
 
@@ -83,15 +79,8 @@ cd $LOCAL_PATH
 
 # now apply it 
 
-apply_all art
-apply_all bionic 
-apply_all build
-apply_all frameworks/av/
-apply_all frameworks/base/
-apply_all frameworks/native/
-apply_all frameworks/opt/net/wifi/
-apply_all frameworks/opt/telephony/
-apply_all packages/services/Telecomm
-apply_all packages/services/Telephony
-apply_all system/core
+for i in  $PATCHES
+do
+apply_all $i
+done
 
