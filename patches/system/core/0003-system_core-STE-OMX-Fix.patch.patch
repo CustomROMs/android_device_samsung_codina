@@ -1,13 +1,15 @@
-From fcd148903b4101d7c7f8764ff2746c90e61bb38f Mon Sep 17 00:00:00 2001
+From c3b222dafe0abe5adf35cf119b9ab99819d1033b Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 10 May 2015 19:07:53 +0300
-Subject: [PATCH 3/6] system_core-STE-OMX-Fix.patch
+Date: Thu, 16 Jul 2015 10:57:18 +0300
+Subject: [PATCH 3/3] 0003-system_core-STE-OMX-Fix.patch.patch
 
-Change-Id: Ie1006feb67925914bd2718de7678ac7a44a74072
+Change-Id: I3112141a8023b8e2f7173aff1a7a3f8dc9ba668e
 ---
  include/utils/Flattenable.h | 22 ++++++++++++++++++++++
  libutils/Android.mk         |  6 ++++++
- 2 files changed, 28 insertions(+)
+ libutils/Flattenable.cpp    | 24 ++++++++++++++++++++++++
+ 3 files changed, 52 insertions(+)
+ create mode 100644 libutils/Flattenable.cpp
 
 diff --git a/include/utils/Flattenable.h b/include/utils/Flattenable.h
 index 882a8b2..495b90d 100644
@@ -88,6 +90,36 @@ index b1dc1f8..44f69c1 100644
  host_commonCflags := -DLIBUTILS_NATIVE=1 $(TOOL_CFLAGS) -Werror
  
  ifeq ($(HOST_OS),windows)
+diff --git a/libutils/Flattenable.cpp b/libutils/Flattenable.cpp
+new file mode 100644
+index 0000000..1f2ffaa
+--- /dev/null
++++ b/libutils/Flattenable.cpp
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (C) 2006 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <utils/Flattenable.h>
++
++namespace android {
++
++Flattenable::~Flattenable() {
++}
++
++}; // namespace android
 -- 
 1.9.1
 
