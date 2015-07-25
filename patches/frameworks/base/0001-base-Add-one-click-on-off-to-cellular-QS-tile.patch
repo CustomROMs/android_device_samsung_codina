@@ -1,0 +1,40 @@
+From ce7399d45e881580629ca6e31f2b2c9fc012acc0 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <s.berger81@gmail.com>
+Date: Sun, 12 Jul 2015 00:58:44 +0200
+Subject: [PATCH 01/11] base: Add one-click on/off to cellular QS tile
+
+Change-Id: I36a1487d1aa081bdfaee2f81b7fdb9e68a20d7db
+---
+ .../src/com/android/systemui/qs/tiles/CellularTile.java      | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java
+index a85355d..5d28570 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java
+@@ -77,16 +77,16 @@ public class CellularTile extends QSTile<QSTile.SignalState> {
+ 
+     @Override
+     protected void handleClick() {
+-        if (mDataController.isMobileDataSupported()) {
+-            showDetail(true);
+-        } else {
+-            mHost.startSettingsActivity(CELLULAR_SETTINGS);
+-        }
++        mDataController.setMobileDataEnabled(!mDataController.isMobileDataEnabled());
+     }
+ 
+     @Override
+     protected void handleLongClick() {
+-        mHost.startSettingsActivity(WIRELESS_SETTINGS);
++        if (mDataController.isMobileDataSupported()) {
++            showDetail(true);
++        } else {
++            mHost.startSettingsActivity(CELLULAR_SETTINGS);
++        } 
+     }
+ 
+     @Override
+-- 
+1.9.1
+

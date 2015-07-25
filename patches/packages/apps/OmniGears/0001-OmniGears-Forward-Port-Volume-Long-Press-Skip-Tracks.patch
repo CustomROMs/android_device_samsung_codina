@@ -1,0 +1,57 @@
+From 13cec4bada4d2eac81772b1d1a23f235e52c3619 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Jul 2015 10:23:26 +0300
+Subject: [PATCH] OmniGears: Forward Port Volume Long Press Skip Tracks[2/2]
+
+Change-Id: Idd70505076b38e7d3c440c832a008f3293e6adea
+---
+ res/values/custom_strings.xml | 2 ++
+ res/xml/button_settings.xml   | 7 ++++---
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/res/values/custom_strings.xml b/res/values/custom_strings.xml
+index 88282d3..be16cd9 100644
+--- a/res/values/custom_strings.xml
++++ b/res/values/custom_strings.xml
+@@ -57,6 +57,8 @@
+     <string name="button_volume_keys_title">Volume</string>
+     <string name="button_volume_wake_title">Button wake</string>
+     <string name="button_volume_wake_summary">Pressing a volume button will wake the device</string>
++    <string name="button_volume_music_control_title">Playback control</string>
++    <string name="button_volume_music_control_summary">When the screen is off, long pressing the volume keys will seek music tracks</string>
+     <string name="keys_action_sleep">Go to sleep</string>
+     <string name="keys_action_omniswitch">OmniSwitch recents</string>
+     <string name="button_home_wake_title">Button wake</string>
+diff --git a/res/xml/button_settings.xml b/res/xml/button_settings.xml
+index c714715..91ad087 100644
+--- a/res/xml/button_settings.xml
++++ b/res/xml/button_settings.xml
+@@ -41,21 +41,22 @@
+             android:summary="@string/button_volume_wake_summary"
+             android:persistent="false"/>
+ 
++
+         <!--<ListPreference
+             android:key="button_volume_default_screen"
+             android:title="@string/button_volume_default_title"
+             android:summary="@string/button_volume_default_summary"
+             android:entries="@array/button_volume_default_entries"
+             android:entryValues="@array/button_volume_default_values"
+-            android:persistent="false"/>
++            android:persistent="false"/> -->
+ 
+         <CheckBoxPreference
+             android:key="button_volume_music_control"
+             android:title="@string/button_volume_music_control_title"
+             android:summary="@string/button_volume_music_control_summary"
+-            android:persistent="false"/>
++            android:persistent="true"/>
+ 
+-        <ListPreference
++        <!--<ListPreference
+             android:key="volume_key_cursor_control"
+             android:persistent="false"
+             android:dialogTitle="@string/volume_key_cursor_control_title"
+-- 
+1.9.1
+

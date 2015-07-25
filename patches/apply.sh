@@ -2,8 +2,8 @@ LOCAL_PATH=../../../..
 
 
 PATCHES="art bionic build frameworks/av frameworks/base/ frameworks/native/ frameworks/opt/net/wifi/ \
-	frameworks/opt/telephony/ libcore packages/apps/Bluetooth/ packages/apps/Settings/ packages/services/Telecomm \
-	packages/services/Telephony system/core"
+	frameworks/opt/telephony/ libcore packages/apps/Bluetooth/ packages/apps/OmniGears packages/apps/Settings/ \
+        packages/services/Telecomm  packages/services/Telephony  system/core"
 
 export CL_RED="\033[31m"
 export CL_GRN="\033[32m"

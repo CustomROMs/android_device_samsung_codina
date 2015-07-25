@@ -1,0 +1,857 @@
+From 642fb5d21aa23a5d0c929e3c8af78668817bfdbc Mon Sep 17 00:00:00 2001
+From: huiwan <huiwan@codeaurora.org>
+Date: Thu, 18 Sep 2014 15:12:15 +0800
+Subject: [PATCH 2/4] Settings: add USB OTG & UICC features' UI support.
+
+ - Modified string resources for appropriate alerts based on volume type
+
+ - Changed title/summary strings for preferences based on volume type
+
+ - There are two mountable partitions coming with UICC. But
+   only one volume supports UMS. Only that should be shown in
+   Settings->Storage screen.
+
+ - UICC storage and OTG storage is shown, Hide not supported hardware UI.
+
+ - Showing mount options for UICC, based on a system property
+   Within Storage Settings, 'UICC Storage' category is shown based
+   on a system property - persist.sys.isUICCEnabled
+   It shall be not set by default, so UI will hide the 'UICC'
+   mount/unmount menus.
+
+ - Add UMS mode support, Android only supports MTP and PTP mode in
+   UsbSettings screen, this change is to add USB mass storage mode.
+
+Change-Id: I02f111e98517052ed13de0b81b463bc455392edb
+
+Conflicts:
+	res/values-zh-rCN/strings.xml
+	res/values/strings.xml
+	src/com/android/settings/MediaFormat.java
+	src/com/android/settings/deviceinfo/StorageVolumePreferenceCategory.java
+---
+ res/layout/media_format_final.xml                  |   2 +-
+ res/layout/media_format_primary.xml                |   2 +-
+ res/values/strings.xml                             |  45 ++++++++
+ res/xml/usb_settings.xml                           |   6 +
+ src/com/android/settings/MediaFormat.java          |  78 ++++++++++++-
+ src/com/android/settings/deviceinfo/Memory.java    |  89 ++++++++++++---
+ .../StorageVolumePreferenceCategory.java           | 124 +++++++++++++++++++--
+ .../android/settings/deviceinfo/UsbSettings.java   | 119 ++++++++++++++++++--
+ 8 files changed, 424 insertions(+), 41 deletions(-)
+
+diff --git a/res/layout/media_format_final.xml b/res/layout/media_format_final.xml
+index ab18f34..7362678 100644
+--- a/res/layout/media_format_final.xml
++++ b/res/layout/media_format_final.xml
+@@ -21,7 +21,7 @@
+         xmlns:android="http://schemas.android.com/apk/res/android"
+         style="@style/info_layout">        
+ 
+-    <TextView
++    <TextView android:id="@+id/execute_media_format_label"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:textSize="20sp"
+diff --git a/res/layout/media_format_primary.xml b/res/layout/media_format_primary.xml
+index 3590492..4f4f6ac 100644
+--- a/res/layout/media_format_primary.xml
++++ b/res/layout/media_format_primary.xml
+@@ -22,7 +22,7 @@
+         xmlns:android="http://schemas.android.com/apk/res/android"
+         style="@style/info_layout">
+ 
+-    <TextView
++    <TextView android:id="@+id/initiate_media_format_label"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:textSize="18sp"
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 27bb819..0b8e61a 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -2300,6 +2300,46 @@
+     <string name="sd_format_summary" product="default">Erases all data on the SD card, such as music and photos</string>
+     <!-- SD card status when it is mounted as read only. Will be appended to size, starts with an unbreakable space -->
+ 
++    <!-- string resources for USB OTG & UICC features -->
++    <string name="storage_usb">USB storage</string>
++    <string name="storage_uicc">UICC storage</string>
++    <string name="usb_eject" product="default">Unmount USB storage</string>
++    <string name="usb_eject_summary" product="default">Unmount the USB storage so you can safely remove it</string>
++    <string name="usb_format" product="default">Erase USB storage</string>
++    <string name="usb_format_summary" product="default">Erases all data on the USB storage, such as music and photos</string>
++    <string name="usb_mount" product="default">Mount USB storage</string>
++    <string name="usb_mount_summary" product="default"></string>
++    <string name="usb_insert_summary" product="default">Insert an USB storage for mounting</string>
++    <string name="uicc_eject" product="default">Unmount UICC storage</string>
++    <string name="uicc_eject_summary" product="default">Unmount the UICC storage so you can safely remove it</string>
++    <string name="uicc_format" product="default">Erase UICC storage</string>
++    <string name="uicc_format_summary" product="default">Erases all data on the UICC storage, such as music and photos</string>
++    <string name="uicc_mount" product="default">Mount UICC storage</string>
++    <string name="uicc_mount_summary" product="default"></string>
++    <string name="uicc_insert_summary" product="default">Insert an UICC storage for mounting</string>
++
++    <string name="dlg_confirm_usb_unmount_title" product="default">Unmount USB storage?</string>
++    <string name="dlg_confirm_uicc_unmount_title" product="default">Unmount UICC storage?</string>
++    <string name="dlg_confirm_usb_unmount_text" product="default">If you unmount the USB storage, some apps you are using will stop and may be unavailable until you remount the USB storage.</string>
++    <string name="dlg_confirm_uicc_unmount_text" product="default">If you unmount the UICC storage, some apps you are using will stop and may be unavailable until you remount the UICC storage.</string>
++    <string name="dlg_error_usb_unmount_text" product="default">Couldn\'t unmount USB storage. Try again later.</string>
++    <string name="dlg_error_uicc_unmount_text" product="default">Couldn\'t unmount UICC storage. Try again later.</string>
++    <string name="usb_unmount_inform_text" product="default">USB storage will be unmounted.</string>
++    <string name="uicc_unmount_inform_text" product="default">UICC storage will be unmounted.</string>
++
++    <string name="usb_media_format_title" product="default">Erase USB storage</string>
++    <string name="uicc_media_format_title" product="default">Erase UICC storage</string>
++    <string name="usb_media_format_summary" product="default">Erases all data on the USB storage</string>
++    <string name="uicc_media_format_summary" product="default">Erases all data on the UICC storage</string>
++    <string name="usb_media_format_desc" product="default">Erase the USB storage? You will lose <b>all</b> data on the storage!</string>
++    <string name="uicc_media_format_desc" product="default">Erase the UICC storage? You will lose <b>all</b> data on the storage!</string>
++    <string name="usb_media_format_button_text" product="default">Erase USB storage</string>
++    <string name="uicc_media_format_button_text" product="default">Erase UICC storage</string>
++    <string name="usb_media_format_final_desc" product="default">Erase the USB storage, deleting all files stored there? You can\'t reverse this action!</string>
++    <string name="uicc_media_format_final_desc" product="default">Erase the UICC storage, deleting all files stored there? You can\'t reverse this action!</string>
++    <string name="usb_media_format_gesture_explanation" product="default">You need to draw your unlock pattern to confirm that you want to erase the USB storage.</string>
++    <string name="uicc_media_format_gesture_explanation" product="default">You need to draw your unlock pattern to confirm that you want to erase the UICC storage.</string>
++
+     <!-- Title of dialog asking user to confirm before clearing all caches. [CHAR LIMIT=48] -->
+     <string name="memory_clear_cache_title">Clear cached data?</string>
+     <!-- Message of dialog asking user to confirm before clearing all caches. [CHAR LIMIT=48] -->
+@@ -6070,4 +6110,9 @@
+ 
+    <string name="usb_charging_title">Charging</string>
+    <string name="usb_charging_summary">Lets you disable all data and file transfer connection with computer and put device in charging only mode.</string>
++
++   <string name="usb_sdcard_summary">Lets you transfer media files in the SD card on computer</string>
++   <string name="usb_sdcard_title">Mount SD card</string>
++   <string name="external_storage_turn_on">External storage has been turned on</string>
++   <string name="external_storage_turn_off">External storage has been turned off</string>
+ </resources>
+diff --git a/res/xml/usb_settings.xml b/res/xml/usb_settings.xml
+index b78ab42..b4d7250 100644
+--- a/res/xml/usb_settings.xml
++++ b/res/xml/usb_settings.xml
+@@ -38,4 +38,10 @@
+         android:summary="@string/usb_charging_summary"
+         />
+ 
++    <CheckBoxPreference
++        android:key="usb_sdcard"
++        android:title="@string/usb_sdcard_title"
++        android:summary="@string/usb_sdcard_summary"
++        />
++
+ </PreferenceScreen>
+diff --git a/src/com/android/settings/MediaFormat.java b/src/com/android/settings/MediaFormat.java
+index 20dac8e..da3e60f 100644
+--- a/src/com/android/settings/MediaFormat.java
++++ b/src/com/android/settings/MediaFormat.java
+@@ -17,12 +17,15 @@
+ package com.android.settings;
+ 
+ import android.app.Activity;
++import android.content.Context;
+ import android.content.Intent;
++import android.content.res.Resources;
+ import android.os.Bundle;
+ import android.os.storage.StorageVolume;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.widget.Button;
++import android.widget.TextView;
+ 
+ import com.android.internal.os.storage.ExternalStorageFormatter;
+ 
+@@ -39,13 +42,46 @@ public class MediaFormat extends Activity {
+     private static final int KEYGUARD_REQUEST = 55;
+ 
+     private LayoutInflater mInflater;
++    private StorageVolume mStorageVolume;
+ 
+     private View mInitialView;
++    private TextView mInitiateTextView;
+     private Button mInitiateButton;
+ 
+     private View mFinalView;
++    private TextView mFinalTextView;
+     private Button mFinalButton;
+ 
++    public static boolean isUsbStorage(StorageVolume volumeObj, Context context) {
++        if (volumeObj == null || context == null) {
++            return false;
++        }
++
++        // check if the supplied storage volume is of USB storage
++        Resources resourcesObj = context.getResources();
++        if (resourcesObj == null) { return false; }
++
++        boolean isUsb = volumeObj.getDescription(context).equalsIgnoreCase(
++                resourcesObj.getString(R.string.storage_usb));
++
++        return isUsb;
++    }
++
++    public static boolean isUiccStorage(StorageVolume volumeObj, Context context) {
++        if (volumeObj == null || context == null) {
++            return false;
++        }
++
++        // check if the supplied storage volume is of UICC (Mega SIM) storage
++        Resources resourcesObj = context.getResources();
++        if (resourcesObj == null) { return false; }
++
++        boolean isUicc = volumeObj.getDescription(context).equalsIgnoreCase(
++                resourcesObj.getString(R.string.storage_uicc));
++
++        return isUicc;
++    }
++
+     /**
+      * The user has gone through the multiple confirmation, so now we go ahead
+      * and invoke the Mount Service to format the SD card.
+@@ -72,9 +108,20 @@ public class MediaFormat extends Activity {
+      * component as a subactivity
+      */
+     private boolean runKeyguardConfirmation(int request) {
++        // Initialize default resource id, then set the right string based on volume
++        int explanationResId = R.string.media_format_gesture_explanation;
++
++        if (isUsbStorage(mStorageVolume, this)) {
++            explanationResId = R.string.usb_media_format_gesture_explanation;
++
++        } else if (isUiccStorage(mStorageVolume, this)) {
++            explanationResId = R.string.uicc_media_format_gesture_explanation;
++        }
++
+         return new ChooseLockSettingsHelper(this)
+                 .launchConfirmationActivity(request, null,
+-                        getText(R.string.media_format_gesture_explanation));
++			getText(explanationResId));
++
+     }
+ 
+     @Override
+@@ -117,10 +164,22 @@ public class MediaFormat extends Activity {
+             mFinalView = mInflater.inflate(R.layout.media_format_final, null);
+             mFinalButton =
+                     (Button) mFinalView.findViewById(R.id.execute_media_format);
++            mFinalTextView = (TextView) mFinalView
++                    .findViewById(R.id.execute_media_format_label);
+             mFinalButton.setOnClickListener(mFinalClickListener);
+         }
+ 
+         setContentView(mFinalView);
++
++        // set the title based on volume
++        if (isUsbStorage(mStorageVolume, this)) {
++            setTitle(R.string.usb_media_format_button_text);
++            mFinalTextView.setText(R.string.usb_media_format_final_desc);
++
++        } else if (isUiccStorage(mStorageVolume, this)) {
++            setTitle(R.string.uicc_media_format_button_text);
++            mFinalTextView.setText(R.string.uicc_media_format_final_desc);
++        }
+     }
+ 
+     /**
+@@ -138,12 +197,26 @@ public class MediaFormat extends Activity {
+     private void establishInitialState() {
+         if (mInitialView == null) {
+             mInitialView = mInflater.inflate(R.layout.media_format_primary, null);
++            mInitiateTextView = (TextView) mInitialView
++                    .findViewById(R.id.initiate_media_format_label);
+             mInitiateButton =
+                     (Button) mInitialView.findViewById(R.id.initiate_media_format);
+             mInitiateButton.setOnClickListener(mInitiateListener);
+         }
+ 
+         setContentView(mInitialView);
++
++        // set the title based on volume
++        if (isUsbStorage(mStorageVolume, this)) {
++            setTitle(R.string.usb_media_format_button_text);
++            mInitiateTextView.setText(R.string.usb_media_format_desc);
++            mInitiateButton.setText(R.string.usb_media_format_button_text);
++
++        } else if (isUiccStorage(mStorageVolume, this)) {
++            setTitle(R.string.uicc_media_format_button_text);
++            mInitiateTextView.setText(R.string.uicc_media_format_desc);
++            mInitiateButton.setText(R.string.uicc_media_format_button_text);
++        }
+     }
+ 
+     @Override
+@@ -154,6 +227,9 @@ public class MediaFormat extends Activity {
+         mFinalView = null;
+         mInflater = LayoutInflater.from(this);
+ 
++        mStorageVolume = getIntent().getParcelableExtra(
++                StorageVolume.EXTRA_STORAGE_VOLUME);
++
+         establishInitialState();
+     }
+ 
+diff --git a/src/com/android/settings/deviceinfo/Memory.java b/src/com/android/settings/deviceinfo/Memory.java
+index 5d7328f..8de13da 100644
+--- a/src/com/android/settings/deviceinfo/Memory.java
++++ b/src/com/android/settings/deviceinfo/Memory.java
+@@ -39,6 +39,7 @@ import android.os.storage.IMountService;
+ import android.os.storage.StorageEventListener;
+ import android.os.storage.StorageManager;
+ import android.os.storage.StorageVolume;
++import android.os.SystemProperties;
+ import android.preference.Preference;
+ import android.preference.PreferenceScreen;
+ import android.util.Log;
+@@ -47,6 +48,7 @@ import android.view.MenuInflater;
+ import android.view.MenuItem;
+ import android.widget.Toast;
+ 
++import com.android.settings.MediaFormat;
+ import com.android.settings.R;
+ import com.android.settings.SettingsActivity;
+ import com.android.settings.SettingsPreferenceFragment;
+@@ -76,6 +78,7 @@ public class Memory extends SettingsPreferenceFragment implements Indexable {
+     // one's preference is disabled
+     private static Preference sLastClickedMountToggle;
+     private static String sClickedMountPoint;
++    private StorageVolume mStorageVolume;
+ 
+     // Access using getMountService()
+     private IMountService mMountService;
+@@ -102,7 +105,29 @@ public class Memory extends SettingsPreferenceFragment implements Indexable {
+ 
+         final StorageVolume[] storageVolumes = mStorageManager.getVolumeList();
+         for (StorageVolume volume : storageVolumes) {
++            // add those storage volumes which are not emulated & allow UMS.
++            // sometimes a storage drive like Mega SIM could carry two volumes,
++            // with only one volume supported for UMS.
+             if (!volume.isEmulated()) {
++                // check if the volume is for UICC & if hardware has UICC enabled
++                // if hardware doesn't have UICC, do not show up on UI
++                boolean uiccStatus = SystemProperties.getBoolean("persist.sys.isUICCEnabled", false);
++                boolean isOtgSupported = SystemProperties.getBoolean("persist.sys.isUsbOtgEnabled",
++                        false);
++
++                if ((MediaFormat.isUiccStorage(volume, context) && (!uiccStatus))
++                        || volume.getPath().contains("uicc1")) {
++                    Log.w(TAG, "Hardware has UICC disabled, Hiding UICC UI");
++
++                    continue;
++                }
++
++                if (MediaFormat.isUsbStorage(volume, context) && (!isOtgSupported)) {
++                    Log.w(TAG, "Hardware has USB OTG not supported, Hiding OTG UI");
++
++                    continue;
++                }
++
+                 addCategory(StorageVolumePreferenceCategory.buildForPhysical(context, volume));
+             }
+             if (volume.isRemovable()) {
+@@ -256,6 +281,8 @@ public class Memory extends SettingsPreferenceFragment implements Indexable {
+             if (volume != null && category.mountToggleClicked(preference)) {
+                 sLastClickedMountToggle = preference;
+                 sClickedMountPoint = volume.getPath();
++                mStorageVolume = volume;
++
+                 String state = mStorageManager.getVolumeState(volume.getPath());
+                 if (Environment.MEDIA_MOUNTED.equals(state) ||
+                         Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+@@ -290,30 +317,62 @@ public class Memory extends SettingsPreferenceFragment implements Indexable {
+ 
+     @Override
+     public Dialog onCreateDialog(int id) {
++
+         switch (id) {
+-        case DLG_CONFIRM_UNMOUNT:
++            case DLG_CONFIRM_UNMOUNT:
++                int titleResId = R.string.dlg_confirm_unmount_title;
++                int messageResId = R.string.dlg_confirm_unmount_text;
++
++                // set the strings based on volume
++                if (MediaFormat.isUsbStorage(mStorageVolume, getActivity())) {
++                    titleResId = R.string.dlg_confirm_usb_unmount_title;
++                    messageResId = R.string.dlg_confirm_usb_unmount_text;
++
++                } else if (MediaFormat.isUiccStorage(mStorageVolume, getActivity())) {
++                    titleResId = R.string.dlg_confirm_uicc_unmount_title;
++                    messageResId = R.string.dlg_confirm_uicc_unmount_text;
++                }
++
+                 return new AlertDialog.Builder(getActivity())
+-                    .setTitle(R.string.dlg_confirm_unmount_title)
+-                    .setPositiveButton(R.string.dlg_ok, new DialogInterface.OnClickListener() {
+-                        public void onClick(DialogInterface dialog, int which) {
+-                            doUnmount();
+-                        }})
+-                    .setNegativeButton(R.string.cancel, null)
+-                    .setMessage(R.string.dlg_confirm_unmount_text)
+-                    .create();
+-        case DLG_ERROR_UNMOUNT:
++                        .setTitle(titleResId)
++                        .setPositiveButton(R.string.dlg_ok, new DialogInterface.OnClickListener() {
++                            public void onClick(DialogInterface dialog, int which) {
++                                doUnmount();
++                            }
++                        })
++                        .setNegativeButton(R.string.cancel, null)
++                        .setMessage(messageResId)
++                        .create();
++
++            case DLG_ERROR_UNMOUNT:
++                int errMessageResId = R.string.dlg_error_unmount_text;
++
++                // set the strings based on volume
++                if (MediaFormat.isUsbStorage(mStorageVolume, getActivity())) {
++                    errMessageResId = R.string.dlg_error_usb_unmount_text;
++
++                } else if (MediaFormat.isUiccStorage(mStorageVolume, getActivity())) {
++                    errMessageResId = R.string.dlg_error_uicc_unmount_text;
++                }
++
+                 return new AlertDialog.Builder(getActivity())
+-            .setTitle(R.string.dlg_error_unmount_title)
+-            .setNeutralButton(R.string.dlg_ok, null)
+-            .setMessage(R.string.dlg_error_unmount_text)
+-            .create();
++                        .setTitle(R.string.dlg_error_unmount_title)
++                        .setNeutralButton(R.string.dlg_ok, null)
++                        .setMessage(errMessageResId)
++                        .create();
+         }
+         return null;
+     }
+ 
+     private void doUnmount() {
+         // Present a toast here
+-        Toast.makeText(getActivity(), R.string.unmount_inform_text, Toast.LENGTH_SHORT).show();
++        if (mStorageVolume != null && MediaFormat.isUsbStorage(mStorageVolume, getActivity())) {
++            Toast.makeText(getActivity(), R.string.usb_unmount_inform_text,
++                    Toast.LENGTH_SHORT).show();
++        } else {
++            Toast.makeText(getActivity(), R.string.unmount_inform_text, Toast.LENGTH_SHORT).show();
++        }
++
+         IMountService mountService = getMountService();
+         try {
+             sLastClickedMountToggle.setEnabled(false);
+diff --git a/src/com/android/settings/deviceinfo/StorageVolumePreferenceCategory.java b/src/com/android/settings/deviceinfo/StorageVolumePreferenceCategory.java
+index b6e2974..272f2f7 100644
+--- a/src/com/android/settings/deviceinfo/StorageVolumePreferenceCategory.java
++++ b/src/com/android/settings/deviceinfo/StorageVolumePreferenceCategory.java
+@@ -40,6 +40,7 @@ import android.provider.MediaStore;
+ import android.text.TextUtils;
+ import android.text.format.Formatter;
+ 
++import com.android.settings.MediaFormat;
+ import com.android.settings.R;
+ import com.android.settings.Settings;
+ import com.android.settings.deviceinfo.StorageMeasurement.MeasurementDetails;
+@@ -207,9 +208,31 @@ public class StorageVolumePreferenceCategory extends PreferenceCategory implemen
+         // Always create the preference since many code rely on it existing
+         mMountTogglePreference = new Preference(context);
+         mMountNotification = new CheckBoxPreference(context);
++
++        // resource IDs that are loaded appropriately based on the storage
++        // volume type
++        int titleResId = 0;
++        int summaryResId = 0;
++
+         if (isRemovable) {
+-            mMountTogglePreference.setTitle(R.string.sd_eject);
+-            mMountTogglePreference.setSummary(R.string.sd_eject_summary);
++
++            // show appropriate title / summary based on volume type
++            if (MediaFormat.isUsbStorage(mVolume, context)) {
++                titleResId = R.string.usb_eject;
++                summaryResId = R.string.usb_eject_summary;
++
++            } else if (MediaFormat.isUiccStorage(mVolume, context)) {
++                titleResId = R.string.uicc_eject;
++                summaryResId = R.string.uicc_eject_summary;
++
++            } else {
++                titleResId = R.string.sd_eject;
++                summaryResId = R.string.sd_eject_summary;
++            }
++
++            mMountTogglePreference.setTitle(titleResId);
++            mMountTogglePreference.setSummary(summaryResId);
++
+             addPreference(mMountTogglePreference);
+ 
+             mMountNotification.setTitle(R.string.mount_notification_title);
+@@ -232,8 +255,24 @@ public class StorageVolumePreferenceCategory extends PreferenceCategory implemen
+         final boolean allowFormat = mVolume != null;
+         if (allowFormat) {
+             mFormatPreference = new Preference(context);
+-            mFormatPreference.setTitle(R.string.sd_format);
+-            mFormatPreference.setSummary(R.string.sd_format_summary);
++
++            // show appropriate title / summary based on volume type
++            if (MediaFormat.isUsbStorage(mVolume, context)) {
++                titleResId = R.string.usb_format;
++                summaryResId = R.string.usb_format_summary;
++
++            } else if (MediaFormat.isUiccStorage(mVolume, context)) {
++                titleResId = R.string.uicc_format;
++                summaryResId = R.string.uicc_format_summary;
++
++            } else {
++                titleResId = R.string.sd_format;
++                summaryResId = R.string.sd_format_summary;
++            }
++
++            mFormatPreference.setTitle(titleResId);
++            mFormatPreference.setSummary(summaryResId);
++
+             addPreference(mFormatPreference);
+         }
+ 
+@@ -259,7 +298,15 @@ public class StorageVolumePreferenceCategory extends PreferenceCategory implemen
+ 
+     private void updatePreferencesFromState() {
+         // Only update for physical volumes
+-        if (mVolume == null) return;
++        if (mVolume == null)
++            return;
++
++        // resource IDs that are loaded appropriately based on the storage
++        // volume type
++        int titleResId = 0;
++        int summaryResId = 0;
++
++        Context context = getContext();
+ 
+         mMountTogglePreference.setEnabled(true);
+ 
+@@ -274,8 +321,23 @@ public class StorageVolumePreferenceCategory extends PreferenceCategory implemen
+         if (Environment.MEDIA_MOUNTED.equals(state)
+                 || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+             mMountTogglePreference.setEnabled(true);
+-            mMountTogglePreference.setTitle(mResources.getString(R.string.sd_eject));
+-            mMountTogglePreference.setSummary(mResources.getString(R.string.sd_eject_summary));
++
++            if (MediaFormat.isUsbStorage(mVolume, context)) {
++                titleResId = R.string.usb_eject;
++                summaryResId = R.string.usb_eject_summary;
++
++            } else if (MediaFormat.isUiccStorage(mVolume, context)) {
++                titleResId = R.string.uicc_eject;
++                summaryResId = R.string.uicc_eject_summary;
++
++            } else {
++                titleResId = R.string.sd_eject;
++                summaryResId = R.string.sd_eject_summary;
++            }
++
++            mMountTogglePreference.setTitle(titleResId);
++            mMountTogglePreference.setSummary(summaryResId);
++
+             addPreference(mUsageBarPreference);
+             addPreference(mItemTotal);
+             addPreference(mItemAvailable);
+@@ -283,12 +345,41 @@ public class StorageVolumePreferenceCategory extends PreferenceCategory implemen
+             if (Environment.MEDIA_UNMOUNTED.equals(state) || Environment.MEDIA_NOFS.equals(state)
+                     || Environment.MEDIA_UNMOUNTABLE.equals(state)) {
+                 mMountTogglePreference.setEnabled(true);
+-                mMountTogglePreference.setTitle(mResources.getString(R.string.sd_mount));
+-                mMountTogglePreference.setSummary(mResources.getString(R.string.sd_mount_summary));
++
++                if (MediaFormat.isUsbStorage(mVolume, context)) {
++                    titleResId = R.string.usb_mount;
++                    summaryResId = R.string.usb_mount_summary;
++
++                } else if (MediaFormat.isUiccStorage(mVolume, context)) {
++                    titleResId = R.string.uicc_mount;
++                    summaryResId = R.string.uicc_mount_summary;
++
++                } else {
++                    titleResId = R.string.sd_mount;
++                    summaryResId = R.string.sd_mount_summary;
++                }
++
++                mMountTogglePreference.setTitle(mResources.getString(titleResId));
++                mMountTogglePreference.setSummary(mResources.getString(summaryResId));
++
+             } else {
+                 mMountTogglePreference.setEnabled(false);
+-                mMountTogglePreference.setTitle(mResources.getString(R.string.sd_mount));
+-                mMountTogglePreference.setSummary(mResources.getString(R.string.sd_insert_summary));
++
++                if (MediaFormat.isUsbStorage(mVolume, context)) {
++                    titleResId = R.string.usb_mount;
++                    summaryResId = R.string.usb_insert_summary;
++
++                } else if (MediaFormat.isUiccStorage(mVolume, context)) {
++                    titleResId = R.string.uicc_mount;
++                    summaryResId = R.string.uicc_insert_summary;
++
++                } else {
++                    titleResId = R.string.sd_mount;
++                    summaryResId = R.string.sd_insert_summary;
++                }
++
++                mMountTogglePreference.setTitle(mResources.getString(titleResId));
++                mMountTogglePreference.setSummary(mResources.getString(summaryResId));
+             }
+ 
+             removePreference(mUsageBarPreference);
+@@ -311,7 +402,16 @@ public class StorageVolumePreferenceCategory extends PreferenceCategory implemen
+             }
+         } else if (mFormatPreference != null) {
+             mFormatPreference.setEnabled(mMountTogglePreference.isEnabled());
+-            mFormatPreference.setSummary(mResources.getString(R.string.sd_format_summary));
++
++            if (MediaFormat.isUsbStorage(mVolume, context)) {
++                mFormatPreference.setSummary(R.string.usb_format_summary);
++
++            } else if (MediaFormat.isUiccStorage(mVolume, context)) {
++                mFormatPreference.setSummary(R.string.uicc_format_summary);
++
++            } else {
++                mFormatPreference.setSummary(R.string.sd_format_summary);
++            }
+         }
+     }
+ 
+diff --git a/src/com/android/settings/deviceinfo/UsbSettings.java b/src/com/android/settings/deviceinfo/UsbSettings.java
+index f2623c5..9332a53 100644
+--- a/src/com/android/settings/deviceinfo/UsbSettings.java
++++ b/src/com/android/settings/deviceinfo/UsbSettings.java
+@@ -23,10 +23,17 @@ import android.content.IntentFilter;
+ import android.hardware.usb.UsbManager;
+ import android.os.Bundle;
+ import android.os.UserManager;
++import android.os.Environment;
++import android.os.SystemProperties;
++import android.os.storage.StorageEventListener;
++import android.os.storage.StorageManager;
++import android.os.storage.StorageVolume;
++import android.os.SystemProperties;
+ import android.preference.CheckBoxPreference;
+ import android.preference.Preference;
+ import android.preference.PreferenceScreen;
+ import android.util.Log;
++import android.widget.Toast;
+ 
+ import com.android.settings.R;
+ import com.android.settings.SettingsPreferenceFragment;
+@@ -37,29 +44,69 @@ import com.android.settings.Utils;
+  */
+ public class UsbSettings extends SettingsPreferenceFragment {
+ 
++    private static final boolean DEBUG = false;
+     private static final String TAG = "UsbSettings";
+ 
+     private static final String KEY_MTP = "usb_mtp";
+     private static final String KEY_PTP = "usb_ptp";
+     private static final String KEY_CHARGING = "usb_charging";
++    private static final String KEY_SDCARD = "usb_sdcard";
++
++    // We could not know what's the usb default mode config of each device, which
++    // may be defined in some sh source file. So here use a hard code for reference,
++    // you should modify this value according to device usb init config.
++    private static final String USB_FUNCTION_DEFAULT = SystemProperties.get(
++            "ro.sys.usb.default.config", "diag,serial_smd,serial_tty,rmnet_bam,mass_storage");
+ 
+     private UsbManager mUsbManager;
+     private CheckBoxPreference mMtp;
+     private CheckBoxPreference mPtp;
+     private CheckBoxPreference mCharging;
++    private CheckBoxPreference mSDCard;
+     private boolean mUsbAccessoryMode;
++    private boolean operateInprogress = false;
++
++    private StorageManager mStorageManager = null;
+ 
+     private final BroadcastReceiver mStateReceiver = new BroadcastReceiver() {
+         public void onReceive(Context content, Intent intent) {
+             String action = intent.getAction();
+             if (action.equals(UsbManager.ACTION_USB_STATE)) {
+                mUsbAccessoryMode = intent.getBooleanExtra(UsbManager.USB_FUNCTION_ACCESSORY, false);
+-               Log.e(TAG, "UsbAccessoryMode " + mUsbAccessoryMode);
++                Log.e(TAG, "UsbAccessoryMode " + mUsbAccessoryMode);
++                boolean connected = intent.getExtras().getBoolean(UsbManager.USB_CONNECTED);
++                if (!connected) {
++                    finish();
++                    return;
++                } else {
++                    // once USB connected agian, we take setting operation as completed
++                    operateInprogress = false;
++                    updateUsbFunctionState();
++                }
+             }
+-            updateToggles(mUsbManager.getDefaultFunction());
+         }
+     };
+ 
++    private void updateUsbFunctionState() {
++        String functions = SystemProperties.get("persist.sys.usb.config", "");
++        if (functions.contains(USB_FUNCTION_DEFAULT)) {
++            updateToggles(USB_FUNCTION_DEFAULT);
++        } else {
++            updateToggles(mUsbManager.getDefaultFunction());
++        }
++    }
++
++    private boolean isMassStorageEnabled() {
++        // Mass storage is enabled if primary volume supports it
++        final StorageVolume[] volumes = mStorageManager.getVolumeList();
++        for (StorageVolume v : volumes) {
++            if (v.allowMassStorage()) {
++                return true;
++            }
++        }
++        return false;
++    }
++
+     private PreferenceScreen createPreferenceHierarchy() {
+         PreferenceScreen root = getPreferenceScreen();
+         if (root != null) {
+@@ -71,11 +118,18 @@ public class UsbSettings extends SettingsPreferenceFragment {
+         mMtp = (CheckBoxPreference)root.findPreference(KEY_MTP);
+         mPtp = (CheckBoxPreference)root.findPreference(KEY_PTP);
+         mCharging = (CheckBoxPreference)root.findPreference(KEY_CHARGING);
++        mSDCard = (CheckBoxPreference)root.findPreference(KEY_SDCARD);
++        //not to show this mode if mass storage is not supported
++        if (!isMassStorageEnabled()) {
++            Log.d(TAG, "createPreferenceHierarchy mass_storage enabled");
++            root.removePreference(mSDCard);
++        }
+ 
+         UserManager um = (UserManager) getActivity().getSystemService(Context.USER_SERVICE);
+         if (um.hasUserRestriction(UserManager.DISALLOW_USB_FILE_TRANSFER)) {
+             mMtp.setEnabled(false);
+             mPtp.setEnabled(false);
++            mSDCard.setEnabled(false);
+         }
+ 
+         return root;
+@@ -85,12 +139,39 @@ public class UsbSettings extends SettingsPreferenceFragment {
+     public void onCreate(Bundle icicle) {
+         super.onCreate(icicle);
+         mUsbManager = (UsbManager)getSystemService(Context.USB_SERVICE);
++        mStorageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
+     }
+ 
++    private StorageEventListener mStorageListener = new StorageEventListener() {
++        @Override
++        public void onStorageStateChanged(String path, String oldState,
++                String newState) {
++            if (DEBUG)
++                Log.i(TAG, "onStorageStateChanged path= " + path
++                        + " oldState = " + oldState + " newState= " + newState);
++            final boolean isExternalPath = (Environment.getExternalStorageDirectory().getPath()
++                    .equals(path));
++            // just enable UMS for external
++            if (!isExternalPath) return;
++            if (newState.equals(Environment.MEDIA_SHARED)) {
++                Toast.makeText(getActivity(), R.string.external_storage_turn_on,
++                        Toast.LENGTH_SHORT).show();
++            } else if (oldState.equals(Environment.MEDIA_SHARED)
++                    && newState.equals(Environment.MEDIA_UNMOUNTED)) {
++                Toast.makeText(getActivity(), R.string.external_storage_turn_off,
++                    Toast.LENGTH_SHORT).show();
++            }
++            updateUsbFunctionState();
++        }
++    };
++
+     @Override
+     public void onPause() {
+         super.onPause();
+         getActivity().unregisterReceiver(mStateReceiver);
++        if (mStorageManager != null) {
++            mStorageManager.unregisterListener(mStorageListener);
++        }
+     }
+ 
+     @Override
+@@ -104,24 +185,37 @@ public class UsbSettings extends SettingsPreferenceFragment {
+         // ACTION_USB_STATE is sticky so this will call updateToggles
+         getActivity().registerReceiver(mStateReceiver,
+                 new IntentFilter(UsbManager.ACTION_USB_STATE));
++        if (mStorageManager != null) {
++            mStorageManager.registerListener(mStorageListener);
++        }
++        updateUsbFunctionState();
+     }
+ 
+     private void updateToggles(String function) {
+         if (UsbManager.USB_FUNCTION_MTP.equals(function)) {
+             mMtp.setChecked(true);
+             mPtp.setChecked(false);
++            mSDCard.setChecked(false);
+             mCharging.setChecked(false);
+         } else if (UsbManager.USB_FUNCTION_PTP.equals(function)) {
+             mMtp.setChecked(false);
+             mPtp.setChecked(true);
++            mSDCard.setChecked(false);
+             mCharging.setChecked(false);
+-        }  else if (UsbManager.USB_FUNCTION_CHARGING.equals(function)) {
++        } else if (UsbManager.USB_FUNCTION_MASS_STORAGE.equals(function)) {
+             mMtp.setChecked(false);
+             mPtp.setChecked(false);
++            mSDCard.setChecked(true);
++            mCharging.setChecked(false);
++        } else if (UsbManager.USB_FUNCTION_CHARGING.equals(function)) {
++            mMtp.setChecked(false);
++            mPtp.setChecked(false);
++            mSDCard.setChecked(false);
+             mCharging.setChecked(true);
+-        }  else  {
++        } else {
+             mMtp.setChecked(false);
+             mPtp.setChecked(false);
++            mSDCard.setChecked(false);
+             mCharging.setChecked(false);
+         }
+ 
+@@ -130,16 +224,15 @@ public class UsbSettings extends SettingsPreferenceFragment {
+             Log.e(TAG, "USB is locked down");
+             mMtp.setEnabled(false);
+             mPtp.setEnabled(false);
+-        } else if (!mUsbAccessoryMode) {
++            mSDCard.setEnabled(false);
++        } else if (!mUsbAccessoryMode && !operateInprogress) {
+             //Enable MTP and PTP switch while USB is not in Accessory Mode, otherwise disable it
+             Log.e(TAG, "USB Normal Mode");
+-            mMtp.setEnabled(true);
+-            mPtp.setEnabled(true);
++            getPreferenceScreen().setEnabled(true);
+         } else {
+-            Log.e(TAG, "USB Accessory Mode");
+-            mMtp.setEnabled(false);
+-            mPtp.setEnabled(false);
++            getPreferenceScreen().setEnabled(false);
+         }
++
+     }
+ 
+     @Override
+@@ -157,15 +250,19 @@ public class UsbSettings extends SettingsPreferenceFragment {
+             return true;
+         }
+ 
+-        String function = "none";
++        //if choose none, we set the function as the default config
++        String function = USB_FUNCTION_DEFAULT;
+         if (preference == mMtp && mMtp.isChecked()) {
+             function = UsbManager.USB_FUNCTION_MTP;
+         } else if (preference == mPtp && mPtp.isChecked()) {
+             function = UsbManager.USB_FUNCTION_PTP;
+         } else if (preference == mCharging && mCharging.isChecked()) {
+             function = UsbManager.USB_FUNCTION_CHARGING;
++        } else if (preference == mSDCard && mSDCard.isChecked()) {
++            function = UsbManager.USB_FUNCTION_MASS_STORAGE;
+         }
+ 
++        operateInprogress = true;
+         mUsbManager.setCurrentFunction(function, true);
+         updateToggles(function);
+ 
+-- 
+1.9.1
+
