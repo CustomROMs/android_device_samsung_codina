@@ -71,16 +71,18 @@ do
 pre_clean $i
 done
 
-cd $patches
+if [ "$1" != "clean" ]; then
 
-# copy patches
-cp -r * $LOCAL_PATH 
-cd $LOCAL_PATH
+	cd $patches
 
-# now apply it 
+	# copy patches
+	cp -r * $LOCAL_PATH 
+	cd $LOCAL_PATH
 
-for i in  $PATCHES
-do
-apply_all $i
-done
+	# now apply it 
 
+	for i in  $PATCHES
+	do
+	apply_all $i
+	done
+fi
