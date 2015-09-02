@@ -1,16 +1,16 @@
-From 29f91d648f994bed309fdae2e2477b50cebdf640 Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 24 May 2015 14:27:37 +0300
-Subject: [PATCH 4/4] 0003-0001-STE-OMX-Fix-video-playback.patch.patch
+From 03996fea59458ec430f34081a58d773e2962c8e1 Mon Sep 17 00:00:00 2001
+From: Agontuk <rifat662@gmail.com>
+Date: Sun, 4 Jan 2015 11:37:45 +0100
+Subject: [PATCH 4/7] STE OMX Fix video playback
 
-Change-Id: I19e4cd961e0e65e1c0ee3201c0acd6cf3335f519
+Change-Id: I9e02f38fe6d8f76eeb0c0ff76c11ead16954edfb
 ---
  include/gui/GLConsumer.h |  5 +++++
- libs/gui/GLConsumer.cpp  | 48 +++++++++++++++++++++++++-----------------------
- 2 files changed, 30 insertions(+), 23 deletions(-)
+ libs/gui/GLConsumer.cpp  | 39 +++++++++++++++++++++++++--------------
+ 2 files changed, 30 insertions(+), 14 deletions(-)
 
 diff --git a/include/gui/GLConsumer.h b/include/gui/GLConsumer.h
-index 645187d..e23f2a5 100644
+index 903ed4b..d9c49d6 100644
 --- a/include/gui/GLConsumer.h
 +++ b/include/gui/GLConsumer.h
 @@ -321,6 +321,11 @@ private:
@@ -26,10 +26,10 @@ index 645187d..e23f2a5 100644
      private:
          // Only allow instantiation using ref counting.
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index 95c8dc7..07c1ba5 100644
+index d15064c..a758b52 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
-@@ -451,21 +451,11 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -433,21 +433,10 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
          return err;
      }
  
@@ -38,33 +38,34 @@ index 95c8dc7..07c1ba5 100644
 -    // ConsumerBase.
 -    // We may have to do this even when item.mGraphicBuffer == NULL (which
 -    // means the buffer was previously acquired).
- 
+-
  #ifdef STE_HARDWARE
      sp<GraphicBuffer> textureBuffer;
-     if (mSlots[buf].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCBCR42XMBN
+     if (mSlots[buf].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCBCR42XMBN 
       || mSlots[buf].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCbCr_420_P) {
 -        /* deallocate image each time .... */
--        /*if (&mEglSlots[buf].mEglImage != EGL_NO_IMAGE_KHR) {
+-        if (&mEglSlots[buf].mEglImage != EGL_NO_IMAGE_KHR) {
 -            eglDestroyImageKHR(mEglDisplay, &mEglSlots[buf].mEglImage);
 -            mEglSlots[buf].mEglImage = (android::GLConsumer::EglImage*)EGL_NO_IMAGE_KHR;
--        }*/
+-        }
          /* test if source and convert buffer size are ok */
          if (mSlots[buf].mGraphicBuffer != NULL && mBlitSlots[mNextBlitSlot] != NULL) {
              sp<GraphicBuffer> srcBuf = mSlots[buf].mGraphicBuffer;
-@@ -506,28 +496,40 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -481,12 +470,29 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
              return UNKNOWN_ERROR;
          }
          textureBuffer = mBlitSlots[mNextBlitSlot];
--        mEglSlots[buf].mEglImage = new EglImage(textureBuffer);
+-        mSlots[buf].mGraphicBuffer = textureBuffer;
          mNextBlitSlot = (mNextBlitSlot + 1) % BufferQueue::NUM_BLIT_BUFFER_SLOTS;
--    } 
-+    } else {
-+         textureBuffer = mSlots[buf].mGraphicBuffer;
+     }
++    else {
++        textureBuffer = mSlots[buf].mGraphicBuffer;
 +    }
-+ 
-+     // Set EglImage to use the new textureBuffer
-+     mEglSlots[buf].mEglImage->setGraphicBuffer(textureBuffer);
-+#endif
++
++    // Set EglImage to use the new textureBuffer
++    mEglSlots[buf].mEglImage->setGraphicBuffer(textureBuffer);
+ #endif
+ 
 +    // Ensure we have a valid EglImageKHR for the slot, creating an EglImage
 +    // if nessessary, for the gralloc buffer currently in the slot in
 +    // ConsumerBase.
@@ -76,26 +77,18 @@ index 95c8dc7..07c1ba5 100644
 +    // using textureBuffer.
 +    err = mEglSlots[buf].mEglImage->createIfNeeded(mEglDisplay, item.mCrop, true);
 +#else
-+     err = mEglSlots[buf].mEglImage->createIfNeeded(mEglDisplay, item.mCrop);
- #endif
- 
--    err = mEglSlots[buf].mEglImage->createIfNeeded(mEglDisplay, item.mCrop);
--    if (err != NO_ERROR) {
--        ST_LOGW("updateAndRelease: unable to createImage on display=%p slot=%d",
--                mEglDisplay, buf);
--        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer,
--                mEglDisplay, EGL_NO_SYNC_KHR);
--        return UNKNOWN_ERROR;
--    }
- 
--    // Do whatever sync ops we need to do before releasing the old slot.
--    err = syncForReleaseLocked(mEglDisplay);
+     err = mEglSlots[buf].mEglImage->createIfNeeded(mEglDisplay, item.mCrop);
++#endif
      if (err != NO_ERROR) {
+         ST_LOGW("updateAndRelease: unable to createImage on display=%p slot=%d",
+                 mEglDisplay, buf);
+@@ -501,8 +507,13 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
          // Release the buffer we just acquired.  It's not safe to
          // release the old buffer, so instead we just drop the new frame.
          // As we are still under lock since acquireBuffer, it is safe to
-         // release by slot.
+-        // release by slot.        
 -        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer, mEglDisplay, EGL_NO_SYNC_KHR);
++        // release by slot.
 +#ifdef STE_HARDWARE
 +        releaseBufferLocked(buf, textureBuffer,
 +#else        

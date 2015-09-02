@@ -1,15 +1,15 @@
-From 783d04bcab40bab2bc7e08dbd9e9f5c9ef1feb71 Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 10 May 2015 18:55:00 +0300
-Subject: [PATCH 2/6] frameworks-base_GPS-init-fix.patch
+From 2e6353927bef178b0d9ebf42dc567db838fe79cf Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Sat, 3 Jan 2015 14:12:26 +0100
+Subject: [PATCH 1/7] Don't set AGPS server (needed for GPS blob to work)
 
-Change-Id: If7f47f435da5c621b0c2b9924f7bb6c7b55fd26e
+Change-Id: I46c0bb1330990dbd844f60d008a989043ef4cb03
 ---
  .../core/java/com/android/server/location/GpsLocationProvider.java    | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/services/core/java/com/android/server/location/GpsLocationProvider.java b/services/core/java/com/android/server/location/GpsLocationProvider.java
-index 7816ce4..3c401d6 100644
+index 7816ce4..f9359f3 100644
 --- a/services/core/java/com/android/server/location/GpsLocationProvider.java
 +++ b/services/core/java/com/android/server/location/GpsLocationProvider.java
 @@ -985,11 +985,11 @@ public class GpsLocationProvider implements LocationProviderInterface {
@@ -17,7 +17,7 @@ index 7816ce4..3c401d6 100644
              }
          }
 -        if (mSuplServerHost != null
-+       /* if (mSuplServerHost != null
++        /* if (mSuplServerHost != null
                  && mSuplServerPort > TCP_MIN_PORT
                  && mSuplServerPort <= TCP_MAX_PORT) {
              native_set_agps_server(AGPS_TYPE_SUPL, mSuplServerHost, mSuplServerPort);

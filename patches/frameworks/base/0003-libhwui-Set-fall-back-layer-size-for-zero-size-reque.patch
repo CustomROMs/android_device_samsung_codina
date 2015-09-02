@@ -1,7 +1,7 @@
-From 5b121c62ae55563efe5203d9705633459235beff Mon Sep 17 00:00:00 2001
+From 74abff8fa0e0486afa2a7761a253b51771e0461a Mon Sep 17 00:00:00 2001
 From: Stefan Berger <s.berger81@gmail.com>
 Date: Sat, 9 May 2015 17:35:31 +0200
-Subject: [PATCH 6/6] libhwui: Set fall-back layer size for zero-size requested
+Subject: [PATCH 3/7] libhwui: Set fall-back layer size for zero-size requested
  layers
 
 Change-Id: I63bdacf537adc703cd59f7f8c722795860d4feed

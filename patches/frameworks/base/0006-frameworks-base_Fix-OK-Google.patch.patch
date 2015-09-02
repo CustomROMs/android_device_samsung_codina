@@ -1,7 +1,7 @@
-From 086576126e6a0df88954ee33d582db5bf83d65cd Mon Sep 17 00:00:00 2001
+From af642b73446de7ad7a042352162fbad1ac1f35f7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 10 May 2015 18:54:54 +0300
-Subject: [PATCH 1/6] frameworks-base_Fix-OK-Google.patch
+Subject: [PATCH 6/7] frameworks-base_Fix-OK-Google.patch
 
 Change-Id: I3886174ce82f1b48dace2f24ffe0bf8af5d9feed
 ---

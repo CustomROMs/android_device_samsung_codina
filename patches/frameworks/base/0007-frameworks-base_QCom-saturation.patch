@@ -1,10 +1,9 @@
-From a00ab045af33ad6f8c257379fb761352811e9257 Mon Sep 17 00:00:00 2001
-From: Meticulus <theonejohnnyd@gmail.com>
-Date: Tue, 25 Feb 2014 11:14:28 -0600
-Subject: [PATCH] fix: Qcom camera features max values not set.
+From ab78744cebfa651efde8e18c9584b49dee7cdc46 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 2 Sep 2015 15:16:15 +0300
+Subject: [PATCH 7/7] frameworks-base_QCom-saturation
 
-was returning null for getMaxSaturation. Now returns 0.
-
+Change-Id: Iaa2bedbcc087c4f15eefb5f1286b667b2d1d3663
 ---
  core/java/android/hardware/Camera.java | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

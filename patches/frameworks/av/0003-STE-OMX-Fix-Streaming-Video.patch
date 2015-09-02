@@ -1,15 +1,15 @@
-From 76abb2545b472c18574e6dd6c64ae999cf26adae Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 24 May 2015 22:18:36 +0300
-Subject: [PATCH 3/9] 0004-0005-STE-OMX-Fix-Streaming-Video.patch.patch
+From a780ddc08b0ab30dfe8f82f8254e4298a485a769 Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Fri, 26 Dec 2014 11:11:19 +0100
+Subject: [PATCH 3/7] STE-OMX Fix Streaming Video
 
-Change-Id: I4a4529952c4e3940cb77928145acf6b421502b39
+Change-Id: If748322debccb4cae8ddb04a67f9b304e368df19
 ---
  media/libstagefright/ACodec.cpp | 4 ++++
  1 file changed, 4 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 0f9e505..8909f56 100644
+index 0e15fe0..11e90cc 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -528,11 +528,15 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {

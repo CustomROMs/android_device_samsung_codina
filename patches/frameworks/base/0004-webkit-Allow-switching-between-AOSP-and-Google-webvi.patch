@@ -1,0 +1,31 @@
+From 55b3b5d92e635f0c6fc3bca170eb3c52d6b73f08 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <s.berger81@gmail.com>
+Date: Sun, 14 Jun 2015 11:32:33 +0200
+Subject: [PATCH 4/7] webkit: Allow switching between AOSP and Google webview
+ via boolean build.prop switch - in case both variants are installed.
+
+android.webview.force_aosp=true
+
+will always force usage of AOSP variant. Default value is false.
+
+Change-Id: Iaf12e01f239c1884362c551b2275c8c0e3cfdd51
+---
+ core/java/android/webkit/WebViewFactory.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/webkit/WebViewFactory.java b/core/java/android/webkit/WebViewFactory.java
+index 9a819a9..a367dd3 100644
+--- a/core/java/android/webkit/WebViewFactory.java
++++ b/core/java/android/webkit/WebViewFactory.java
+@@ -81,7 +81,7 @@ public final class WebViewFactory {
+         String pkg = initialApp.getString(
+                 com.android.internal.R.string.config_alternateWebViewPackageName);
+         /* Attempt to use alternate WebView package first */
+-        if (isPackageInstalled(initialApp, pkg)) {
++        if (isPackageInstalled(initialApp, pkg) && !SystemProperties.getBoolean("android.webview.force_aosp", false)) {
+             return pkg;
+         }
+         return initialApp.getString(
+-- 
+1.9.1
+

@@ -1,38 +1,38 @@
-From c15a04ae13cf0ffe354e8fcc24b67a3173445129 Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 24 May 2015 21:17:09 +0300
-Subject: [PATCH 2/4] 0003-Native-fix.patch
+From 58b0448e09bb5d7d02171bd3835c9bea9bd77442 Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Thu, 6 Nov 2014 00:58:05 +0100
+Subject: [PATCH 2/7] STE OMX Fix Fix Camera, Camcorder and Torch on STE
+ Devices
 
-Change-Id: Iabc991cacfc68e0c2109354bce01a6872b2d0758
+Change-Id: I46d1a04a8fcc63546b319d31d9299517406e783a
 ---
  include/binder/MemoryBase.h                |   3 +
- include/binder/Parcel.h                    |  32 +++++-
+ include/binder/Parcel.h                    |  34 ++++++-
  include/gui/BufferItem.h                   |   4 +-
  include/gui/BufferQueue.h                  |   4 +
  include/gui/ConsumerBase.h                 |   5 +-
- include/gui/GLConsumer.h                   |  38 +++++++
+ include/gui/GLConsumer.h                   |  38 ++++++++
  include/gui/IGraphicBufferConsumer.h       |   4 +
  include/gui/IGraphicBufferProducer.h       |   4 +
  include/media/openmax/OMX_IVCommon.h       |   3 +
  include/ui/Fence.h                         |   4 +
  include/ui/GraphicBuffer.h                 |  10 +-
- include/ui/PixelFormat.h                   |   9 ++
- include/ui/Region.h                        |  24 ++++
- libs/binder/MemoryBase.cpp                 |  19 ++++
+ include/ui/PixelFormat.h                   |  10 ++
+ include/ui/Region.h                        |  24 +++++
+ libs/binder/MemoryBase.cpp                 |  28 ++++++
  libs/binder/Parcel.cpp                     |  14 +++
  libs/gui/Android.mk                        |   1 +
- libs/gui/BufferQueueProducer.cpp           |   4 +-
  libs/gui/ConsumerBase.cpp                  |   2 +-
- libs/gui/GLConsumer.cpp                    | 175 ++++++++++++++++++++++++++++-
- libs/ui/PixelFormat.cpp                    |   4 +
+ libs/gui/GLConsumer.cpp                    | 142 ++++++++++++++++++++++++++++-
+ libs/ui/PixelFormat.cpp                    |   5 +
  opengl/include/EGL/eglext.h                |   2 +
+ opengl/libs/Android.mk                     |   3 +
  opengl/libs/EGL/eglApi.cpp                 |   4 +
- opengl/libs/EGL/egl_entries.in             |   2 +
- services/surfaceflinger/DisplayDevice.cpp  |  27 ++++-
+ opengl/libs/EGL/egl_entries.in             |   3 +
+ services/surfaceflinger/DisplayDevice.cpp  |  23 ++++-
  services/surfaceflinger/DisplayDevice.h    |   2 +
  services/surfaceflinger/SurfaceFlinger.cpp |   3 +
- 26 files changed, 386 insertions(+), 17 deletions(-)
- mode change 100644 => 100755 services/surfaceflinger/DisplayDevice.cpp
+ 26 files changed, 364 insertions(+), 15 deletions(-)
 
 diff --git a/include/binder/MemoryBase.h b/include/binder/MemoryBase.h
 index 463e26d..5bf104b 100644
@@ -49,7 +49,7 @@ index 463e26d..5bf104b 100644
  private:
      size_t          mSize;
 diff --git a/include/binder/Parcel.h b/include/binder/Parcel.h
-index 6a69761..2255e63 100644
+index 6a69761..68c2083 100644
 --- a/include/binder/Parcel.h
 +++ b/include/binder/Parcel.h
 @@ -28,8 +28,12 @@
@@ -66,34 +66,35 @@ index 6a69761..2255e63 100644
  class IBinder;
  class IPCThreadState;
  class ProcessState;
-@@ -106,8 +110,12 @@ public:
+@@ -106,9 +110,12 @@ public:
      status_t            writeInt32Array(size_t len, const int32_t *val);
      status_t            writeByteArray(size_t len, const uint8_t *val);
  
 +#ifdef STE_HARDWARE
-+    status_t            write(const Flattenable& val);
++ status_t               write(const Flattenable& val);
 +#else
      template<typename T>
      status_t            write(const Flattenable<T>& val);
+-
 +#endif
- 
      template<typename T>
      status_t            write(const LightFlattenable<T>& val);
-@@ -167,9 +175,12 @@ public:
-     const char16_t*     readString16Inplace(size_t* outLen) const;
+ 
+@@ -168,9 +175,12 @@ public:
      sp<IBinder>         readStrongBinder() const;
      wp<IBinder>         readWeakBinder() const;
--
+ 
 +#ifdef STE_HARDWARE
-+    status_t            read(Flattenable& val) const;
++    status_t read(Flattenable& val) const;
 +#else
      template<typename T>
      status_t            read(Flattenable<T>& val) const;
+-
 +#endif
- 
      template<typename T>
      status_t            read(LightFlattenable<T>& val) const;
-@@ -288,7 +299,7 @@ private:
+ 
+@@ -288,19 +298,25 @@ private:
  
      class FlattenableHelperInterface {
      protected:
@@ -102,10 +103,10 @@ index 6a69761..2255e63 100644
      public:
          virtual size_t getFlattenedSize() const = 0;
          virtual size_t getFdCount() const = 0;
-@@ -296,11 +307,18 @@ private:
+         virtual status_t flatten(void* buffer, size_t size, int* fds, size_t count) const = 0;
          virtual status_t unflatten(void const* buffer, size_t size, int const* fds, size_t count) = 0;
      };
- 
+-
 +#ifndef STE_HARDWARE
      template<typename T>
 +#endif
@@ -121,7 +122,7 @@ index 6a69761..2255e63 100644
  
      public:
          virtual size_t getFlattenedSize() const {
-@@ -313,7 +331,11 @@ private:
+@@ -313,7 +329,11 @@ private:
              return val.flatten(buffer, size, fds, count);
          }
          virtual status_t unflatten(void const* buffer, size_t size, int const* fds, size_t count) {
@@ -133,7 +134,7 @@ index 6a69761..2255e63 100644
          }
      };
      status_t write(const FlattenableHelperInterface& val);
-@@ -335,11 +357,13 @@ public:
+@@ -335,11 +355,13 @@ public:
  
  // ---------------------------------------------------------------------------
  
@@ -147,7 +148,7 @@ index 6a69761..2255e63 100644
  
  template<typename T>
  status_t Parcel::write(const LightFlattenable<T>& val) {
-@@ -359,11 +383,13 @@ status_t Parcel::write(const LightFlattenable<T>& val) {
+@@ -359,11 +381,13 @@ status_t Parcel::write(const LightFlattenable<T>& val) {
      return NO_ERROR;
  }
  
@@ -208,7 +209,7 @@ index f7ab5ac..e89d363 100644
  
      // addReleaseFence* adds the sync points associated with a fence to the set
 diff --git a/include/gui/GLConsumer.h b/include/gui/GLConsumer.h
-index 9931ec5..645187d 100644
+index 9931ec5..903ed4b 100644
 --- a/include/gui/GLConsumer.h
 +++ b/include/gui/GLConsumer.h
 @@ -30,6 +30,11 @@
@@ -228,7 +229,7 @@ index 9931ec5..645187d 100644
              bool useFenceSync, bool isControlledByApp);
  
 +#ifdef STE_HARDWARE
-+    // Method for closing copybit device while abandoning the surface 
++    // Method for closing copybit device while abandoning the surface
 +    virtual ~GLConsumer();
 +#endif
 +
@@ -261,8 +262,8 @@ index 9931ec5..645187d 100644
                  const sp<GraphicBuffer>& graphicBuffer, const Rect& crop);
  
 +#ifdef STE_HARDWARE
-+    // converts buffer to a suitable color format
-+    status_t convert(sp<GraphicBuffer> &srcBuf, sp<GraphicBuffer> &dstBuf);
++        // converts buffer to a suitable color format
++        status_t convert(sp<GraphicBuffer> &srcBuf, sp<GraphicBuffer> &dstBuf);
 +#endif
 +
          // Disallow copying
@@ -380,13 +381,14 @@ index 7630faa..d1361c0 100644
  
      enum {
 diff --git a/include/ui/PixelFormat.h b/include/ui/PixelFormat.h
-index ed7c1d8..6e0641c 100644
+index ed7c1d8..bedec56 100644
 --- a/include/ui/PixelFormat.h
 +++ b/include/ui/PixelFormat.h
-@@ -65,6 +65,15 @@ enum {
+@@ -65,6 +65,16 @@ enum {
      PIXEL_FORMAT_RGBA_4444   = 7,                            // 16-bit ARGB
      PIXEL_FORMAT_sRGB_A_8888 = HAL_PIXEL_FORMAT_sRGB_A_8888, // 4x8-bit sRGB + A
      PIXEL_FORMAT_sRGB_X_8888 = HAL_PIXEL_FORMAT_sRGB_X_8888, // 4x8-bit sRGB, no A
++
 +
 +#ifdef STE_HARDWARE
 +    // Added Support for YUV42XMBN,
@@ -442,13 +444,14 @@ index 0d1c68c..47a46b0 100644
  
  #endif // ANDROID_UI_REGION_H
 diff --git a/libs/binder/MemoryBase.cpp b/libs/binder/MemoryBase.cpp
-index 033066b..04565c6 100644
+index 033066b..eb423ac 100644
 --- a/libs/binder/MemoryBase.cpp
 +++ b/libs/binder/MemoryBase.cpp
-@@ -25,6 +25,10 @@ namespace android {
+@@ -25,6 +25,11 @@ namespace android {
  
  // ---------------------------------------------------------------------------
  
++
 +#ifdef STE_HARDWARE
 +extern "C" void _ZN7android10MemoryBaseC2ERKNS_2spINS_11IMemoryHeapEEElj() __attribute__((alias("_ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEElj")));
 +#endif
@@ -456,7 +459,7 @@ index 033066b..04565c6 100644
  MemoryBase::MemoryBase(const sp<IMemoryHeap>& heap,
          ssize_t offset, size_t size)
      : mSize(size), mOffset(offset), mHeap(heap)
-@@ -42,5 +46,20 @@ MemoryBase::~MemoryBase()
+@@ -42,5 +47,28 @@ MemoryBase::~MemoryBase()
  {
  }
  
@@ -477,6 +480,14 @@ index 033066b..04565c6 100644
 +
  // ---------------------------------------------------------------------------
  }; // namespace android
++
++// Backwards compatibility for libdatabase_sqlcipher (http://b/8253769).
++extern "C" void _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEEij(void*, void*, ssize_t, size_t);
++extern "C" void _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEElj(void* obj, void* h, long o, unsigned int size) {
++    _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEEij(obj, h, o, size);
++    ALOGW("Using temporary compatibility workaround for usage of MemoryBase "
++          "private API. Please fix your application!");
++}
 diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
 index e7589b1..27e5614 100644
 --- a/libs/binder/Parcel.cpp
@@ -521,21 +532,6 @@ index 86740ac..3c89e69 100644
  	liblog
  
  ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
-diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
-index 7809314..0567842 100644
---- a/libs/gui/BufferQueueProducer.cpp
-+++ b/libs/gui/BufferQueueProducer.cpp
-@@ -277,7 +277,9 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
-         if (format == 0) {
-             format = mCore->mDefaultBufferFormat;
-         }
--
-+        if (format == 0x7FA00000) {
-+            format = HAL_PIXEL_FORMAT_YCBCR42XMBN;
-+        }
-         // Enable the usage bits the consumer requested
-         usage |= mCore->mConsumerUsageBits;
- 
 diff --git a/libs/gui/ConsumerBase.cpp b/libs/gui/ConsumerBase.cpp
 index 210e98e..e171398 100644
 --- a/libs/gui/ConsumerBase.cpp
@@ -550,7 +546,7 @@ index 210e98e..e171398 100644
          freeBufferLocked(i);
      }
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index ca97109..95c8dc7 100644
+index ca97109..d15064c 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
 @@ -133,6 +133,9 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
@@ -563,39 +559,7 @@ index ca97109..95c8dc7 100644
      mAttached(true)
  {
      ST_LOGV("GLConsumer");
-@@ -140,6 +143,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
-     memcpy(mCurrentTransformMatrix, mtxIdentity,
-             sizeof(mCurrentTransformMatrix));
- 
-+#ifdef STE_HARDWARE
-+    hw_module_t const* module;
-+    mBlitEngine = 0;
-+    if (hw_get_module(COPYBIT_HARDWARE_MODULE_ID, &module) == 0) {
-+        copybit_open(module, &mBlitEngine);
-+    }
-+    ALOGE_IF(!mBlitEngine, "\nCannot open copybit mBlitEngine=%p", mBlitEngine);
-+
-+    sp<ISurfaceComposer> composer(ComposerService::getComposerService());
-+          mGraphicBufferAlloc = composer->createGraphicBufferAlloc();
-+    if (mGraphicBufferAlloc == 0) {
-+        ST_LOGE("createGraphicBufferAlloc() failed in SurfaceTexture()");
-+    }
-+#endif
-+
-     mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
- #ifdef QCOM_HARDWARE
-     mCurrentDirtyRect.clear();
-@@ -163,6 +181,9 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
-     mEglDisplay(EGL_NO_DISPLAY),
-     mEglContext(EGL_NO_CONTEXT),
-     mCurrentTexture(BufferQueue::INVALID_BUFFER_SLOT),
-+#ifdef STE_HARDWARE
-+    mNextBlitSlot(0),
-+#endif
-     mAttached(false)
- {
-     ST_LOGV("GLConsumer");
-@@ -170,6 +191,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
+@@ -170,6 +173,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
      memcpy(mCurrentTransformMatrix, mtxIdentity,
              sizeof(mCurrentTransformMatrix));
  
@@ -617,7 +581,7 @@ index ca97109..95c8dc7 100644
      mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
  }
  
-@@ -178,6 +214,16 @@ status_t GLConsumer::setDefaultMaxBufferCount(int bufferCount) {
+@@ -178,6 +196,16 @@ status_t GLConsumer::setDefaultMaxBufferCount(int bufferCount) {
      return mConsumer->setDefaultMaxBufferCount(bufferCount);
  }
  
@@ -634,7 +598,7 @@ index ca97109..95c8dc7 100644
  
  status_t GLConsumer::setDefaultBufferSize(uint32_t w, uint32_t h)
  {
-@@ -365,6 +411,24 @@ status_t GLConsumer::releaseBufferLocked(int buf,
+@@ -365,6 +393,24 @@ status_t GLConsumer::releaseBufferLocked(int buf,
      return err;
  }
  
@@ -659,20 +623,20 @@ index ca97109..95c8dc7 100644
  status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
  {
      status_t err = NO_ERROR;
-@@ -392,6 +456,61 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -392,6 +438,54 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
      // ConsumerBase.
      // We may have to do this even when item.mGraphicBuffer == NULL (which
      // means the buffer was previously acquired).
 +
 +#ifdef STE_HARDWARE
 +    sp<GraphicBuffer> textureBuffer;
-+    if (mSlots[buf].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCBCR42XMBN
++    if (mSlots[buf].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCBCR42XMBN 
 +     || mSlots[buf].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCbCr_420_P) {
 +        /* deallocate image each time .... */
-+        /*if (&mEglSlots[buf].mEglImage != EGL_NO_IMAGE_KHR) {
++        if (&mEglSlots[buf].mEglImage != EGL_NO_IMAGE_KHR) {
 +            eglDestroyImageKHR(mEglDisplay, &mEglSlots[buf].mEglImage);
 +            mEglSlots[buf].mEglImage = (android::GLConsumer::EglImage*)EGL_NO_IMAGE_KHR;
-+        }*/
++        }
 +        /* test if source and convert buffer size are ok */
 +        if (mSlots[buf].mGraphicBuffer != NULL && mBlitSlots[mNextBlitSlot] != NULL) {
 +            sp<GraphicBuffer> srcBuf = mSlots[buf].mGraphicBuffer;
@@ -683,13 +647,6 @@ index ca97109..95c8dc7 100644
 +        }
 +        /* allocate convert buffer if needed */
 +        if (mBlitSlots[mNextBlitSlot] == NULL) {
-+	    if(mGraphicBufferAlloc == NULL) {
-+		
-+		/* For some reason this is not being initialized in the constructor.
-+		   So, we will create it here if it's null. */
-+    		sp<ISurfaceComposer> composer(ComposerService::getComposerService());
-+                mGraphicBufferAlloc = composer->createGraphicBufferAlloc();
-+	    }
 +            status_t res;
 +            sp<GraphicBuffer> srcBuf = mSlots[buf].mGraphicBuffer;
 +            sp<GraphicBuffer> dstBuf(mGraphicBufferAlloc->createGraphicBuffer(srcBuf->getWidth(),
@@ -713,40 +670,32 @@ index ca97109..95c8dc7 100644
 +            return UNKNOWN_ERROR;
 +        }
 +        textureBuffer = mBlitSlots[mNextBlitSlot];
-+        mEglSlots[buf].mEglImage = new EglImage(textureBuffer);
++        mSlots[buf].mGraphicBuffer = textureBuffer;
 +        mNextBlitSlot = (mNextBlitSlot + 1) % BufferQueue::NUM_BLIT_BUFFER_SLOTS;
-+    } 
++    }
 +#endif
 +
      err = mEglSlots[buf].mEglImage->createIfNeeded(mEglDisplay, item.mCrop);
      if (err != NO_ERROR) {
          ST_LOGW("updateAndRelease: unable to createImage on display=%p slot=%d",
-@@ -408,8 +527,7 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -407,9 +501,8 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+         // Release the buffer we just acquired.  It's not safe to
          // release the old buffer, so instead we just drop the new frame.
          // As we are still under lock since acquireBuffer, it is safe to
-         // release by slot.
+-        // release by slot.
 -        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer,
 -                mEglDisplay, EGL_NO_SYNC_KHR);
++        // release by slot.        
 +        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer, mEglDisplay, EGL_NO_SYNC_KHR);
          return err;
      }
  
-@@ -1045,6 +1163,59 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
+@@ -1045,6 +1138,49 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
      ConsumerBase::dumpLocked(result, prefix);
  }
  
 +#ifdef STE_HARDWARE
 +status_t GLConsumer::convert(sp<GraphicBuffer> &srcBuf, sp<GraphicBuffer> &dstBuf) {
-+
-+    /* For some reason mBlitEngine is not being initialized in
-+       the constructor so we init' it before we use it. */
-+    hw_module_t const* module;
-+    if(mBlitEngine == NULL) {
-+        if (hw_get_module(COPYBIT_HARDWARE_MODULE_ID, &module) == 0) {
-+            copybit_open(module, &mBlitEngine);
-+        }
-+    }
-+
 +    copybit_image_t dstImg;
 +    dstImg.w = dstBuf->getWidth();
 +    dstImg.h = dstBuf->getHeight();
@@ -778,7 +727,7 @@ index ca97109..95c8dc7 100644
 +    mBlitEngine->set_parameter(mBlitEngine, COPYBIT_DITHER, COPYBIT_ENABLE);
 +
 +    int err = mBlitEngine->stretch(
-+            mBlitEngine, &dstImg, &srcImg, &dstCrop, &srcCrop, &clip);
++    mBlitEngine, &dstImg, &srcImg, &dstCrop, &srcCrop, &clip);
 +    if (err != 0) {
 +        ALOGE("\nError: Blit stretch operation failed (err:%d)\n", err);
 +        /* return ok to not block decoding. But why this error ? */
@@ -792,20 +741,21 @@ index ca97109..95c8dc7 100644
      out[0] = a[0]*b[0] + a[4]*b[1] + a[8]*b[2] + a[12]*b[3];
      out[1] = a[1]*b[0] + a[5]*b[1] + a[9]*b[2] + a[13]*b[3];
 diff --git a/libs/ui/PixelFormat.cpp b/libs/ui/PixelFormat.cpp
-index a716949..cbd0063 100644
+index a716949..ac964e0 100644
 --- a/libs/ui/PixelFormat.cpp
 +++ b/libs/ui/PixelFormat.cpp
-@@ -90,6 +90,10 @@ status_t getPixelFormatInfo(PixelFormat format, PixelFormatInfo* info)
-     case HAL_PIXEL_FORMAT_YCbCr_422_I:
-         info->bitsPerPixel = 16;
-         goto done;
+@@ -158,6 +158,11 @@ ssize_t bitsPerPixel(PixelFormat format) {
+         case PIXEL_FORMAT_RGBA_5551:
+         case PIXEL_FORMAT_RGBA_4444:
+             return 16;
 +#ifdef STE_HARDWARE
-+    case HAL_PIXEL_FORMAT_YCbCr_420_P:
-+    case HAL_PIXEL_FORMAT_YCBCR42XMBN:
++        case HAL_PIXEL_FORMAT_YCbCr_420_P:
++        case HAL_PIXEL_FORMAT_YCBCR42XMBN:
++            return 12;
 +#endif
-     case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-     case HAL_PIXEL_FORMAT_YV12:
-         info->bitsPerPixel = 12;
+     }
+     return BAD_VALUE;
+ }
 diff --git a/opengl/include/EGL/eglext.h b/opengl/include/EGL/eglext.h
 index 3b2984a..9736c5a 100644
 --- a/opengl/include/EGL/eglext.h
@@ -826,6 +776,20 @@ index 3b2984a..9736c5a 100644
  
  #if KHRONOS_SUPPORT_INT64 /* EGLuint64KHR requires 64-bit uint support */
  #ifndef EGL_KHR_stream
+diff --git a/opengl/libs/Android.mk b/opengl/libs/Android.mk
+index 11bd7a2..cadc8a0 100644
+--- a/opengl/libs/Android.mk
++++ b/opengl/libs/Android.mk
+@@ -47,6 +47,9 @@ LOCAL_CFLAGS += -DEGL_TRACE=1
+ ifeq ($(BOARD_ALLOW_EGL_HIBERNATION),true)
+   LOCAL_CFLAGS += -DBOARD_ALLOW_EGL_HIBERNATION
+ endif
++ifeq ($(BOARD_EGL_WORKAROUND_BUG_10194508), true)
++  LOCAL_CFLAGS += -DWORKAROUND_BUG_10194508=1
++endif
+ ifeq ($(TARGET_BOARD_PLATFORM), omap4)
+   LOCAL_CFLAGS += -DWORKAROUND_BUG_10194508=1
+ endif
 diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
 index e3d2066..5211157 100644
 --- a/opengl/libs/EGL/eglApi.cpp
@@ -858,13 +822,14 @@ index e3d2066..5211157 100644
  }
 +#endif
 diff --git a/opengl/libs/EGL/egl_entries.in b/opengl/libs/EGL/egl_entries.in
-index 88e13cb..8d6c503 100644
+index 88e13cb..3355a80 100644
 --- a/opengl/libs/EGL/egl_entries.in
 +++ b/opengl/libs/EGL/egl_entries.in
-@@ -89,8 +89,10 @@ EGL_ENTRY(EGLBoolean, eglGpuPerfHintQCOM, EGLDisplay, EGLContext, EGLint *)
+@@ -89,8 +89,11 @@ EGL_ENTRY(EGLBoolean, eglGpuPerfHintQCOM, EGLDisplay, EGLContext, EGLint *)
  #endif /* QCOM_HARDWARE */
  /* NVIDIA extensions */
  
++
 +#ifndef STE_HARDWARE
  EGL_ENTRY(EGLuint64NV, eglGetSystemTimeFrequencyNV, void)
  EGL_ENTRY(EGLuint64NV, eglGetSystemTimeNV, void)
@@ -873,9 +838,7 @@ index 88e13cb..8d6c503 100644
  /* IMG extensions */
  
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-old mode 100644
-new mode 100755
-index 175e4b5..871e431
+index 7fd5ded..889b821 100644
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -26,6 +26,9 @@
@@ -888,23 +851,20 @@ index 175e4b5..871e431
  
  #include <gui/Surface.h>
  
-@@ -85,11 +88,11 @@ DisplayDevice::DisplayDevice(
+@@ -77,8 +80,12 @@ DisplayDevice::DisplayDevice(
        mPowerMode(HWC_POWER_MODE_OFF),
        mActiveConfig(0)
  {
--    mNativeWindow = new Surface(producer, false);
--#ifndef BOARD_EGL_NEEDS_LEGACY_FB
--    ANativeWindow* const window = mNativeWindow.get();
 +#ifdef STE_HARDWARE
-+     ANativeWindow* const window = new FramebufferNativeWindow();
- #else
--    ANativeWindow* const window = new FramebufferNativeWindow();
-+     mNativeWindow = new Surface(producer, false);
-+     ANativeWindow* const window = mNativeWindow.get();
- #endif
++    ANativeWindow* const window = new FramebufferNativeWindow();
++#else
+     mNativeWindow = new Surface(producer, false);
+     ANativeWindow* const window = mNativeWindow.get();
++#endif
  
      /*
-@@ -469,7 +472,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
+      * Create our display's surface
+@@ -457,7 +464,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
  
      mDisplaySurface->resizeBuffers(newWidth, newHeight);
  
@@ -917,24 +877,24 @@ index 175e4b5..871e431
      mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
      eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
      eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
-@@ -561,12 +569,19 @@ void DisplayDevice::dump(String8& result) const {
+@@ -549,12 +561,19 @@ void DisplayDevice::dump(String8& result) const {
      const Transform& tr(mGlobalTransform);
      result.appendFormat(
          "+ DisplayDevice: %s\n"
 -        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d), ANativeWindow=%p, orient=%2d (type=%08x), "
-+        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d)," 
++        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d),"
 +#ifndef STE_HARDWARE
 +        "ANativeWindow=%p,"
-+#endif 
++#endif
 +        "orient=%2d (type=%08x), "
          "flips=%u, isSecure=%d, secureVis=%d, powerMode=%d, activeConfig=%d, numLayers=%zu\n"
          "   v:[%d,%d,%d,%d], f:[%d,%d,%d,%d], s:[%d,%d,%d,%d],"
          "transform:[[%0.3f,%0.3f,%0.3f][%0.3f,%0.3f,%0.3f][%0.3f,%0.3f,%0.3f]]\n",
          mDisplayName.string(), mType, mHwcDisplayId,
 -        mLayerStack, mDisplayWidth, mDisplayHeight, mNativeWindow.get(),
-+        mLayerStack, mDisplayWidth, mDisplayHeight, 
++        mLayerStack, mDisplayWidth, mDisplayHeight,
 +#ifndef STE_HARDWARE
-+	mNativeWindow.get(),
++        mNativeWindow.get(),
 +#endif
          mOrientation, tr.getType(), getPageFlipCount(),
          mIsSecure, mSecureLayerVisible, mPowerMode, mActiveConfig,
@@ -954,7 +914,7 @@ index 9b4ca50..80f682a 100644
  
      EGLConfig       mConfig;
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 4ee3f04..9540a4a 100644
+index 4ee3f04..235c9f4 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
 @@ -3549,6 +3549,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
@@ -969,7 +929,7 @@ index 4ee3f04..9540a4a 100644
       */
      virtual status_t transact(uint32_t code,
              const Parcel& data, Parcel* reply, uint32_t /* flags */) {
-+        mLock.lock(); 
++        mLock.lock();
          this->code = code;
          this->data = &data;
          this->reply = reply;

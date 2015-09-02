@@ -1,0 +1,39 @@
+From 0a06cbd54b46696a7f5eb7bbc721e43d3f1a9ad8 Mon Sep 17 00:00:00 2001
+From: Epirex <estebanguzzo@gmail.com>
+Date: Wed, 22 Jul 2015 20:33:51 -0300
+Subject: [PATCH 4/7] STE OMX fix getSupportedProfileLevel
+
+---
+ media/libstagefright/OMXClient.cpp | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/media/libstagefright/OMXClient.cpp b/media/libstagefright/OMXClient.cpp
+index ca031aa..ffc9f5b 100644
+--- a/media/libstagefright/OMXClient.cpp
++++ b/media/libstagefright/OMXClient.cpp
+@@ -257,6 +257,22 @@ status_t MuxOMX::sendCommand(
+ status_t MuxOMX::getParameter(
+         node_id node, OMX_INDEXTYPE index,
+         void *params, size_t size) {
++#ifdef STE_HARDWARE
++	/* Meticulus:
++	 * If we call into our STE omx blobs with an unsupported profile index
++	 * The blob freaks out and dies causing errors later. If we stop the call
++	 * and just return an error here, VFM doesn't freak out and the caller
++	 * can try a working profile. i.e. YouTube v5.10.1.5 (9/19/2014) and up.
++	 */
++	if(index == OMX_IndexParamVideoProfileLevelQuerySupported){
++		OMX_VIDEO_PARAM_PROFILELEVELTYPE *pt = (OMX_VIDEO_PARAM_PROFILELEVELTYPE *)params;
++		ALOGI("Meticulus: eProfile=%lu eLevel=%lu nProfileIndex=%lu\n",pt->eProfile, pt->eLevel, pt->nProfileIndex);
++		if(pt->nProfileIndex >= 3 || pt->nProfileIndex == 0){
++			return -1;
++		}
++		
++	}
++#endif
+     return getOMX(node)->getParameter(node, index, params, size);
+ }
+ 
+-- 
+1.9.1
+

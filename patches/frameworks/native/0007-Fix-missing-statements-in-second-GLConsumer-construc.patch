@@ -1,0 +1,49 @@
+From d6ee485018e13bf6244618c142e63c89b964f214 Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Thu, 5 Mar 2015 21:09:45 +0100
+Subject: [PATCH 7/7] Fix missing statements in second GLConsumer constructor
+
+Change-Id: Iac0b70817ff4273c17541608721bcc87eddd0298
+---
+ libs/gui/GLConsumer.cpp | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
+index 963d8f1..f0fb07b 100644
+--- a/libs/gui/GLConsumer.cpp
++++ b/libs/gui/GLConsumer.cpp
+@@ -143,6 +143,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
+     memcpy(mCurrentTransformMatrix, mtxIdentity,
+             sizeof(mCurrentTransformMatrix));
+ 
++#ifdef STE_HARDWARE
++    hw_module_t const* module;
++    mBlitEngine = 0;
++    if (hw_get_module(COPYBIT_HARDWARE_MODULE_ID, &module) == 0) {
++        copybit_open(module, &mBlitEngine);
++    }
++    ALOGE_IF(!mBlitEngine, "\nCannot open copybit mBlitEngine=%p", mBlitEngine);
++
++    sp<ISurfaceComposer> composer(ComposerService::getComposerService());
++          mGraphicBufferAlloc = composer->createGraphicBufferAlloc();
++    if (mGraphicBufferAlloc == 0) {
++        ST_LOGE("createGraphicBufferAlloc() failed in SurfaceTexture()");
++    }
++#endif
++
+     mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
+ #ifdef QCOM_HARDWARE
+     mCurrentDirtyRect.clear();
+@@ -166,6 +181,9 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
+     mEglDisplay(EGL_NO_DISPLAY),
+     mEglContext(EGL_NO_CONTEXT),
+     mCurrentTexture(BufferQueue::INVALID_BUFFER_SLOT),
++#ifdef STE_HARDWARE
++    mNextBlitSlot(0),
++#endif
+     mAttached(false)
+ {
+     ST_LOGV("GLConsumer");
+-- 
+1.9.1
+

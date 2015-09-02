@@ -1,7 +1,7 @@
-From cfdc0304ecde9dd50dd36a579d0bacb4ec2ea349 Mon Sep 17 00:00:00 2001
+From 271da8cf3e47308ecba4d2aaeadc7ae310d1ae34 Mon Sep 17 00:00:00 2001
 From: Stefan Berger <s.berger81@gmail.com>
 Date: Sat, 28 Feb 2015 22:07:50 +0100
-Subject: [PATCH 5/6] base: Allow media_rw (gid 1023) full SD card access
+Subject: [PATCH 2/7] base: Allow media_rw (gid 1023) full SD card access
 
 Change-Id: If6c974f692a5c4b82d96e490bcfe353e0a3cbb61
 ---

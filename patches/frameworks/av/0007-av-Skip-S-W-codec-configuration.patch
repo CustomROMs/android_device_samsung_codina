@@ -1,18 +1,18 @@
-From 57a5f719af4c08487de284904389fa054e68ef41 Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 24 May 2015 22:20:18 +0300
-Subject: [PATCH 8/9] 0009-0010-av-Skip-S-W-codec-configuration.patch.patch
+From 224a453bd4729e6cd49ec6ebf222e303eb48732c Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Wed, 11 Mar 2015 23:41:37 +0100
+Subject: [PATCH 7/7] av: Skip S/W codec configuration
 
-Change-Id: Ibcd840d8bc1149a5bbbce4de47e2270e9ff484f2
+Change-Id: I864d3bb46162ebdb10e69cbe3e485b6bfcff08b6
 ---
  media/libstagefright/ACodec.cpp | 8 ++++++++
  1 file changed, 8 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 8909f56..05a5000 100644
+index 11e90cc..11d38cb 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
-@@ -1189,6 +1189,14 @@ status_t ACodec::configureCodec(
+@@ -1193,6 +1193,14 @@ status_t ACodec::configureCodec(
      sp<AMessage> outputFormat = mNotify->dup(); // will use this for kWhatOutputFormatChanged
  
      mIsEncoder = encoder;
