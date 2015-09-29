@@ -1,9 +1,9 @@
-From 0043f4217fb75b7b1eac599e2588aaa6377c8b9a Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Wed, 2 Sep 2015 15:00:37 +0300
-Subject: [PATCH 1/7] STE Multimedia fix
+From fab309378e8f120d6f2388a551342881527a11ca Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Wed, 5 Nov 2014 22:57:06 +0100
+Subject: [PATCH 05/15] STE Multimedia Fix
 
-Change-Id: I9d3044388f4add10c47a9458387f521588918904
+Change-Id: I41b1993023dcdae651a2171208524018e2381bd8
 ---
  camera/CameraParameters.cpp                        |  21 +++
  include/camera/CameraParameters.h                  |  21 +++
@@ -19,7 +19,7 @@ Change-Id: I9d3044388f4add10c47a9458387f521588918904
  11 files changed, 283 insertions(+), 2 deletions(-)
 
 diff --git a/camera/CameraParameters.cpp b/camera/CameraParameters.cpp
-index 44b3f11..8066def 100644
+index e5e4e90..4bb4beb 100644
 --- a/camera/CameraParameters.cpp
 +++ b/camera/CameraParameters.cpp
 @@ -147,11 +147,26 @@ const char CameraParameters::SCENE_MODE_FIREWORKS[] = "fireworks";
@@ -49,9 +49,9 @@ index 44b3f11..8066def 100644
  const char CameraParameters::PIXEL_FORMAT_YUV422I[] = "yuv422i-yuyv";
  const char CameraParameters::PIXEL_FORMAT_YUV420P[]  = "yuv420p";
  const char CameraParameters::PIXEL_FORMAT_RGB565[] = "rgb565";
-@@ -177,6 +192,12 @@ const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
- CAMERA_PARAMETERS_EXTRA_C
- #endif
+@@ -173,6 +188,12 @@ const char CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE[] = "continuous-pictu
+ const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
+ const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
  
 +#ifdef STE_HARDWARE
 +// keys for record stride and sliceheight
@@ -63,10 +63,10 @@ index 44b3f11..8066def 100644
                  : mMap()
  {
 diff --git a/include/camera/CameraParameters.h b/include/camera/CameraParameters.h
-index a06ab1b..24eec63 100644
+index c6074fc..635ae52 100644
 --- a/include/camera/CameraParameters.h
 +++ b/include/camera/CameraParameters.h
-@@ -601,6 +601,13 @@ public:
+@@ -600,6 +600,13 @@ public:
      static const char SCENE_MODE_SPORTS[];
      static const char SCENE_MODE_PARTY[];
      static const char SCENE_MODE_CANDLELIGHT[];
@@ -80,7 +80,7 @@ index a06ab1b..24eec63 100644
      // Applications are looking for a barcode. Camera driver will be optimized
      // for barcode reading.
      static const char SCENE_MODE_BARCODE[];
-@@ -613,6 +620,14 @@ public:
+@@ -612,6 +619,14 @@ public:
      // and KEY_VIDEO_FRAME_FORMAT
      static const char PIXEL_FORMAT_YUV422SP[];
      static const char PIXEL_FORMAT_YUV420SP[]; // NV21
@@ -95,7 +95,7 @@ index a06ab1b..24eec63 100644
      static const char PIXEL_FORMAT_YUV422I[]; // YUY2
      static const char PIXEL_FORMAT_YUV420P[]; // YV12
      static const char PIXEL_FORMAT_RGB565[];
-@@ -692,6 +707,12 @@ CAMERA_PARAMETERS_EXTRA_H
+@@ -687,6 +702,12 @@ public:
       */
      static int previewFormatToEnum(const char* format);
  

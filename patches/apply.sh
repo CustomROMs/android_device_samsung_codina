@@ -83,6 +83,10 @@ if [ "$1" != "clean" ]; then
 
 	for i in  $PATCHES
 	do
+	if test -f RESET; then
+               /bin/bash RESET
+        fi
+
 	apply_all $i
 	done
 fi

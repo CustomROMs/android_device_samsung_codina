@@ -1,7 +1,7 @@
-From b5e3a3916c3113c47b2e4d75a60202b41090ded1 Mon Sep 17 00:00:00 2001
+From 32bfaa7e9ff16834f1b3559ada6d751aabaf53ce Mon Sep 17 00:00:00 2001
 From: Agontuk <rifat662@gmail.com>
 Date: Sat, 3 Jan 2015 14:03:52 +0100
-Subject: [PATCH 5/7] Fix in-call audio
+Subject: [PATCH 10/15] Fix in-call audio
 
 Change-Id: I08f2df6276dc619ea58d72e968276aee9a0ea298
 ---
@@ -9,10 +9,10 @@ Change-Id: I08f2df6276dc619ea58d72e968276aee9a0ea298
  1 file changed, 4 insertions(+)
 
 diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
-index ccc05a1..0b1aced 100644
+index aa014d3..3402e84 100644
 --- a/services/audioflinger/AudioFlinger.cpp
 +++ b/services/audioflinger/AudioFlinger.cpp
-@@ -1799,7 +1799,11 @@ status_t AudioFlinger::openOutput(audio_module_handle_t module,
+@@ -2158,7 +2158,11 @@ status_t AudioFlinger::openOutput(audio_module_handle_t module,
          thread->audioConfigChanged(AudioSystem::OUTPUT_OPENED);
  
          // the first primary output opened designates the primary hw device

@@ -1,0 +1,30 @@
+From 3f2aa833032262031b6dac7fe952436bdd079a64 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <s.berger81@gmail.com>
+Date: Wed, 11 Mar 2015 23:47:09 +0100
+Subject: [PATCH 14/15] av: Support for HOTWORD - OK Google
+
+Change-Id: I3a5cc79dcb642d3802847b405790bf326495964e
+---
+ services/audiopolicy/AudioPolicyInterfaceImplLegacy.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/audiopolicy/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/AudioPolicyInterfaceImplLegacy.cpp
+index 33a1655..c7f5a8b 100644
+--- a/services/audiopolicy/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/AudioPolicyInterfaceImplLegacy.cpp
+@@ -259,6 +259,12 @@ status_t AudioPolicyService::getInputForAttr(const audio_attributes_t *attr,
+         return BAD_VALUE;
+     }
+ 
++#ifdef HAVE_PRE_KITKAT_AUDIO_BLOB
++    if (inputSource == AUDIO_SOURCE_HOTWORD) {
++        inputSource = AUDIO_SOURCE_VOICE_RECOGNITION;
++    }
++#endif
++
+     sp<AudioPolicyEffects>audioPolicyEffects;
+     {
+         Mutex::Autolock _l(mLock);
+-- 
+1.9.1
+

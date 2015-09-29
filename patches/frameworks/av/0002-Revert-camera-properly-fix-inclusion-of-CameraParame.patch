@@ -1,0 +1,48 @@
+From c3b583faf3784284a287970271397926df6d091a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 28 Sep 2015 11:21:10 +0300
+Subject: [PATCH 02/15] Revert "camera: properly fix inclusion of
+ CameraParametersExtra.h"
+
+This reverts commit e5cfa2f44691a4e727550d39375ef04c30499af1.
+---
+ camera/CameraParameters.cpp            | 1 +
+ include/camera/CameraParametersExtra.h | 6 ------
+ 2 files changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/camera/CameraParameters.cpp b/camera/CameraParameters.cpp
+index 44b3f11..49885c1 100644
+--- a/camera/CameraParameters.cpp
++++ b/camera/CameraParameters.cpp
+@@ -21,6 +21,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <camera/CameraParameters.h>
++#include <camera/CameraParametersExtra.h>
+ #include <system/graphics.h>
+ 
+ namespace android {
+diff --git a/include/camera/CameraParametersExtra.h b/include/camera/CameraParametersExtra.h
+index c0d1681..80a67cc 100644
+--- a/include/camera/CameraParametersExtra.h
++++ b/include/camera/CameraParametersExtra.h
+@@ -16,10 +16,6 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-
+-#ifndef ANDROID_HARDWARE_CAMERA_PARAMETERS_EXTRA_H
+-#define ANDROID_HARDWARE_CAMERA_PARAMETERS_EXTRA_H
+-
+ /*
+ #define CAMERA_PARAMETERS_EXTRA_C \
+ const char CameraParameters::KEY_SUPPORTED_BURST_NUM[] = "supported-burst-num"; \
+@@ -37,5 +33,3 @@ const char CameraParameters::HDR_MODE_HDR[] = "hdr-mode-hdr";
+     static const char HDR_MODE_OFF[]; \
+     static const char HDR_MODE_HDR[];
+ */
+-
+-#endif
+-- 
+1.9.1
+

@@ -1,0 +1,38 @@
+From d89477f4efa8f9f44219f7e147b3fcadfd4ec3a1 Mon Sep 17 00:00:00 2001
+From: Arne Coucheron <arco68@gmail.com>
+Date: Fri, 26 Dec 2014 11:05:00 +0100
+Subject: [PATCH 07/15] camera: Fix inclusion of CameraParametersExtra.h
+
+Change-Id: If3a6484c7423063c984650f5170794d1bb0e20e9
+---
+ camera/CameraParameters.cpp       | 1 +
+ include/camera/CameraParameters.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/camera/CameraParameters.cpp b/camera/CameraParameters.cpp
+index 4bb4beb..c577466 100644
+--- a/camera/CameraParameters.cpp
++++ b/camera/CameraParameters.cpp
+@@ -21,6 +21,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <camera/CameraParameters.h>
++#include "camera/CameraParametersExtra.h"
+ #include <system/graphics.h>
+ 
+ namespace android {
+diff --git a/include/camera/CameraParameters.h b/include/camera/CameraParameters.h
+index 635ae52..07e0434 100644
+--- a/include/camera/CameraParameters.h
++++ b/include/camera/CameraParameters.h
+@@ -19,6 +19,7 @@
+ 
+ #include <utils/KeyedVector.h>
+ #include <utils/String8.h>
++#include "camera/CameraParametersExtra.h"
+ 
+ namespace android {
+ 
+-- 
+1.9.1
+

@@ -1,7 +1,7 @@
-From d6ee485018e13bf6244618c142e63c89b964f214 Mon Sep 17 00:00:00 2001
+From ab4563be06c530dba4cccc0a9f2e904ce247a462 Mon Sep 17 00:00:00 2001
 From: Meticulus <theonejohnnyd@gmail.com>
 Date: Thu, 5 Mar 2015 21:09:45 +0100
-Subject: [PATCH 7/7] Fix missing statements in second GLConsumer constructor
+Subject: [PATCH 9/9] Fix missing statements in second GLConsumer constructor
 
 Change-Id: Iac0b70817ff4273c17541608721bcc87eddd0298
 ---
@@ -9,7 +9,7 @@ Change-Id: Iac0b70817ff4273c17541608721bcc87eddd0298
  1 file changed, 18 insertions(+)
 
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index 963d8f1..f0fb07b 100644
+index f6ce634..04ad6dd 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
 @@ -143,6 +143,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
@@ -32,9 +32,9 @@ index 963d8f1..f0fb07b 100644
 +#endif
 +
      mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
- #ifdef QCOM_HARDWARE
-     mCurrentDirtyRect.clear();
-@@ -166,6 +181,9 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
+ }
+ 
+@@ -163,6 +178,9 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
      mEglDisplay(EGL_NO_DISPLAY),
      mEglContext(EGL_NO_CONTEXT),
      mCurrentTexture(BufferQueue::INVALID_BUFFER_SLOT),

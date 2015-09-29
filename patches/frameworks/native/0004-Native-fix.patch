@@ -1,10 +1,9 @@
-From 58b0448e09bb5d7d02171bd3835c9bea9bd77442 Mon Sep 17 00:00:00 2001
-From: Meticulus <theonejohnnyd@gmail.com>
-Date: Thu, 6 Nov 2014 00:58:05 +0100
-Subject: [PATCH 2/7] STE OMX Fix Fix Camera, Camcorder and Torch on STE
- Devices
+From 8b7ec759bf165dcf3bb06115eb34548c1f446250 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 29 Sep 2015 16:14:58 +0300
+Subject: [PATCH 4/9] Native fix
 
-Change-Id: I46d1a04a8fcc63546b319d31d9299517406e783a
+Change-Id: I9583f69f02204679e875a271e38ca0ec06c435ba
 ---
  include/binder/MemoryBase.h                |   3 +
  include/binder/Parcel.h                    |  34 ++++++-
@@ -19,7 +18,7 @@ Change-Id: I46d1a04a8fcc63546b319d31d9299517406e783a
  include/ui/GraphicBuffer.h                 |  10 +-
  include/ui/PixelFormat.h                   |  10 ++
  include/ui/Region.h                        |  24 +++++
- libs/binder/MemoryBase.cpp                 |  28 ++++++
+ libs/binder/MemoryBase.cpp                 |  21 +++++
  libs/binder/Parcel.cpp                     |  14 +++
  libs/gui/Android.mk                        |   1 +
  libs/gui/ConsumerBase.cpp                  |   2 +-
@@ -32,7 +31,7 @@ Change-Id: I46d1a04a8fcc63546b319d31d9299517406e783a
  services/surfaceflinger/DisplayDevice.cpp  |  23 ++++-
  services/surfaceflinger/DisplayDevice.h    |   2 +
  services/surfaceflinger/SurfaceFlinger.cpp |   3 +
- 26 files changed, 364 insertions(+), 15 deletions(-)
+ 26 files changed, 357 insertions(+), 15 deletions(-)
 
 diff --git a/include/binder/MemoryBase.h b/include/binder/MemoryBase.h
 index 463e26d..5bf104b 100644
@@ -163,7 +162,7 @@ index 6a69761..68c2083 100644
  template<typename T>
  status_t Parcel::read(LightFlattenable<T>& val) const {
 diff --git a/include/gui/BufferItem.h b/include/gui/BufferItem.h
-index 75f0100..19d2eb1 100644
+index 01b6ff4..0372112 100644
 --- a/include/gui/BufferItem.h
 +++ b/include/gui/BufferItem.h
 @@ -32,8 +32,8 @@ namespace android {
@@ -209,7 +208,7 @@ index f7ab5ac..e89d363 100644
  
      // addReleaseFence* adds the sync points associated with a fence to the set
 diff --git a/include/gui/GLConsumer.h b/include/gui/GLConsumer.h
-index 9931ec5..903ed4b 100644
+index f91fe46..474d286 100644
 --- a/include/gui/GLConsumer.h
 +++ b/include/gui/GLConsumer.h
 @@ -30,6 +30,11 @@
@@ -236,7 +235,7 @@ index 9931ec5..903ed4b 100644
      // updateTexImage acquires the most recently queued buffer, and sets the
      // image contents of the target texture to it.
      //
-@@ -206,6 +216,8 @@ public:
+@@ -201,6 +211,8 @@ public:
      status_t setConsumerUsageBits(uint32_t usage);
      status_t setTransformHint(uint32_t hint);
  
@@ -245,7 +244,7 @@ index 9931ec5..903ed4b 100644
      // detachFromContext detaches the GLConsumer from the calling thread's
      // current OpenGL ES context.  This context must be the same as the context
      // that was current for previous calls to updateTexImage.
-@@ -254,6 +266,11 @@ protected:
+@@ -249,6 +261,11 @@ protected:
              const sp<GraphicBuffer> graphicBuffer,
              EGLDisplay display, EGLSyncKHR eglFence);
  
@@ -257,7 +256,7 @@ index 9931ec5..903ed4b 100644
      status_t releaseBufferLocked(int slot,
              const sp<GraphicBuffer> graphicBuffer, EGLSyncKHR eglFence) {
          return releaseBufferLocked(slot, graphicBuffer, mEglDisplay, eglFence);
-@@ -314,6 +331,11 @@ private:
+@@ -309,6 +326,11 @@ private:
          EGLImageKHR createImage(EGLDisplay dpy,
                  const sp<GraphicBuffer>& graphicBuffer, const Rect& crop);
  
@@ -269,7 +268,7 @@ index 9931ec5..903ed4b 100644
          // Disallow copying
          EglImage(const EglImage& rhs);
          void operator = (const EglImage& rhs);
-@@ -475,6 +497,22 @@ private:
+@@ -464,6 +486,22 @@ private:
      // reset mCurrentTexture to INVALID_BUFFER_SLOT.
      int mCurrentTexture;
  
@@ -293,7 +292,7 @@ index 9931ec5..903ed4b 100644
      // an OpenGL ES context.  For legacy reasons, this is initialized to true,
      // indicating that the ConsumerBase is considered to be attached to
 diff --git a/include/gui/IGraphicBufferConsumer.h b/include/gui/IGraphicBufferConsumer.h
-index 3ba9e4c..b11b73c 100644
+index 15f51fe..7ba056b 100644
 --- a/include/gui/IGraphicBufferConsumer.h
 +++ b/include/gui/IGraphicBufferConsumer.h
 @@ -43,8 +43,12 @@ class IGraphicBufferConsumer : public IInterface {
@@ -310,7 +309,7 @@ index 3ba9e4c..b11b73c 100644
          size_t getFlattenedSize() const;
          size_t getFdCount() const;
 diff --git a/include/gui/IGraphicBufferProducer.h b/include/gui/IGraphicBufferProducer.h
-index b8ac9b2..543b295 100644
+index 4e9e810..5848e77 100644
 --- a/include/gui/IGraphicBufferProducer.h
 +++ b/include/gui/IGraphicBufferProducer.h
 @@ -262,8 +262,12 @@ public:
@@ -357,7 +356,7 @@ index 20466b6..4fdb425 100644
  public:
      static const sp<Fence> NO_FENCE;
 diff --git a/include/ui/GraphicBuffer.h b/include/ui/GraphicBuffer.h
-index 7630faa..d1361c0 100644
+index 3a5b10d..6f303e5 100644
 --- a/include/ui/GraphicBuffer.h
 +++ b/include/ui/GraphicBuffer.h
 @@ -38,10 +38,18 @@ class GraphicBufferMapper;
@@ -444,7 +443,7 @@ index 0d1c68c..47a46b0 100644
  
  #endif // ANDROID_UI_REGION_H
 diff --git a/libs/binder/MemoryBase.cpp b/libs/binder/MemoryBase.cpp
-index 033066b..eb423ac 100644
+index 6604757..8f49142 100644
 --- a/libs/binder/MemoryBase.cpp
 +++ b/libs/binder/MemoryBase.cpp
 @@ -25,6 +25,11 @@ namespace android {
@@ -459,7 +458,7 @@ index 033066b..eb423ac 100644
  MemoryBase::MemoryBase(const sp<IMemoryHeap>& heap,
          ssize_t offset, size_t size)
      : mSize(size), mOffset(offset), mHeap(heap)
-@@ -42,5 +47,28 @@ MemoryBase::~MemoryBase()
+@@ -42,6 +47,22 @@ MemoryBase::~MemoryBase()
  {
  }
  
@@ -478,16 +477,10 @@ index 033066b..eb423ac 100644
 +}
 +#endif
 +
++
  // ---------------------------------------------------------------------------
  }; // namespace android
-+
-+// Backwards compatibility for libdatabase_sqlcipher (http://b/8253769).
-+extern "C" void _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEEij(void*, void*, ssize_t, size_t);
-+extern "C" void _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEElj(void* obj, void* h, long o, unsigned int size) {
-+    _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEEij(obj, h, o, size);
-+    ALOGW("Using temporary compatibility workaround for usage of MemoryBase "
-+          "private API. Please fix your application!");
-+}
+ 
 diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
 index e7589b1..27e5614 100644
 --- a/libs/binder/Parcel.cpp
@@ -521,7 +514,7 @@ index e7589b1..27e5614 100644
  {
      // size
 diff --git a/libs/gui/Android.mk b/libs/gui/Android.mk
-index 86740ac..3c89e69 100644
+index e5a5eb3..bc5df54 100644
 --- a/libs/gui/Android.mk
 +++ b/libs/gui/Android.mk
 @@ -44,6 +44,7 @@ LOCAL_SHARED_LIBRARIES := \
@@ -531,7 +524,7 @@ index 86740ac..3c89e69 100644
 +	libhardware \
  	liblog
  
- ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+ 
 diff --git a/libs/gui/ConsumerBase.cpp b/libs/gui/ConsumerBase.cpp
 index 210e98e..e171398 100644
 --- a/libs/gui/ConsumerBase.cpp
@@ -546,7 +539,7 @@ index 210e98e..e171398 100644
          freeBufferLocked(i);
      }
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index ca97109..d15064c 100644
+index 318c087..6711362 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
 @@ -133,6 +133,9 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
@@ -559,7 +552,7 @@ index ca97109..d15064c 100644
      mAttached(true)
  {
      ST_LOGV("GLConsumer");
-@@ -170,6 +173,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
+@@ -167,6 +170,21 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
      memcpy(mCurrentTransformMatrix, mtxIdentity,
              sizeof(mCurrentTransformMatrix));
  
@@ -581,7 +574,7 @@ index ca97109..d15064c 100644
      mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
  }
  
-@@ -178,6 +196,16 @@ status_t GLConsumer::setDefaultMaxBufferCount(int bufferCount) {
+@@ -175,6 +193,16 @@ status_t GLConsumer::setDefaultMaxBufferCount(int bufferCount) {
      return mConsumer->setDefaultMaxBufferCount(bufferCount);
  }
  
@@ -598,7 +591,7 @@ index ca97109..d15064c 100644
  
  status_t GLConsumer::setDefaultBufferSize(uint32_t w, uint32_t h)
  {
-@@ -365,6 +393,24 @@ status_t GLConsumer::releaseBufferLocked(int buf,
+@@ -362,6 +390,24 @@ status_t GLConsumer::releaseBufferLocked(int buf,
      return err;
  }
  
@@ -623,7 +616,7 @@ index ca97109..d15064c 100644
  status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
  {
      status_t err = NO_ERROR;
-@@ -392,6 +438,54 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -389,6 +435,54 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
      // ConsumerBase.
      // We may have to do this even when item.mGraphicBuffer == NULL (which
      // means the buffer was previously acquired).
@@ -678,7 +671,7 @@ index ca97109..d15064c 100644
      err = mEglSlots[buf].mEglImage->createIfNeeded(mEglDisplay, item.mCrop);
      if (err != NO_ERROR) {
          ST_LOGW("updateAndRelease: unable to createImage on display=%p slot=%d",
-@@ -407,9 +501,8 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -404,9 +498,8 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
          // Release the buffer we just acquired.  It's not safe to
          // release the old buffer, so instead we just drop the new frame.
          // As we are still under lock since acquireBuffer, it is safe to
@@ -690,7 +683,7 @@ index ca97109..d15064c 100644
          return err;
      }
  
-@@ -1045,6 +1138,49 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
+@@ -1032,6 +1125,49 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
      ConsumerBase::dumpLocked(result, prefix);
  }
  
@@ -791,7 +784,7 @@ index 11bd7a2..cadc8a0 100644
    LOCAL_CFLAGS += -DWORKAROUND_BUG_10194508=1
  endif
 diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
-index e3d2066..5211157 100644
+index 937665b..9303165 100644
 --- a/opengl/libs/EGL/eglApi.cpp
 +++ b/opengl/libs/EGL/eglApi.cpp
 @@ -139,11 +139,13 @@ static const extention_map_t sExtensionMap[] = {
@@ -808,7 +801,7 @@ index e3d2066..5211157 100644
  
      // EGL_KHR_wait_sync
      { "eglWaitSyncKHR",
-@@ -1661,6 +1663,7 @@ EGLBoolean eglGpuPerfHintQCOM(EGLDisplay dpy, EGLContext ctx, EGLint *attrib_lis
+@@ -1610,6 +1612,7 @@ EGLBoolean eglGpuPerfHintQCOM(EGLDisplay dpy, EGLContext ctx, EGLint *attrib_lis
  // ----------------------------------------------------------------------------
  // NVIDIA extensions
  // ----------------------------------------------------------------------------
@@ -816,17 +809,17 @@ index e3d2066..5211157 100644
  EGLuint64NV eglGetSystemTimeFrequencyNV()
  {
      clearError();
-@@ -1696,3 +1699,4 @@ EGLuint64NV eglGetSystemTimeNV()
+@@ -1645,3 +1648,4 @@ EGLuint64NV eglGetSystemTimeNV()
  
      return setErrorQuiet(EGL_BAD_DISPLAY, 0);
  }
 +#endif
 diff --git a/opengl/libs/EGL/egl_entries.in b/opengl/libs/EGL/egl_entries.in
-index 88e13cb..3355a80 100644
+index aa92ea0..938c3c2 100644
 --- a/opengl/libs/EGL/egl_entries.in
 +++ b/opengl/libs/EGL/egl_entries.in
-@@ -89,8 +89,11 @@ EGL_ENTRY(EGLBoolean, eglGpuPerfHintQCOM, EGLDisplay, EGLContext, EGLint *)
- #endif /* QCOM_HARDWARE */
+@@ -87,8 +87,11 @@ EGL_ENTRY(EGLBoolean, eglGpuPerfHintQCOM, EGLDisplay, EGLContext, EGLint *)
+ 
  /* NVIDIA extensions */
  
 +
@@ -838,7 +831,7 @@ index 88e13cb..3355a80 100644
  /* IMG extensions */
  
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-index 7fd5ded..889b821 100644
+index ac49e84..23936cb 100644
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -26,6 +26,9 @@
@@ -864,7 +857,7 @@ index 7fd5ded..889b821 100644
  
      /*
       * Create our display's surface
-@@ -457,7 +464,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
+@@ -435,7 +442,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
  
      mDisplaySurface->resizeBuffers(newWidth, newHeight);
  
@@ -877,7 +870,7 @@ index 7fd5ded..889b821 100644
      mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
      eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
      eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
-@@ -549,12 +561,19 @@ void DisplayDevice::dump(String8& result) const {
+@@ -527,12 +539,19 @@ void DisplayDevice::dump(String8& result) const {
      const Transform& tr(mGlobalTransform);
      result.appendFormat(
          "+ DisplayDevice: %s\n"
@@ -900,10 +893,10 @@ index 7fd5ded..889b821 100644
          mIsSecure, mSecureLayerVisible, mPowerMode, mActiveConfig,
          mVisibleLayersSortedByZ.size(),
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index 9b4ca50..80f682a 100644
+index fec5991..169b65b 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
-@@ -195,7 +195,9 @@ private:
+@@ -181,7 +181,9 @@ private:
      wp<IBinder> mDisplayToken;
  
      // ANativeWindow this display is rendering into
@@ -914,10 +907,10 @@ index 9b4ca50..80f682a 100644
  
      EGLConfig       mConfig;
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 4ee3f04..235c9f4 100644
+index 9981029..9f7ae0b 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -3549,6 +3549,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -2936,6 +2936,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
      uint32_t code;
      Parcel const* data;
      Parcel* reply;
@@ -925,7 +918,7 @@ index 4ee3f04..235c9f4 100644
  
      enum {
          MSG_API_CALL,
-@@ -3562,6 +3563,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -2949,6 +2950,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
       */
      virtual status_t transact(uint32_t code,
              const Parcel& data, Parcel* reply, uint32_t /* flags */) {
@@ -933,7 +926,7 @@ index 4ee3f04..235c9f4 100644
          this->code = code;
          this->data = &data;
          this->reply = reply;
-@@ -3579,6 +3581,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -2966,6 +2968,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
              looper->sendMessage(this, Message(MSG_API_CALL));
              barrier.wait();
          }

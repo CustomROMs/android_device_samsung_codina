@@ -1,7 +1,7 @@
-From d3a4b49c2acabc6f7586c0a8d20d3eaea35ab4f3 Mon Sep 17 00:00:00 2001
+From 8fcdab8d14c50f98b456244b0544de856a64865d Mon Sep 17 00:00:00 2001
 From: C457 <android.c357@gmail.com>
 Date: Thu, 27 Mar 2014 09:40:20 -0500
-Subject: [PATCH 3/7] native:Fix buffering on Samsung STE devices
+Subject: [PATCH 5/9] native:Fix buffering on Samsung STE devices
 
 @marcin1147
 

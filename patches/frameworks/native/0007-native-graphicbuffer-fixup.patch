@@ -1,7 +1,7 @@
-From 71e87f917ce4955c7a8a252aaa4cbc515a480f5c Mon Sep 17 00:00:00 2001
+From 6413a995b39b4a96490e97558d82c508c960b046 Mon Sep 17 00:00:00 2001
 From: Stefan Berger <s.berger81@gmail.com>
 Date: Thu, 15 Jan 2015 21:43:04 +0100
-Subject: [PATCH 5/7] native: graphicbuffer fixup
+Subject: [PATCH 7/9] native: graphicbuffer fixup
 
 Change-Id: I4a0a0cc435672f03e1b453fd26547aeb94cf04fd
 ---
@@ -10,7 +10,7 @@ Change-Id: I4a0a0cc435672f03e1b453fd26547aeb94cf04fd
  2 files changed, 21 insertions(+), 1 deletion(-)
 
 diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
-index 7809314..0567842 100644
+index 16b9747..05414f5 100644
 --- a/libs/gui/BufferQueueProducer.cpp
 +++ b/libs/gui/BufferQueueProducer.cpp
 @@ -277,7 +277,9 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
@@ -25,10 +25,10 @@ index 7809314..0567842 100644
          usage |= mCore->mConsumerUsageBits;
  
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index a758b52..1596f74 100644
+index e9af9da..3fdc027 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
-@@ -447,6 +447,13 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -444,6 +444,13 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
          }
          /* allocate convert buffer if needed */
          if (mBlitSlots[mNextBlitSlot] == NULL) {
@@ -42,7 +42,7 @@ index a758b52..1596f74 100644
              status_t res;
              sp<GraphicBuffer> srcBuf = mSlots[buf].mGraphicBuffer;
              sp<GraphicBuffer> dstBuf(mGraphicBufferAlloc->createGraphicBuffer(srcBuf->getWidth(),
-@@ -470,6 +477,7 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -467,6 +474,7 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
              return UNKNOWN_ERROR;
          }
          textureBuffer = mBlitSlots[mNextBlitSlot];
@@ -50,7 +50,7 @@ index a758b52..1596f74 100644
          mNextBlitSlot = (mNextBlitSlot + 1) % BufferQueue::NUM_BLIT_BUFFER_SLOTS;
      }
      else {
-@@ -1151,6 +1159,16 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
+@@ -1138,6 +1146,16 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
  
  #ifdef STE_HARDWARE
  status_t GLConsumer::convert(sp<GraphicBuffer> &srcBuf, sp<GraphicBuffer> &dstBuf) {

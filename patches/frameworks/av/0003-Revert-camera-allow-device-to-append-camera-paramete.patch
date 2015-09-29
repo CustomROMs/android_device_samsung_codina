@@ -1,0 +1,104 @@
+From ad99f90a3194c8873e87348b99771c60d828a455 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 28 Sep 2015 11:21:22 +0300
+Subject: [PATCH 03/15] Revert "camera: allow device to append camera
+ parameters"
+
+This reverts commit b393969c2e67fd247113e9549d7cc39c1e918855.
+---
+ camera/CameraParameters.cpp            |  5 -----
+ include/camera/CameraParameters.h      |  5 -----
+ include/camera/CameraParametersExtra.h | 35 ----------------------------------
+ 3 files changed, 45 deletions(-)
+ delete mode 100644 include/camera/CameraParametersExtra.h
+
+diff --git a/camera/CameraParameters.cpp b/camera/CameraParameters.cpp
+index 49885c1..e5e4e90 100644
+--- a/camera/CameraParameters.cpp
++++ b/camera/CameraParameters.cpp
+@@ -21,7 +21,6 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <camera/CameraParameters.h>
+-#include <camera/CameraParametersExtra.h>
+ #include <system/graphics.h>
+ 
+ namespace android {
+@@ -174,10 +173,6 @@ const char CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE[] = "continuous-pictu
+ const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
+ const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
+ 
+-#ifdef CAMERA_PARAMETERS_EXTRA_C
+-CAMERA_PARAMETERS_EXTRA_C
+-#endif
+-
+ CameraParameters::CameraParameters()
+                 : mMap()
+ {
+diff --git a/include/camera/CameraParameters.h b/include/camera/CameraParameters.h
+index a06ab1b..c6074fc 100644
+--- a/include/camera/CameraParameters.h
++++ b/include/camera/CameraParameters.h
+@@ -19,7 +19,6 @@
+ 
+ #include <utils/KeyedVector.h>
+ #include <utils/String8.h>
+-#include <camera/CameraParametersExtra.h>
+ 
+ namespace android {
+ 
+@@ -681,10 +680,6 @@ public:
+     // High-dynamic range mode
+     static const char LIGHTFX_HDR[];
+ 
+-#ifdef CAMERA_PARAMETERS_EXTRA_H
+-CAMERA_PARAMETERS_EXTRA_H
+-#endif
+-
+     /**
+      * Returns the the supported preview formats as an enum given in graphics.h
+      * corrsponding to the format given in the input string or -1 if no such
+diff --git a/include/camera/CameraParametersExtra.h b/include/camera/CameraParametersExtra.h
+deleted file mode 100644
+index 80a67cc..0000000
+--- a/include/camera/CameraParametersExtra.h
++++ /dev/null
+@@ -1,35 +0,0 @@
+-// Overload this file in your device specific config if you need
+-// to add extra camera parameters.
+-// A typical file would look like this:
+-/*
+- * Copyright (C) 2014 The CyanogenMod Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-/*
+-#define CAMERA_PARAMETERS_EXTRA_C \
+-const char CameraParameters::KEY_SUPPORTED_BURST_NUM[] = "supported-burst-num"; \
+-const char CameraParameters::KEY_BURST_NUM[] = "burst-num"; \
+-const char CameraParameters::KEY_SUPPORTED_HDR_MODES[] = "supported-hdr-modes"; \
+-const char CameraParameters::KEY_HDR_MODE[] = "hdr-mode"; \
+-const char CameraParameters::HDR_MODE_OFF[] = "hdr-mode-off"; \
+-const char CameraParameters::HDR_MODE_HDR[] = "hdr-mode-hdr";
+-
+-#define CAMERA_PARAMETERS_EXTRA_H \
+-    static const char KEY_SUPPORTED_BURST_NUM[]; \
+-    static const char KEY_BURST_NUM[]; \
+-    static const char KEY_SUPPORTED_HDR_MODES[]; \
+-    static const char KEY_HDR_MODE[]; \
+-    static const char HDR_MODE_OFF[]; \
+-    static const char HDR_MODE_HDR[];
+-*/
+-- 
+1.9.1
+

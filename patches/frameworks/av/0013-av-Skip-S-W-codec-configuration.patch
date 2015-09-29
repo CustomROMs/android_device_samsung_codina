@@ -1,7 +1,7 @@
-From 224a453bd4729e6cd49ec6ebf222e303eb48732c Mon Sep 17 00:00:00 2001
+From 14f98fed4318170575c5ff0e7d8cad8fbb8138ef Mon Sep 17 00:00:00 2001
 From: Meticulus <theonejohnnyd@gmail.com>
 Date: Wed, 11 Mar 2015 23:41:37 +0100
-Subject: [PATCH 7/7] av: Skip S/W codec configuration
+Subject: [PATCH 13/15] av: Skip S/W codec configuration
 
 Change-Id: I864d3bb46162ebdb10e69cbe3e485b6bfcff08b6
 ---

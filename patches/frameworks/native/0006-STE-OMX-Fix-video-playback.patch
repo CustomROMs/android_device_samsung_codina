@@ -1,7 +1,7 @@
-From 03996fea59458ec430f34081a58d773e2962c8e1 Mon Sep 17 00:00:00 2001
+From 2d6676f77fab7bb36fff6977e51806cde75abf4d Mon Sep 17 00:00:00 2001
 From: Agontuk <rifat662@gmail.com>
 Date: Sun, 4 Jan 2015 11:37:45 +0100
-Subject: [PATCH 4/7] STE OMX Fix video playback
+Subject: [PATCH 6/9] STE OMX Fix video playback
 
 Change-Id: I9e02f38fe6d8f76eeb0c0ff76c11ead16954edfb
 ---
@@ -10,10 +10,10 @@ Change-Id: I9e02f38fe6d8f76eeb0c0ff76c11ead16954edfb
  2 files changed, 30 insertions(+), 14 deletions(-)
 
 diff --git a/include/gui/GLConsumer.h b/include/gui/GLConsumer.h
-index 903ed4b..d9c49d6 100644
+index 474d286..a48c549 100644
 --- a/include/gui/GLConsumer.h
 +++ b/include/gui/GLConsumer.h
-@@ -321,6 +321,11 @@ private:
+@@ -316,6 +316,11 @@ private:
          const native_handle* graphicBufferHandle() {
              return mGraphicBuffer == NULL ? NULL : mGraphicBuffer->handle;
          }
@@ -26,10 +26,10 @@ index 903ed4b..d9c49d6 100644
      private:
          // Only allow instantiation using ref counting.
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index d15064c..a758b52 100644
+index 6711362..e9af9da 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
-@@ -433,21 +433,10 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -430,21 +430,10 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
          return err;
      }
  
@@ -51,7 +51,7 @@ index d15064c..a758b52 100644
          /* test if source and convert buffer size are ok */
          if (mSlots[buf].mGraphicBuffer != NULL && mBlitSlots[mNextBlitSlot] != NULL) {
              sp<GraphicBuffer> srcBuf = mSlots[buf].mGraphicBuffer;
-@@ -481,12 +470,29 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -478,12 +467,29 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
              return UNKNOWN_ERROR;
          }
          textureBuffer = mBlitSlots[mNextBlitSlot];
@@ -82,7 +82,7 @@ index d15064c..a758b52 100644
      if (err != NO_ERROR) {
          ST_LOGW("updateAndRelease: unable to createImage on display=%p slot=%d",
                  mEglDisplay, buf);
-@@ -501,8 +507,13 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
+@@ -498,8 +504,13 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferQueue::BufferItem& item)
          // Release the buffer we just acquired.  It's not safe to
          // release the old buffer, so instead we just drop the new frame.
          // As we are still under lock since acquireBuffer, it is safe to
