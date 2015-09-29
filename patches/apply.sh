@@ -1,7 +1,7 @@
 LOCAL_PATH=../../../..
 
 
-PATCHES="art bionic build frameworks/av frameworks/base/ frameworks/native/ frameworks/opt/net/wifi/ \
+PATCHES="bionic build frameworks/av frameworks/base/ frameworks/native/ frameworks/opt/net/wifi/ \
 	frameworks/opt/telephony/ libcore packages/apps/Bluetooth/ packages/apps/OmniGears packages/apps/Settings/ \
         packages/services/Telecomm  packages/services/Telephony  system/core"
 
