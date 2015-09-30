@@ -22,9 +22,8 @@ DEVICE_PACKAGE_OVERLAYS := $(LOCAL_PATH)/overlay
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
 
-# NovaThor Settings
 PRODUCT_PACKAGES += \
-    NovaThorSettings
+    OmniTorch
 
 # U8500 Common init
 PRODUCT_COPY_FILES += \

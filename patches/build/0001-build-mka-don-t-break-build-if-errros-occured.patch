@@ -1,0 +1,26 @@
+From 9bfbb8d7b0f470bbcf09578d431838c3c81e977a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 30 Sep 2015 12:07:20 +0300
+Subject: [PATCH] build: mka: don't break build if errros occured
+
+Change-Id: I32fbebf3805ee7b4f2f69037d978c502651923ba
+---
+ envsetup.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/envsetup.sh b/envsetup.sh
+index 849bad1..d96d0a6 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -1844,7 +1844,7 @@ function mka() {
+             make -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
+             ;;
+         *)
+-            schedtool -B -n 1 -e ionice -n 1 make -j `cat /proc/cpuinfo | grep "^processor" | wc -l` "$@"
++            schedtool -B -n 1 -e ionice -n 1 make -k -j `cat /proc/cpuinfo | grep "^processor" | wc -l` "$@"
+             ;;
+     esac
+ }
+-- 
+1.9.1
+
