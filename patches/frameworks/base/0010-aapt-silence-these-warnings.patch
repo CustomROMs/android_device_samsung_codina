@@ -1,0 +1,32 @@
+From d1ca41f7c4525b2798f3f6aedd780bcbf77266fe Mon Sep 17 00:00:00 2001
+From: Evisceration <eviscerationls@gmail.com>
+Date: Wed, 21 May 2014 14:15:23 +0200
+Subject: [PATCH 10/26] aapt: silence these warnings
+
+to show them, set SHOW_MANIFEST_WARNING
+
+Change-Id: I8fd3617e03ca535df1ae0ebdb3dde3a67eb2737b
+Signed-off-by: Chet Kener <Cl3Kener@gmail.com>
+---
+ tools/aapt/Resource.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tools/aapt/Resource.cpp b/tools/aapt/Resource.cpp
+index e2e83e4..c9d94d8 100644
+--- a/tools/aapt/Resource.cpp
++++ b/tools/aapt/Resource.cpp
+@@ -713,9 +713,11 @@ bool addTagAttribute(const sp<XMLNode>& node, const char* ns8,
+             return false;
+         }
+ 
++#ifdef SHOW_MANIFEST_WARNING
+         fprintf(stderr, "Warning: AndroidManifest.xml already defines %s (in %s);"
+                         " using existing value in manifest.\n",
+                 String8(attr).string(), String8(ns).string());
++#endif
+ 
+         // don't stop the build.
+         return true;
+-- 
+1.9.1
+

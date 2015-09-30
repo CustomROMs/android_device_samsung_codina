@@ -1,0 +1,83 @@
+From 50dc86c9957a26791de3ef96cbf0a253b7ae49da Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 30 Sep 2015 13:39:22 +0300
+Subject: [PATCH 03/26] Subject: [PATCH] Expose hardcoded colors
+
+Opening up values for themers to have better control.
+
+Change-Id: I2650af3803e17d9b1e980cd92b1763fc4dda52d1
+---
+ core/res/res/layout/notification_material_action.xml               | 2 +-
+ core/res/res/layout/notification_template_material_big_picture.xml | 2 +-
+ core/res/res/layout/resolver_different_item_header.xml             | 2 +-
+ core/res/res/layout/resolver_list.xml                              | 2 +-
+ core/res/res/layout/resolver_list_with_default.xml                 | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/core/res/res/layout/notification_material_action.xml b/core/res/res/layout/notification_material_action.xml
+index da8b2e7..0a4109a 100644
+--- a/core/res/res/layout/notification_material_action.xml
++++ b/core/res/res/layout/notification_material_action.xml
+@@ -25,7 +25,7 @@
+     android:gravity="start|center_vertical"
+     android:drawablePadding="8dp"
+     android:paddingStart="8dp"
+-    android:textColor="@color/secondary_text_material_light"
++    android:textColor="@color/notification_mtrl_action_textcolor"
+     android:textSize="13sp"
+     android:singleLine="true"
+     android:ellipsize="end"
+diff --git a/core/res/res/layout/notification_template_material_big_picture.xml b/core/res/res/layout/notification_template_material_big_picture.xml
+index 302e651..2fe0192 100644
+--- a/core/res/res/layout/notification_template_material_big_picture.xml
++++ b/core/res/res/layout/notification_template_material_big_picture.xml
+@@ -48,7 +48,7 @@
+         android:layout_marginTop="208dp"
+         android:paddingStart="@dimen/notification_large_icon_width"
+         android:layout_gravity="bottom"
+-        android:background="#CCEEEEEE"
++        android:background="@color/notification_mtrl_big_picture_bg"
+         >
+         <include
+             layout="@layout/notification_material_action_list"
+diff --git a/core/res/res/layout/resolver_different_item_header.xml b/core/res/res/layout/resolver_different_item_header.xml
+index 5889136..201c8c6 100644
+--- a/core/res/res/layout/resolver_different_item_header.xml
++++ b/core/res/res/layout/resolver_different_item_header.xml
+@@ -29,6 +29,6 @@
+     android:paddingEnd="16dp"
+     android:paddingTop="8dp"
+     android:paddingBottom="8dp"
+-    android:background="@color/white"
++    android:background="@color/resolver_list_bg"
+     android:elevation="8dp"
+     />
+diff --git a/core/res/res/layout/resolver_list.xml b/core/res/res/layout/resolver_list.xml
+index 00c25e6..85557e4 100644
+--- a/core/res/res/layout/resolver_list.xml
++++ b/core/res/res/layout/resolver_list.xml
+@@ -108,7 +108,7 @@
+         android:orientation="horizontal"
+         android:layoutDirection="locale"
+         android:measureWithLargestChild="true"
+-        android:background="@color/white"
++        android:background="@color/resolver_list_bg"
+         android:paddingTop="8dp"
+         android:paddingBottom="8dp"
+         android:paddingStart="12dp"
+diff --git a/core/res/res/layout/resolver_list_with_default.xml b/core/res/res/layout/resolver_list_with_default.xml
+index 31361e5..0cac596 100644
+--- a/core/res/res/layout/resolver_list_with_default.xml
++++ b/core/res/res/layout/resolver_list_with_default.xml
+@@ -30,7 +30,7 @@
+         android:layout_height="wrap_content"
+         android:layout_alwaysShow="true"
+         android:orientation="vertical"
+-        android:background="@color/white"
++        android:background="@color/resolver_list_bg"
+         android:elevation="8dp" >
+ 
+         <LinearLayout
+-- 
+1.9.1
+

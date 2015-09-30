@@ -1,0 +1,108 @@
+From 1c54ec2b8234dd9ea7b76cf89d0cb28cf88fc56f Mon Sep 17 00:00:00 2001
+From: bgill55 <bricam55@gmail.com>
+Date: Sat, 24 Jan 2015 18:12:39 -0700
+Subject: [PATCH 1/4] Exposing hard coded resources for type 2 overlay access
+ [4/6]
+
+Have to expose hard coded hex coding to changeable resources for theming purposes. For the Layers type 2 overlays.
+
+Change-Id: Iaa939f71828583ea21b3e665de1b09bdb35cb813
+---
+ res/layout/contact_tile_frequent.xml              | 4 ++--
+ res/layout/contact_tile_starred.xml               | 3 ++-
+ res/layout/contact_tile_starred_quick_contact.xml | 5 ++---
+ res/values/colors.xml                             | 8 ++++++++
+ res/values/styles.xml                             | 2 +-
+ 5 files changed, 15 insertions(+), 7 deletions(-)
+
+diff --git a/res/layout/contact_tile_frequent.xml b/res/layout/contact_tile_frequent.xml
+index b1e83ce..8feb1aa 100644
+--- a/res/layout/contact_tile_frequent.xml
++++ b/res/layout/contact_tile_frequent.xml
+@@ -33,12 +33,12 @@
+             android:layout_height="?list_item_photo_size"
+             android:scaleType="centerCrop"
+             android:layout_marginEnd="?list_item_gap_between_image_and_text"/>
+-
++	<!-- Exposed textcolor for theming -->
+         <TextView
+             android:id="@+id/contact_tile_name"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+-            android:textColor="@android:color/black"
++            android:textColor="@color/exposed_primary_text_light"
+             android:textSize="@dimen/contact_browser_list_item_text_size"
+             android:singleLine="true"
+             android:fadingEdge="horizontal"
+diff --git a/res/layout/contact_tile_starred.xml b/res/layout/contact_tile_starred.xml
+index 777cc05..3553726 100644
+--- a/res/layout/contact_tile_starred.xml
++++ b/res/layout/contact_tile_starred.xml
+@@ -38,12 +38,13 @@
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent" />
+         </view>
++	<!-- exposed textcolor for theming -->
+         <TextView
+             android:id="@+id/contact_tile_name"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:paddingTop="7dp"
+-            android:textColor="#202020"
++            android:textColor="@color/exposed_primary_text_light"
+             android:textSize="@dimen/contact_browser_list_item_text_size"
+             android:singleLine="true"
+             android:fadingEdge="horizontal"
+diff --git a/res/layout/contact_tile_starred_quick_contact.xml b/res/layout/contact_tile_starred_quick_contact.xml
+index ecbe583..c91ccc7 100644
+--- a/res/layout/contact_tile_starred_quick_contact.xml
++++ b/res/layout/contact_tile_starred_quick_contact.xml
+@@ -42,13 +42,12 @@
+             android:paddingRight="8dip"
+             android:paddingStart="8dip"
+             android:paddingEnd="8dip">
+-
++	  <!-- exposed textcolor for theming -->
+             <TextView
+                 android:id="@+id/contact_tile_name"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+-                android:textColor="@android:color/white"
+-                android:textSize="16sp"
++                android:textColor="@color/exposed_primary_text_dark"
+                 android:singleLine="true"
+                 android:fadingEdge="horizontal"
+                 android:fadingEdgeLength="3dip"
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 376fd3f..fba104e 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -152,4 +152,12 @@
+     <!-- Color of the background of the contact detail and editor pages -->
+     <color name="background_primary">#f9f9f9</color>
+     <color name="contact_all_list_background_color">#FFFFFF</color>
++    
++    <!-- exposed colors for theming -->
++    <color name="exposed_bg_dark">#ffffffff</color>
++    <color name="exposed_bg_light">#ff000000</color>
++    <color name="exposed_primary_text_light">#de000000</color>
++    <color name="exposed_secondary_text_light">#8a000000</color>
++    <color name="exposed_primary_text_dark">#ffffffff</color>
++    <color name="exposed_secondary_text_dark">#b3ffffff</color>
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 7e1127d..eab212c 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -62,7 +62,7 @@ background and text color. See also android:style/Widget.Holo.TextView.ListSepar
+ 
+     <style name="TextAppearanceSmall" parent="@android:style/TextAppearance.Small">
+         <item name="android:textSize">14sp</item>
+-        <item name="android:textColor">#737373</item>
++        <item name="android:textColor">#000000</item>
+     </style>
+ 
+     <style name="ListViewStyle" parent="@android:style/Widget.Material.Light.ListView">
+-- 
+1.9.1
+

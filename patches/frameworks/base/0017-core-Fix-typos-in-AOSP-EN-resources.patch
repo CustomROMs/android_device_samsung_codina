@@ -1,0 +1,50 @@
+From 2bc57107341c7a9615c247ebe1773eb8c59a1ec5 Mon Sep 17 00:00:00 2001
+From: Michael Bestas <mikeioannina@gmail.com>
+Date: Tue, 16 Dec 2014 21:29:57 +0200
+Subject: [PATCH 17/26] core: Fix typos in AOSP EN resources
+
+Change-Id: I40220888c2fbe87629d17fc52046e554388de3ee
+---
+ core/res/res/values/strings.xml | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
+index 4fe5b03..40188b8 100644
+--- a/core/res/res/values/strings.xml
++++ b/core/res/res/values/strings.xml
+@@ -3231,7 +3231,7 @@
+     <string name="permdesc_writeHistoryBookmarks" product="tablet">Allows the
+         app to modify the Browser\'s history or bookmarks stored on your tablet.
+         This may allow the app to erase or modify Browser data.  Note: this
+-        permission may note be enforced by third-party browsers or other
++        permission may not be enforced by third-party browsers or other
+         applications with web browsing capabilities.</string>
+     <!-- Description of an application permission, listed so the user can choose whether
+         they want to allow the application to do this. -->
+@@ -3245,7 +3245,7 @@
+     <string name="permdesc_writeHistoryBookmarks" product="default">Allows the
+         app to modify the Browser\'s history or bookmarks stored on your phone.
+         This may allow the app to erase or modify Browser data.  Note:
+-        this permission may note be enforced by third-party browsers or other
++        this permission may not be enforced by third-party browsers or other
+         applications with web browsing capabilities.</string>
+ 
+     <!-- Title of an application permission, listed so the user can choose whether
+@@ -4126,12 +4126,12 @@
+     <!-- Title of an application permission that lets an application access keyguard secure storage. -->
+     <string name="permlab_access_keyguard_secure_storage">Access keyguard secure storage</string>
+     <!-- Description of an application permission that lets an application access keyguard secure storage. -->
+-    <string name="permdesc_access_keyguard_secure_storage">Allows an application to access keguard secure storage.</string>
++    <string name="permdesc_access_keyguard_secure_storage">Allows an application to access keyguard secure storage.</string>
+ 
+     <!-- Title of an application permission that lets it control keyguard. -->
+     <string name="permlab_control_keyguard">Control displaying and hiding keyguard</string>
+     <!-- Description of an application permission that lets it control keyguard. -->
+-    <string name="permdesc_control_keyguard">Allows an application to control keguard.</string>
++    <string name="permdesc_control_keyguard">Allows an application to control keyguard.</string>
+ 
+     <!-- Title of an application permission that lets it listen to trust state changes. -->
+     <string name="permlab_trust_listener">Listen to trust state changes.</string>
+-- 
+1.9.1
+

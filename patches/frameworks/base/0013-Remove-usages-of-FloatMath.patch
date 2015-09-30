@@ -1,0 +1,260 @@
+From f244c61a1d1b52e9909978f1ba0807554db5d866 Mon Sep 17 00:00:00 2001
+From: Neil Fuller <nfuller@google.com>
+Date: Wed, 11 Feb 2015 15:49:47 +0000
+Subject: [PATCH 13/26] Remove usages of FloatMath
+
+Bug: https://code.google.com/p/android/issues/detail?id=36199
+Change-Id: Iec8fb663ed54eb967050f6ff25a36ba534204c4d
+Signed-off-by: Chet Kener <Cl3Kener@gmail.com>
+---
+ core/java/android/transition/ArcMotion.java        |  3 +--
+ .../android/transition/CircularPropagation.java    | 15 +++++++-------
+ core/java/android/transition/Explode.java          | 24 +++++++++-------------
+ .../java/android/transition/PatternPathMotion.java | 12 ++++-------
+ core/java/android/transition/SidePropagation.java  |  1 -
+ core/java/android/util/Spline.java                 |  2 +-
+ core/java/android/widget/EdgeEffect.java           |  5 ++---
+ .../java/com/android/server/display/ColorFade.java | 15 +++++++-------
+ 8 files changed, 32 insertions(+), 45 deletions(-)
+
+diff --git a/core/java/android/transition/ArcMotion.java b/core/java/android/transition/ArcMotion.java
+index f95fb49..70dfe7f 100644
+--- a/core/java/android/transition/ArcMotion.java
++++ b/core/java/android/transition/ArcMotion.java
+@@ -21,7 +21,6 @@ import android.content.Context;
+ import android.content.res.TypedArray;
+ import android.graphics.Path;
+ import android.util.AttributeSet;
+-import android.util.FloatMath;
+ 
+ /**
+  * A PathMotion that generates a curved path along an arc on an imaginary circle containing
+@@ -257,7 +256,7 @@ public class ArcMotion extends PathMotion {
+             }
+             if (newArcDistance2 != 0) {
+                 float ratio2 = newArcDistance2 / arcDist2;
+-                float ratio = FloatMath.sqrt(ratio2);
++                float ratio = (float) Math.sqrt(ratio2);
+                 ex = dx + (ratio * (ex - dx));
+                 ey = dy + (ratio * (ey - dy));
+             }
+diff --git a/core/java/android/transition/CircularPropagation.java b/core/java/android/transition/CircularPropagation.java
+index 51beb51..1e44cfa 100644
+--- a/core/java/android/transition/CircularPropagation.java
++++ b/core/java/android/transition/CircularPropagation.java
+@@ -16,7 +16,6 @@
+ package android.transition;
+ 
+ import android.graphics.Rect;
+-import android.util.FloatMath;
+ import android.util.Log;
+ import android.view.View;
+ import android.view.ViewGroup;
+@@ -87,9 +86,9 @@ public class CircularPropagation extends VisibilityPropagation {
+             epicenterY = Math.round(loc[1] + (sceneRoot.getHeight() / 2)
+                     + sceneRoot.getTranslationY());
+         }
+-        float distance = distance(viewCenterX, viewCenterY, epicenterX, epicenterY);
+-        float maxDistance = distance(0, 0, sceneRoot.getWidth(), sceneRoot.getHeight());
+-        float distanceFraction = distance/maxDistance;
++        double distance = distance(viewCenterX, viewCenterY, epicenterX, epicenterY);
++        double maxDistance = distance(0, 0, sceneRoot.getWidth(), sceneRoot.getHeight());
++        double distanceFraction = distance/maxDistance;
+ 
+         long duration = transition.getDuration();
+         if (duration < 0) {
+@@ -99,9 +98,9 @@ public class CircularPropagation extends VisibilityPropagation {
+         return Math.round(duration * directionMultiplier / mPropagationSpeed * distanceFraction);
+     }
+ 
+-    private static float distance(float x1, float y1, float x2, float y2) {
+-        float x = x2 - x1;
+-        float y = y2 - y1;
+-        return FloatMath.sqrt((x * x) + (y * y));
++    private static double distance(float x1, float y1, float x2, float y2) {
++        double x = x2 - x1;
++        double y = y2 - y1;
++        return Math.hypot(x, y);
+     }
+ }
+diff --git a/core/java/android/transition/Explode.java b/core/java/android/transition/Explode.java
+index 0ccdf15..788676a 100644
+--- a/core/java/android/transition/Explode.java
++++ b/core/java/android/transition/Explode.java
+@@ -22,7 +22,6 @@ import android.animation.TimeInterpolator;
+ import android.content.Context;
+ import android.graphics.Rect;
+ import android.util.AttributeSet;
+-import android.util.FloatMath;
+ import android.view.View;
+ import android.view.ViewGroup;
+ import android.view.animation.AccelerateInterpolator;
+@@ -143,32 +142,29 @@ public class Explode extends Visibility {
+ 
+         int centerX = bounds.centerX();
+         int centerY = bounds.centerY();
+-        float xVector = centerX - focalX;
+-        float yVector = centerY - focalY;
++        double xVector = centerX - focalX;
++        double yVector = centerY - focalY;
+ 
+         if (xVector == 0 && yVector == 0) {
+             // Random direction when View is centered on focal View.
+-            xVector = (float) (Math.random() * 2) - 1;
+-            yVector = (float) (Math.random() * 2) - 1;
++            xVector = (Math.random() * 2) - 1;
++            yVector = (Math.random() * 2) - 1;
+         }
+-        float vectorSize = calculateDistance(xVector, yVector);
++        double vectorSize = Math.hypot(xVector, yVector);
+         xVector /= vectorSize;
+         yVector /= vectorSize;
+ 
+-        float maxDistance =
++        double maxDistance =
+                 calculateMaxDistance(sceneRoot, focalX - sceneRootX, focalY - sceneRootY);
+ 
+-        outVector[0] = Math.round(maxDistance * xVector);
+-        outVector[1] = Math.round(maxDistance * yVector);
++        outVector[0] = (int) Math.round(maxDistance * xVector);
++        outVector[1] = (int) Math.round(maxDistance * yVector);
+     }
+ 
+-    private static float calculateMaxDistance(View sceneRoot, int focalX, int focalY) {
++    private static double calculateMaxDistance(View sceneRoot, int focalX, int focalY) {
+         int maxX = Math.max(focalX, sceneRoot.getWidth() - focalX);
+         int maxY = Math.max(focalY, sceneRoot.getHeight() - focalY);
+-        return calculateDistance(maxX, maxY);
++        return Math.hypot(maxX, maxY);
+     }
+ 
+-    private static float calculateDistance(float x, float y) {
+-        return FloatMath.sqrt((x * x) + (y * y));
+-    }
+ }
+diff --git a/core/java/android/transition/PatternPathMotion.java b/core/java/android/transition/PatternPathMotion.java
+index a609df6..773c387 100644
+--- a/core/java/android/transition/PatternPathMotion.java
++++ b/core/java/android/transition/PatternPathMotion.java
+@@ -23,7 +23,6 @@ import android.graphics.Matrix;
+ import android.graphics.Path;
+ import android.graphics.PathMeasure;
+ import android.util.AttributeSet;
+-import android.util.FloatMath;
+ import android.util.PathParser;
+ 
+ /**
+@@ -119,7 +118,7 @@ public class PatternPathMotion extends PathMotion {
+         mTempMatrix.setTranslate(-startX, -startY);
+         float dx = endX - startX;
+         float dy = endY - startY;
+-        float distance = distance(dx, dy);
++        float distance = (float) Math.hypot(dx, dy);
+         float scale = 1 / distance;
+         mTempMatrix.postScale(scale, scale);
+         double angle = Math.atan2(dy, dx);
+@@ -130,9 +129,9 @@ public class PatternPathMotion extends PathMotion {
+ 
+     @Override
+     public Path getPath(float startX, float startY, float endX, float endY) {
+-        float dx = endX - startX;
+-        float dy = endY - startY;
+-        float length = distance(dx, dy);
++        double dx = endX - startX;
++        double dy = endY - startY;
++        float length = (float) Math.hypot(dx, dy);
+         double angle = Math.atan2(dy, dx);
+ 
+         mTempMatrix.setScale(length, length);
+@@ -143,7 +142,4 @@ public class PatternPathMotion extends PathMotion {
+         return path;
+     }
+ 
+-    private static float distance(float x, float y) {
+-        return FloatMath.sqrt((x * x) + (y * y));
+-    }
+ }
+diff --git a/core/java/android/transition/SidePropagation.java b/core/java/android/transition/SidePropagation.java
+index ad6c2dd..5dd1fff 100644
+--- a/core/java/android/transition/SidePropagation.java
++++ b/core/java/android/transition/SidePropagation.java
+@@ -16,7 +16,6 @@
+ package android.transition;
+ 
+ import android.graphics.Rect;
+-import android.util.FloatMath;
+ import android.util.Log;
+ import android.view.Gravity;
+ import android.view.View;
+diff --git a/core/java/android/util/Spline.java b/core/java/android/util/Spline.java
+index 41a2e5d..bed3a60 100644
+--- a/core/java/android/util/Spline.java
++++ b/core/java/android/util/Spline.java
+@@ -165,7 +165,7 @@ public abstract class Spline {
+                         throw new IllegalArgumentException("The control points must have "
+                                 + "monotonic Y values.");
+                     }
+-                    float h = FloatMath.hypot(a, b);
++                    float h = (float) Math.hypot(a, b);
+                     if (h > 9f) {
+                         float t = 3f / h;
+                         m[i] = t * a * d[i];
+diff --git a/core/java/android/widget/EdgeEffect.java b/core/java/android/widget/EdgeEffect.java
+index 6925756..391347e 100644
+--- a/core/java/android/widget/EdgeEffect.java
++++ b/core/java/android/widget/EdgeEffect.java
+@@ -24,7 +24,6 @@ import android.graphics.Rect;
+ 
+ import android.content.Context;
+ import android.graphics.Canvas;
+-import android.util.FloatMath;
+ import android.view.animation.AnimationUtils;
+ import android.view.animation.DecelerateInterpolator;
+ import android.view.animation.Interpolator;
+@@ -220,8 +219,8 @@ public class EdgeEffect {
+         if (mPullDistance == 0) {
+             mGlowScaleY = mGlowScaleYStart = 0;
+         } else {
+-            final float scale = Math.max(0, 1 - 1 /
+-                    FloatMath.sqrt(Math.abs(mPullDistance) * mBounds.height()) - 0.3f) / 0.7f;
++            final float scale = (float) (Math.max(0, 1 - 1 /
++                    Math.sqrt(Math.abs(mPullDistance) * mBounds.height()) - 0.3d) / 0.7d);
+ 
+             mGlowScaleY = mGlowScaleYStart = scale;
+         }
+diff --git a/services/core/java/com/android/server/display/ColorFade.java b/services/core/java/com/android/server/display/ColorFade.java
+index 6e61e41..4e075c3 100644
+--- a/services/core/java/com/android/server/display/ColorFade.java
++++ b/services/core/java/com/android/server/display/ColorFade.java
+@@ -37,7 +37,6 @@ import android.opengl.EGLDisplay;
+ import android.opengl.EGLSurface;
+ import android.opengl.GLES20;
+ import android.opengl.GLES11Ext;
+-import android.util.FloatMath;
+ import android.util.Slog;
+ import android.view.DisplayInfo;
+ import android.view.Surface.OutOfResourcesException;
+@@ -372,13 +371,13 @@ final class ColorFade {
+             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+ 
+             // Draw the frame.
+-            float one_minus_level = 1 - level;
+-            float cos = FloatMath.cos((float)Math.PI * one_minus_level);
+-            float sign = cos < 0 ? -1 : 1;
+-            float opacity = -FloatMath.pow(one_minus_level, 2) + 1;
+-            float saturation = FloatMath.pow(level, 4);
+-            float scale = (-FloatMath.pow(one_minus_level, 2) + 1) * 0.1f + 0.9f;
+-            float gamma = (0.5f * sign * FloatMath.pow(cos, 2) + 0.5f) * 0.9f + 0.1f;
++            double one_minus_level = 1 - level;
++            double cos = Math.cos(Math.PI * one_minus_level);
++            double sign = cos < 0 ? -1 : 1;
++            float opacity = (float) -Math.pow(one_minus_level, 2) + 1;
++            float saturation = (float) Math.pow(level, 4);
++            float scale = (float) ((-Math.pow(one_minus_level, 2) + 1) * 0.1d + 0.9d);
++            float gamma = (float) ((0.5d * sign * Math.pow(cos, 2) + 0.5d) * 0.9d + 0.1d);
+             drawFaded(opacity, 1.f / gamma, saturation, scale);
+             if (checkGlErrors("drawFrame")) {
+                 return false;
+-- 
+1.9.1
+

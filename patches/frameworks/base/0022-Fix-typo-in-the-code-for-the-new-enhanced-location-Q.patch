@@ -1,0 +1,37 @@
+From 453e036ece1c651c13c221b5a15fd9b938dab405 Mon Sep 17 00:00:00 2001
+From: Craig Gomez <craigacgomez@gmail.com>
+Date: Fri, 18 Sep 2015 01:11:43 -0700
+Subject: [PATCH 22/26] Fix typo in the code for the new enhanced location QS
+
+---
+ .../src/com/android/systemui/qs/tiles/LocationTile.java        | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java
+index 12c04f1..6822c14 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java
+@@ -63,15 +63,15 @@ public class LocationTile extends QSTile<QSTile.BooleanState> {
+ 
+     @Override
+     protected void handleClick() {
+-        final int locationMode = mLocationController.getLocationMode();
++        final int locationMode = mController.getLocationMode();
+         if (locationMode == Settings.Secure.LOCATION_MODE_HIGH_ACCURACY) {
+-            mLocationController.setLocationMode(Settings.Secure.LOCATION_MODE_OFF);
++            mController.setLocationMode(Settings.Secure.LOCATION_MODE_OFF);
+         } else if (locationMode == Settings.Secure.LOCATION_MODE_BATTERY_SAVING) {
+-            mLocationController.setLocationMode(Settings.Secure.LOCATION_MODE_HIGH_ACCURACY);
++            mController.setLocationMode(Settings.Secure.LOCATION_MODE_HIGH_ACCURACY);
+         } else if (locationMode == Settings.Secure.LOCATION_MODE_SENSORS_ONLY) {
+-            mLocationController.setLocationMode(Settings.Secure.LOCATION_MODE_BATTERY_SAVING);
++            mController.setLocationMode(Settings.Secure.LOCATION_MODE_BATTERY_SAVING);
+         } else if (locationMode == Settings.Secure.LOCATION_MODE_OFF) {
+-            mLocationController.setLocationMode(Settings.Secure.LOCATION_MODE_SENSORS_ONLY);
++            mController.setLocationMode(Settings.Secure.LOCATION_MODE_SENSORS_ONLY);
+         }
+         mEnable.setAllowAnimation(true);
+         mDisable.setAllowAnimation(true);
+-- 
+1.9.1
+

@@ -1,0 +1,344 @@
+From b50f7e8fa5e6bd0cd1a8384f09b6604b4a3146ea Mon Sep 17 00:00:00 2001
+From: Craig Gomez <craigacgomez@gmail.com>
+Date: Fri, 3 Apr 2015 16:23:35 -0700
+Subject: [PATCH 01/10] Layers : Exposing hard coded resources for type 2
+ overlay access [2/6]
+
+Have to expose hard coded hex coding to changeable resources for theming purposes. For the Layers type 2 overlays
+
+Ref.: https://github.com/BitSyko/platform_packages_apps_Settings/commit/0626c475be8b50748eb75d6f237f885ad5cf91ab
+---
+ res/layout/battery_history_chart.xml |  2 +-
+ res/layout/dashboard_category.xml    |  2 +-
+ res/layout/ownerinfo.xml             |  4 ++--
+ res/values/colors.xml                | 10 +++++++++
+ res/values/styles.xml                | 28 +++++++++++++++++++-----
+ res/values/themes.xml                | 41 +++++++++++++++++++++++++-----------
+ 6 files changed, 66 insertions(+), 21 deletions(-)
+
+diff --git a/res/layout/battery_history_chart.xml b/res/layout/battery_history_chart.xml
+index 0e3cf88..a5fa05c 100644
+--- a/res/layout/battery_history_chart.xml
++++ b/res/layout/battery_history_chart.xml
+@@ -28,7 +28,7 @@
+         android:gravity="center_vertical"
+         android:id="@+id/battery_history_chart"
+         android:textAppearance="?android:attr/textAppearanceSmall"
+-        android:textColor="#ff000000"
++        android:textColor="@color/exposed_primary_text_light"
+         app:headerAppearance="?android:attr/textAppearanceMedium"
+         android:shadowRadius="4"
+         android:shadowColor="?android:attr/colorBackground"
+diff --git a/res/layout/dashboard_category.xml b/res/layout/dashboard_category.xml
+index 01afa5d..7180341 100644
+--- a/res/layout/dashboard_category.xml
++++ b/res/layout/dashboard_category.xml
+@@ -21,7 +21,7 @@
+         android:paddingStart="@dimen/dashboard_category_padding_start"
+         android:paddingEnd="@dimen/dashboard_category_padding_end"
+         android:orientation="vertical"
+-        android:background="@android:color/white"
++        android:background="@color/exposed_bg_dark"
+         android:layout_marginBottom="8dip"
+         android:elevation="@dimen/dashboard_category_elevation">
+ 
+diff --git a/res/layout/ownerinfo.xml b/res/layout/ownerinfo.xml
+index 6adec7d..4d861f7 100644
+--- a/res/layout/ownerinfo.xml
++++ b/res/layout/ownerinfo.xml
+@@ -18,7 +18,7 @@
+     android:layout_height="wrap_content"
+     android:orientation="vertical"
+     android:scrollbars="vertical"
+-    android:background="@android:color/white">
++    android:background="@color/exposed_bg_dark">
+ 
+     <ScrollView
+         android:layout_width="match_parent"
+@@ -56,7 +56,7 @@
+                 android:layout_marginTop="8dip"
+                 android:text="@string/show_owner_info_on_lockscreen_label"
+                 android:textAppearance="?android:attr/textAppearanceMedium"
+-                android:textColor="?android:attr/textColorSecondary"
++                android:textColor="@color/exposed_secondary_text_light"
+             />
+ 
+             <View
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 70fc4a0..cee7892 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -80,4 +80,14 @@
+     <color name="wifi_divider">#ffe0e0e0</color>
+     <color name="sim_noitification">@*android:color/material_deep_teal_500</color>
+ 
++    <!-- Exposed resources for theming -->
++    <color name="exposed_bg_dark">#ffffffff</color>
++    <color name="exposed_bg_light">#ff212121</color>
++    <color name="exposed_primary_text_light">#de000000</color>
++    <color name="exposed_secondary_text_light">#8a000000</color>
++    <color name="exposed_primary_text_dark">#ffffffff</color>
++    <color name="exposed_secondary_text_dark">#b3ffffff</color>
++    <color name="exposed_barPrimaryColor">#ff009688</color>
++    <color name="exposed_barPredictionColor">@color/material_empty_color_light</color>
++
+ </resources>
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 626fc27..94a0226 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -17,6 +17,7 @@
+ <resources>
+ 
+     <style name="info_label">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+         <item name="android:layout_height">wrap_content</item>
+         <item name="android:layout_width">wrap_content</item>
+         <item name="android:textAppearance">@style/TextAppearance.info_label</item>
+@@ -24,13 +25,14 @@
+     </style>
+ 
+     <style name="info_value">
++        <item name="android:textColor">@color/exposed_secondary_text_light</item>
+         <item name="android:layout_height">wrap_content</item>
+         <item name="android:layout_width">wrap_content</item>
+         <item name="android:textAppearance">@style/TextAppearance.info_value</item>
+     </style>
+ 
+     <style name="info_small">
+-        <item name="android:layout_height">wrap_content</item>
++        <item name="android:textColor">@color/exposed_secondary_text_light</item>
+         <item name="android:layout_width">wrap_content</item>
+         <item name="android:textAppearance">@style/TextAppearance.info_small</item>
+     </style>
+@@ -56,23 +58,28 @@
+         <item name="android:layout_width">match_parent</item>
+     </style>
+ 
+-
+     <style name="TextAppearance" parent="android:TextAppearance.Material">
++        <item name="android:textSize">14sp</item>
++        <item name="android:textStyle">bold</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.info_label">
+         <item name="android:textSize">14sp</item>
+         <item name="android:textStyle">bold</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.info_small">
+         <item name="android:textSize">12sp</item>
+         <item name="android:textStyle">normal</item>
++        <item name="android:textColor">@color/exposed_secondary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.info_value">
+         <item name="android:textSize">14sp</item>
+         <item name="android:textStyle">normal</item>
++        <item name="android:textColor">@color/exposed_secondary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.PasswordEntry" parent="android:TextAppearance.Material">
+@@ -220,6 +227,8 @@
+     </style>
+ 
+     <style name="wifi_item">
++        <item name="android:textColorPrimary">@color/exposed_primary_text_light</item>
++        <item name="android:textColorSecondary">@color/exposed_secondary_text_light</item>
+         <item name="android:layout_marginTop">8dip</item>
+         <item name="android:layout_marginStart">8dip</item>
+         <item name="android:layout_marginEnd">8dip</item>
+@@ -234,13 +243,15 @@
+         <item name="android:textSize">14sp</item>
+         <item name="android:textAlignment">viewStart</item>
+         <item name="android:textAppearance">@android:style/TextAppearance.Material.Body1</item>
+-        <item name="android:textColor">?android:attr/textColorSecondary</item>
++        <item name="android:textColorPrimary">@color/exposed_primary_text_light</item>
++        <item name="android:textColorSecondary">@color/exposed_secondary_text_light</item>
+     </style>
+ 
+     <style name="wifi_item_content">
+         <item name="android:textAlignment">viewStart</item>
+         <item name="android:textAppearance">@android:style/TextAppearance.Material.Subhead</item>
+-        <item name="android:textColor">?android:attr/textColorPrimary</item>
++        <item name="android:textColorPrimary">@color/exposed_primary_text_light</item>
++        <item name="android:textColorSecondary">@color/exposed_secondary_text_light</item>
+     </style>
+ 
+     <style name="wifi_item_edit_content">
+@@ -317,12 +328,15 @@
+     </style>
+ 
+     <style name="TextAppearance.Medium" parent="@android:style/TextAppearance.Material.Medium">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.Small" parent="@android:style/TextAppearance.Material.Small">
++      <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.Switch" parent="TextAppearance.Medium">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.CategoryTitle" parent="@android:style/TextAppearance.Material.Small">
+@@ -331,18 +345,22 @@
+     </style>
+ 
+     <style name="TextAppearance.TileTitle" parent="@android:style/TextAppearance.Material.Medium">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.TileSubTitle" parent="@android:style/TextAppearance.Material.Small">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.RecentsTitle" parent="TextAppearance.CategoryTitle">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="TextAppearance.ResultTitle" parent="TextAppearance.CategoryTitle">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="Widget.TimePicker" parent="@*android:style/Widget.Material.Light.TimePicker">
+-        <item name="@android:numbersBackgroundColor">@android:color/white</item>
++        <item name="@android:numbersBackgroundColor">@color/exposed_bg_dark</item>
+     </style>
+ </resources>
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 18cc40e..c87ba0f 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -86,6 +86,9 @@
+ 
+     <style name="Theme.WifiDialog" parent="@*android:style/Theme.Material.Dialog.Alert">
+         <item name="android:windowSoftInputMode">adjustResize</item>
++        <item name="android:colorPrimary">@color/theme_primary</item>
++        <item name="android:colorPrimaryDark">@color/theme_primary_dark</item>
++        <item name="android:colorAccent">@color/theme_accent</item>
+         <item name="ic_menu_add">@drawable/ic_menu_add_dark</item>
+         <item name="ic_menu_moreoverflow">@*android:drawable/ic_menu_moreoverflow_material</item>
+         <item name="ic_wps">@drawable/ic_wps_dark</item>
+@@ -104,16 +107,21 @@
+          layouts against a remote context using our local theme colors. Due to the implementation
+          details of Theme, we can't reference any local resources and MUST instead use the values
+          directly. So use #ff263238 instead of @color/theme_primary and so on. -->
+-    <style name="Theme.SettingsBase" parent="@android:style/Theme.Material.Settings" />
++    <style name="Theme.SettingsBase" parent="@android:style/Theme.Material.Settings">
++       <item name="android:colorBackground">@color/exposed_bg_dark</item>
++    </style>
+ 
+     <style name="Theme.Settings" parent="Theme.SettingsBase">
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+         <item name="@*android:preferenceHeaderPanelStyle">@style/PreferenceHeaderPanelSinglePane</item>
+         <item name="@*android:preferencePanelStyle">@style/PreferencePanelSinglePane</item>
+         <item name="@*android:preferenceListStyle">@style/PreferenceHeaderListSinglePane</item>
+         <item name="@*android:preferenceFragmentListStyle">@style/PreferenceFragmentListSinglePane</item>
+         <item name="@*android:preferenceFragmentStyle">@style/PreferenceFragmentStyle</item>
+         <item name="@*android:preferenceFragmentPaddingSide">@dimen/settings_side_margin</item>
+-
++        <item name="android:colorPrimary">@color/theme_primary</item>
++        <item name="android:colorPrimaryDark">@color/theme_primary_dark</item>
++        <item name="android:colorAccent">@color/theme_accent</item>
+         <item name="apnPreferenceStyle">@style/ApnPreference</item>
+ 
+         <item name="ic_menu_add">@drawable/ic_menu_add_dark</item>
+@@ -128,7 +136,7 @@
+ 
+         <item name="switchBarTheme">@style/Theme.SwitchBar.Settings</item>
+ 
+-        <item name="preferenceBackgroundColor">@drawable/preference_background</item>
++        <item name="preferenceBackgroundColor">@color/exposed_bg_dark</item>
+ 
+         <!-- For all Alert Dialogs -->
+         <item name="android:alertDialogTheme">@style/Theme.AlertDialog</item>
+@@ -145,32 +153,40 @@
+     <style name="Theme.SubSettings" parent="Theme.Settings">
+         <!-- Redefine the ActionBar style for contentInsetStart -->
+         <item name="android:actionBarStyle">@style/Theme.ActionBar.SubSettings</item>
+-
++        <item name="android:colorBackground">@color/exposed_bg_dark</item>
++        <item name="android:textColorPrimary">@color/exposed_primary_text_light</item>
+         <item name="switchBarTheme">@style/Theme.SwitchBar.SubSettings</item>
+     </style>
+ 
+     <style name="Theme.ActionBar" parent="@android:style/Widget.Material.Light.ActionBar.Solid">
+         <item name="android:contentInsetStart">@dimen/actionbar_contentInsetStart</item>
++        <item name="android:colorBackground">@color/exposed_bg_dark</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="Theme.ActionBar.SubSettings" parent="Theme.ActionBar">
+         <item name="android:contentInsetStart">@dimen/actionbar_subsettings_contentInsetStart</item>
++        <item name="android:colorBackground">@color/exposed_bg_dark</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="Theme.SwitchBar.Settings" parent="@android:style/Theme.Material">
+         <item name="switchBarMarginStart">@dimen/switchbar_margin_start</item>
+         <item name="switchBarMarginEnd">@dimen/switchbar_margin_end</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="Theme.SwitchBar.SubSettings" parent="@android:style/Theme.Material">
+         <item name="switchBarMarginStart">@dimen/switchbar_subsettings_margin_start</item>
+         <item name="switchBarMarginEnd">@dimen/switchbar_subsettings_margin_end</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+     </style>
+ 
+     <style name="Theme.DialogWhenLarge" parent="@android:style/Theme.Material.Light.DialogWhenLarge">
+         <!-- Explicitly override the background color. -->
+-        <item name="android:colorBackground">@android:color/white</item>
+-
++        <item name="android:colorBackground">@color/exposed_bg_dark</item>
++        <item name="android:textColorPrimary">@color/exposed_primary_text_light</item>
++        <item name="android:textColorSecondary">@color/exposed_secondary_text_light</item>
+         <!-- Used by the ActionBar -->
+         <item name="android:colorPrimary">@color/theme_primary</item>
+         <!-- Used by the StatusBar -->
+@@ -181,7 +197,7 @@
+         <!-- Redefine the ActionBar style for contentInsetStart -->
+         <item name="android:actionBarStyle">@style/Theme.ActionBar</item>
+ 
+-        <item name="preferenceBackgroundColor">@drawable/preference_background</item>
++        <item name="preferenceBackgroundColor">@color/exposed_bg_dark</item>
+     </style>
+ 
+     <style name="Theme.CryptKeeper" parent="@android:style/Theme.Material.NoActionBar">
+@@ -198,16 +214,17 @@
+     <style name="Theme.SubSettingsDialogWhenLarge" parent="Theme.DialogWhenLarge">
+         <item name="android:actionBarWidgetTheme">@null</item>
+         <item name="android:actionBarTheme">@android:style/ThemeOverlay.Material.Dark.ActionBar</item>
+-
+-        <item name="preferenceBackgroundColor">@drawable/preference_background</item>
++        <item name="android:textColorPrimary">@color/exposed_primary_text_light</item>
++        <item name="android:textColorSecondary">@color/exposed_secondary_text_light</item>
++        <item name="preferenceBackgroundColor">@color/exposed_bg_dark</item>
+     </style>
+ 
+     <style name="Theme.AlertDialog" parent="@*android:style/Theme.Material.Light.Dialog.Alert">
+         <item name="android:windowSoftInputMode">adjustResize</item>
+ 
+         <!-- Explicitly override the background color. -->
+-        <item name="android:colorBackground">@android:color/white</item>
+-
++        <item name="android:colorBackground">@color/exposed_bg_dark</item>
++        <item name="android:textColor">@color/exposed_primary_text_light</item>
+         <!-- Used by the ActionBar -->
+         <item name="android:colorPrimary">@color/theme_primary</item>
+         <!-- Used by the StatusBar -->
+@@ -223,7 +240,7 @@
+         <!-- Redefine the ActionBar style for contentInsetStart -->
+         <item name="android:actionBarStyle">@style/Theme.ActionBar.SubSettings</item>
+         <item name="@*android:actionBarSize">@dimen/actionbar_size</item>
+-
++         <item name="android:textColor">@color/exposed_primary_text_light</item>
+         <item name="preferenceBackgroundColor">@android:color/transparent</item>
+     </style>
+ 
+-- 
+1.9.1
+

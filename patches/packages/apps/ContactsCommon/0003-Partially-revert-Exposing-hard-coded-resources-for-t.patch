@@ -1,0 +1,53 @@
+From a0f0f58da90766bd226f9b8d44c378c3702efa4e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 30 Sep 2015 16:52:39 +0300
+Subject: [PATCH 3/4] Partially revert "Exposing hard coded resources for type
+ 2 overlay access"
+
+Change-Id: I676bdead50665d9f9690bdf0ca2ed99a7e350603
+---
+ res/layout/contact_tile_frequent.xml | 4 ++--
+ res/layout/contact_tile_starred.xml  | 3 +--
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/res/layout/contact_tile_frequent.xml b/res/layout/contact_tile_frequent.xml
+index 8feb1aa..b1e83ce 100644
+--- a/res/layout/contact_tile_frequent.xml
++++ b/res/layout/contact_tile_frequent.xml
+@@ -33,12 +33,12 @@
+             android:layout_height="?list_item_photo_size"
+             android:scaleType="centerCrop"
+             android:layout_marginEnd="?list_item_gap_between_image_and_text"/>
+-	<!-- Exposed textcolor for theming -->
++
+         <TextView
+             android:id="@+id/contact_tile_name"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+-            android:textColor="@color/exposed_primary_text_light"
++            android:textColor="@android:color/black"
+             android:textSize="@dimen/contact_browser_list_item_text_size"
+             android:singleLine="true"
+             android:fadingEdge="horizontal"
+diff --git a/res/layout/contact_tile_starred.xml b/res/layout/contact_tile_starred.xml
+index 3553726..777cc05 100644
+--- a/res/layout/contact_tile_starred.xml
++++ b/res/layout/contact_tile_starred.xml
+@@ -38,13 +38,12 @@
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent" />
+         </view>
+-	<!-- exposed textcolor for theming -->
+         <TextView
+             android:id="@+id/contact_tile_name"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:paddingTop="7dp"
+-            android:textColor="@color/exposed_primary_text_light"
++            android:textColor="#202020"
+             android:textSize="@dimen/contact_browser_list_item_text_size"
+             android:singleLine="true"
+             android:fadingEdge="horizontal"
+-- 
+1.9.1
+

@@ -1,0 +1,26 @@
+From b1f199e2796f447565ba3c0e3040001bf7889a1e Mon Sep 17 00:00:00 2001
+From: camcory <camcory1@gmail.com>
+Date: Tue, 14 Apr 2015 15:59:07 -0400
+Subject: [PATCH 06/10] Fix subsettings FC
+
+Due to themes that contain edited preference_background.xml
+---
+ res/values/themes.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/res/values/themes.xml b/res/values/themes.xml
+index 674eacb..1c673f0 100644
+--- a/res/values/themes.xml
++++ b/res/values/themes.xml
+@@ -135,7 +135,7 @@
+ 
+         <item name="switchBarTheme">@style/Theme.SwitchBar.Settings</item>
+ 
+-        <item name="preferenceBackgroundColor">@drawable/preference_background</item>
++        <item name="preferenceBackgroundColor">@color/background_color_white</item>
+ 
+         <!-- For all Alert Dialogs -->
+         <item name="android:alertDialogTheme">@style/Theme.AlertDialog</item>
+-- 
+1.9.1
+

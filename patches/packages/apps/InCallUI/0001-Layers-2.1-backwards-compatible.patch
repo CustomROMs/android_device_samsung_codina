@@ -1,0 +1,97 @@
+From cb2ee557a7c4ee0fca3c2faff05455b62e6662fe Mon Sep 17 00:00:00 2001
+From: camcory <camcory1@gmail.com>
+Date: Sat, 11 Apr 2015 09:57:25 -0400
+Subject: [PATCH] Layers 2.1 (backwards compatible)
+
+This is a rework of the initial layers type 2 commit
+
+Changes naming conventions to coexist with AOSP naming
+
+Original commit:
+Layers : Exposing hard coded resources for type 2 overlay access [6/6]
+Author: bgill55
+https://github.com/BitSyko/platform_packages_apps_InCallUI/commit/4abd6f39466cb74363a402de62b1858b963f79f0
+---
+ res/layout/call_card_content.xml |  4 ++--
+ res/values/custom_colors.xml     | 19 +++++++++++++++++++
+ res/values/layers_colors.xml     | 20 ++++++++++++++++++++
+ 3 files changed, 41 insertions(+), 2 deletions(-)
+ create mode 100644 res/values/custom_colors.xml
+ create mode 100644 res/values/layers_colors.xml
+
+diff --git a/res/layout/call_card_content.xml b/res/layout/call_card_content.xml
+index 7a42586..72fb24e 100644
+--- a/res/layout/call_card_content.xml
++++ b/res/layout/call_card_content.xml
+@@ -54,7 +54,7 @@
+             android:textAppearance="?android:attr/textAppearanceMedium"
+             android:visibility="gone"
+             android:padding="@dimen/call_banner_side_padding"
+-            android:background="@android:color/white" />
++            android:background="@color/background_white" />
+ 
+     </LinearLayout>
+ 
+@@ -67,7 +67,7 @@
+         android:gravity="top|center_horizontal"
+         android:scaleType="centerCrop"
+         android:contentDescription="@string/contactPhoto"
+-        android:background="@android:color/white"
++        android:background="@color/background_white"
+         android:src="@drawable/img_no_image_automirrored" />
+ 
+     <!-- Progress spinner, useful for indicating pending operations such as upgrade to video. -->
+diff --git a/res/values/custom_colors.xml b/res/values/custom_colors.xml
+new file mode 100644
+index 0000000..4d1b666
+--- /dev/null
++++ b/res/values/custom_colors.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2007 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<resources>
++    <color name="background_white">@color/exposed_bg_dark</color>
++</resources> 
+diff --git a/res/values/layers_colors.xml b/res/values/layers_colors.xml
+new file mode 100644
+index 0000000..58d127e
+--- /dev/null
++++ b/res/values/layers_colors.xml
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2007 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<resources>
++    <!-- Exposed colors for theming -->
++    <color name="exposed_bg_dark">@android:color/white</color>
++</resources> 
+-- 
+1.9.1
+

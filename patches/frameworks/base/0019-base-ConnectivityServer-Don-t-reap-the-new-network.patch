@@ -1,0 +1,33 @@
+From 2ddfe0ac0f1e184560af748c0f71f3d722131500 Mon Sep 17 00:00:00 2001
+From: "Christopher R. Palmer" <crpalmer@gmail.com>
+Date: Mon, 20 Apr 2015 07:09:10 -0400
+Subject: [PATCH 19/26] base: ConnectivityServer: Don't reap the new network
+
+When we add a network it may show up as unneeded while we are
+adding it and reaped as we are adding it.
+
+Reaping it immediately can happen before the captive portal
+check has completed.  This can then cause the network to get added
+again causing an unnecessary battery drain.
+
+Change-Id: I837f627c9f6d95bb8a021d2a58f5fc28564ef8b4
+---
+ services/core/java/com/android/server/ConnectivityService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/ConnectivityService.java b/services/core/java/com/android/server/ConnectivityService.java
+index baa36f3..61dd855 100644
+--- a/services/core/java/com/android/server/ConnectivityService.java
++++ b/services/core/java/com/android/server/ConnectivityService.java
+@@ -4235,7 +4235,7 @@ public class ConnectivityService extends IConnectivityManager.Stub
+         }
+         if (reapUnvalidatedNetworks == ReapUnvalidatedNetworks.REAP) {
+             for (NetworkAgentInfo nai : mNetworkAgentInfos.values()) {
+-                if (!nai.everValidated && unneeded(nai)) {
++                if (!nai.everValidated && unneeded(nai) && nai != newNetwork) {
+                     if (DBG) log("Reaping " + nai.name());
+                     teardownUnneededNetwork(nai);
+                 }
+-- 
+1.9.1
+

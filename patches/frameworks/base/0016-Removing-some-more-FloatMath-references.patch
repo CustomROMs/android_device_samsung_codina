@@ -1,0 +1,71 @@
+From 34aaf06e7ac97dd836e3fb2f84b6b91f11b7872e Mon Sep 17 00:00:00 2001
+From: Neil Fuller <nfuller@google.com>
+Date: Fri, 3 Oct 2014 09:38:24 +0100
+Subject: [PATCH 16/26] Removing some more FloatMath references
+
+See frameworks/base commit 33253a4baa6279f81a73425b49dfb6abe5f5416e
+for details.
+
+Bug: https://code.google.com/p/android/issues/detail?id=36199
+Change-Id: I46d4ee4c4be7972e3bcc6782fb50f024b6fff1ee
+Signed-off-by: Chet Kener <Cl3Kener@gmail.com>
+---
+ core/java/android/gesture/GestureStroke.java                       | 2 +-
+ .../src/com/android/gallery3d/common/BitmapUtils.java              | 7 +++----
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/gesture/GestureStroke.java b/core/java/android/gesture/GestureStroke.java
+index bed904e..4a324f9 100644
+--- a/core/java/android/gesture/GestureStroke.java
++++ b/core/java/android/gesture/GestureStroke.java
+@@ -69,7 +69,7 @@ public class GestureStroke {
+                 bx.bottom = p.y;
+                 len = 0;
+             } else {
+-                len += Math.hypot(p.x - tmpPoints[(i - 1) * 2], p.y - tmpPoints[(i -1 ) * 2 + 1]);
++                len += Math.hypot(p.x - tmpPoints[(i - 1) * 2], p.y - tmpPoints[(i -1) * 2 + 1]);
+                 bx.union(p.x, p.y);
+             }
+             index++;
+diff --git a/packages/WallpaperCropper/src/com/android/gallery3d/common/BitmapUtils.java b/packages/WallpaperCropper/src/com/android/gallery3d/common/BitmapUtils.java
+index a671ed2..4e276db 100644
+--- a/packages/WallpaperCropper/src/com/android/gallery3d/common/BitmapUtils.java
++++ b/packages/WallpaperCropper/src/com/android/gallery3d/common/BitmapUtils.java
+@@ -23,7 +23,6 @@ import android.graphics.Canvas;
+ import android.graphics.Matrix;
+ import android.graphics.Paint;
+ import android.os.Build;
+-import android.util.FloatMath;
+ import android.util.Log;
+ 
+ import java.io.ByteArrayOutputStream;
+@@ -72,7 +71,7 @@ public class BitmapUtils {
+                 && minSideLength == UNCONSTRAINED) return 1;
+ 
+         int lowerBound = (maxNumOfPixels == UNCONSTRAINED) ? 1 :
+-                (int) FloatMath.ceil(FloatMath.sqrt((float) (w * h) / maxNumOfPixels));
++                (int) Math.ceil(Math.sqrt((double) (w * h) / maxNumOfPixels));
+ 
+         if (minSideLength == UNCONSTRAINED) {
+             return lowerBound;
+@@ -96,7 +95,7 @@ public class BitmapUtils {
+ 
+     // Find the min x that 1 / x >= scale
+     public static int computeSampleSizeLarger(float scale) {
+-        int initialSize = (int) FloatMath.floor(1f / scale);
++        int initialSize = (int) Math.floor(1 / scale);
+         if (initialSize <= 1) return 1;
+ 
+         return initialSize <= 8
+@@ -107,7 +106,7 @@ public class BitmapUtils {
+     // Find the max x that 1 / x <= scale.
+     public static int computeSampleSize(float scale) {
+         Utils.assertTrue(scale > 0);
+-        int initialSize = Math.max(1, (int) FloatMath.ceil(1 / scale));
++        int initialSize = Math.max(1, (int) Math.ceil(1 / scale));
+         return initialSize <= 8
+                 ? Utils.nextPowerOf2(initialSize)
+                 : (initialSize + 7) / 8 * 8;
+-- 
+1.9.1
+

@@ -1,0 +1,97 @@
+From 9fb50c4cef527d00c1f03a31d6258041c25517fa Mon Sep 17 00:00:00 2001
+From: Thyrus11 <thyrus11@gmail.com>
+Date: Sat, 21 Feb 2015 07:56:00 +0100
+Subject: [PATCH 01/26] Themes: Making DocumentsUI fully themeable
+
+Changes added for main activitity and ItemGrid text colors
+
+Default values:
+drawer_background_color>#ffffffff
+font_color_doc_grid">#ffffffff
+
+PS2: move colors to cm_colors.xml and clear whitespaces
+
+Change-Id: Ia25030f3c2d2c19d43cadda149705d7086f2c155
+---
+ packages/DocumentsUI/res/layout/activity.xml      |  2 +-
+ packages/DocumentsUI/res/layout/item_doc_grid.xml |  6 +++---
+ packages/DocumentsUI/res/values/cm_colors.xml     | 23 +++++++++++++++++++++++
+ 3 files changed, 27 insertions(+), 4 deletions(-)
+ create mode 100644 packages/DocumentsUI/res/values/cm_colors.xml
+
+diff --git a/packages/DocumentsUI/res/layout/activity.xml b/packages/DocumentsUI/res/layout/activity.xml
+index 120168e..6fec8b2 100644
+--- a/packages/DocumentsUI/res/layout/activity.xml
++++ b/packages/DocumentsUI/res/layout/activity.xml
+@@ -63,7 +63,7 @@
+         android:layout_gravity="start"
+         android:orientation="vertical"
+         android:elevation="16dp"
+-        android:background="@*android:color/white">
++        android:background="@color/drawer_background_color">
+ 
+         <Toolbar
+             android:id="@+id/roots_toolbar"
+diff --git a/packages/DocumentsUI/res/layout/item_doc_grid.xml b/packages/DocumentsUI/res/layout/item_doc_grid.xml
+index d62d050..90938ae 100644
+--- a/packages/DocumentsUI/res/layout/item_doc_grid.xml
++++ b/packages/DocumentsUI/res/layout/item_doc_grid.xml
+@@ -66,7 +66,7 @@
+                     android:ellipsize="middle"
+                     android:textAlignment="viewStart"
+                     android:textAppearance="@android:style/TextAppearance.Material.Subhead"
+-                    android:textColor="@*android:color/primary_text_default_material_dark" />
++                    android:textColor="@color/font_color_doc_grid" />
+ 
+                 <ImageView
+                     android:id="@android:id/icon1"
+@@ -95,7 +95,7 @@
+                     android:ellipsize="end"
+                     android:textAlignment="viewStart"
+                     android:textAppearance="@android:style/TextAppearance.Material.Caption"
+-                    android:textColor="@*android:color/primary_text_default_material_dark" />
++                    android:textColor="@color/font_color_doc_grid" />
+ 
+                 <TextView
+                     android:id="@+id/size"
+@@ -107,7 +107,7 @@
+                     android:ellipsize="end"
+                     android:textAlignment="viewStart"
+                     android:textAppearance="@android:style/TextAppearance.Material.Caption"
+-                    android:textColor="@*android:color/primary_text_default_material_dark" />
++                    android:textColor="@color/font_color_doc_grid" />
+ 
+                 <ImageView
+                     android:id="@android:id/icon2"
+diff --git a/packages/DocumentsUI/res/values/cm_colors.xml b/packages/DocumentsUI/res/values/cm_colors.xml
+new file mode 100644
+index 0000000..1fa1a80
+--- /dev/null
++++ b/packages/DocumentsUI/res/values/cm_colors.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2015 The CyanogenMod Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<resources>
++
++    <!-- adding new exposed theme components -->
++    <color name="drawer_background_color">#ffffffff</color>
++    <color name="font_color_doc_grid">#ffffffff</color>
++
++</resources>
+-- 
+1.9.1
+
