@@ -1,0 +1,20 @@
+#!/system/bin/sh -x
+
+####### module autoload ######
+MODULES="/system/lib/modules/autoload"
+
+rw_system() {
+mount -o remount,rw /system
+}
+ro_system() {
+mount -o remount,ro /system
+}
+
+rw_system
+chmod -R 755 $MODULES
+ro_system
+
+for i in $MODULES/*.ko
+do
+insmod $i
+done

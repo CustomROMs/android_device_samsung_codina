@@ -29,3 +29,10 @@ ro.config.sync=yes
 ro.config.ntp.server_poll=86400000
 ro.config.ntp.clock_sync=1800000
 ro.config.ntp.sync_mode=3
+
+# Awesome Player
+media.stagefright.use-awesome=true
+persist.sys.media.use-awesome=true
+
+# Camera
+camera2.portability.force_api=1

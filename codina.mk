@@ -43,11 +43,15 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/omxloaders:system/etc/omxloaders \
     $(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
     $(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profiles.xml \
-    $(LOCAL_PATH)/configs/media_codecs_google_video.xml:system/etc/media_codecs_google_video.xml \
+    $(LOCAL_PATH)/configs/media_codecs_google_video_le.xml:system/etc/media_codecs_google_video.xml \
     $(LOCAL_PATH)/configs/audio_effects.conf:system/etc/audio_effects.conf \
     $(LOCAL_PATH)/configs/media_codecs_ffmpeg.xml:system/etc/media_codecs_ffmpeg.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
+
+# init.d
+PRODUCT_COPY_FILES += \
+    $(call find-copy-subdir-files,*,$(LOCAL_PATH)/configs/init.d,system/etc/init.d) \
 
 # Wifi
 PRODUCT_COPY_FILES += \
@@ -58,6 +62,7 @@ PRODUCT_PACKAGES += \
     wpa_supplicant.conf
 PRODUCT_PROPERTY_OVERRIDES += \
     wifi.interface=wlan0 \
+    wifi.p2pinterface=wlan0 \
     wifi.supplicant_scan_interval=150
 $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4330/device-bcm.mk)
 
@@ -79,6 +84,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     mobiledata.interfaces=pdp0,wlan0,gprs,ppp0
 
 # Audio
+PRODUCT_PROPERTY_OVERRIDES += \
+    audio.offload.disable=1
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf \
     $(LOCAL_PATH)/configs/asound.conf:system/etc/asound.conf
@@ -90,6 +97,14 @@ PRODUCT_PACKAGES += \
 
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
+
+ADDITIONAL_DEFAULT_PROPERTIES += \
+	ro.secure=0 \
+	ro.adb.secure=0 \
+	persist.sys.force_highendgfx=true 
+
+PRODUCT_PROPERTY_OVERRIDES += \
+        persist.sys.root_access=1
 
 # USB
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -156,7 +171,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.touchscreen.xml:system/etc/permissions/android.hardware.touchscreen.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:system/etc/permissions/android.hardware.usb.accessory.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
-    frameworks/native/data/etc/android.hardware.wifi.direct.xml:system/etc/permissions/android.hardware.wifi.direct.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/android.software.sip.xml:system/etc/permissions/android.software.sip.xml \
@@ -226,7 +240,8 @@ PRODUCT_COPY_FILES += \
 # GPS
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sirfgps.conf:system/etc/sirfgps.conf \
-    $(LOCAL_PATH)/configs/gps.conf:system/etc/gps.conf
+    $(LOCAL_PATH)/configs/gps.conf:system/etc/gps.conf \
+    $(LOCAL_PATH)/configs/cacert.txt:system/etc/suplcert/cacert.txt
 
 # Wi-Fi test
 PRODUCT_PACKAGES += \

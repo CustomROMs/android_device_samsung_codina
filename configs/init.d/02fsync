@@ -1,0 +1,3 @@
+#!/system/bin/sh -x
+
+echo 0 > /sys/kernel/dyn_fsync/Dyn_fsync_active
