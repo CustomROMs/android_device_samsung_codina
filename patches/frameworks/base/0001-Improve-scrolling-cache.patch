@@ -1,0 +1,85 @@
+From ede34c579352e68636bd85d58a531904f39cf947 Mon Sep 17 00:00:00 2001
+From: undefined <undefined@codebug.es>
+Date: Mon, 17 Nov 2014 18:59:57 +0100
+Subject: [PATCH] Improve scrolling cache
+
+Scrolling cache helps make short scrolls/flings smooth but will
+cause stutter when long flings are made. This patch disables
+scrolling cache when long flings are made.
+
+This patch also fixes a related bug where scrolling cache will
+not be enabled properly when transitioning from flinging to scrolling.
+
+Patch Set 2: Calculate threshold based on maximum velocity (Sang Tae Park)
+
+Credits: Pawit Pornkitprasan
+
+Change-Id: Iad52a35120212c871ffd35df6184aeb678ee44aa
+---
+ core/java/android/widget/AbsListView.java | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/widget/AbsListView.java b/core/java/android/widget/AbsListView.java
+index 523f970..4dc06b8 100644
+--- a/core/java/android/widget/AbsListView.java
++++ b/core/java/android/widget/AbsListView.java
+@@ -605,6 +605,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+     Runnable mPositionScrollAfterLayout;
+     private int mMinimumVelocity;
+     private int mMaximumVelocity;
++    private int mDecacheThreshold;
+     private float mVelocityScale = 1.0f;
+ 
+     final boolean[] mIsScrap = new boolean[1];
+@@ -864,6 +865,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+         mTouchSlop = configuration.getScaledTouchSlop();
+         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
+         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
++        mDecacheThreshold = mMaximumVelocity / 2;
+         mOverscrollDistance = configuration.getScaledOverscrollDistance();
+         mOverflingDistance = configuration.getScaledOverflingDistance();
+ 
+@@ -4372,7 +4374,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+                     // Keep the fling alive a little longer
+                     postDelayed(this, FLYWHEEL_TIMEOUT);
+                 } else {
+-                    endFling();
++                    endFling(false); // Don't disable the scrolling cache right after it was enabled
+                     mTouchMode = TOUCH_MODE_SCROLL;
+                     reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+                 }
+@@ -4386,6 +4388,11 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+         }
+ 
+         void start(int initialVelocity) {
++            if (Math.abs(initialVelocity) > mDecacheThreshold) {
++                // For long flings, scrolling cache causes stutter, so don't use it
++                clearScrollingCache();
++            }
++
+             int initialY = initialVelocity < 0 ? Integer.MAX_VALUE : 0;
+             mLastFlingY = initialY;
+             mScroller.setInterpolator(null);
+@@ -4458,13 +4465,18 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+         }
+ 
+         void endFling() {
++            endFling(true);
++        }
++
++        void endFling(boolean clearCache) {
+             mTouchMode = TOUCH_MODE_REST;
+ 
+             removeCallbacks(this);
+             removeCallbacks(mCheckFlywheel);
+ 
+             reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+-            clearScrollingCache();
++            if (clearCache)
++                clearScrollingCache();
+             mScroller.abortAnimation();
+ 
+             if (mFlingStrictSpan != null) {
+-- 
+1.9.1
+
