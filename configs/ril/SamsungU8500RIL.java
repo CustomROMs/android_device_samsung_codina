@@ -194,11 +194,6 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         mContext = context;
     }
 
-    public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription, Integer instanceId) {
-        super(context, networkMode, cdmaSubscription, instanceId);
-        mQANElements = 5;
-    }
-
     static String
     requestToString(int request) {
         switch (request) {
