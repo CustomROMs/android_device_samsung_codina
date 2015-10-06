@@ -1,8 +1,7 @@
 LOCAL_PATH=../../../..
 
-
 PATCHES="bionic build frameworks/av frameworks/base/ frameworks/native/ frameworks/opt/net/wifi/ \
-	frameworks/opt/telephony/ libcore packages/apps/Bluetooth/ packages/apps/OmniGears packages/apps/Settings/ \
+        frameworks/opt/telephony/ \
         packages/services/Telecomm  packages/services/Telephony  system/core"
 
 export CL_RED="\033[31m"
@@ -38,7 +37,8 @@ apply() {
              #echo -e $CL_RED$out$CL_RST | tr '.' '\n'
          fi
     else 
-         echo -e $CL_RED"patch $1 has been applied with errors"$CL_RST
+         echo -e $CL_RED"patch $1 applies with errors -> reject"$CL_RST
+	 git reset --hard
          #echo -e $CL_RED$l$CL_RST | tr '.' '\n'
     fi;
 }
@@ -71,6 +71,7 @@ do
 pre_clean $i
 done
 
+
 if [ "$1" != "clean" ]; then
 
 	cd $patches
@@ -84,9 +85,8 @@ if [ "$1" != "clean" ]; then
 	for i in  $PATCHES
 	do
 	if test -f RESET; then
-               /bin/bash RESET
-        fi
-
+		/bin/bash RESET
+	fi
 	apply_all $i
 	done
 fi
