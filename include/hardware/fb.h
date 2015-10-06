@@ -36,6 +36,12 @@ __BEGIN_DECLS
 /*****************************************************************************/
 
 typedef struct framebuffer_device_t {
+    /**
+     * Common methods of the framebuffer device.  This *must* be the first member of
+     * framebuffer_device_t as users of this structure will cast a hw_device_t to
+     * framebuffer_device_t pointer in contexts where it's known the hw_device_t references a
+     * framebuffer_device_t.
+     */
     struct hw_device_t common;
 
     /* flags describing some attributes of the framebuffer */
@@ -43,8 +49,8 @@ typedef struct framebuffer_device_t {
 
     /* dimensions of the framebuffer in pixels */
 #ifdef STE_HARDWARE
-    uint32_t  width;
-    uint32_t  height;
+    uint32_t        width;
+    uint32_t        height;
 #else
     const uint32_t  width;
     const uint32_t  height;
@@ -52,7 +58,7 @@ typedef struct framebuffer_device_t {
 
     /* frambuffer stride in pixels */
 #ifdef STE_HARDWARE
-    int       stride;
+    int             stride;
 #else
     const int       stride;
 #endif
@@ -62,8 +68,8 @@ typedef struct framebuffer_device_t {
 
     /* resolution of the framebuffer's display panel in pixel per inch*/
 #ifdef STE_HARDWARE
-    float     xdpi;
-    float     ydpi;
+    float           xdpi;
+    float           ydpi;
 #else
     const float     xdpi;
     const float     ydpi;
