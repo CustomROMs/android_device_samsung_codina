@@ -25,10 +25,6 @@ PRODUCT_AAPT_PREF_CONFIG := hdpi
 # new google video codecs for low end devices
 DEVICE_ENABLE_LOV := true
 
-# NovaThor Settings
-PRODUCT_PACKAGES += \
-    NovaThorSettings
-
 # Graphics
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=131072 \
