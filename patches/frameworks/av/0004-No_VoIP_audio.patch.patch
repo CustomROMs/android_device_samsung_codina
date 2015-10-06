@@ -1,0 +1,25 @@
+From bfa011a00d81383a2602d487cdca9e72ab847edc Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 7 Oct 2015 01:57:41 +0300
+Subject: [PATCH 4/7] No_VoIP_audio.patch
+
+Change-Id: I0520a578f99aaf040345eb560f33a122d24d6d6a
+---
+ services/audiopolicy/service/AudioPolicyService.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/services/audiopolicy/service/AudioPolicyService.cpp b/services/audiopolicy/service/AudioPolicyService.cpp
+index eefff3d..98e2d0b 100644
+--- a/services/audiopolicy/service/AudioPolicyService.cpp
++++ b/services/audiopolicy/service/AudioPolicyService.cpp
+@@ -1021,6 +1021,7 @@ void AudioPolicyService::setParameters(audio_io_handle_t ioHandle,
+                                        const char *keyValuePairs,
+                                        int delayMs)
+ {
++    return;
+     mAudioCommandThread->parametersCommand(ioHandle, keyValuePairs,
+                                            delayMs);
+ }
+-- 
+1.9.1
+

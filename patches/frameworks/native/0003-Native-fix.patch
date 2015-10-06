@@ -1,7 +1,7 @@
-From 8b7ec759bf165dcf3bb06115eb34548c1f446250 Mon Sep 17 00:00:00 2001
+From ab43fc07f25e8296d83c4dc46081bbb5c459b93c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 29 Sep 2015 16:14:58 +0300
-Subject: [PATCH 4/9] Native fix
+Subject: [PATCH 3/8] Native fix
 
 Change-Id: I9583f69f02204679e875a271e38ca0ec06c435ba
 ---
@@ -48,7 +48,7 @@ index 463e26d..5bf104b 100644
  private:
      size_t          mSize;
 diff --git a/include/binder/Parcel.h b/include/binder/Parcel.h
-index 6a69761..68c2083 100644
+index 6e098bf..59ba485 100644
 --- a/include/binder/Parcel.h
 +++ b/include/binder/Parcel.h
 @@ -28,8 +28,12 @@
@@ -79,7 +79,7 @@ index 6a69761..68c2083 100644
      template<typename T>
      status_t            write(const LightFlattenable<T>& val);
  
-@@ -168,9 +175,12 @@ public:
+@@ -171,9 +178,12 @@ public:
      sp<IBinder>         readStrongBinder() const;
      wp<IBinder>         readWeakBinder() const;
  
@@ -93,7 +93,7 @@ index 6a69761..68c2083 100644
      template<typename T>
      status_t            read(LightFlattenable<T>& val) const;
  
-@@ -288,19 +298,25 @@ private:
+@@ -291,19 +301,25 @@ private:
  
      class FlattenableHelperInterface {
      protected:
@@ -121,7 +121,7 @@ index 6a69761..68c2083 100644
  
      public:
          virtual size_t getFlattenedSize() const {
-@@ -313,7 +329,11 @@ private:
+@@ -316,7 +332,11 @@ private:
              return val.flatten(buffer, size, fds, count);
          }
          virtual status_t unflatten(void const* buffer, size_t size, int const* fds, size_t count) {
@@ -133,7 +133,7 @@ index 6a69761..68c2083 100644
          }
      };
      status_t write(const FlattenableHelperInterface& val);
-@@ -335,11 +355,13 @@ public:
+@@ -338,11 +358,13 @@ public:
  
  // ---------------------------------------------------------------------------
  
@@ -147,7 +147,7 @@ index 6a69761..68c2083 100644
  
  template<typename T>
  status_t Parcel::write(const LightFlattenable<T>& val) {
-@@ -359,11 +381,13 @@ status_t Parcel::write(const LightFlattenable<T>& val) {
+@@ -362,11 +384,13 @@ status_t Parcel::write(const LightFlattenable<T>& val) {
      return NO_ERROR;
  }
  
@@ -326,10 +326,10 @@ index 4e9e810..5848e77 100644
          // timestamp - a monotonically increasing value in nanoseconds
          // isAutoTimestamp - if the timestamp was synthesized at queue time
 diff --git a/include/media/openmax/OMX_IVCommon.h b/include/media/openmax/OMX_IVCommon.h
-index a5b9d18..8944349 100644
+index f9b6f4b..7ce89ab 100644
 --- a/include/media/openmax/OMX_IVCommon.h
 +++ b/include/media/openmax/OMX_IVCommon.h
-@@ -165,6 +165,9 @@ typedef enum OMX_COLOR_FORMATTYPE {
+@@ -166,6 +166,9 @@ typedef enum OMX_COLOR_FORMATTYPE {
      OMX_COLOR_FormatYUV420Flexible = 0x7F420888,
  
      OMX_TI_COLOR_FormatYUV420PackedSemiPlanar = 0x7F000100,
@@ -482,7 +482,7 @@ index 6604757..8f49142 100644
  }; // namespace android
  
 diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
-index e7589b1..27e5614 100644
+index 343b2f9..0a1e1b7 100644
 --- a/libs/binder/Parcel.cpp
 +++ b/libs/binder/Parcel.cpp
 @@ -873,6 +873,13 @@ status_t Parcel::writeBlob(size_t len, WritableBlob* outBlob)
@@ -499,7 +499,7 @@ index e7589b1..27e5614 100644
  status_t Parcel::write(const FlattenableHelperInterface& val)
  {
      status_t err;
-@@ -1285,6 +1292,13 @@ status_t Parcel::readBlob(size_t len, ReadableBlob* outBlob) const
+@@ -1298,6 +1305,13 @@ status_t Parcel::readBlob(size_t len, ReadableBlob* outBlob) const
      return NO_ERROR;
  }
  
@@ -750,10 +750,10 @@ index a716949..ac964e0 100644
      return BAD_VALUE;
  }
 diff --git a/opengl/include/EGL/eglext.h b/opengl/include/EGL/eglext.h
-index 3b2984a..9736c5a 100644
+index b2abdb1..16fb3e4 100644
 --- a/opengl/include/EGL/eglext.h
 +++ b/opengl/include/EGL/eglext.h
-@@ -313,6 +313,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSURFACEPOINTERANGLEPROC) (EGLDisplay
+@@ -322,6 +322,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSURFACEPOINTERANGLEPROC) (EGLDisplay
  #endif
  
  #if KHRONOS_SUPPORT_INT64   /* EGLuint64NV requires 64-bit uint support */
@@ -761,7 +761,7 @@ index 3b2984a..9736c5a 100644
  #ifndef EGL_NV_system_time
  #define EGL_NV_system_time 1
  typedef khronos_utime_nanoseconds_t EGLuint64NV;
-@@ -324,6 +325,7 @@ typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMEFREQUENCYNVPROC) (void);
+@@ -333,6 +334,7 @@ typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMEFREQUENCYNVPROC) (void);
  typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMENVPROC) (void);
  #endif
  #endif
@@ -831,7 +831,7 @@ index aa92ea0..938c3c2 100644
  /* IMG extensions */
  
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-index ac49e84..23936cb 100644
+index 13d44f3..072539b 100644
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -26,6 +26,9 @@
@@ -844,7 +844,7 @@ index ac49e84..23936cb 100644
  
  #include <gui/Surface.h>
  
-@@ -77,8 +80,12 @@ DisplayDevice::DisplayDevice(
+@@ -88,8 +91,12 @@ DisplayDevice::DisplayDevice(
        mPowerMode(HWC_POWER_MODE_OFF),
        mActiveConfig(0)
  {
@@ -857,7 +857,7 @@ index ac49e84..23936cb 100644
  
      /*
       * Create our display's surface
-@@ -435,7 +442,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
+@@ -416,7 +423,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
  
      mDisplaySurface->resizeBuffers(newWidth, newHeight);
  
@@ -870,7 +870,7 @@ index ac49e84..23936cb 100644
      mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
      eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
      eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
-@@ -527,12 +539,19 @@ void DisplayDevice::dump(String8& result) const {
+@@ -500,12 +512,19 @@ void DisplayDevice::dump(String8& result) const {
      const Transform& tr(mGlobalTransform);
      result.appendFormat(
          "+ DisplayDevice: %s\n"
@@ -893,10 +893,10 @@ index ac49e84..23936cb 100644
          mIsSecure, mSecureLayerVisible, mPowerMode, mActiveConfig,
          mVisibleLayersSortedByZ.size(),
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index fec5991..169b65b 100644
+index 8695a44..d349e44 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
-@@ -181,7 +181,9 @@ private:
+@@ -180,7 +180,9 @@ private:
      wp<IBinder> mDisplayToken;
  
      // ANativeWindow this display is rendering into
@@ -907,10 +907,10 @@ index fec5991..169b65b 100644
  
      EGLConfig       mConfig;
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 9981029..9f7ae0b 100644
+index de0f921..d96dbb4 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -2936,6 +2936,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3051,6 +3051,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
      uint32_t code;
      Parcel const* data;
      Parcel* reply;
@@ -918,7 +918,7 @@ index 9981029..9f7ae0b 100644
  
      enum {
          MSG_API_CALL,
-@@ -2949,6 +2950,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3064,6 +3065,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
       */
      virtual status_t transact(uint32_t code,
              const Parcel& data, Parcel* reply, uint32_t /* flags */) {
@@ -926,7 +926,7 @@ index 9981029..9f7ae0b 100644
          this->code = code;
          this->data = &data;
          this->reply = reply;
-@@ -2966,6 +2968,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3081,6 +3083,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
              looper->sendMessage(this, Message(MSG_API_CALL));
              barrier.wait();
          }

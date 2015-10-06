@@ -1,0 +1,30 @@
+From 418ccb1471f664ef67c09c9355a82470b0929294 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 7 Oct 2015 02:03:33 +0300
+Subject: [PATCH 6/7] av-Support-for-HOTWORD-OK-Google
+
+Change-Id: I1428b55b35be8adf3a5e1d3f1c4c1f6ce5d6ed0c
+---
+ services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 13af3ef..c547125 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -261,6 +261,12 @@ status_t AudioPolicyService::getInputForAttr(const audio_attributes_t *attr,
+         return BAD_VALUE;
+     }
+ 
++#ifdef HAVE_PRE_KITKAT_AUDIO_BLOB
++    if (inputSource == AUDIO_SOURCE_HOTWORD) {
++        inputSource = AUDIO_SOURCE_VOICE_RECOGNITION;
++    }
++#endif
++
+     sp<AudioPolicyEffects>audioPolicyEffects;
+     {
+         Mutex::Autolock _l(mLock);
+-- 
+1.9.1
+

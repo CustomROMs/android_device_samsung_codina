@@ -1,7 +1,7 @@
-From 6413a995b39b4a96490e97558d82c508c960b046 Mon Sep 17 00:00:00 2001
+From 4c9aa6e7483c1d5af7930a13f4c89fcc6f481091 Mon Sep 17 00:00:00 2001
 From: Stefan Berger <s.berger81@gmail.com>
 Date: Thu, 15 Jan 2015 21:43:04 +0100
-Subject: [PATCH 7/9] native: graphicbuffer fixup
+Subject: [PATCH 6/8] native: graphicbuffer fixup
 
 Change-Id: I4a0a0cc435672f03e1b453fd26547aeb94cf04fd
 ---
