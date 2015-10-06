@@ -22,9 +22,6 @@ DEVICE_PACKAGE_OVERLAYS := $(LOCAL_PATH)/overlay
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
 
-PRODUCT_PACKAGES += \
-    OmniTorch
-
 # U8500 Common init
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/init.u8500.rc:root/init.u8500.rc \
@@ -219,7 +216,7 @@ $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.m
 
 ifneq ($(TARGET_SCREEN_HEIGHT),800)
 # Call omni_codina.mk because somehow it's not being called!
-$(call inherit-product, device/samsung/codina/omni_codina.mk)
+#$(call inherit-product, device/samsung/codina/aosp_codina.mk)
 endif
 
 # Init files
