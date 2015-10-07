@@ -20,17 +20,12 @@ LOCAL_PATH := device/samsung/codina
 TARGET_SPECIFIC_HEADER_PATH := $(LOCAL_PATH)/include
 PRODUCT_VENDOR_KERNEL_HEADERS := $(LOCAL_PATH)/kernel-headers
 
-# Codinaramfs sdboot
-
-ifeq ($(shell cat $(LOCAL_PATH)/rootdir/fstab.samsungcodina | grep -q mmcblk1p2 ; echo $$?),0)
-DEVICE_CODINA_ENABLE_SDBOOT := false
-endif
-
 # Board
 TARGET_NO_BOOTLOADER := true
 TARGET_NO_KERNEL := true
 TARGET_NO_RADIOIMAGE := true
 TARGET_NO_SEPARATE_RECOVERY := true
+BOARD_CANT_BUILD_RECOVERY_FROM_BOOT_PATCH := true
 TARGET_BOOTLOADER_BOARD_NAME := montblanc
 
 # Partitions

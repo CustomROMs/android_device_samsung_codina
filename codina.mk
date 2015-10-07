@@ -206,6 +206,17 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Use the non-open-source parts, if they're present
 include vendor/samsung/u8500-common/vendor-common.mk
 
+TARGET_PREBUILT_KERNEL="true"
+
+ifeq ($(TARGET_PREBUILT_KERNEL),"true")
+LOCAL_KERNEL := $(LOCAL_PATH)/prebuilt/boot.img
+else
+LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
+endif
+
+PRODUCT_COPY_FILES := \
+	$(LOCAL_KERNEL):kernel
+
 # == BEGIN LOCAL CONFIG ==
 
 # For better compatibility with ROMs (like Slim, PAC)
@@ -215,27 +226,6 @@ ifneq ($(TARGET_SCREEN_HEIGHT),800)
 # Call omni_codina.mk because somehow it's not being called!
 #$(call inherit-product, device/samsung/codina/aosp_codina.mk)
 endif
-
-# Init files
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/fstab.samsungcodina:root/fstab.samsungcodina \
-    $(LOCAL_PATH)/rootdir/init.samsungcodina.rc:root/init.samsungcodina.rc \
-    $(LOCAL_PATH)/rootdir/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc \
-    $(LOCAL_PATH)/rootdir/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc
-    
-# STE Modem
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/ste_modem.sh:system/etc/ste_modem.sh
-
-# Audio
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/adm.sqlite-u8500:system/etc/adm.sqlite-u8500
-
-# GPS
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/sirfgps.conf:system/etc/sirfgps.conf \
-    $(LOCAL_PATH)/configs/gps.conf:system/etc/gps.conf \
-    $(LOCAL_PATH)/configs/cacert.txt:system/etc/suplcert/cacert.txt
 
 # Wi-Fi test
 PRODUCT_PACKAGES += \
