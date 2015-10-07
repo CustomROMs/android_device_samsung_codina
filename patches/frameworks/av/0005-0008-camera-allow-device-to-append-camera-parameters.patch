@@ -1,0 +1,135 @@
+From cfded8cecdeca38b153835b2052778c59d899bb8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 7 Oct 2015 20:28:25 +0300
+Subject: [PATCH 5/6] 
+ 0008-camera-allow-device-to-append-camera-parameters.patch
+
+Change-Id: I5f3b87e5e9c8ee6fdcd8c0e511e7c765c1944b3e
+---
+ camera/CameraParameters.cpp                        | 22 +++------------------
+ include/camera/CameraParameters.h                  | 23 ++++------------------
+ .../device1/CameraHardwareInterface.h              |  3 +++
+ 3 files changed, 10 insertions(+), 38 deletions(-)
+
+diff --git a/camera/CameraParameters.cpp b/camera/CameraParameters.cpp
+index dccf5ca..e76ba39 100644
+--- a/camera/CameraParameters.cpp
++++ b/camera/CameraParameters.cpp
+@@ -21,6 +21,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <camera/CameraParameters.h>
++#include "camera/CameraParametersExtra.h"
+ 
+ namespace android {
+ // Parameter keys to communicate between camera application and driver.
+@@ -146,26 +147,11 @@ const char CameraParameters::SCENE_MODE_FIREWORKS[] = "fireworks";
+ const char CameraParameters::SCENE_MODE_SPORTS[] = "sports";
+ const char CameraParameters::SCENE_MODE_PARTY[] = "party";
+ const char CameraParameters::SCENE_MODE_CANDLELIGHT[] = "candlelight";
+-#ifdef STE_SAMSUNG_HARDWARE
+-const char CameraParameters::SCENE_MODE_AQUA[] = "aqua";
+-const char CameraParameters::SCENE_MODE_BACKLIGHT[] = "backlight";
+-const char CameraParameters::SCENE_MODE_DUSKDAWN[] = "duskdawn";
+-const char CameraParameters::SCENE_MODE_FALLCOLOR[] = "fallcolor";
+-const char CameraParameters::SCENE_MODE_TEXT[] = "text";
+-#endif
+ const char CameraParameters::SCENE_MODE_BARCODE[] = "barcode";
+ const char CameraParameters::SCENE_MODE_HDR[] = "hdr";
+ 
+ const char CameraParameters::PIXEL_FORMAT_YUV422SP[] = "yuv422sp";
+ const char CameraParameters::PIXEL_FORMAT_YUV420SP[] = "yuv420sp";
+-#ifdef STE_HARDWARE
+-const char CameraParameters::PIXEL_FORMAT_YUV420SPNV12[] = "yuv420spnv12";
+-const char CameraParameters::PIXEL_FORMAT_YUV420MB[] = "yuv420mb";
+-const char CameraParameters::PIXEL_FORMAT_YVU422SP[] = "yvu422sp";
+-const char CameraParameters::PIXEL_FORMAT_YVU422P[] = "yvu422p";
+-const char CameraParameters::PIXEL_FORMAT_YVU420SP[] = "yvu420sp";
+-const char CameraParameters::PIXEL_FORMAT_YVU420P[]  = "yvu420p";
+-#endif
+ const char CameraParameters::PIXEL_FORMAT_YUV422I[] = "yuv422i-yuyv";
+ const char CameraParameters::PIXEL_FORMAT_YUV420P[]  = "yuv420p";
+ const char CameraParameters::PIXEL_FORMAT_RGB565[] = "rgb565";
+@@ -187,10 +173,8 @@ const char CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE[] = "continuous-pictu
+ const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
+ const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
+ 
+-#ifdef STE_HARDWARE
+-// keys for record stride and sliceheight
+-const char CameraParameters::KEY_RECORD_STRIDE[] = "record-stride";
+-const char CameraParameters::KEY_RECORD_SLICE_HEIGHT[] = "record-slice-height";
++#ifdef CAMERA_PARAMETERS_EXTRA_C
++CAMERA_PARAMETERS_EXTRA_C
+ #endif
+ 
+ CameraParameters::CameraParameters()
+diff --git a/include/camera/CameraParameters.h b/include/camera/CameraParameters.h
+index be79297..814fc32 100644
+--- a/include/camera/CameraParameters.h
++++ b/include/camera/CameraParameters.h
+@@ -594,13 +594,6 @@ public:
+     static const char SCENE_MODE_SPORTS[];
+     static const char SCENE_MODE_PARTY[];
+     static const char SCENE_MODE_CANDLELIGHT[];
+-#ifdef STE_SAMSUNG_HARDWARE
+-    static const char SCENE_MODE_AQUA[];
+-    static const char SCENE_MODE_BACKLIGHT[];
+-    static const char SCENE_MODE_DUSKDAWN[];
+-    static const char SCENE_MODE_FALLCOLOR[];
+-    static const char SCENE_MODE_TEXT[];
+-#endif
+     // Applications are looking for a barcode. Camera driver will be optimized
+     // for barcode reading.
+     static const char SCENE_MODE_BARCODE[];
+@@ -613,14 +606,6 @@ public:
+     // and KEY_VIDEO_FRAME_FORMAT
+     static const char PIXEL_FORMAT_YUV422SP[];
+     static const char PIXEL_FORMAT_YUV420SP[]; // NV21
+-#ifdef STE_HARDWARE
+-    static const char PIXEL_FORMAT_YUV420SPNV12[]; // NV12
+-    static const char PIXEL_FORMAT_YVU422SP[];
+-    static const char PIXEL_FORMAT_YVU422P[];
+-    static const char PIXEL_FORMAT_YVU420SP[];
+-    static const char PIXEL_FORMAT_YVU420P[];
+-    static const char PIXEL_FORMAT_YUV420MB[];
+-#endif
+     static const char PIXEL_FORMAT_YUV422I[]; // YUY2
+     static const char PIXEL_FORMAT_YUV420P[]; // YV12
+     static const char PIXEL_FORMAT_RGB565[];
+@@ -686,15 +671,15 @@ public:
+     // Values for light special effects
+     // Low-light enhancement mode
+     static const char LIGHTFX_LOWLIGHT[];
++
+     // High-dynamic range mode
+     static const char LIGHTFX_HDR[];
+ 
+-#ifdef STE_HARDWARE
+-    // keys for record stride and slice height
+-    static const char KEY_RECORD_STRIDE[];
+-    static const char KEY_RECORD_SLICE_HEIGHT[];
++#ifdef CAMERA_PARAMETERS_EXTRA_H
++CAMERA_PARAMETERS_EXTRA_H
+ #endif
+ 
++
+ private:
+     DefaultKeyedVector<String8,String8>    mMap;
+ };
+diff --git a/services/camera/libcameraservice/device1/CameraHardwareInterface.h b/services/camera/libcameraservice/device1/CameraHardwareInterface.h
+index 87b2807..362ccf9 100644
+--- a/services/camera/libcameraservice/device1/CameraHardwareInterface.h
++++ b/services/camera/libcameraservice/device1/CameraHardwareInterface.h
+@@ -636,6 +636,9 @@ private:
+ 
+     static int __set_usage(struct preview_stream_ops* w, int usage)
+     {
++#ifdef STE_HARDWARE
++        usage |= GRALLOC_USAGE_PRIVATE_0;
++#endif
+         ANativeWindow *a = anw(w);
+         return native_window_set_usage(a, usage);
+     }
+-- 
+1.9.1
+

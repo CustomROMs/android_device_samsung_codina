@@ -1,0 +1,163 @@
+From 1cbbb53eebdf723f500d2aaf0bfeb0c485f970be Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 7 Oct 2015 20:19:18 +0300
+Subject: [PATCH 4/5] Fix build
+
+Change-Id: I6c2e32eefdd1ae9ec9960a4be7131350f4eb683c
+---
+ libs/ui/PixelFormat.cpp                   | 38 +++++++++++++++++++------------
+ opengl/libagl/egl.cpp                     |  2 ++
+ opengl/tests/hwc/hwcTestLib.cpp           |  8 +++++++
+ opengl/tests/hwc/hwcTestLib.h             |  2 ++
+ services/surfaceflinger/DisplayDevice.cpp | 11 +++++++--
+ 5 files changed, 45 insertions(+), 16 deletions(-)
+
+diff --git a/libs/ui/PixelFormat.cpp b/libs/ui/PixelFormat.cpp
+index d2d103a..15e99ab 100644
+--- a/libs/ui/PixelFormat.cpp
++++ b/libs/ui/PixelFormat.cpp
+@@ -23,32 +23,42 @@ namespace android {
+ 
+ ssize_t bytesPerPixel(PixelFormat format) {
+     switch (format) {
+-        case PIXEL_FORMAT_RGBA_8888:
+-        case PIXEL_FORMAT_RGBX_8888:
+-        case PIXEL_FORMAT_BGRA_8888:
++        case HAL_PIXEL_FORMAT_RGBA_8888:
++        case HAL_PIXEL_FORMAT_RGBX_8888:
++        case HAL_PIXEL_FORMAT_BGRA_8888:
+             return 4;
+-        case PIXEL_FORMAT_RGB_888:
++        case HAL_PIXEL_FORMAT_RGB_888:
+             return 3;
+-        case PIXEL_FORMAT_RGB_565:
+-        case PIXEL_FORMAT_RGBA_5551:
+-        case PIXEL_FORMAT_RGBA_4444:
++        case HAL_PIXEL_FORMAT_RGB_565:
++        case HAL_PIXEL_FORMAT_RGBA_5551:
++        case HAL_PIXEL_FORMAT_RGBA_4444:
+             return 2;
++        case HAL_PIXEL_FORMAT_YCbCr_422_SP:
++        case HAL_PIXEL_FORMAT_YCbCr_422_I:
++        case HAL_PIXEL_FORMAT_YCrCb_420_SP:
++        case HAL_PIXEL_FORMAT_YV12:
++            return 1;
+     }
+     return BAD_VALUE;
+ }
+ 
+ ssize_t bitsPerPixel(PixelFormat format) {
+     switch (format) {
+-        case PIXEL_FORMAT_RGBA_8888:
+-        case PIXEL_FORMAT_RGBX_8888:
+-        case PIXEL_FORMAT_BGRA_8888:
++        case HAL_PIXEL_FORMAT_RGBA_8888:
++        case HAL_PIXEL_FORMAT_RGBX_8888:
++        case HAL_PIXEL_FORMAT_BGRA_8888:
+             return 32;
+-        case PIXEL_FORMAT_RGB_888:
++        case HAL_PIXEL_FORMAT_RGB_888:
+             return 24;
+-        case PIXEL_FORMAT_RGB_565:
+-        case PIXEL_FORMAT_RGBA_5551:
+-        case PIXEL_FORMAT_RGBA_4444:
++        case HAL_PIXEL_FORMAT_RGB_565:
++        case HAL_PIXEL_FORMAT_RGBA_5551:
++        case HAL_PIXEL_FORMAT_RGBA_4444:
++        case HAL_PIXEL_FORMAT_YCbCr_422_SP:
++        case HAL_PIXEL_FORMAT_YCbCr_422_I:
+             return 16;
++        case HAL_PIXEL_FORMAT_YCrCb_420_SP:
++        case HAL_PIXEL_FORMAT_YV12:
++            return 12;
+     }
+     return BAD_VALUE;
+ }
+diff --git a/opengl/libagl/egl.cpp b/opengl/libagl/egl.cpp
+index 1feac8b..f688d69 100644
+--- a/opengl/libagl/egl.cpp
++++ b/opengl/libagl/egl.cpp
+@@ -2051,6 +2051,8 @@ EGLImageKHR eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+         case HAL_PIXEL_FORMAT_RGB_888:
+         case HAL_PIXEL_FORMAT_RGB_565:
+         case HAL_PIXEL_FORMAT_BGRA_8888:
++        case HAL_PIXEL_FORMAT_RGBA_5551:
++        case HAL_PIXEL_FORMAT_RGBA_4444:
+             break;
+         default:
+             return setError(EGL_BAD_PARAMETER, EGL_NO_IMAGE_KHR);
+diff --git a/opengl/tests/hwc/hwcTestLib.cpp b/opengl/tests/hwc/hwcTestLib.cpp
+index 9b224e2..d567e6e 100644
+--- a/opengl/tests/hwc/hwcTestLib.cpp
++++ b/opengl/tests/hwc/hwcTestLib.cpp
+@@ -560,6 +560,8 @@ uint32_t hwcTestColor2Pixel(uint32_t format, ColorFract color, float alpha)
+         {HAL_PIXEL_FORMAT_RGB_888,   false, 3,  0, 8,  8, 8, 16, 8,  0, 0},
+         {HAL_PIXEL_FORMAT_RGB_565,   true,  2,  0, 5,  5, 6, 11, 5,  0, 0},
+         {HAL_PIXEL_FORMAT_BGRA_8888, false, 4, 16, 8,  8, 8,  0, 8, 24, 8},
++        {HAL_PIXEL_FORMAT_RGBA_5551, true , 2,  0, 5,  5, 5, 10, 5, 15, 1},
++        {HAL_PIXEL_FORMAT_RGBA_4444, false, 2, 12, 4,  0, 4,  4, 4,  8, 4},
+         {HAL_PIXEL_FORMAT_YV12,      true,  3, 16, 8,  8, 8,  0, 8,  0, 0},  
+     };
+ 
+@@ -612,6 +614,8 @@ void hwcTestSetPixel(GraphicBuffer *gBuf, unsigned char *buf,
+         {HAL_PIXEL_FORMAT_RGB_888,    3},
+         {HAL_PIXEL_FORMAT_RGB_565,    2},
+         {HAL_PIXEL_FORMAT_BGRA_8888,  4},
++        {HAL_PIXEL_FORMAT_RGBA_5551,  2},
++        {HAL_PIXEL_FORMAT_RGBA_4444,  2},
+     };
+ 
+     if (gBuf->getPixelFormat() == HAL_PIXEL_FORMAT_YV12) {
+@@ -809,6 +813,10 @@ void hwcTestColorConvert(uint32_t fromFormat, uint32_t toFormat,
+          0, 0, 31, 31, 0, 0, 63, 63, 0, 0, 31, 31},
+         {HAL_PIXEL_FORMAT_BGRA_8888, true,  false,
+          0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255},
++        {HAL_PIXEL_FORMAT_RGBA_5551, true,  false,
++         0, 0, 31, 31, 0, 0, 31, 31, 0, 0, 31, 31},
++        {HAL_PIXEL_FORMAT_RGBA_4444, true,  false,
++         0, 0, 15, 15, 0, 0, 15, 15, 0, 0, 15, 15},
+         {HAL_PIXEL_FORMAT_YV12,      false, true,
+          0, 16, 235, 255, 0, 16, 240, 255, 0, 16, 240, 255},
+     };
+diff --git a/opengl/tests/hwc/hwcTestLib.h b/opengl/tests/hwc/hwcTestLib.h
+index d403308..d7d5837 100644
+--- a/opengl/tests/hwc/hwcTestLib.h
++++ b/opengl/tests/hwc/hwcTestLib.h
+@@ -46,6 +46,8 @@ const struct hwcTestGraphicFormat {
+     {HAL_PIXEL_FORMAT_RGB_888,   "RGB888",   1, 1},
+     {HAL_PIXEL_FORMAT_RGB_565,   "RGB565",   1, 1},
+     {HAL_PIXEL_FORMAT_BGRA_8888, "BGRA8888", 1, 1},
++    {HAL_PIXEL_FORMAT_RGBA_5551, "RGBA5551", 1, 1},
++    {HAL_PIXEL_FORMAT_RGBA_4444, "RGBA4444", 1, 1},
+     {HAL_PIXEL_FORMAT_YV12,      "YV12",     2, 2},
+ };
+ 
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+index 90f99a0..68884d9 100755
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -468,12 +468,19 @@ void DisplayDevice::dump(String8& result) const {
+     const Transform& tr(mGlobalTransform);
+     result.appendFormat(
+         "+ DisplayDevice: %s\n"
+-        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d), ANativeWindow=%p, orient=%2d (type=%08x), "
++        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d),"
++#ifndef STE_HARDWARE
++        " ANativeWindow=%p,"
++#endif
++        " orient=%2d (type=%08x), "
+         "flips=%u, isSecure=%d, secureVis=%d, acquired=%d, numLayers=%zu\n"
+         "   v:[%d,%d,%d,%d], f:[%d,%d,%d,%d], s:[%d,%d,%d,%d],"
+         "transform:[[%0.3f,%0.3f,%0.3f][%0.3f,%0.3f,%0.3f][%0.3f,%0.3f,%0.3f]]\n",
+         mDisplayName.string(), mType, mHwcDisplayId,
+-        mLayerStack, mDisplayWidth, mDisplayHeight, mNativeWindow.get(),
++        mLayerStack, mDisplayWidth, mDisplayHeight, 
++#ifndef STE_HARDWARE
++        mNativeWindow.get(),
++#endif
+         mOrientation, tr.getType(), getPageFlipCount(),
+         mIsSecure, mSecureLayerVisible, mScreenAcquired, mVisibleLayersSortedByZ.size(),
+         mViewport.left, mViewport.top, mViewport.right, mViewport.bottom,
+-- 
+1.9.1
+

@@ -1,9 +1,9 @@
-From c3b222dafe0abe5adf35cf119b9ab99819d1033b Mon Sep 17 00:00:00 2001
+From c3508078857e8e72c2632be42ff756e6e9731b45 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Thu, 16 Jul 2015 10:57:18 +0300
-Subject: [PATCH 3/3] 0003-system_core-STE-OMX-Fix.patch.patch
+Date: Wed, 7 Oct 2015 17:59:29 +0300
+Subject: [PATCH 2/6] STE OMX fix
 
-Change-Id: I3112141a8023b8e2f7173aff1a7a3f8dc9ba668e
+Change-Id: I708ea8f08f9e85889e7f91baeb8b8a1a5d532106
 ---
  include/utils/Flattenable.h | 22 ++++++++++++++++++++++
  libutils/Android.mk         |  6 ++++++
@@ -74,10 +74,10 @@ index 882a8b2..495b90d 100644
  /*
   * LightFlattenable is a protocol allowing object to serialize themselves out
 diff --git a/libutils/Android.mk b/libutils/Android.mk
-index b1dc1f8..44f69c1 100644
+index b55e635..7a02783 100644
 --- a/libutils/Android.mk
 +++ b/libutils/Android.mk
-@@ -44,6 +44,12 @@ commonSources:= \
+@@ -43,6 +43,12 @@ commonSources:= \
  	VectorImpl.cpp \
  	misc.cpp
  

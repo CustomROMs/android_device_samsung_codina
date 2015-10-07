@@ -1,7 +1,7 @@
-From b0422ec69e26e9955386bfe67720304f7419c3f3 Mon Sep 17 00:00:00 2001
+From d4d18822dca01dd6ea67053776ab078db355dbde Mon Sep 17 00:00:00 2001
 From: C457 <android.c357@gmail.com>
 Date: Thu, 27 Mar 2014 09:40:20 -0500
-Subject: [PATCH 4/8] native:Fix buffering on Samsung STE devices
+Subject: [PATCH 5/5] native:Fix buffering on Samsung STE devices
 
 @marcin1147
 
@@ -16,10 +16,10 @@ Change-Id: I01e29fc05969ab11c6790433a6ccb7fa7ce4658b
  2 files changed, 16 insertions(+)
 
 diff --git a/include/ui/FramebufferNativeWindow.h b/include/ui/FramebufferNativeWindow.h
-index 5cd8101..14def01 100644
+index 5ec738f..22bbf67 100644
 --- a/include/ui/FramebufferNativeWindow.h
 +++ b/include/ui/FramebufferNativeWindow.h
-@@ -30,8 +30,12 @@
+@@ -28,8 +28,12 @@
  #include <ui/ANativeObjectBase.h>
  #include <ui/Rect.h>
  
@@ -32,7 +32,7 @@ index 5cd8101..14def01 100644
  
  extern "C" EGLNativeWindowType android_createDisplaySurface(void);
  
-@@ -80,7 +84,11 @@ private:
+@@ -78,7 +82,11 @@ private:
      framebuffer_device_t* fbDev;
      alloc_device_t* grDev;
  

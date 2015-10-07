@@ -1,0 +1,70 @@
+From 61ae3039dc176dfcf83399bce1a26387562566ec Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 7 Oct 2015 20:19:07 +0300
+Subject: [PATCH 3/5] Revert "get rid of HAL pixelformats 5551 and 4444"
+
+This reverts commit c2414bb0989763641ca57cf72c11ef6d86565a23.
+
+Conflicts:
+	include/ui/PixelFormat.h
+	libs/gui/GLConsumer.cpp
+	services/surfaceflinger/Layer.cpp
+
+Change-Id: I897e3fa23cdcdeb2655da1911438c1b5a03a3291
+---
+ include/ui/PixelFormat.h          | 4 ++--
+ libs/gui/GLConsumer.cpp           | 2 ++
+ services/surfaceflinger/Layer.cpp | 2 ++
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/include/ui/PixelFormat.h b/include/ui/PixelFormat.h
+index 9af1ce6..276fc8f 100644
+--- a/include/ui/PixelFormat.h
++++ b/include/ui/PixelFormat.h
+@@ -61,8 +61,6 @@ enum {
+     PIXEL_FORMAT_RGB_888     = HAL_PIXEL_FORMAT_RGB_888,    // 3x8-bit RGB
+     PIXEL_FORMAT_RGB_565     = HAL_PIXEL_FORMAT_RGB_565,    // 16-bit RGB
+     PIXEL_FORMAT_BGRA_8888   = HAL_PIXEL_FORMAT_BGRA_8888,  // 4x8-bit BGRA
+-    PIXEL_FORMAT_RGBA_5551   = 6,                           // 16-bit ARGB
+-    PIXEL_FORMAT_RGBA_4444   = 7,                           // 16-bit ARGB
+ #ifdef STE_HARDWARE
+     // Added Support for YUV42XMBN,
+     // Required for Copybit CC acceleration
+@@ -70,6 +68,8 @@ enum {
+     PIXEL_FORMAT_YCbCr_420_SP = HAL_PIXEL_FORMAT_YCbCr_420_SP,
+     PIXEL_FORMAT_YCbCr_420_P = HAL_PIXEL_FORMAT_YCbCr_420_P,
+ #endif
++    PIXEL_FORMAT_RGBA_5551   = HAL_PIXEL_FORMAT_RGBA_5551,  // 16-bit ARGB
++    PIXEL_FORMAT_RGBA_4444   = HAL_PIXEL_FORMAT_RGBA_4444,  // 16-bit ARGB
+ };
+ 
+ typedef int32_t PixelFormat;
+diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
+index 2add66c..002d07d 100644
+--- a/libs/gui/GLConsumer.cpp
++++ b/libs/gui/GLConsumer.cpp
+@@ -919,6 +919,8 @@ void GLConsumer::computeCurrentTransformMatrixLocked() {
+                 switch (buf->getPixelFormat()) {
+                     case PIXEL_FORMAT_RGBA_8888:
+                     case PIXEL_FORMAT_RGBX_8888:
++                    case PIXEL_FORMAT_RGBA_5551:
++                    case PIXEL_FORMAT_RGBA_4444:
+                     case PIXEL_FORMAT_RGB_888:
+                     case PIXEL_FORMAT_RGB_565:
+                     case PIXEL_FORMAT_BGRA_8888:
+diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
+index 6419020..a439269 100644
+--- a/services/surfaceflinger/Layer.cpp
++++ b/services/surfaceflinger/Layer.cpp
+@@ -624,6 +624,8 @@ bool Layer::getOpacityForFormat(uint32_t format) {
+         case HAL_PIXEL_FORMAT_RGBA_8888:
+         case HAL_PIXEL_FORMAT_BGRA_8888:
+         case HAL_PIXEL_FORMAT_sRGB_A_8888:
++        case HAL_PIXEL_FORMAT_RGBA_5551:
++        case HAL_PIXEL_FORMAT_RGBA_4444:
+             return false;
+     }
+     // in all other case, we have no blending (also for unknown formats)
+-- 
+1.9.1
+

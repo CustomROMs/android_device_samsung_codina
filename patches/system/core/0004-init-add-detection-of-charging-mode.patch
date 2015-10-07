@@ -1,7 +1,7 @@
-From be4dad06bdb5edc3f99cb63c2fc3d0dfb90ce50f Mon Sep 17 00:00:00 2001
+From 24454ef39258de37b11917e87a604e18cdd7d3a3 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Sat, 17 Dec 2011 17:26:54 -0500
-Subject: [PATCH 5/6] init: add detection of charging mode
+Subject: [PATCH 4/6] init: add detection of charging mode
 
 Based on Prashant Somashekar's patch which is in turn based on techomancer's
 patch http://goo.gl/I19GG.
@@ -26,12 +26,15 @@ Conflicts:
  init/Android.mk |  8 ++++++++
  init/init.c     | 21 ++++++++++++++++++++-
  2 files changed, 28 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 init/Android.mk
 
 diff --git a/init/Android.mk b/init/Android.mk
-index 0b906e9..f9cf1c0 100755
+old mode 100644
+new mode 100755
+index 72c2272..fc40652
 --- a/init/Android.mk
 +++ b/init/Android.mk
-@@ -32,6 +32,14 @@ endif
+@@ -31,6 +31,14 @@ endif
  # Enable ueventd logging
  #LOCAL_CFLAGS += -DLOG_UEVENTS=1
  
@@ -45,9 +48,9 @@ index 0b906e9..f9cf1c0 100755
 +
  LOCAL_MODULE:= init
  
- LOCAL_FORCE_STATIC_EXECUTABLE := true
+ # Currently, init doesn't start when built with clang.
 diff --git a/init/init.c b/init/init.c
-index 1c7ba6b..46281bc 100644
+index 99474e6..64e89f8 100644
 --- a/init/init.c
 +++ b/init/init.c
 @@ -999,6 +999,25 @@ static void selinux_initialize(void)
