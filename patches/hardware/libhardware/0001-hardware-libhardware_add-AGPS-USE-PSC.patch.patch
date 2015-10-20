@@ -1,0 +1,27 @@
+From fa40b83967a0e407b7beb54a1b7e88787ba6f47b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 10:34:43 +0300
+Subject: [PATCH 1/4] hardware-libhardware_add-AGPS-USE-PSC.patch
+
+Change-Id: I3e6f1c321f5e4dcbea1f36b9baa2cd0744da77a3
+---
+ include/hardware/gps.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/hardware/gps.h b/include/hardware/gps.h
+index 76b6cb7..47d7cb9 100644
+--- a/include/hardware/gps.h
++++ b/include/hardware/gps.h
+@@ -507,6 +507,9 @@ typedef struct {
+     uint16_t mcc;
+     uint16_t mnc;
+     uint16_t lac;
++#ifdef AGPS_USE_PSC
++    uint16_t psc;
++#endif
+     uint32_t cid;
+ } AGpsRefLocationCellID;
+ 
+-- 
+1.9.1
+

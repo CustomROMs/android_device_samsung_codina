@@ -1,8 +1,8 @@
 LOCAL_PATH=../../../..
 
-PATCHES="bionic build frameworks/av frameworks/base/ frameworks/native/ frameworks/opt/net/wifi/ \
-        hardware/libhardware frameworks/opt/telephony/ \
-        packages/services/Telecomm  packages/services/Telephony  system/core"
+PATCHES="./frameworks/opt/net ./frameworks/opt/net/wifi ./frameworks/opt/telephony ./frameworks/native \
+./frameworks/base ./frameworks/av ./system/core ./hardware/libhardware ./hardware/ril ./bionic ./build \
+./external/sepolicy"
 
 export CL_RED="\033[31m"
 export CL_GRN="\033[32m"

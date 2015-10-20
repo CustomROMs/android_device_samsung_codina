@@ -1,0 +1,35 @@
+From ca8fee946d5fe775d11c24b787755905fe667169 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 10:28:23 +0300
+Subject: [PATCH 5/8] system-core_W0-Fix.patch
+
+Change-Id: I734cd1ec4c09ef2b6d8e5649935eb28e3394b598
+---
+ libpixelflinger/Android.mk | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/libpixelflinger/Android.mk b/libpixelflinger/Android.mk
+index 697db25..227053b 100644
+--- a/libpixelflinger/Android.mk
++++ b/libpixelflinger/Android.mk
+@@ -76,4 +76,17 @@ LOCAL_CLANG_ASFLAGS_arm += -no-integrated-as
+ LOCAL_CLANG_ASFLAGS_arm64 += -no-integrated-as
+ include $(BUILD_SHARED_LIBRARY)
+ 
++#
++# Static library version
++#
++
++include $(CLEAR_VARS)
++LOCAL_MODULE:= libpixelflinger_static
++LOCAL_SRC_FILES := $(PIXELFLINGER_SRC_FILES)
++LOCAL_SRC_FILES_arm := $(PIXELFLINGER_SRC_FILES_arm)
++LOCAL_SRC_FILES_arm64 := $(PIXELFLINGER_SRC_FILES_arm64)
++LOCAL_SRC_FILES_mips := $(PIXELFLINGER_SRC_FILES_mips)
++LOCAL_CFLAGS := $(PIXELFLINGER_CFLAGS)
++include $(BUILD_STATIC_LIBRARY)
++
+ include $(call all-makefiles-under,$(LOCAL_PATH))
+-- 
+1.9.1
+

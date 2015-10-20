@@ -1,0 +1,33 @@
+From 2457108a06f6849a3834ba93c5cdec8cb97b0181 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 10:17:56 +0300
+Subject: [PATCH 03/10] frameworks-av_005-ACodec-no-configure-swencdec.patch
+
+Change-Id: I1b739a38b5845b3548845031da5d2ace2853c723
+---
+ media/libstagefright/ACodec.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 8d9bd21..ae3da9c 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1629,6 +1629,15 @@ status_t ACodec::configureCodec(
+     sp<AMessage> outputFormat = mNotify->dup(); // will use this for kWhatOutputFormatChanged
+ 
+     mIsEncoder = encoder;
++   /* Meticulus:
++    * Software codecs don't require configuration? Not sure
++    * but skipping configuration for them seems to work.
++    */
++    if(strncmp("OMX.google.h264", mComponentName.c_str(), 15) == 0
++       || strncmp("OMX.ffmpeg.h264", mComponentName.c_str(), 15) == 0){
++	ALOGI("Meticulus: Soft codec %s detected, skipping configureCodec\n", mComponentName.c_str());
++       return OK;
++    }
+ 
+     mInputMetadataType = kMetadataBufferTypeInvalid;
+     mOutputMetadataType = kMetadataBufferTypeInvalid;
+-- 
+1.9.1
+

@@ -1,0 +1,33 @@
+From e6f1a65e252b0adc93fabe1c651609d4363b600e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 10:18:18 +0300
+Subject: [PATCH 04/10] frameworks-av_006-STE-OMX-fix-streaming-video.patch
+
+Change-Id: Iec74a8b9fe089273c215e02634638366bf86c0f9
+---
+ media/libstagefright/ACodec.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index ae3da9c..60c3025 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -769,11 +769,15 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+ 
+     status_t err;
+     if (mNativeWindow != NULL && portIndex == kPortIndexOutput) {
++#ifdef STE_HARDWARE
++	err = allocateOutputBuffersFromNativeWindow();
++#else
+         if (storingMetadataInDecodedBuffers()) {
+             err = allocateOutputMetadataBuffers();
+         } else {
+             err = allocateOutputBuffersFromNativeWindow();
+         }
++#endif
+     } else {
+         OMX_PARAM_PORTDEFINITIONTYPE def;
+         InitOMXParams(&def);
+-- 
+1.9.1
+

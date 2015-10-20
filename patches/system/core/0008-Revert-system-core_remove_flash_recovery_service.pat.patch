@@ -1,0 +1,36 @@
+From bfc37a8f5d7b8595453835063ea6d0c50dc5cb9f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 15:54:43 +0300
+Subject: [PATCH 8/8] Revert "system-core_remove_flash_recovery_service.patch"
+
+This reverts commit c6f7d01d2b7deac535d4094a2256f2247e5c9442.
+---
+ rootdir/init.rc | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 62d7aa7..b71908c 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -554,18 +554,6 @@ service adbd /sbin/adbd --root_seclabel=u:r:su:s0
+     disabled
+     seclabel u:r:adbd:s0
+ 
+-# Always start adbd on userdebug and eng builds
+-on property:ro.debuggable=1
+-    #write /sys/class/android_usb/android0/enable 1
+-    #start adbd
+-    setprop service.adb.root 1
+-
+-# Restart adbd so it can run as root
+-on property:service.adb.root=1
+-    write /sys/class/android_usb/android0/enable 0
+-    restart adbd
+-    write /sys/class/android_usb/android0/enable 1
+-
+ # adbd on at boot in emulator
+ on property:ro.kernel.qemu=1
+     start adbd
+-- 
+1.9.1
+

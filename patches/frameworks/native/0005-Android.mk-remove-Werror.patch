@@ -1,0 +1,184 @@
+From d64e3c34cf310975758a2b6f14ba43de26774347 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 18:01:46 +0300
+Subject: [PATCH 5/5] */Android.mk: remove -Werror
+
+Change-Id: Ic4dfe95736de6de17f00c640546c34faf56c0f52
+---
+ cmds/installd/Android.mk           | 2 +-
+ libs/binder/Android.mk             | 4 ++--
+ libs/ui/Android.mk                 | 2 +-
+ opengl/tests/gl2_jni/Android.mk    | 2 +-
+ opengl/tests/gl_jni/Android.mk     | 2 +-
+ opengl/tests/gl_perfapp/Android.mk | 2 +-
+ opengl/tests/gldual/Android.mk     | 2 +-
+ services/batteryservice/Android.mk | 2 +-
+ services/powermanager/Android.mk   | 2 +-
+ services/surfaceflinger/Android.mk | 8 ++++----
+ 10 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/cmds/installd/Android.mk b/cmds/installd/Android.mk
+index 6dec7f6..31f494c 100644
+--- a/cmds/installd/Android.mk
++++ b/cmds/installd/Android.mk
+@@ -1,7 +1,7 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+ common_src_files := commands.cpp utils.cpp
+-common_cflags := -Wall -Werror
++common_cflags := -Wall 
+ 
+ #
+ # Static library used in testing and executable
+diff --git a/libs/binder/Android.mk b/libs/binder/Android.mk
+index d5860ef..cd4515c 100644
+--- a/libs/binder/Android.mk
++++ b/libs/binder/Android.mk
+@@ -49,7 +49,7 @@ ifneq ($(TARGET_IS_64_BIT),true)
+ LOCAL_CFLAGS += -DBINDER_IPC_32BIT=1
+ endif
+ endif
+-LOCAL_CFLAGS += -Werror
++LOCAL_CFLAGS += 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+@@ -61,5 +61,5 @@ ifneq ($(TARGET_IS_64_BIT),true)
+ LOCAL_CFLAGS += -DBINDER_IPC_32BIT=1
+ endif
+ endif
+-LOCAL_CFLAGS += -Werror
++LOCAL_CFLAGS += 
+ include $(BUILD_STATIC_LIBRARY)
+diff --git a/libs/ui/Android.mk b/libs/ui/Android.mk
+index 1ce8626..2ac3795 100644
+--- a/libs/ui/Android.mk
++++ b/libs/ui/Android.mk
+@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_CLANG := true
+-LOCAL_CPPFLAGS := -std=c++1y -Weverything -Werror
++LOCAL_CPPFLAGS := -std=c++1y -Weverything 
+ 
+ # The static constructors and destructors in this library have not been noted to
+ # introduce significant overheads
+diff --git a/opengl/tests/gl2_jni/Android.mk b/opengl/tests/gl2_jni/Android.mk
+index 409bd73..0f5da46 100644
+--- a/opengl/tests/gl2_jni/Android.mk
++++ b/opengl/tests/gl2_jni/Android.mk
+@@ -30,7 +30,7 @@ include $(CLEAR_VARS)
+ # Optional tag would mean it doesn't get installed by default
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_CFLAGS := -Werror -Wno-error=unused-parameter
++LOCAL_CFLAGS :=  -Wno-error=unused-parameter
+ 
+ LOCAL_SRC_FILES:= \
+   gl_code.cpp
+diff --git a/opengl/tests/gl_jni/Android.mk b/opengl/tests/gl_jni/Android.mk
+index 11b4c8b..a40d0e6 100644
+--- a/opengl/tests/gl_jni/Android.mk
++++ b/opengl/tests/gl_jni/Android.mk
+@@ -30,7 +30,7 @@ include $(CLEAR_VARS)
+ # Optional tag would mean it doesn't get installed by default
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_CFLAGS := -Werror -Wno-error=unused-parameter
++LOCAL_CFLAGS :=  -Wno-error=unused-parameter
+ 
+ LOCAL_SRC_FILES:= \
+   gl_code.cpp
+diff --git a/opengl/tests/gl_perfapp/Android.mk b/opengl/tests/gl_perfapp/Android.mk
+index 854b54f..9577c20 100644
+--- a/opengl/tests/gl_perfapp/Android.mk
++++ b/opengl/tests/gl_perfapp/Android.mk
+@@ -33,7 +33,7 @@ include $(CLEAR_VARS)
+ # Optional tag would mean it doesn't get installed by default
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_CFLAGS := -Werror -Wno-error=unused-parameter
++LOCAL_CFLAGS :=  -Wno-error=unused-parameter
+ 
+ LOCAL_SRC_FILES:= \
+   gl_code.cpp
+diff --git a/opengl/tests/gldual/Android.mk b/opengl/tests/gldual/Android.mk
+index 1991ed9..4657f99 100644
+--- a/opengl/tests/gldual/Android.mk
++++ b/opengl/tests/gldual/Android.mk
+@@ -30,7 +30,7 @@ include $(CLEAR_VARS)
+ # Optional tag would mean it doesn't get installed by default
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_CFLAGS := -Werror -Wno-error=unused-parameter
++LOCAL_CFLAGS :=  -Wno-error=unused-parameter
+ 
+ LOCAL_SRC_FILES:= \
+   gl_code.cpp
+diff --git a/services/batteryservice/Android.mk b/services/batteryservice/Android.mk
+index e4097d7..112ef2a 100644
+--- a/services/batteryservice/Android.mk
++++ b/services/batteryservice/Android.mk
+@@ -15,6 +15,6 @@ LOCAL_MODULE:= libbatteryservice
+ 
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall  -Wunused -Wunreachable-code
+ 
+ include $(BUILD_STATIC_LIBRARY)
+diff --git a/services/powermanager/Android.mk b/services/powermanager/Android.mk
+index 7b24c65..340a1ef 100644
+--- a/services/powermanager/Android.mk
++++ b/services/powermanager/Android.mk
+@@ -12,6 +12,6 @@ LOCAL_MODULE:= libpowermanager
+ 
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall  -Wunused -Wunreachable-code
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index 068e55a..9066799 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -89,7 +89,7 @@ else
+     LOCAL_CFLAGS += -DMAX_VIRTUAL_DISPLAY_DIMENSION=0
+ endif
+ 
+-LOCAL_CFLAGS += -fvisibility=hidden -Wno-error=unused-parameter -Werror=format
++LOCAL_CFLAGS += -fvisibility=hidden -Wno-error=unused-parameter 
+ LOCAL_CFLAGS += -std=c++11
+ 
+ LOCAL_SHARED_LIBRARIES := \
+@@ -108,7 +108,7 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ LOCAL_MODULE := libsurfaceflinger
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wno-error=unused-parameter -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall  -Wno-error=unused-parameter -Wunused -Wunreachable-code
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+@@ -141,7 +141,7 @@ ifdef TARGET_32_BIT_SURFACEFLINGER
+ LOCAL_32_BIT_ONLY := true
+ endif
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wno-error=unused-parameter -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall  -Wno-error=unused-parameter -Wunused -Wunreachable-code
+ 
+ include $(BUILD_EXECUTABLE)
+ 
+@@ -165,7 +165,7 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ LOCAL_MODULE := libsurfaceflinger_ddmconnection
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wno-error=unused-parameter -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall  -Wno-error=unused-parameter -Wunused -Wunreachable-code
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ endif # libnativehelper
+-- 
+1.9.1
+

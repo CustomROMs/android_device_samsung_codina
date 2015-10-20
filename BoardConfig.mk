@@ -22,7 +22,6 @@ PRODUCT_VENDOR_KERNEL_HEADERS := $(LOCAL_PATH)/kernel-headers
 
 # Board
 TARGET_NO_BOOTLOADER := true
-TARGET_NO_KERNEL := true
 TARGET_NO_RADIOIMAGE := true
 TARGET_NO_SEPARATE_RECOVERY := true
 BOARD_CANT_BUILD_RECOVERY_FROM_BOOT_PATCH := true
@@ -164,22 +163,6 @@ TW_MAX_BRIGHTNESS := 255
 TW_NO_USB_STORAGE := true
 TW_NO_REBOOT_BOOTLOADER := true
 TW_HAS_DOWNLOAD_MODE := true
-
-# SELinux
-BOARD_SEPOLICY_DIRS := \
-    $(BOARD_SEPOLICY_DIRS) \
-    $(LOCAL_PATH)/sepolicy
-
-BOARD_SEPOLICY_UNION += \
-    device.te \
-    file.te \
-    rild.te \
-    drmserver.te \
-    ueventd.te \
-    domain.te \
-    file_contexts \
-    wpa_supplicant.te \
-    vold.te
 
 # Delete the line below when SELinux is enabled on all devices
 COMMON_GLOBAL_CFLAGS += -DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR

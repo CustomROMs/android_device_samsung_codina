@@ -1,0 +1,78 @@
+From becdc7200279d9dae20096ac1eccc6012116ae90 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 10:35:16 +0300
+Subject: [PATCH 4/4] hardware-libhardware_STE-fb-header.patch
+
+Change-Id: I27f45eabb2bd7e59d24c94bb4dcf55b8c8c83205
+---
+ include/hardware/fb.h | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/include/hardware/fb.h b/include/hardware/fb.h
+index 9df9416..d07a2c4 100644
+--- a/include/hardware/fb.h
++++ b/include/hardware/fb.h
+@@ -48,18 +48,32 @@ typedef struct framebuffer_device_t {
+     const uint32_t  flags;
+ 
+     /* dimensions of the framebuffer in pixels */
++#ifdef STE_HARDWARE
++    uint32_t        width;
++    uint32_t        height;
++#else
+     const uint32_t  width;
+     const uint32_t  height;
++#endif
+ 
+     /* frambuffer stride in pixels */
++#ifdef STE_HARDWARE
++    int             stride;
++#else
+     const int       stride;
++#endif
+ 
+     /* framebuffer pixel format */
+     const int       format;
+ 
+     /* resolution of the framebuffer's display panel in pixel per inch*/
++#ifdef STE_HARDWARE
++    float           xdpi;
++    float           ydpi;
++#else
+     const float     xdpi;
+     const float     ydpi;
++#endif
+ 
+     /* framebuffer's display panel refresh rate in frames per second */
+     const float     fps;
+@@ -150,6 +164,27 @@ typedef struct framebuffer_device_t {
+      */
+     int (*enableScreen)(struct framebuffer_device_t* dev, int enable);
+ 
++#ifdef STE_HARDWARE
++    /*
++     * Sets the number of degrees ccw the framebuffer shall be rotated before
++     * being sent to the display. This call may change the framebuffer's
++     * dimensions.
++     */
++    int (*rotate)(struct framebuffer_device_t* dev, unsigned int absolute_degree);
++
++    /*
++     * Informs gralloc about the UI rotation. This is needed in the mirroring use
++     * case to get the correct orientation on the external device, e.g. HDMI.
++     */
++    void (*UIRotationChange)(struct framebuffer_device_t* dev, int uiRotation);
++
++    /*
++     * Enables the mirroring of the main display content to an external device,
++     * e.g. HDMI.
++     */
++    void (*enableHDMIMirroring)(struct framebuffer_device_t* dev, int enable);
++#endif
++
+     void* reserved_proc[6];
+ 
+ } framebuffer_device_t;
+-- 
+1.9.1
+
