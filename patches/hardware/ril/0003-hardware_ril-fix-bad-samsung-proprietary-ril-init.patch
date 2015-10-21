@@ -1,0 +1,56 @@
+From b9ff8099e56cd0a7950484eb8def775b58e0d552 Mon Sep 17 00:00:00 2001
+From: Marco Magliona <marco.magliona@gmail.com>
+Date: Sun, 30 Nov 2014 01:44:38 +0100
+Subject: [PATCH 3/6] hardware_ril: fix bad samsung proprietary ril init
+
+rild create and pass an additional parameter to RIL_init function.
+This force RIL_init, in libsec-ril.so (samsung proprietary ril library),
+to give a null pointer (RIL_init fails) and breaks completely RIL.
+This should fix this problem. To make this effective it is necessary to
+add BOARD_NEEDS_SEC_RIL_WORKAROUND := true in your BoardCommonConfig.mk
+
+PS3: fix typo
+PS4: do not try to log clientId if not set
+
+Change-Id: I14e66315fa25aa1db05dbe9a03422c63a421205c
+---
+ rild/Android.mk | 4 ++++
+ rild/rild.c     | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/rild/Android.mk b/rild/Android.mk
+index 8aae88d..035d2b9 100644
+--- a/rild/Android.mk
++++ b/rild/Android.mk
+@@ -24,6 +24,10 @@ ifeq ($(SIM_COUNT), 2)
+     LOCAL_CFLAGS += -DANDROID_SIM_COUNT_2
+ endif
+ 
++ifeq ($(BOARD_NEEDS_SEC_RIL_WORKAROUND),true)
++     LOCAL_CFLAGS += -DSAMSUNG_PROPRIETARY_RIL_WORKAROUND
++endif
++
+ LOCAL_MODULE:= rild
+ LOCAL_MODULE_TAGS := optional
+ 
+diff --git a/rild/rild.c b/rild/rild.c
+index c63da38..8cf11c6 100644
+--- a/rild/rild.c
++++ b/rild/rild.c
+@@ -339,9 +339,13 @@ OpenLib:
+         argc = make_argv(args, rilArgv);
+     }
+ 
++#ifndef SAMSUNG_PROPRIETARY_RIL_WORKAROUND
+     rilArgv[argc++] = "-c";
+     rilArgv[argc++] = clientId;
+     RLOGD("RIL_Init argc = %d clientId = %s", argc, rilArgv[argc-1]);
++#else
++    RLOGD("RIL_Init argc = %d", argc);
++#endif
+ 
+     // Make sure there's a reasonable argv[0]
+     rilArgv[0] = argv[0];
+-- 
+1.9.1
+

@@ -1,0 +1,1204 @@
+From f041a915726c4cda469d12b62245247fc4ff9c39 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 21 Oct 2015 13:11:21 +0300
+Subject: [PATCH 5/6] Revert to LP-5.1
+
+Change-Id: I77ba3b734d74f1eb2e7e9deb934610bc4dc9e160
+---
+ libril/Android.mk                 |  10 +-
+ libril/RilSapSocket.h             | 262 --------------------------------------
+ libril/RilSocket.cpp              | 177 -------------------------
+ libril/ril.cpp                    | 143 ++++++---------------
+ libril/rilSocketQueue.h           | 167 ------------------------
+ libril/ril_ex.h                   |  48 -------
+ librilutils/Android.mk            |  25 +---
+ librilutils/proto/sap-api.options |  23 ----
+ rild/Android.mk                   |   2 -
+ rild/rild.c                       |  46 ++-----
+ 10 files changed, 52 insertions(+), 851 deletions(-)
+ delete mode 100644 libril/RilSapSocket.h
+ delete mode 100644 libril/RilSocket.cpp
+ delete mode 100644 libril/rilSocketQueue.h
+ delete mode 100644 libril/ril_ex.h
+ delete mode 100644 librilutils/proto/sap-api.options
+
+diff --git a/libril/Android.mk b/libril/Android.mk
+index 3f1d3e8..fa4a193 100644
+--- a/libril/Android.mk
++++ b/libril/Android.mk
+@@ -5,9 +5,7 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:= \
+     ril.cpp \
+-    ril_event.cpp\
+-    RilSocket.cpp \
+-    RilSapSocket.cpp \
++    ril_event.cpp
+ 
+ LOCAL_SHARED_LIBRARIES := \
+     liblog \
+@@ -26,14 +24,8 @@ ifeq ($(SIM_COUNT), 2)
+     LOCAL_CFLAGS += -DANDROID_SIM_COUNT_2
+ endif
+ 
+-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADER)/librilutils
+-LOCAL_C_INCLUDES += external/nanopb-c
+-
+ LOCAL_MODULE:= libril
+ 
+-LOCAL_COPY_HEADERS_TO := libril
+-LOCAL_COPY_HEADERS := ril_ex.h
+-
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ 
+diff --git a/libril/RilSapSocket.h b/libril/RilSapSocket.h
+deleted file mode 100644
+index 4261f93..0000000
+--- a/libril/RilSapSocket.h
++++ /dev/null
+@@ -1,262 +0,0 @@
+-/*
+-* Copyright (C) 2014 The Android Open Source Project
+-*
+-* Licensed under the Apache License, Version 2.0 (the "License");
+-* you may not use this file except in compliance with the License.
+-* You may obtain a copy of the License at
+-*
+-*     http://www.apache.org/licenses/LICENSE-2.0
+-*
+-* Unless required by applicable law or agreed to in writing, software
+-* distributed under the License is distributed on an "AS IS" BASIS,
+-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-* See the License for the specific language governing permissions and
+-* limitations under the License.
+-*/
+-
+-#ifndef RIL_UIM_SOCKET_H_INCLUDED
+-#define RIL_UIM_SOCKET_H_INCLUDED
+-#define RIL_SHLIB
+-#include "telephony/ril.h"
+-#include "RilSocket.h"
+-#include <hardware/ril/librilutils/proto/sap-api.pb.h>
+-
+-/**
+- * RilSapSocket is a derived class, derived from the RilSocket abstract
+- * class, representing sockets for communication between bluetooth SAP module and
+- * the ril daemon.
+- * <p>
+- * This class performs the following functions :
+- * <ul>
+- *     <li>Initialize the socket.
+- *     <li>Process the requests coming on the socket.
+- *     <li>Provide handlers for Unsolicited and request responses.
+- *     <li>Request and pending response queue handling.
+- * </ul>
+- */
+-class RilSapSocket : public RilSocket {
+-    /**
+-     * Function pointer to the ril initialization funtion.
+-     *
+-     * @param Ril environment variable with place request and
+-     *        response handlers and timeout handler.
+-     *
+-     * @param Number of arguements for the initialization function.
+-     *
+-     * @param Arguements to the initialization function used to
+-     *        generate instance id of the ril daemon.
+-     *
+-     * @return Radio functions with handlers for onRequest, onStateRequest,
+-     *         supports, onCancel and getVersion.
+-     */
+-    RIL_RadioFunctions *(*UimInit)(const struct RIL_Env *, int argc, char **argv);
+-
+-    /**
+-     * Place holder for the radio functions returned by the initialization
+-     * function. Currenty only onRequest handler is being used.
+-     */
+-    RIL_RadioFunctions* uimFuncs;
+-
+-    /**
+-     * Wrapper struct for handling the requests in the queue.
+-     */
+-    typedef struct SapSocketRequest {
+-        int token;
+-        MsgHeader* curr;
+-        struct SapSocketRequest* p_next;
+-        RIL_SOCKET_ID socketId;
+-    } SapSocketRequest;
+-
+-    /**
+-     * Queue for requests that are pending dispatch.
+-     */
+-    Ril_queue<SapSocketRequest> dispatchQueue;
+-
+-    /**
+-     * Queue for requests that are dispatched but are pending response
+-     */
+-    Ril_queue<SapSocketRequest> pendingResponseQueue;
+-
+-    public:
+-        /**
+-         * Initialize the socket and add the socket to the list.
+-         *
+-         * @param Name of the socket.
+-         * @param Radio functions to be used by the socket.
+-         */
+-        static void initSapSocket(const char *socketName,
+-        RIL_RadioFunctions *uimFuncs);
+-
+-        /**
+-         * Process requests from the dispatch request queue.
+-         * @param Request to be dispatched.
+-         */
+-        int processRequest(MsgHeader *request);
+-
+-        /**
+-         * Ril envoronment variable that holds the request and
+-         * unsol response handlers.
+-         */
+-        static struct RIL_Env uimRilEnv;
+-
+-        /**
+-         * Function to print the socket list.
+-         */
+-        static void printList();
+-
+-        /**
+-         * Clean up method to be called on command close.
+-         */
+-        void onCommandsSocketClosed(void);
+-
+-        /**
+-         * Datatype to handle the socket list.
+-         */
+-        typedef struct RilSapSocketList {
+-            RilSapSocket* socket;
+-            RilSapSocketList *next;
+-        } RilSapSocketList;
+-
+-    protected:
+-        /**
+-         * Process each record read from the socket and
+-         * push a new request created from that record to
+-         * the dispatch request queue.
+-         *
+-         * @param The record data.
+-         * @param The record length.
+-         */
+-        void pushRecord(void *record, size_t recordlen);
+-
+-        /**
+-         * Socket handler to be called when a request has
+-         * been completed.
+-         *
+-         * @param Token associated with the request.
+-         * @param Error, if any, while processing the request.
+-         * @param The response payload.
+-         * @param Response payload length.
+-         */
+-        void onRequestComplete(RIL_Token t,RIL_Errno e,
+-        void *response, size_t response_len);
+-
+-        /**
+-         * Socket handler to be called when there is an
+-         * unsolicited response.
+-         *
+-         * @param Message id.
+-         * @param Response data.
+-         * @param Response data length.
+-         */
+-        void onUnsolicitedResponse(int unsolResponse,
+-        void *data, size_t datalen);
+-
+-        /**
+-         * Class method to get the socket from the socket list.
+-         *
+-         * @param Socket id.
+-         * @return the sap socket.
+-         */
+-        static RilSapSocket* getSocketById(RIL_SOCKET_ID socketId);
+-
+-        /**
+-         * Method to send response to SAP. It does an atomic write operation on the
+-         * socket.
+-         *
+-         * @param the response header with the payload.
+-         */
+-        void sendResponse(MsgHeader *hdr);
+-
+-        /**
+-         * A loop for processing the requests in the request dispatch queue.
+-         */
+-        void *processRequestsLoop(void);
+-
+-        /**
+-         * Class method to add the sap socket to the list of sockets.
+-         * Does nothing if the socket is already present in the list.
+-         * Otherwise, calls the constructor of the parent class(To startlistening)
+-         * and add socket to the socket list.
+-         */
+-        static void addSocketToList(const char *socketName, RIL_SOCKET_ID socketid,
+-        RIL_RadioFunctions *uimFuncs);
+-
+-        /**
+-         * Check if a socket of the given name exists in the socket list.
+-         *
+-         * @param Socket name.
+-         * @return true if exists, false otherwise.
+-         */
+-        static bool SocketExists(const char *socketName);
+-
+-        /**
+-         * Send a clean up SAP DISCONNECT if the socket disconnects before doing a SAP
+-         * disconnect.
+-         */
+-        void sendDisconnect(void);
+-
+-        /**
+-         * Dispatch the clean up disconnect request.
+-         */
+-        void dispatchDisconnect(MsgHeader *req);
+-
+-
+-    private:
+-        /**
+-         * Constructor.
+-         *
+-         * @param Socket name.
+-         * @param Socket id.
+-         * @param Radio functions.
+-         */
+-        RilSapSocket(const char *socketName,
+-        RIL_SOCKET_ID socketId,
+-        RIL_RadioFunctions *inputUimFuncs);
+-
+-        /**
+-         * Called by the processRequest method to dispatch the request to
+-         * the lower layers. It calls the on request function.
+-         *
+-         * @param The request message.
+-         */
+-        void dispatchRequest(MsgHeader *request);
+-
+-        /**
+-         * Class method that selects the socket on which the onRequestComplete
+-         * is called.
+-         *
+-         * @param Token associated with the request.
+-         * @param Error, if any, while processing the request.
+-         * @param The response payload.
+-         * @param Response payload length.
+-         */
+-        static void sOnRequestComplete(RIL_Token t,
+-        RIL_Errno e, void *response, size_t responselen);
+-
+-#if defined(ANDROID_MULTI_SIM)
+-        /**
+-         * Class method that selects the socket on which the onUnsolicitedResponse
+-         * is called.
+-         *
+-         * @param Message id.
+-         * @param Response data.
+-         * @param Response data length.
+-         * @param Socket id.
+-         */
+-        static void sOnUnsolicitedResponse(int unsolResponse, const void *data,
+-        size_t datalen, RIL_SOCKET_ID socket_id);
+-#else
+-        /**
+-         * Class method that selects the socket on which the onUnsolicitedResponse
+-         * is called.
+-         *
+-         * @param Message id.
+-         * @param Response data.
+-         * @param Response data length.
+-         */
+-        static void sOnUnsolicitedResponse(int unsolResponse, const void *data,
+-        size_t datalen);
+-#endif
+-};
+-
+-#endif /*RIL_UIM_SOCKET_H_INCLUDED*/
+diff --git a/libril/RilSocket.cpp b/libril/RilSocket.cpp
+deleted file mode 100644
+index a002d94..0000000
+--- a/libril/RilSocket.cpp
++++ /dev/null
+@@ -1,177 +0,0 @@
+-/*
+-* Copyright (C) 2014 The Android Open Source Project
+-*
+-* Licensed under the Apache License, Version 2.0 (the "License");
+-* you may not use this file except in compliance with the License.
+-* You may obtain a copy of the License at
+-*
+-*     http://www.apache.org/licenses/LICENSE-2.0
+-*
+-* Unless required by applicable law or agreed to in writing, software
+-* distributed under the License is distributed on an "AS IS" BASIS,
+-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-* See the License for the specific language governing permissions and
+-* limitations under the License.
+-*/
+-
+-extern "C"
+-void *ril_socket_process_requests_loop(void *arg);
+-
+-#include "RilSocket.h"
+-#include <cutils/sockets.h>
+-#include <utils/Log.h>
+-#include <assert.h>
+-#define SOCKET_LISTEN_BACKLOG 0
+-
+-int RilSocket::socketInit(void) {
+-    int ret;
+-
+-    listenCb = &RilSocket::sSocketListener;
+-    commandCb = &RilSocket::sSocketRequestsHandler;
+-    listenFd = android_get_control_socket(name);
+-
+-    //Start listening
+-    ret = listen(listenFd, SOCKET_LISTEN_BACKLOG);
+-
+-    if (ret < 0) {
+-        RLOGE("Failed to listen on %s socket '%d': %s",
+-        name, listenFd, strerror(errno));
+-        return ret;
+-    }
+-    //Add listen event to the event loop
+-    ril_event_set(&listenEvent, listenFd, false, listenCb, this);
+-    rilEventAddWakeup_helper(&listenEvent);
+-    return ret;
+-}
+-
+-void RilSocket::sSocketListener(int fd, short flags, void *param) {
+-    RilSocket *theSocket = (RilSocket *) param;
+-    MySocketListenParam listenParam;
+-    listenParam.socket = theSocket;
+-    listenParam.sListenParam.type = RIL_SAP_SOCKET;
+-
+-    listenCallback_helper(fd, flags, (void*)&listenParam);
+-}
+-
+-void RilSocket::onNewCommandConnect() {
+-    pthread_attr_t attr;
+-    PthreadPtr pptr = ril_socket_process_requests_loop;
+-    int result;
+-
+-    pthread_attr_init(&attr);
+-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+-
+-    //Start socket request processing loop thread
+-    result = pthread_create(&socketThreadId, &attr, pptr, this);
+-    if(result < 0) {
+-        RLOGE("pthread_create failed with result:%d",result);
+-    }
+-
+-    RLOGE("New socket command connected and socket request thread started");
+-}
+-
+-void RilSocket::sSocketRequestsHandler(int fd, short flags, void *param) {
+-    socketClient *sc = (socketClient *) param;
+-    RilSocket *theSocket = sc->socketPtr;
+-    RecordStream *rs = sc->rs;
+-
+-    theSocket->socketRequestsHandler(fd, flags, rs);
+-}
+-
+-void RilSocket::socketRequestsHandler(int fd, short flags, RecordStream *p_rs) {
+-    int ret;
+-    assert(fd == commandFd);
+-    void *p_record;
+-    size_t recordlen;
+-
+-    for (;;) {
+-        /* loop until EAGAIN/EINTR, end of stream, or other error */
+-        ret = record_stream_get_next(p_rs, &p_record, &recordlen);
+-
+-        if (ret == 0 && p_record == NULL) {
+-            /* end-of-stream */
+-            break;
+-        } else if (ret < 0) {
+-            break;
+-        } else if (ret == 0) {
+-            pushRecord(p_record, recordlen);
+-        }
+-    }
+-
+-    if (ret == 0 || !(errno == EAGAIN || errno == EINTR)) {
+-        /* fatal error or end-of-stream */
+-        if (ret != 0) {
+-            RLOGE("error on reading command socket errno:%d\n", errno);
+-        } else {
+-            RLOGW("EOS.  Closing command socket.");
+-        }
+-
+-        close(commandFd);
+-        commandFd = -1;
+-
+-        ril_event_del(&callbackEvent);
+-
+-        record_stream_free(p_rs);
+-
+-        /* start listening for new connections again */
+-
+-        rilEventAddWakeup_helper(&listenEvent);
+-
+-        onCommandsSocketClosed();
+-    }
+-}
+-
+-void RilSocket::setListenFd(int fd) {
+-    listenFd = fd;
+-}
+-
+-void RilSocket::setCommandFd(int fd) {
+-    commandFd = fd;
+-}
+-
+-int RilSocket::getListenFd(void) {
+-    return listenFd;
+-}
+-
+-int RilSocket::getCommandFd(void) {
+-    return commandFd;
+-}
+-
+-void RilSocket::setListenCb(ril_event_cb cb) {
+-    listenCb = cb;
+-}
+-
+-void RilSocket::setCommandCb(ril_event_cb cb) {
+-    commandCb = cb;
+-}
+-
+-ril_event_cb RilSocket::getListenCb(void) {
+-    return listenCb;
+-}
+-
+-ril_event_cb RilSocket::getCommandCb(void) {
+-    return commandCb;
+-}
+-
+-void RilSocket::setListenEvent(ril_event event) {
+-    listenEvent = event;
+-}
+-
+-void RilSocket::setCallbackEvent(ril_event event) {
+-    callbackEvent = event;
+-}
+-
+-ril_event* RilSocket::getListenEvent(void)  {
+-    return &listenEvent;
+-}
+-
+-ril_event* RilSocket::getCallbackEvent(void) {
+-    return &callbackEvent;
+-}
+-
+-extern "C"
+-void *ril_socket_process_requests_loop(void *arg) {
+-    RilSocket *socket = (RilSocket *)arg;
+-    socket->processRequestsLoop();
+-    return NULL;
+-}
+diff --git a/libril/ril.cpp b/libril/ril.cpp
+index 4424561..fb50e1c 100644
+--- a/libril/ril.cpp
++++ b/libril/ril.cpp
+@@ -18,6 +18,7 @@
+ #define LOG_TAG "RILC"
+ 
+ #include <hardware_legacy/power.h>
++
+ #include <telephony/ril.h>
+ #include <telephony/ril_cdma_sms.h>
+ #include <cutils/sockets.h>
+@@ -28,9 +29,11 @@
+ #include <pthread.h>
+ #include <binder/Parcel.h>
+ #include <cutils/jstring.h>
++
+ #include <sys/types.h>
+ #include <sys/limits.h>
+ #include <pwd.h>
++
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdarg.h>
+@@ -46,14 +49,12 @@
+ #include <assert.h>
+ #include <netinet/in.h>
+ #include <cutils/properties.h>
+-#include <RilSapSocket.h>
+ 
+-extern "C" void
+-RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responselen);
++#include <ril_event.h>
++
+ namespace android {
+ 
+ #define PHONE_PROCESS "radio"
+-#define BLUETOOTH_PROCESS "bluetooth"
+ 
+ #define SOCKET_NAME_RIL "rild"
+ #define SOCKET2_NAME_RIL "rild2"
+@@ -152,6 +153,17 @@ typedef struct UserCallbackInfo {
+     struct UserCallbackInfo *p_next;
+ } UserCallbackInfo;
+ 
++typedef struct SocketListenParam {
++    RIL_SOCKET_ID socket_id;
++    int fdListen;
++    int fdCommand;
++    char* processName;
++    struct ril_event* commands_event;
++    struct ril_event* listen_event;
++    void (*processCommandsCallback)(int fd, short flags, void *param);
++    RecordStream *p_rs;
++} SocketListenParam;
++
+ extern "C" const char * requestToString(int request);
+ extern "C" const char * failCauseToString(RIL_Errno);
+ extern "C" const char * callStateToString(RIL_CallState);
+@@ -368,7 +380,7 @@ static char * RIL_getRilSocketName() {
+ }
+ 
+ extern "C"
+-void RIL_setRilSocketName(const char * s) {
++void RIL_setRilSocketName(char * s) {
+     strncpy(rild, s, MAX_SOCKET_NAME_LENGTH);
+ }
+ 
+@@ -2065,9 +2077,6 @@ blockingWrite(int fd, const void *buffer, size_t len) {
+             return -1;
+         }
+     }
+-#if VDBG
+-    RLOGE("RIL Response bytes written:%d", writeOffset);
+-#endif
+     return 0;
+ }
+ 
+@@ -3852,19 +3861,9 @@ static void listenCallback (int fd, short flags, void *param) {
+     int err;
+     int is_phone_socket;
+     int fdCommand = -1;
+-    char* processName;
+     RecordStream *p_rs;
+-    MySocketListenParam* listenParam;
+-    RilSocket *sapSocket = NULL;
+-    socketClient *sClient = NULL;
+-
+     SocketListenParam *p_info = (SocketListenParam *)param;
+ 
+-    if(RIL_SAP_SOCKET == p_info->type) {
+-        listenParam = (MySocketListenParam *)param;
+-        sapSocket = listenParam->socket;
+-    }
+-
+     struct sockaddr_un peeraddr;
+     socklen_t socklen = sizeof (peeraddr);
+ 
+@@ -3873,27 +3872,15 @@ static void listenCallback (int fd, short flags, void *param) {
+ 
+     struct passwd *pwd = NULL;
+ 
+-    if(NULL == sapSocket) {
+-        assert (*p_info->fdCommand < 0);
+-        assert (fd == *p_info->fdListen);
+-        processName = PHONE_PROCESS;
+-    } else {
+-        assert (sapSocket->commandFd < 0);
+-        assert (fd == sapSocket->listenFd);
+-        processName = BLUETOOTH_PROCESS;
+-    }
+-
++    assert (*p_info->fdCommand < 0);
++    assert (fd == *p_info->fdListen);
+ 
+     fdCommand = accept(fd, (sockaddr *) &peeraddr, &socklen);
+ 
+     if (fdCommand < 0 ) {
+         RLOGE("Error on accept() errno:%d", errno);
+         /* start listening for new connections again */
+-        if(NULL == sapSocket) {
+-            rilEventAddWakeup(p_info->listen_event);
+-        } else {
+-            rilEventAddWakeup(sapSocket->getListenEvent());
+-        }
++        rilEventAddWakeup(p_info->listen_event);
+         return;
+     }
+ 
+@@ -3909,7 +3896,7 @@ static void listenCallback (int fd, short flags, void *param) {
+         errno = 0;
+         pwd = getpwuid(creds.uid);
+         if (pwd != NULL) {
+-            if (strcmp(pwd->pw_name, processName) == 0) {
++            if (strcmp(pwd->pw_name, p_info->processName) == 0) {
+                 is_phone_socket = 1;
+             } else {
+                 RLOGE("RILD can't accept socket from process %s", pwd->pw_name);
+@@ -3922,24 +3909,17 @@ static void listenCallback (int fd, short flags, void *param) {
+     }
+ 
+     if (!is_phone_socket) {
+-        RLOGE("RILD must accept socket from %s", processName);
++      RLOGE("RILD must accept socket from %s", p_info->processName);
+ 
+-        close(fdCommand);
+-        fdCommand = -1;
++      close(fdCommand);
++      fdCommand = -1;
+ 
+-        if(NULL == sapSocket) {
+-            onCommandsSocketClosed(p_info->socket_id);
++      onCommandsSocketClosed(p_info->socket_id);
+ 
+-            /* start listening for new connections again */
+-            rilEventAddWakeup(p_info->listen_event);
+-        } else {
+-            sapSocket->onCommandsSocketClosed();
+-
+-            /* start listening for new connections again */
+-            rilEventAddWakeup(sapSocket->getListenEvent());
+-        }
++      /* start listening for new connections again */
++      rilEventAddWakeup(p_info->listen_event);
+ 
+-        return;
++      return;
+     }
+ 
+     ret = fcntl(fdCommand, F_SETFL, O_NONBLOCK);
+@@ -3948,30 +3928,20 @@ static void listenCallback (int fd, short flags, void *param) {
+         RLOGE ("Error setting O_NONBLOCK errno:%d", errno);
+     }
+ 
+-    if(NULL == sapSocket) {
+-        RLOGI("libril: new connection to %s", rilSocketIdToString(p_info->socket_id));
++    RLOGI("libril: new connection to %s", rilSocketIdToString(p_info->socket_id));
+ 
+-        p_info->fdCommand = fdCommand;
+-        p_rs = record_stream_new(p_info->fdCommand, MAX_COMMAND_BYTES);
+-        p_info->p_rs = p_rs;
++    p_info->fdCommand = fdCommand;
+ 
+-        ril_event_set (p_info->commands_event, p_info->fdCommand, 1,
+-        p_info->processCommandsCallback, p_info);
+-        rilEventAddWakeup (p_info->commands_event);
++    p_rs = record_stream_new(p_info->fdCommand, MAX_COMMAND_BYTES);
+ 
+-        onNewCommandConnect(p_info->socket_id);
+-    } else {
+-        RLOGI("libril: new connection");
++    p_info->p_rs = p_rs;
+ 
+-        sapSocket->setCommandFd(fdCommand);
+-        p_rs = record_stream_new(sapSocket->getCommandFd(), MAX_COMMAND_BYTES);
+-        sClient = new socketClient(sapSocket,p_rs);
+-        ril_event_set (sapSocket->getCallbackEvent(), sapSocket->getCommandFd(), 1,
+-        sapSocket->getCommandCb(), sClient);
++    ril_event_set (p_info->commands_event, p_info->fdCommand, 1,
++        p_info->processCommandsCallback, p_info);
+ 
+-        rilEventAddWakeup(sapSocket->getCallbackEvent());
+-        sapSocket->onNewCommandConnect();
+-    }
++    rilEventAddWakeup (p_info->commands_event);
++
++    onNewCommandConnect(p_info->socket_id);
+ }
+ 
+ static void freeDebugCallbackArgs(int number, char **args) {
+@@ -4448,33 +4418,6 @@ RIL_register (const RIL_RadioFunctions *callbacks) {
+ 
+ }
+ 
+-extern "C" void
+-RIL_register_socket (RIL_RadioFunctions *(*Init)(const struct RIL_Env *, int, char **),RIL_SOCKET_TYPE socketType, int argc, char **argv) {
+-
+-    RIL_RadioFunctions* UimFuncs = NULL;
+-
+-    if(Init) {
+-        UimFuncs = Init(&RilSapSocket::uimRilEnv, argc, argv);
+-
+-        switch(socketType) {
+-            case RIL_SAP_SOCKET:
+-                RilSapSocket::initSapSocket("sap_uim_socket1", UimFuncs);
+-
+-#if (SIM_COUNT >= 2)
+-                RilSapSocket::initSapSocket("sap_uim_socket2", UimFuncs);
+-#endif
+-
+-#if (SIM_COUNT >= 3)
+-                RilSapSocket::initSapSocket("sap_uim_socket3", UimFuncs);
+-#endif
+-
+-#if (SIM_COUNT >= 4)
+-                RilSapSocket::initSapSocket("sap_uim_socket4", UimFuncs);
+-#endif
+-        }
+-    }
+-}
+-
+ static int
+ checkAndDequeueRequestInfo(struct RequestInfo *pRI) {
+     int ret = 0;
+@@ -5185,15 +5128,3 @@ rilSocketIdToString(RIL_SOCKET_ID socket_id)
+ }
+ 
+ } /* namespace android */
+-
+-void rilEventAddWakeup_helper(struct ril_event *ev) {
+-    android::rilEventAddWakeup(ev);
+-}
+-
+-void listenCallback_helper(int fd, short flags, void *param) {
+-    android::listenCallback(fd, flags, param);
+-}
+-
+-int blockingWrite_helper(int fd, void *buffer, size_t len) {
+-    return android::blockingWrite(fd, buffer, len);
+-}
+diff --git a/libril/rilSocketQueue.h b/libril/rilSocketQueue.h
+deleted file mode 100644
+index eaa5155..0000000
+--- a/libril/rilSocketQueue.h
++++ /dev/null
+@@ -1,167 +0,0 @@
+-/*
+-* Copyright (C) 2014 The Android Open Source Project
+-*
+-* Licensed under the Apache License, Version 2.0 (the "License");
+-* you may not use this file except in compliance with the License.
+-* You may obtain a copy of the License at
+-*
+-*     http://www.apache.org/licenses/LICENSE-2.0
+-*
+-* Unless required by applicable law or agreed to in writing, software
+-* distributed under the License is distributed on an "AS IS" BASIS,
+-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-* See the License for the specific language governing permissions and
+-* limitations under the License.
+-*/
+-
+-#include "pb_decode.h"
+-#include <pthread.h>
+-#include <hardware/ril/librilutils/proto/sap-api.pb.h>
+-#include <utils/Log.h>
+-
+-using namespace std;
+-
+-/**
+- * Template queue class to handling requests for a rild socket.
+- * <p>
+- * This class performs the following functions :
+- * <ul>
+- *     <li>Enqueue.
+- *     <li>Dequeue.
+- *     <li>Check and dequeue.
+- * </ul>
+- */
+-
+-template <typename T>
+-class Ril_queue {
+-
+-   /**
+-     * Mutex attribute used in queue mutex initialization.
+-     */
+-    pthread_mutexattr_t attr;
+-
+-   /**
+-     * Queue mutex variable for synchronized queue access.
+-     */
+-    pthread_mutex_t mutex_instance;
+-
+-   /**
+-     * Condition to be waited on for dequeuing.
+-     */
+-    pthread_cond_t cond;
+-
+-   /**
+-     * Front of the queue.
+-     */
+-    T *front;
+-
+-    public:
+-
+-       /**
+-         * Remove the first element of the queue.
+-         *
+-         * @return first element of the queue.
+-         */
+-        T* dequeue(void);
+-
+-       /**
+-         * Add a request to the front of the queue.
+-         *
+-         * @param Request to be added.
+-         */
+-        void enqueue(T* request);
+-
+-       /**
+-         * Check if the queue is empty.
+-         */
+-        int empty(void);
+-
+-       /**
+-         * Check and remove an element with a particular message id and token.
+-         *
+-         * @param Request message id.
+-         * @param Request token.
+-         */
+-        int checkAndDequeue( MsgId id, int token);
+-
+-       /**
+-         * Queue constructor.
+-         */
+-        Ril_queue(void);
+-};
+-
+-template <typename T>
+-Ril_queue<T>::Ril_queue(void) {
+-    pthread_mutexattr_init(&attr);
+-    pthread_mutex_init(&mutex_instance, &attr);
+-    cond = PTHREAD_COND_INITIALIZER;
+-    front = NULL;
+-}
+-
+-template <typename T>
+-T* Ril_queue<T>::dequeue(void) {
+-    T* temp = NULL;
+-
+-    pthread_mutex_lock(&mutex_instance);
+-    while(empty()) {
+-        pthread_cond_wait(&cond, &mutex_instance);
+-    }
+-    temp = this->front;
+-    if(NULL != this->front->p_next) {
+-        this->front = this->front->p_next;
+-    } else {
+-        this->front = NULL;
+-    }
+-    pthread_mutex_unlock(&mutex_instance);
+-
+-    return temp;
+-}
+-
+-template <typename T>
+-void Ril_queue<T>::enqueue(T* request) {
+-
+-    pthread_mutex_lock(&mutex_instance);
+-
+-    if(NULL == this->front) {
+-        this->front = request;
+-        request->p_next = NULL;
+-    } else {
+-        request->p_next = this->front;
+-        this->front = request;
+-    }
+-    pthread_cond_broadcast(&cond);
+-    pthread_mutex_unlock(&mutex_instance);
+-}
+-
+-template <typename T>
+-int Ril_queue<T>::checkAndDequeue(MsgId id, int token) {
+-    int ret = 0;
+-    T* temp;
+-
+-    pthread_mutex_lock(&mutex_instance);
+-
+-    for(T **ppCur = &(this->front); *ppCur != NULL; ppCur = &((*ppCur)->p_next)) {
+-        if (token == (*ppCur)->token && id == (*ppCur)->curr->id) {
+-            ret = 1;
+-            temp = *ppCur;
+-            *ppCur = (*ppCur)->p_next;
+-            free(temp);
+-            break;
+-        }
+-    }
+-
+-    pthread_mutex_unlock(&mutex_instance);
+-
+-    return ret;
+-}
+-
+-
+-template <typename T>
+-int Ril_queue<T>::empty(void) {
+-
+-    if(this->front == NULL) {
+-        return 1;
+-    } else {
+-        return 0;
+-    }
+-}
+diff --git a/libril/ril_ex.h b/libril/ril_ex.h
+deleted file mode 100644
+index 8e15d65..0000000
+--- a/libril/ril_ex.h
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*
+-* Copyright (C) 2014 The Android Open Source Project
+-*
+-* Licensed under the Apache License, Version 2.0 (the "License");
+-* you may not use this file except in compliance with the License.
+-* You may obtain a copy of the License at
+-*
+-*     http://www.apache.org/licenses/LICENSE-2.0
+-*
+-* Unless required by applicable law or agreed to in writing, software
+-* distributed under the License is distributed on an "AS IS" BASIS,
+-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-* See the License for the specific language governing permissions and
+-* limitations under the License.
+-*/
+-
+-#ifndef RIL_EX_H_INCLUDED
+-#define RIL_EX_H_INCLUDED
+-
+-#include <telephony/ril.h>
+-#include <telephony/record_stream.h>
+-
+-#define NUM_ELEMS_SOCKET(a)     (sizeof (a) / sizeof (a)[0])
+-
+-void rilEventAddWakeup_helper(struct ril_event *ev);
+-void listenCallback_helper(int fd, short flags, void *param);
+-int blockingWrite_helper(int fd, void* data, size_t len);
+-
+-enum SocketWakeType {DONT_WAKE, WAKE_PARTIAL};
+-
+-typedef enum {
+-    RIL_TELEPHONY_SOCKET,
+-    RIL_SAP_SOCKET
+-} RIL_SOCKET_TYPE;
+-
+-typedef struct SocketListenParam {
+-    RIL_SOCKET_ID socket_id;
+-    int fdListen;
+-    int fdCommand;
+-    char* processName;
+-    struct ril_event* commands_event;
+-    struct ril_event* listen_event;
+-    void (*processCommandsCallback)(int fd, short flags, void *param);
+-    RecordStream *p_rs;
+-    RIL_SOCKET_TYPE type;
+-} SocketListenParam;
+-
+-#endif
+diff --git a/librilutils/Android.mk b/librilutils/Android.mk
+index 1ac00e0..033a4dc 100644
+--- a/librilutils/Android.mk
++++ b/librilutils/Android.mk
+@@ -5,12 +5,7 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:= \
+     librilutils.c \
+-    record_stream.c \
+-    proto/sap-api.proto \
+-
+-LOCAL_C_INCLUDES += external/nanopb-c/ \
+-
+-LOCAL_PROTOC_OPTIMIZE_TYPE := nanopb-c-enable_malloc
++    record_stream.c
+ 
+ LOCAL_CFLAGS :=
+ 
+@@ -25,26 +20,12 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:= \
+     librilutils.c \
+-    record_stream.c \
+-    proto/sap-api.proto \
++    record_stream.c
+ 
+-LOCAL_C_INCLUDES += external/nanopb-c/ \
+-
+-LOCAL_PROTOC_OPTIMIZE_TYPE := nanopb-c-enable_malloc
++LOCAL_STATIC_LIBRARIES :=
+ 
+ LOCAL_CFLAGS :=
+ 
+ LOCAL_MODULE:= librilutils_static
+ 
+ include $(BUILD_STATIC_LIBRARY)
+-
+-# Create java protobuf code
+-
+-include $(CLEAR_VARS)
+-
+-src_proto := $(LOCAL_PATH)
+-LOCAL_MODULE := sap-api-java-static
+-LOCAL_SRC_FILES := proto/sap-api.proto
+-LOCAL_PROTOC_OPTIMIZE_TYPE := micro
+-
+-include $(BUILD_STATIC_JAVA_LIBRARY)
+diff --git a/librilutils/proto/sap-api.options b/librilutils/proto/sap-api.options
+deleted file mode 100644
+index f76ba93..0000000
+--- a/librilutils/proto/sap-api.options
++++ /dev/null
+@@ -1,23 +0,0 @@
+-#
+-# Copyright (C) 2014 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-
+-MsgHeader.payload                 type:FT_POINTER
+-RIL_SIM_SAP_APDU_REQ.command      type:FT_POINTER
+-RIL_SIM_SAP_APDU_RSP.apduResponse type:FT_POINTER
+-RIL_SIM_SAP_TRANSFER_ATR_RSP.atr  type:FT_POINTER
+-
+-#RIL_SIM_SAP_REQUEST.apdu type:FT_POINTER
+-#RIL_SIM_SAP_RESPONSE.apdu type:FT_POINTER
+diff --git a/rild/Android.mk b/rild/Android.mk
+index 035d2b9..9436514 100644
+--- a/rild/Android.mk
++++ b/rild/Android.mk
+@@ -31,8 +31,6 @@ endif
+ LOCAL_MODULE:= rild
+ LOCAL_MODULE_TAGS := optional
+ 
+-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libril
+-
+ include $(BUILD_EXECUTABLE)
+ 
+ # For radiooptions binary
+diff --git a/rild/rild.c b/rild/rild.c
+index 1b9ff4f..51e93bc 100644
+--- a/rild/rild.c
++++ b/rild/rild.c
+@@ -33,7 +33,6 @@
+ #include <sys/prctl.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+-#include <libril/ril_ex.h>
+ 
+ #include <private/android_filesystem_config.h>
+ #include "hardware/qemu_pipe.h"
+@@ -43,7 +42,8 @@
+ #define MAX_LIB_ARGS        16
+ #define MAX_CAP_NUM         (CAP_TO_INDEX(CAP_LAST_CAP) + 1)
+ 
+-static void usage(const char *argv0) {
++static void usage(const char *argv0)
++{
+     fprintf(stderr, "Usage: %s -l <ril impl library> [-- <args for impl library>]\n", argv0);
+     exit(EXIT_FAILURE);
+ }
+@@ -54,24 +54,21 @@ extern char rild[MAX_SOCKET_NAME_LENGTH] __attribute__((weak));
+ 
+ extern void RIL_register (const RIL_RadioFunctions *callbacks);
+ 
+-extern void RIL_register_socket (RIL_RadioFunctions *(*rilUimInit)
+-        (const struct RIL_Env *, int, char **), RIL_SOCKET_TYPE socketType, int argc, char **argv);
+-
+ extern void RIL_onRequestComplete(RIL_Token t, RIL_Errno e,
+-        void *response, size_t responselen);
++                           void *response, size_t responselen);
+ 
+ extern void RIL_setRilSocketName(char *);
+ 
+ #if defined(ANDROID_MULTI_SIM)
+ extern void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
+-        size_t datalen, RIL_SOCKET_ID socket_id);
++                                size_t datalen, RIL_SOCKET_ID socket_id);
+ #else
+ extern void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
+-        size_t datalen);
++                                size_t datalen);
+ #endif
+ 
+ extern void RIL_requestTimedCallback (RIL_TimedCallback callback,
+-        void *param, const struct timeval *relativeTime);
++                               void *param, const struct timeval *relativeTime);
+ 
+ extern void RIL_setRilSocketName(char * s) __attribute__((weak));
+ 
+@@ -83,7 +80,8 @@ static struct RIL_Env s_rilEnv = {
+ 
+ extern void RIL_startEventLoop();
+ 
+-static int make_argv(char * args, char ** argv) {
++static int make_argv(char * args, char ** argv)
++{
+     // Note: reserve argv[0]
+     int count = 1;
+     char * tok;
+@@ -139,14 +137,12 @@ void switchUser() {
+     }
+ }
+ 
+-int main(int argc, char **argv) {
++int main(int argc, char **argv)
++{
+     const char * rilLibPath = NULL;
+     char **rilArgv;
+     void *dlHandle;
+     const RIL_RadioFunctions *(*rilInit)(const struct RIL_Env *, int, char **);
+-    const RIL_RadioFunctions *(*rilUimInit)(const struct RIL_Env *, int, char **);
+-    char *err_str = NULL;
+-
+     const RIL_RadioFunctions *funcs;
+     char libPath[PROPERTY_VALUE_MAX];
+     unsigned char hasLibArgs = 0;
+@@ -317,26 +313,13 @@ OpenLib:
+ 
+     RIL_startEventLoop();
+ 
+-    rilInit =
+-        (const RIL_RadioFunctions *(*)(const struct RIL_Env *, int, char **))
+-        dlsym(dlHandle, "RIL_Init");
++    rilInit = (const RIL_RadioFunctions *(*)(const struct RIL_Env *, int, char **))dlsym(dlHandle, "RIL_Init");
+ 
+     if (rilInit == NULL) {
+         RLOGE("RIL_Init not defined or exported in %s\n", rilLibPath);
+         exit(EXIT_FAILURE);
+     }
+ 
+-    dlerror(); // Clear any previous dlerror
+-    rilUimInit =
+-        (const RIL_RadioFunctions *(*)(const struct RIL_Env *, int, char **))
+-        dlsym(dlHandle, "RIL_SAP_Init");
+-    err_str = dlerror();
+-    if (err_str) {
+-        RLOGW("RIL_SAP_Init not defined or exported in %s: %s\n", rilLibPath, err_str);
+-    } else if (!rilUimInit) {
+-        RLOGW("RIL_SAP_Init defined as null in %s. SAP Not usable\n", rilLibPath);
+-    }
+-
+     if (hasLibArgs) {
+         rilArgv = argv + i - 1;
+         argc = argc -i + 1;
+@@ -379,13 +362,6 @@ OpenLib:
+ 
+     RLOGD("RIL_Init RIL_register completed");
+ 
+-    if (rilUimInit) {
+-        RLOGD("RIL_register_socket started");
+-        RIL_register_socket(rilUimInit, RIL_SAP_SOCKET, argc, rilArgv);
+-    }
+-
+-    RLOGD("RIL_register_socket completed");
+-
+ done:
+ 
+     RLOGD("RIL_Init starting sleep loop");
+-- 
+1.9.1
+
