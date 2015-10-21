@@ -93,17 +93,21 @@ PRODUCT_PACKAGES += \
 $(call inherit-product, hardware/u8500/u8500.mk)
 
 ADDITIONAL_DEFAULT_PROPERTIES += \
-	ro.secure=0 \
-	ro.adb.secure=0 \
 	persist.sys.force_highendgfx=true 
 
 PRODUCT_PROPERTY_OVERRIDES += \
         persist.sys.root_access=1
 
-# USB
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    persist.sys.usb.config=mtp \
-    persist.service.adb.enable=1
+ADDITIONAL_DEFAULT_PROPERTIES += \
+    ro.secure=0 \
+    ro.adb.secure=0 \
+    persist.service.adb.enable=1 \
+    persist.service.debuggable=1
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.service.adb.enable=1 \
+    persist.service.debuggable=1 \
+    persist.sys.usb.config=mtp,adb
 
 # Charger Prebuilt (temporary solution for lollipop)
 # Use prebuilt charger and images from KitKat
