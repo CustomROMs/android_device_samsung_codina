@@ -1,0 +1,31 @@
+From cbd9e1c06bb609d193e300987999a6526dc2d73f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 20 Oct 2015 21:59:39 +0300
+Subject: [PATCH] Revert "Remove text-relocs support for apps targeting M+"
+
+This reverts commit 3e6f7807541bab8157f9c26e55829fd193683349.
+---
+ linker/linker.cpp | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index 3a3bf7f..2d8688f 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -2932,13 +2932,6 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t&
+ 
+ #if !defined(__LP64__)
+   if (has_text_relocations) {
+-    // Fail if app is targeting sdk version > 22
+-    // TODO (dimitry): remove != __ANDROID_API__ check once http://b/20020312 is fixed
+-    if (get_application_target_sdk_version() != __ANDROID_API__
+-        && get_application_target_sdk_version() > 22) {
+-      DL_ERR("%s: has text relocations", get_realpath());
+-      return false;
+-    }
+     // Make segments writable to allow text relocations to work properly. We will later call
+     // phdr_table_protect_segments() after all of them are applied and all constructors are run.
+     if (phdr_table_unprotect_segments(phdr, phnum, load_bias) < 0) {
+-- 
+1.9.1
+
