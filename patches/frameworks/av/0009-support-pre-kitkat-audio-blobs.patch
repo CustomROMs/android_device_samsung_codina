@@ -1,0 +1,98 @@
+From 946e817fe6da5fdfaa8b860b66aa4af2a69158b9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 21 Oct 2015 17:12:23 +0300
+Subject: [PATCH 9/9] support pre-kitkat audio blobs
+
+Change-Id: Iec29119f26993af506f3fcfabb4a5e8963879470
+---
+ media/libstagefright/ACodec.cpp                                 | 4 ++--
+ media/libstagefright/OMXCodec.cpp                               | 6 +++---
+ services/audiopolicy/Android.mk                                 | 4 ++++
+ services/audiopolicy/service/AudioPolicyClientImplLegacy.cpp    | 5 +++++
+ services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp | 3 +++
+ 5 files changed, 17 insertions(+), 5 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index a5d9177..dce3342 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -918,9 +918,9 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
+             def.format.video.nFrameWidth,
+             def.format.video.nFrameHeight,
+ #ifdef STE_HARDWARE
+-            OMXCodec::OmxToHALFormat(def.format.video.eColorFormat));
++            OMXCodec::OmxToHALFormat(def.format.video.eColorFormat),
+ #else
+-            def.format.video.eColorFormat);
++            def.format.video.eColorFormat,
+ #endif
+ 
+             mRotationDegrees,
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index 8d890da..344a52f 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -1869,10 +1869,10 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+             def.format.video.nFrameWidth,
+             def.format.video.nFrameHeight,
+ #ifdef STE_HARDWARE
+-            OmxToHALFormat(def.format.video.eColorFormat));
++            OmxToHALFormat(def.format.video.eColorFormat),
+ #else
+-             def.format.video.eColorFormat);
+-#endif,
++             def.format.video.eColorFormat,
++#endif
+             rotationDegrees,
+             usage | GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_EXTERNAL_DISP);
+     if (err != 0) {
+diff --git a/services/audiopolicy/Android.mk b/services/audiopolicy/Android.mk
+index 5b38e1c..77dca1a 100644
+--- a/services/audiopolicy/Android.mk
++++ b/services/audiopolicy/Android.mk
+@@ -40,6 +40,10 @@ LOCAL_SHARED_LIBRARIES += \
+     libaudiopolicymanager
+ endif
+ 
++ifeq ($(BOARD_HAVE_PRE_KITKAT_AUDIO_BLOB),true)
++    LOCAL_CFLAGS += -DHAVE_PRE_KITKAT_AUDIO_BLOB
++endif
++
+ LOCAL_STATIC_LIBRARIES := \
+     libmedia_helper \
+     libaudiopolicycomponents
+diff --git a/services/audiopolicy/service/AudioPolicyClientImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyClientImplLegacy.cpp
+index a79f8ae..fdc0728 100644
+--- a/services/audiopolicy/service/AudioPolicyClientImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyClientImplLegacy.cpp
+@@ -125,8 +125,13 @@ audio_io_handle_t aps_open_output_on_module(void *service __unused,
+                                                    audio_output_flags_t flags,
+                                                    const audio_offload_info_t *offloadInfo)
+ {
++#ifdef HAVE_PRE_KITKAT_AUDIO_BLOB
++    return open_output(module, pDevices, pSamplingRate, pFormat, pChannelMask,
++                          pLatencyMs, flags, NULL);
++#else
+     return open_output(module, pDevices, pSamplingRate, pFormat, pChannelMask,
+                           pLatencyMs, flags, offloadInfo);
++#endif
+ }
+ 
+ audio_io_handle_t aps_open_dup_output(void *service __unused,
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 13af3ef..936b3f0 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -510,6 +510,9 @@ status_t AudioPolicyService::queryDefaultPreProcessing(int audioSession,
+ 
+ bool AudioPolicyService::isOffloadSupported(const audio_offload_info_t& info)
+ {
++#if HAVE_PRE_KITKAT_AUDIO_BLOB
++    return false;
++#endif
+     if (mpAudioPolicy == NULL) {
+         ALOGV("mpAudioPolicy == NULL");
+         return false;
+-- 
+1.9.1
+

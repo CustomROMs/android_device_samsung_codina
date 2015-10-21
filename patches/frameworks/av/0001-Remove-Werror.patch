@@ -1,0 +1,26 @@
+From e906235ccd9e0b1ef18712a3a6ee15f69847e542 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 21 Oct 2015 15:01:08 +0300
+Subject: [PATCH 1/9] Remove -Werror
+
+Change-Id: Ica4bea2c3b2d83198f677532bfa78365f9344a48
+---
+ media/libstagefright/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
+index 2529aa7..bea530d 100644
+--- a/media/libstagefright/Android.mk
++++ b/media/libstagefright/Android.mk
+@@ -127,7 +127,7 @@ LOCAL_SHARED_LIBRARIES += \
+         libdl \
+         libRScpp \
+ 
+-LOCAL_CFLAGS += -Wno-multichar -Werror -Wno-error=deprecated-declarations -Wall
++LOCAL_CFLAGS += -Wno-multichar -Wall
+ 
+ # enable experiments only in userdebug and eng builds
+ ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+-- 
+1.9.1
+

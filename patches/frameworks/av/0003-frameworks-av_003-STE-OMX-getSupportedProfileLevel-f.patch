@@ -1,7 +1,7 @@
-From a3062214346a91c1182181c044531ff894dda023 Mon Sep 17 00:00:00 2001
+From b29d87cc9ac0177af0c7ef500cba465593b15229 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 20 Oct 2015 10:17:41 +0300
-Subject: [PATCH 02/10] 
+Subject: [PATCH 3/9] 
  frameworks-av_003-STE-OMX-getSupportedProfileLevel-fix.patch
 
 Change-Id: I36965f6a20b9b2f90381902994ecf64c927890fb
