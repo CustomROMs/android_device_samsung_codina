@@ -1,0 +1,28 @@
+From 189a2a537c800f635945cf39426ad41cbaf6a3b3 Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Sat, 8 Mar 2014 19:35:17 +0700
+Subject: [PATCH 3/5] RIL: mark mInstanceId as protected
+
+To use in RIL subclasses
+
+Change-Id: I4ab1ea79079e3b03670b1e985f7a574df1f16658
+---
+ src/java/com/android/internal/telephony/RIL.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 1334d07..8451c17 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -267,7 +267,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+     // When we are testing emergency calls
+     AtomicBoolean mTestingEmergencyCall = new AtomicBoolean(false);
+ 
+-    private Integer mInstanceId;
++    protected Integer mInstanceId;
+ 
+     //***** Events
+ 
+-- 
+1.9.1
+
