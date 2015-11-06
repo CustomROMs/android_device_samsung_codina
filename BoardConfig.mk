@@ -17,7 +17,6 @@
 
 LOCAL_PATH := device/samsung/codina
 
-TARGET_SPECIFIC_HEADER_PATH := $(LOCAL_PATH)/include
 PRODUCT_VENDOR_KERNEL_HEADERS := $(LOCAL_PATH)/kernel-headers
 
 # Board
