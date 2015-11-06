@@ -212,6 +212,79 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
          */
     }
 
+    private void
+    setNetworkSelectionMode(String operatorNumeric, Message response) {
+        RILRequest rr;
+
+        if (operatorNumeric == null)
+            rr = RILRequest.obtain(RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC, response);
+        else
+            rr = RILRequest.obtain(RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL, response);
+
+        rr.mParcel.writeString(operatorNumeric);
+        rr.mParcel.writeInt(-1);
+
+        send(rr);
+    }
+
+    private void
+    handleUnsupportedRequest(Message response) {
+        if (response != null) {
+            CommandException ex = new CommandException(
+                CommandException.Error.REQUEST_NOT_SUPPORTED);
+            AsyncResult.forMessage(response, null, ex);
+            response.sendToTarget();
+        }
+    }
+
+    @Override
+    public void getImsRegistrationState(Message result) {
+        Rlog.i(LOG_TAG, "RIL_REQUEST_IMS_REGISTRATION_STATE is not supported");
+        handleUnsupportedRequest(result);
+    }
+
+    @Override
+    public void
+    getHardwareConfig (Message result) {
+       Rlog.i(LOG_TAG, "RIL_REQUEST_GET_HARDWARE_CONFIG is not supported");
+       handleUnsupportedRequest(result);
+    }
+
+    @Override
+    public void getCellInfoList(Message result) {
+        Rlog.i(LOG_TAG, "RIL_REQUEST_GET_CELL_INFO_LIST is not supported");
+        handleUnsupportedRequest(result);
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setCellInfoListRate(int rateInMillis, Message response) {
+        Rlog.i(LOG_TAG, "RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE is not supported");
+        handleUnsupportedRequest(response);
+    }
+
+    @Override
+    public void getRadioCapability(Message response) {
+        Rlog.i(LOG_TAG, "RIL_REQUEST_GET_RADIO_CAPABILITY is not supported");
+        handleUnsupportedRequest(response);
+    }
+
+    public void setInitialAttachApn(String apn, String protocol, int authType, String username,
+            String password, Message result) {
+        Rlog.i(LOG_TAG, "RIL_REQUEST_SET_INITIAL_ATTACH_APN is not supported");
+        handleUnsupportedRequest(result);
+    }
+
+    @Override
+    public void startLceService(int reportIntervalMs, boolean pullMode, Message response) {
+        Rlog.i(LOG_TAG, "RIL_REQUEST_START_LCE is not supported");
+        handleUnsupportedRequest(response);
+    }
+
+
     private boolean NeedReconnect()
     {
         ConnectivityManager cm =
@@ -593,6 +666,19 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
 
 	return rr;
    }
+
+    @Override
+    public void
+    setNetworkSelectionModeAutomatic(Message response) {
+        setNetworkSelectionMode(null, response);
+    }
+
+    @Override
+    public void
+    setNetworkSelectionModeManual(String operatorNumeric, Message response) {
+        setNetworkSelectionMode(operatorNumeric, response);
+    }
+
 
     @Override
     public void
