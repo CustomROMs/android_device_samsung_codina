@@ -93,7 +93,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class SamsungU8500RIL extends RIL implements CommandsInterface {
-
+    static final String LOG_TAG = "SamsungU8500RIL";
 
     //SAMSUNG STATES
     static final int RIL_REQUEST_GET_CELL_BROADCAST_CONFIG = 10002;
