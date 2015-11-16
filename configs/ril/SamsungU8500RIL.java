@@ -267,12 +267,6 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         handleUnsupportedRequest(response);
     }
 
-    @Override
-    public void getRadioCapability(Message response) {
-        Rlog.i(LOG_TAG, "RIL_REQUEST_GET_RADIO_CAPABILITY is not supported");
-        handleUnsupportedRequest(response);
-    }
-
     public void setInitialAttachApn(String apn, String protocol, int authType, String username,
             String password, Message result) {
         Rlog.i(LOG_TAG, "RIL_REQUEST_SET_INITIAL_ATTACH_APN is not supported");
