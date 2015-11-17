@@ -208,3 +208,4 @@ WITH_DEXPREOPT_COMP := false
 # Enable position-independent code for odex files
 WITH_DEXPREOPT_PIC := true
 
+TARGET_NEEDS_BIONIC_PRELINK_SUPPORT := true
