@@ -189,17 +189,11 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
     private boolean mIsSamsungCdma = SystemProperties.getBoolean("ro.ril.samsung_cdma", false);
 
-     public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription) {
-        this(context, networkMode, cdmaSubscription, null);
-	mContext = context;
-     }
- 
-     public SamsungU8500RIL(Context context, int preferredNetworkType,
-             int cdmaSubscription, Integer instanceId) {
-        super(context, preferredNetworkType, cdmaSubscription, instanceId);
+    public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription, Integer instanceId) {
+        super(context, networkMode, cdmaSubscription);
         mQANElements = 5;
         mContext = context;
-     }
+    }
 
     static String
     requestToString(int request) {
