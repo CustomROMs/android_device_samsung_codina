@@ -105,6 +105,7 @@ BOARD_BLUEDROID_VENDOR_CONF := $(LOCAL_PATH)/configs/bluetooth/vnd_u8500.txt
 
 # RIL
 BOARD_RIL_CLASS := ../../../device/samsung/codina/configs/ril
+COMMON_GLOBAL_CFLAGS += -DDISABLE_ASHMEM_TRACKING
 
 # Audio
 BOARD_USES_ALSA_AUDIO := true
