@@ -1,0 +1,36 @@
+From 3feac024a5b7229ceefcd5f7ad9435ef7f76ed9b Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Mon, 07 Dec 2015 11:25:59 -0600
+Subject: [PATCH] SpnOverride: prefer selective-spn config if exists
+
+Change-Id: Ib088dcf8452432192356628fe747d615a164c8b6
+---
+
+diff --git a/src/java/com/android/internal/telephony/uicc/SpnOverride.java b/src/java/com/android/internal/telephony/uicc/SpnOverride.java
+index 3a01af6..eb25ce6 100644
+--- a/src/java/com/android/internal/telephony/uicc/SpnOverride.java
++++ b/src/java/com/android/internal/telephony/uicc/SpnOverride.java
+@@ -38,6 +38,7 @@
+     static final String LOG_TAG = "SpnOverride";
+     static final String PARTNER_SPN_OVERRIDE_PATH ="etc/spn-conf.xml";
+     static final String OEM_SPN_OVERRIDE_PATH = "telephony/spn-conf.xml";
++    static final String SELECTIVE_SPN_OVERRIDE_PATH = "etc/selective-spn-conf.xml";
+ 
+     SpnOverride () {
+         mCarrierSpnMap = new HashMap<String, String>();
+@@ -59,8 +60,14 @@
+                 PARTNER_SPN_OVERRIDE_PATH);
+         File oemSpnFile = new File(Environment.getOemDirectory(),
+                 OEM_SPN_OVERRIDE_PATH);
++        File selectiveSpnFile = new File(Environment.getOemDirectory(),
++                SELECTIVE_SPN_OVERRIDE_PATH);
+ 
+-        if (oemSpnFile.exists()) {
++        // Override OEM and Vendor SPN if we have a selective SPN xml
++        if (selectiveSpnFile.exists()) {
++            Rlog.d(LOG_TAG, "Selective SPN xml found");
++            spnFile = selectiveSpnFile;
++        } else if (oemSpnFile.exists()) {
+             // OEM image exist SPN xml, get the timestamp from OEM & System image for comparison.
+             long oemSpnTime = oemSpnFile.lastModified();
+             long sysSpnTime = spnFile.lastModified();
