@@ -1,0 +1,235 @@
+From 731e4efd2600efd7ce155087c996085d258099b3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 4 Mar 2016 19:44:15 +0700
+Subject: [PATCH] rootdir: reset to aosp-6.0
+
+Change-Id: Ic993036f289610f8d4c4bb3f2da1260330a3ba1f
+---
+ rootdir/Android.mk         | 11 +++--------
+ rootdir/init.environ.rc.in |  1 -
+ rootdir/init.rc            | 49 +++++++++++++++++-----------------------------
+ rootdir/ueventd.rc         | 42 +--------------------------------------
+ 4 files changed, 22 insertions(+), 81 deletions(-)
+
+diff --git a/rootdir/Android.mk b/rootdir/Android.mk
+index 836e585..7ab76b8 100644
+--- a/rootdir/Android.mk
++++ b/rootdir/Android.mk
+@@ -30,21 +30,16 @@ LOCAL_POST_INSTALL_CMD := mkdir -p $(addprefix $(TARGET_ROOT_OUT)/, \
+ 
+ include $(BUILD_SYSTEM)/base_rules.mk
+ 
+-# Regenerate init.environ.rc if PRODUCT_BOOTCLASSPATH or TARGET_LDPRELOAD has changed.
+-bcp_md5 := $(word 1, $(shell echo $(PRODUCT_BOOTCLASSPATH) $(PRODUCT_SYSTEM_SERVER_CLASSPATH) $(TARGET_LDPRELOAD) | $(MD5SUM)))
++# Regenerate init.environ.rc if PRODUCT_BOOTCLASSPATH has changed.
++bcp_md5 := $(word 1, $(shell echo $(PRODUCT_BOOTCLASSPATH) $(PRODUCT_SYSTEM_SERVER_CLASSPATH) | $(MD5SUM)))
+ bcp_dep := $(intermediates)/$(bcp_md5).bcp.dep
+ $(bcp_dep) :
+ 	$(hide) mkdir -p $(dir $@) && rm -rf $(dir $@)*.bcp.dep && touch $@
+ 
+-ifneq ($(strip $(TARGET_LDPRELOAD)),)
+-    TARGET_LDPRELOAD_STR := :$(TARGET_LDPRELOAD)
+-endif
+-
+ $(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/init.environ.rc.in $(bcp_dep)
+ 	@echo "Generate: $< -> $@"
+ 	@mkdir -p $(dir $@)
+-	$(hide) sed -e 's?%BOOTCLASSPATH%?$(PRODUCT_BOOTCLASSPATH)?g'\
+-                -e 's?%TARGET_LDPRELOAD%?$(TARGET_LDPRELOAD_STR)?g' $< >$@
++	$(hide) sed -e 's?%BOOTCLASSPATH%?$(PRODUCT_BOOTCLASSPATH)?g' $< >$@
+ 	$(hide) sed -i -e 's?%SYSTEMSERVERCLASSPATH%?$(PRODUCT_SYSTEM_SERVER_CLASSPATH)?g' $@
+ 
+ bcp_md5 :=
+diff --git a/rootdir/init.environ.rc.in b/rootdir/init.environ.rc.in
+index 46ec1fb..b34ea01 100644
+--- a/rootdir/init.environ.rc.in
++++ b/rootdir/init.environ.rc.in
+@@ -9,4 +9,3 @@ on init
+     export ASEC_MOUNTPOINT /mnt/asec
+     export BOOTCLASSPATH %BOOTCLASSPATH%
+     export SYSTEMSERVERCLASSPATH %SYSTEMSERVERCLASSPATH%
+-    export LD_PRELOAD libsigchain.so%TARGET_LDPRELOAD%
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 5c6b606..2c66da9 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -10,9 +10,6 @@ import /init.${ro.hardware}.rc
+ import /init.usb.configfs.rc
+ import /init.${ro.zygote}.rc
+ import /init.trace.rc
+-# Include CM's extra init file
+-import /init.cm.rc
+-
+ 
+ on early-init
+     # Set init and its forked children's oom_adj.
+@@ -50,7 +47,6 @@ on init
+     write /sys/fs/cgroup/memory/sw/memory.move_charge_at_immigrate 1
+     chown root system /sys/fs/cgroup/memory/sw/tasks
+     chmod 0660 /sys/fs/cgroup/memory/sw/tasks
+-    chmod 0220 /sys/fs/cgroup/memory/cgroup.event_control
+ 
+     mkdir /system
+     mkdir /data 0771 system system
+@@ -144,27 +140,23 @@ on init
+     # sets up initial cpusets for ActivityManager
+     mkdir /dev/cpuset
+     mount cpuset none /dev/cpuset
+-
+-    # this ensures that the cpusets are present and usable, but the device's
+-    # init.rc must actually set the correct cpus
+     mkdir /dev/cpuset/foreground
+-    write /dev/cpuset/foreground/cpus 0
+-    write /dev/cpuset/foreground/mems 0
+     mkdir /dev/cpuset/foreground/boost
+-    write /dev/cpuset/foreground/boost/cpus 0
+-    write /dev/cpuset/foreground/boost/mems 0
+     mkdir /dev/cpuset/background
+-    write /dev/cpuset/background/cpus 0
+-    write /dev/cpuset/background/mems 0
+-
+     # system-background is for system tasks that should only run on
+     # little cores, not on bigs
+-    # to be used only by init, so don't change system-bg permissions
++    # to be used only by init, so don't change the permissions
+     mkdir /dev/cpuset/system-background
++    # this ensures that the cpusets are present and usable, but the device's
++    # init.rc must actually set the correct cpus
++    write /dev/cpuset/foreground/cpus 0
++    write /dev/cpuset/foreground/boost/cpus 0
++    write /dev/cpuset/background/cpus 0
+     write /dev/cpuset/system-background/cpus 0
++    write /dev/cpuset/foreground/mems 0
++    write /dev/cpuset/foreground/boost/mems 0
++    write /dev/cpuset/background/mems 0
+     write /dev/cpuset/system-background/mems 0
+-
+-    # change permissions for all cpusets we'll touch at runtime
+     chown system system /dev/cpuset
+     chown system system /dev/cpuset/foreground
+     chown system system /dev/cpuset/foreground/boost
+@@ -394,9 +386,6 @@ on post-fs-data
+ 
+     # Set SELinux security contexts on upgrade or policy update.
+     restorecon_recursive /data
+-    restorecon /data/data
+-    restorecon /data/user
+-    restorecon /data/user/0
+ 
+     # Check any timezone data in /data is newer than the copy in /system, delete if not.
+     exec - system system -- /system/bin/tzdatacheck /system/usr/share/zoneinfo /data/misc/zoneinfo
+@@ -407,6 +396,9 @@ on post-fs-data
+     # Set indication (checked by vold) that we have finished this action
+     #setprop vold.post_fs_data_done 1
+ 
++    # Include extra init file with FML extras
++    import /init.fml.rc
++
+ on boot
+     # basic network init
+     ifup lo
+@@ -646,7 +638,7 @@ service ril-daemon /system/bin/rild
+     socket sap_uim_socket1 stream 660 bluetooth bluetooth
+     socket rild-debug stream 660 radio system
+     user root
+-    group radio cache inet misc audio log qcom_diag
++    group radio cache inet misc audio log
+ 
+ service surfaceflinger /system/bin/surfaceflinger
+     class core
+@@ -663,7 +655,7 @@ service drm /system/bin/drmserver
+ service media /system/bin/mediaserver
+     class main
+     user media
+-    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm qcom_diag
++    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm
+     ioprio rt 4
+ 
+ # One shot invocation to deal with encrypted volume.
+@@ -674,7 +666,7 @@ service defaultcrypto /system/bin/vdc --wait cryptfs mountdefaultencrypted
+     # encryption) or trigger_restart_min_framework (other encryption)
+ 
+ # One shot invocation to encrypt unencrypted volumes
+-service encrypt /system/bin/vdc --wait cryptfs enablecrypto inplace default noui
++service encrypt /system/bin/vdc --wait cryptfs enablecrypto inplace default
+     disabled
+     oneshot
+     # vold will set vold.decrypt to trigger_restart_framework (default
+@@ -695,14 +687,9 @@ service installd /system/bin/installd
+     class main
+     socket installd stream 600 system system
+ 
+-service flash_recovery /system/bin/install-recovery.sh
+-    class main
+-    oneshot
+-    disabled
+-
+-# update recovery if enabled
+-on property:persist.sys.recovery_update=true
+-    start flash_recovery
++#service flash_recovery /system/bin/install-recovery.sh
++#    class main
++#    oneshot
+ 
+ service racoon /system/bin/racoon
+     class main
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index f82d899..b735dc3 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -28,7 +28,7 @@ subsystem adf
+ /dev/dri/*                0666   root       graphics
+ 
+ # these should not be world writable
+-/dev/diag                 0660   system     qcom_diag
++/dev/diag                 0660   radio      radio
+ /dev/diag_arm9            0660   radio      radio
+ /dev/android_adb          0660   adb        adb
+ /dev/android_adb_enable   0660   adb        adb
+@@ -98,43 +98,3 @@ subsystem adf
+ 
+ # DVB API device nodes
+ /dev/dvb*                 0660   root       system
+-
+-# Governor permissions
+-/sys/devices/system/cpu/cpu*   cpufreq/scaling_governor   0664  system system
+-
+-/sys/devices/system/cpu/cpufreq ondemand/boostfreq   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/boostpulse  0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/boosttime   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/down_differential   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/down_differential_multi_core   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/ignore_nice_load   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/input_boost   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/io_is_busy      0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/optimal_freq   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/powersave_bias  0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/sampling_down_factor    0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/sampling_rate   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/sampling_rate_min   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/sync_freq   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/up_threshold   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/up_threshold_any_cpu_load   0664    system  system
+-/sys/devices/system/cpu/cpufreq ondemand/up_threshold_multi_core   0664    system  system
+-
+-/sys/devices/system/cpu/cpufreq interactive/above_hispeed_delay 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/align_windows 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/boost  0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/boostpulse  0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/boostpulse_duration  0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/go_hispeed_load 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/hispeed_freq    0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/io_is_busy      0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/max_freq_hysteresis 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/min_sample_rate 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/min_sample_time 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/sampling_down_factor 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/sync_freq 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/target_loads 0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/timer_rate  0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/timer_slack      0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/up_threshold_any_cpu_freq      0664    system  system
+-/sys/devices/system/cpu/cpufreq interactive/up_threshold_any_cpu_load      0664    system  system
+-- 
+2.5.0
+

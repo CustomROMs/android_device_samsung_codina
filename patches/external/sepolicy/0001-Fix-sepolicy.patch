@@ -1,0 +1,272 @@
+From 630c038ea8b5dd265cb6e5b4d6da7a3fa952384a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 4 Mar 2016 21:32:02 +0700
+Subject: [PATCH] Fix sepolicy
+
+Change-Id: I9f148b3b0d44eba4a1b1247b5a9fff91af3ad793
+---
+ domain.te         | 44 ++++++++------------------------------------
+ keystore.te       | 11 -----------
+ property_contexts |  2 +-
+ recovery.te       | 10 ++--------
+ system_server.te  | 17 ++---------------
+ vold.te           | 22 +---------------------
+ 6 files changed, 14 insertions(+), 92 deletions(-)
+
+diff --git a/domain.te b/domain.te
+index b6eeb2e..825be6b 100644
+--- a/domain.te
++++ b/domain.te
+@@ -196,9 +196,8 @@ neverallow {
+   -vold
+ } self:capability mknod;
+ 
+-attribute rmt_placeholder;
+ # Limit raw I/O to these whitelisted domains.
+-neverallow { domain -kernel -init -recovery -ueventd -watchdogd -healthd -vold -uncrypt -tee -rmt_placeholder } self:capability sys_rawio;
++neverallow { domain -kernel -init -recovery -ueventd -watchdogd -healthd -vold -uncrypt -tee } self:capability sys_rawio;
+ 
+ # No process can map low memory (< CONFIG_LSM_MMAP_MIN_ADDR).
+ neverallow domain self:memprotect mmap_zero;
+@@ -228,9 +227,6 @@ neverallow { domain -init } security_file:{ dir file lnk_file } { relabelfrom re
+ # system_server is for creating subdirectories under /data/security.
+ neverallow { domain -init -system_server } security_file:dir { create setattr };
+ # Only system_server can create subdirectories and files under /data/security.
+-neverallow { domain -system_server -recovery } security_file:dir { rename write add_name remove_name rmdir };
+-neverallow { domain -system_server -recovery } security_file:file { create setattr write append unlink link rename };
+-neverallow { domain -system_server -recovery } security_file:lnk_file { create setattr unlink rename };
+ 
+ # Only init prior to switching context should be able to set enforcing mode.
+ # init starts in kernel domain and switches to init domain via setcon in
+@@ -254,8 +250,8 @@ neverallow { domain -init -system_server -ueventd } hw_random_device:chr_file *;
+ neverallow domain { file_type -exec_type }:file entrypoint;
+ 
+ # Ensure that nothing in userspace can access /dev/mem or /dev/kmem
+-neverallow { domain -rmt_placeholder -kernel -ueventd -init } kmem_device:chr_file *;
+-neverallow { domain -rmt_placeholder } kmem_device:chr_file ~{ create relabelto unlink setattr };
++neverallow { domain -kernel -ueventd -init } kmem_device:chr_file *;
++neverallow domain kmem_device:chr_file ~{ create relabelto unlink setattr };
+ 
+ # Only init should be able to configure kernel usermodehelpers or
+ # security-sensitive proc settings.
+@@ -304,8 +300,8 @@ neverallow {
+ } { fs_type -rootfs }:file execute;
+ 
+ # Only the init property service should write to /data/property.
+-neverallow { domain -init -recovery } property_data_file:dir no_w_dir_perms;
+-neverallow { domain -init -recovery } property_data_file:file no_w_file_perms;
++# neverallow { domain -init } property_data_file:dir no_w_dir_perms;
++# neverallow { domain -init } property_data_file:file no_w_file_perms;
+ 
+ # Only recovery should be doing writes to /system
+ neverallow { domain -recovery } { system_file exec_type }:dir_file_class_set
+@@ -316,18 +312,11 @@ neverallow { domain -recovery -kernel } { system_file exec_type }:dir_file_class
+ neverallow domain { system_file exec_type }:dir_file_class_set mounton;
+ 
+ # Nothing should be writing to files in the rootfs.
+-ifelse(shipping_build, `true',
+-  `neverallow domain rootfs:file { create write setattr relabelto append unlink link rename };'
+-,
+-)
++# neverallow domain rootfs:file { create write setattr relabelto append unlink link rename };
+ 
+ # Restrict context mounts to specific types marked with
+ # the contextmount_type attribute.
+-ifelse(shipping_build, `true',
+-  `neverallow domain {fs_type -contextmount_type}:filesystem relabelto;'
+-,
+-  `neverallow domain {fs_type -contextmount_type -sdcard_posix}:filesystem relabelto;'
+-)
++neverallow domain {fs_type -contextmount_type}:filesystem relabelto;
+ 
+ # Ensure that context mount types are not writable, to ensure that
+ # the write to /system restriction above is not bypassed via context=
+@@ -359,17 +348,6 @@ neverallow { domain -servicemanager } *:binder set_context_mgr;
+ 
+ # Only authorized processes should be writing to files in /data/dalvik-cache
+ # (excluding /data/dalvik-cache/profiles, which is labeled differently)
+-ifelse(shipping_build, `true',
+-  `neverallow { domain -init -zygote -installd -dex2oat } dalvikcache_data_file:file no_w_file_perms;'
+-,
+-  `neverallow { domain -init -zygote -installd -dex2oat -system_server -recovery} dalvikcache_data_file:file no_w_file_perms;'
+-)
+-
+-ifelse(shipping_build, `true',
+-  `neverallow { domain -init -installd -dex2oat -zygote } dalvikcache_data_file:dir no_w_dir_perms;'
+-,
+-  `neverallow { domain -init -installd -dex2oat -zygote -recovery } dalvikcache_data_file:dir no_w_dir_perms;'
+-)
+ 
+ # Only system_server should be able to send commands via the zygote socket
+ neverallow { domain -zygote -system_server } zygote:unix_stream_socket connectto;
+@@ -400,7 +378,7 @@ neverallow domain { file_type fs_type dev_type }:{ lnk_file fifo_file sock_file
+ # Nobody should be able to execute su on user builds.
+ # On userdebug/eng builds, only dumpstate, shell, and
+ # su itself execute su.
+-neverallow { domain userdebug_or_eng(`-dumpstate -shell -su -init -untrusted_app -sudaemon') } su_exec:file no_x_file_perms;
++# neverallow { domain userdebug_or_eng(`-dumpstate -shell -su') } su_exec:file no_x_file_perms;
+ 
+ # Do not allow the introduction of new execmod rules. Text relocations
+ # and modification of executable pages are unsafe.
+@@ -438,12 +416,6 @@ neverallow ~domain domain:process { transition dyntransition };
+ # Example type transition:
+ #  mydomain.te:file_type_auto_trans(mydomain, system_data_file, new_file_type)
+ #
+-ifelse(shipping_build, `true',
+-  `neverallow { domain -system_server -system_app -init -installd } system_data_file:file no_w_file_perms;'
+-,
+-  `neverallow { domain -system_server -system_app -init -installd -recovery } system_data_file:file no_w_file_perms;'
+-)
+-
+ # do not grant anything greater than r_file_perms and relabelfrom unlink
+ # to installd
+ neverallow installd system_data_file:file ~{ r_file_perms relabelfrom unlink };
+diff --git a/keystore.te b/keystore.te
+index b5d119f..80e48eb 100644
+--- a/keystore.te
++++ b/keystore.te
+@@ -23,15 +23,4 @@ selinux_check_access(keystore)
+ ### Protect ourself from others
+ ###
+ 
+-neverallow { domain -keystore -recovery } keystore_data_file:dir ~{ open create read getattr setattr search relabelto ioctl };
+-neverallow { domain -keystore -recovery } keystore_data_file:notdevfile_class_set ~{ relabelto getattr };
+-
+-ifelse(shipping_build, `true',
+-  `neverallow { domain -keystore -init } keystore_data_file:dir *;
+-   neverallow { domain -keystore -init } keystore_data_file:notdevfile_class_set *;'
+-,
+-  `neverallow { domain -keystore -init -recovery } keystore_data_file:dir *;
+-   neverallow { domain -keystore -init -recovery } keystore_data_file:notdevfile_class_set *;'
+-)
+-
+ neverallow domain keystore:process ptrace;
+diff --git a/property_contexts b/property_contexts
+index 5bdb3c3..2a461e8 100644
+--- a/property_contexts
++++ b/property_contexts
+@@ -31,7 +31,7 @@ debug.                  u:object_r:debug_prop:s0
+ debug.db.               u:object_r:debuggerd_prop:s0
+ log.                    u:object_r:shell_prop:s0
+ service.adb.root        u:object_r:shell_prop:s0
+-service.adb.tcp.port    u:object_r:shell_prop:s0
++service.adb.tcp.port*   u:object_r:shell_prop:s0
+ 
+ persist.audio.          u:object_r:audio_prop:s0
+ persist.logd.           u:object_r:logd_prop:s0
+diff --git a/recovery.te b/recovery.te
+index 646e42f..335773d 100644
+--- a/recovery.te
++++ b/recovery.te
+@@ -114,11 +114,5 @@ recovery_only(`
+ # domains, including recovery.
+ #
+ # TODO: tighten this up further.
+-ifelse(shipping_build, `true',
+-  `neverallow recovery data_file_type:file { no_w_file_perms no_x_file_perms };'
+-,
+-)
+-ifelse(shipping_build, `true',
+-  `neverallow recovery data_file_type:dir no_w_dir_perms;'
+-,
+-)
++#neverallow recovery data_file_type:file { no_w_file_perms no_x_file_perms };
++#neverallow recovery data_file_type:dir no_w_dir_perms;
+diff --git a/system_server.te b/system_server.te
+index 36c36e9..d54deea 100644
+--- a/system_server.te
++++ b/system_server.te
+@@ -101,13 +101,9 @@ allow system_server proc_sysrq:file rw_file_perms;
+ # Read /sys/kernel/debug/wakeup_sources.
+ allow system_server debugfs:file r_file_perms;
+ 
+-# The DhcpClient and WifiWatchdog use packet_sockets
++# WifiWatchdog uses a packet_socket
+ allow system_server self:packet_socket create_socket_perms;
+ 
+-# NetworkDiagnostics requires explicit bind() calls to ping sockets. These aren't actually the same
+-# as raw sockets, but the kernel doesn't yet distinguish between the two.
+-allow system_server node:rawip_socket node_bind;
+-
+ # 3rd party VPN clients require a tun_socket to be created
+ allow system_server self:tun_socket create_socket_perms;
+ 
+@@ -134,7 +130,6 @@ binder_call(system_server, binderservicedomain)
+ binder_call(system_server, gatekeeperd)
+ binder_call(system_server, fingerprintd)
+ binder_call(system_server, appdomain)
+-binder_call(system_server, bootanim)
+ binder_call(system_server, dumpstate)
+ binder_service(system_server)
+ 
+@@ -296,11 +291,6 @@ set_prop(system_server, powerctl_prop)
+ set_prop(system_server, fingerprint_prop)
+ 
+ # ctl interface
+-allow system_server ctl_bootanim_prop:property_service set;
+-
+-# Use open file provided by bootanim.
+-allow system_server bootanim:fd use;
+-
+ set_prop(system_server, ctl_default_prop)
+ set_prop(system_server, ctl_dhcp_pan_prop)
+ set_prop(system_server, ctl_bugreport_prop)
+@@ -461,10 +451,7 @@ neverallow system_server { bluetooth_data_file nfc_data_file shell_data_file app
+ # a bug (for example, bug 16317188), or represents an attempt by
+ # system server to dynamically load a dex file, something we do not
+ # want to allow.
+-ifelse(shipping_build, `true',
+-  `neverallow system_server dex2oat_exec:file no_x_file_perms;'
+-,
+-)
++# neverallow system_server dex2oat_exec:file no_x_file_perms;
+ 
+ # The only block device system_server should be accessing is
+ # the frp_block_device. This helps avoid a system_server to root
+diff --git a/vold.te b/vold.te
+index 7ddf2b7..856a293 100644
+--- a/vold.te
++++ b/vold.te
+@@ -34,10 +34,6 @@ allow vold sdcard_type:dir mounton; # TODO: deprecated in M
+ allow vold sdcard_type:filesystem { mount remount unmount }; # TODO: deprecated in M
+ allow vold sdcard_type:dir create_dir_perms; # TODO: deprecated in M
+ allow vold sdcard_type:file create_file_perms; # TODO: deprecated in M
+-ifelse(shipping_build, `true', ,
+-  allow vold sdcard_posix:filesystem { relabelto relabelfrom };
+-)
+-allow vold labeledfs:filesystem { relabelfrom };
+ 
+ # Manage locations where storage is mounted
+ allow vold { mnt_media_rw_file storage_file sdcard_type }:dir create_dir_perms;
+@@ -141,10 +137,6 @@ allow vold tee_device:chr_file rw_file_perms;
+ 
+ # Access userdata block device.
+ allow vold userdata_block_device:blk_file rw_file_perms;
+-auditallow vold userdata_block_device:blk_file rw_file_perms;
+-
+-# For UMS tuning
+-allow vold proc_dirty_ratio:file rw_file_perms;
+ 
+ # Access metadata block device used for encryption meta-data.
+ allow vold metadata_block_device:blk_file rw_file_perms;
+@@ -171,16 +163,4 @@ allow vold self:capability sys_nice;
+ allow vold self:capability sys_chroot;
+ allow vold storage_file:dir mounton;
+ 
+-ifelse(shipping_build, `true',
+-  `neverallow { domain -vold } vold_data_file:dir ~{ open create read getattr setattr search relabelto ioctl };
+-   neverallow { domain -vold } vold_data_file:notdevfile_class_set ~{ relabelto getattr };
+-   neverallow { domain -vold -init } vold_data_file:dir *;
+-   neverallow { domain -vold -init } vold_data_file:notdevfile_class_set *;
+-   neverallow { domain -vold -init } restorecon_prop:property_service set;'
+-,
+-   `neverallow { domain -vold -recovery } vold_data_file:dir ~{ open create read getattr setattr search relabelto ioctl };
+-    neverallow { domain -vold -recovery } vold_data_file:notdevfile_class_set ~{ relabelto getattr };
+-    neverallow { domain -vold -init -recovery } vold_data_file:dir *;
+-    neverallow { domain -vold -init -recovery } vold_data_file:notdevfile_class_set *;
+-    neverallow { domain -vold -init -recovery } restorecon_prop:property_service set;'
+-)
++neverallow { domain -vold -init } restorecon_prop:property_service set;
+-- 
+2.5.0
+
