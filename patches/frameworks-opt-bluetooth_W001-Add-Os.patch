@@ -1,0 +1,15 @@
+diff --git a/Android.mk b/Android.mk
+index 030d2b6..00fc5fa 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,7 +1,9 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
+ 
+-LOCAL_MODULE_TAGS := optional
++LOCAL_CFLAGS += -Os
++
++LOCALgit@github.com:CyanogenMod/android_frameworks_opt_bluetooth.git
+ 
+ src_dirs:= src/android/bluetooth/client/pbap
+ 

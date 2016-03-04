@@ -1,0 +1,102 @@
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 090f271..2189001 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -24,4 +24,9 @@
+     <string name="su_indicator_summary_on">Superuser indicator is visible when a session is active</string>
+     <string name="su_indicator_summary_off">Toggle to show superuser indicator when a session is active</string>
+ 
++    <!-- Security Settings -->
++    <string name="external_storage_permissions">External storage permissions</string>    
++    <string name="storage_worldwritable_title">Make writable to all apps</string>    
++    <string name="storage_worldwritable_summary">(will be taken into account after ejecting/inserting the media)</string>    
++
+ </resources>
+diff --git a/res/xml/security_settings_misc.xml b/res/xml/security_settings_misc.xml
+index 090f272..2289001 100644
+--- a/res/xml/security_settings_misc.xml
++++ b/res/xml/security_settings_misc.xml
+@@ -26,7 +26,17 @@
+ 
+     </PreferenceCategory>
+ 
+-    <PreferenceCategory android:key="sim_lock"
++    <PreferenceCategory android:title="@string/external_storage_permissions"
++            android:persistent="false">
++
++        <SwitchPreference android:key="persist.external_drive_world_rw"
++                android:title="@string/storage_worldwritable_title"
++                android:summary="@string/storage_worldwritable_summary"                
++                android:persistent="false"/>
++
++    </PreferenceCategory>
++
++    <PreferenceCategory android:key="sim_lock"
+             android:title="@string/sim_lock_settings_title"
+             android:persistent="false">
+ 
+diff --git a/src/com/android/settings/SecuritySettings.java b/src/com/android/settings/SecuritySettings.java
+index 090f273..2289001 100644
+--- a/src/com/android/settings/SecuritySettings.java
++++ b/src/com/android/settings/SecuritySettings.java
+@@ -64,6 +64,8 @@
+ import java.util.ArrayList;
+ import java.util.List;
+ 
++import android.os.SystemProperties;
++
+ import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
+ 
+ /**
+@@ -103,11 +105,13 @@
+     private static final String KEY_SMS_SECURITY_CHECK_PREF = "sms_security_check_limit";
+     private static final String KEY_GENERAL_CATEGORY = "general_category";
+     private static final String KEY_LIVE_LOCK_SCREEN = "live_lock_screen";
++    private static final String KEY_EXTERNAL_DRIVE_WRW = "persist.external_drive_world_rw";
+ 
+     // These switch preferences need special handling since they're not all stored in Settings.
+     private static final String SWITCH_PREFERENCE_KEYS[] = { KEY_LOCK_AFTER_TIMEOUT,
+             KEY_VISIBLE_PATTERN, KEY_VISIBLE_ERROR_PATTERN, KEY_VISIBLE_DOTS, KEY_DIRECTLY_SHOW,
+-            KEY_POWER_INSTANTLY_LOCKS, KEY_SHOW_PASSWORD, KEY_TOGGLE_INSTALL_APPLICATIONS };
++            KEY_POWER_INSTANTLY_LOCKS, KEY_SHOW_PASSWORD, KEY_TOGGLE_INSTALL_APPLICATIONS,
++            KEY_EXTERNAL_DRIVE_WRW };
+ 
+     // Only allow one trust agent on the platform.
+     private static final boolean ONLY_ONE_TRUST_AGENT = true;
+@@ -124,6 +127,7 @@
+     private SwitchPreference mVisibleDots;
+ 
+     private SwitchPreference mShowPassword;
++    private SwitchPreference mStorageWorldWritable;
+ 
+     private KeyStore mKeyStore;
+     private Preference mResetCredentials;
+@@ -284,6 +288,7 @@ public boolean onPreferenceClick(Preference preference) {
+             // Show password
+             mShowPassword = (SwitchPreference) root.findPreference(KEY_SHOW_PASSWORD);
+             mResetCredentials = root.findPreference(KEY_RESET_CREDENTIALS);
++            mStorageWorldWritable = (SwitchPreference) root.findPreference(KEY_EXTERNAL_DRIVE_WRW);
+ 
+             // Credential storage
+             final UserManager um = (UserManager) getActivity().getSystemService(Context.USER_SERVICE);
+@@ -617,6 +622,9 @@ public void onResume() {
+             mShowPassword.setChecked(Settings.System.getInt(getContentResolver(),
+                     Settings.System.TEXT_SHOW_PASSWORD, 1) != 0);
+         }
++        
++       if (mStorageWorldWritable != null) 
++            mStorageWorldWritable.setChecked(SystemProperties.getInt(KEY_EXTERNAL_DRIVE_WRW, 0) == 1);
+ 
+         if (mResetCredentials != null) {
+             mResetCredentials.setEnabled(!mKeyStore.isEmpty());
+@@ -701,6 +709,10 @@ public boolean onPreferenceChange(Preference preference, Object value) {
+                     smsSecurityCheck);
+             updateSmsSecuritySummary(smsSecurityCheck);
++        } else if (KEY_EXTERNAL_DRIVE_WRW.equals(key)) {		
++            SystemProperties.set(KEY_EXTERNAL_DRIVE_WRW, (Boolean)value?"1":"0");
++            result = true;
+         }
+         return result;
++
+     }
+ 

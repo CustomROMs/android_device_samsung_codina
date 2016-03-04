@@ -1,0 +1,13 @@
+diff --git a/libs/androidfw/ResourceTypes.cpp b/libs/androidfw/ResourceTypes.cpp
+index 83f9c6a..d41baf2 100644
+--- a/libs/androidfw/ResourceTypes.cpp
++++ b/libs/androidfw/ResourceTypes.cpp
+@@ -568,7 +568,7 @@ status_t ResStringPool::setTo(const void* data, size_t size, bool copyData)
+ 
+         if ((mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+                 ((uint8_t*)mStrings)[mStringPoolSize-1] != 0) ||
+-                (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
++                (!(mHeader->flags&ResStringPool_header::UTF8_FLAG) &&
+                 ((uint16_t*)mStrings)[mStringPoolSize-1] != 0)) {
+             ALOGW("Bad string block: last string is not 0-terminated\n");
+             return (mError=BAD_TYPE);

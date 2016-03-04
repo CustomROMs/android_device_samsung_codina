@@ -1,0 +1,16 @@
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 0108a5a..ff6f6bb 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -16228,6 +16228,11 @@ private void updateExternalMediaStatusInner(boolean isMounted, boolean reportSta
+                         continue;
+                     }
+ 
++                    // Verifying SdDir before Install to avoid NPE
++                    if (PackageHelper.getSdDir(cid) == null) {
++                        continue;
++                    }
++
+                     final AsecInstallArgs args = new AsecInstallArgs(cid,
+                             getAppDexInstructionSets(ps), ps.isForwardLocked());
+                     // The package status is changed only if the code path

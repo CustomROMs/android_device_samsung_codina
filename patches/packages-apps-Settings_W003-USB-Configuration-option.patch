@@ -1,0 +1,28 @@
+Init and Make USB Configuration option persistent 
+
+diff --git a/src/com/android/settings/DevelopmentSettings.java b/src/com/android/settings/DevelopmentSettings.java
+index 0005524..00ec124 100644
+--- a/src/com/android/settings/DevelopmentSettings.java
++++ b/src/com/android/settings/DevelopmentSettings.java
+@@ -1554,8 +1554,10 @@ private void updateUsbConfigurationValues() {
+             String[] values = getResources().getStringArray(R.array.usb_configuration_values);
+             String[] titles = getResources().getStringArray(R.array.usb_configuration_titles);
+             int index = 0;
+-            for (int i = 0; i < titles.length; i++) {
+-                if (manager.isFunctionEnabled(values[i])) {
++            String currentSetValue = SystemProperties.get("persist.usbconfiguration", "mtp");
++
++            for (int i = 0; i < values.length; i++) {
++                if (currentSetValue.equals(values[i])){
+                     index = i;
+                     break;
+                 }
+@@ -1569,6 +1571,8 @@ private void updateUsbConfigurationValues() {
+     private void writeUsbConfigurationOption(Object newValue) {
+         UsbManager manager = (UsbManager)getActivity().getSystemService(Context.USB_SERVICE);
+         String function = newValue.toString();
++        SystemProperties.set("persist.usbconfiguration", function);
++
+         manager.setCurrentFunction(function);
+         if (function.equals("none")) {
+             manager.setUsbDataUnlocked(false);

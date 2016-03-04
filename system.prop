@@ -24,15 +24,40 @@ ro.device.rear_cam=5 Mpix (2592x1944)
 ro.device.front_cam=VGA (640x480)
 ro.device.screen_res=3,8' 800x480 pixels ( ~246 ppi)
 
-# NTP sync
-ro.config.sync=yes
-ro.config.ntp.server_poll=86400000
-ro.config.ntp.clock_sync=1800000
-ro.config.ntp.sync_mode=3
+# test
+persist.external_drive_world_rw=1
+persist.sys.usb.config=mtp,adb
+# media.stagefright.use-awesome=false
+# persist.sys.media.use-awesome=true
+# net.tethering.noprovisioning=true
+# ro.disableWifiApFirmwareReload=false
 
-# Awesome Player
-media.stagefright.use-awesome=true
-persist.sys.media.use-awesome=true
-
-# Camera
+# Hardware
+persist.sys.scrollingcache=2
 camera2.portability.force_api=1
+# debug.composition.type=gpu
+debug.composition.type=dyn
+# ro.sys.fw.trim_enable_memory=805306368
+ro.sys.fw.trim_enable_memory=536870912
+ro.sys.fw.use_trim_settings=true
+ro.sys.fw.empty_app_percent=25
+ro.sys.fw.trim_empty_percent=50
+ro.sys.fw.trim_cache_percent=50
+ro.sys.fw.bg_apps_limit=16
+# ro.telephony.call_ring.delay=1000
+# persist.sys.dalvik.multithread=true
+persist.sys.strictmode.disable=true
+
+# art optimization
+dalvik.vm.image-dex2oat-filter=speed
+dalvik.vm.dex2oat-filter=interpret-only
+# dalvik.vm.image-dex2oat-filter=everything
+# dalvik.vm.dex2oat-filter=everything
+
+# hwui
+ro.hwui.drop_shadow_cache_size=1
+ro.hwui.gradient_cache_size=0.2
+ro.hwui.layer_cache_size=6
+ro.hwui.path_cache_size=2
+ro.hwui.r_buffer_cache_size=1
+ro.hwui.texture_cache_size=8

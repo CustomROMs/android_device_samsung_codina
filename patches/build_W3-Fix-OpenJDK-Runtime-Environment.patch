@@ -1,0 +1,34 @@
+From b11051be1fd06d06fd6f57533ffc92d1ddccc060 Mon Sep 17 00:00:00 2001
+From: Matt Mower <mowerm@gmail.com>
+Date: Mon, 04 May 2015 14:30:30 -0500
+Subject: [PATCH] build: Unset JAVA_TOOL_OPTIONS to read java version
+
+If env variable JAVA_TOOL_OPTIONS is set, it breaks the expected java
+version output. Exp:
+
+ Picked up JAVA_TOOL_OPTIONS: -javaagent:/usr/share/java/jayatanaag.jar
+ java version "1.7.0_79"
+ OpenJDK Runtime Environment (IcedTea 2.5.5) (7u79-2.5.5-0ubuntu1)
+ OpenJDK 64-Bit Server VM (build 24.79-b02, mixed mode)
+
+Unset JAVA_TOOL_OPTIONS for the purposes of reading java and javac
+versions. This was encountered on an Ubuntu 15.04 system.
+
+Change-Id: I288faaa18f5799e29cd436fc9568c1a879618c65
+---
+
+diff --git a/core/main.mk b/core/main.mk
+index 8643ee3..d816ff4 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -147,8 +147,8 @@
+ $(error Directory names containing spaces not supported)
+ endif
+ 
+-java_version_str := $(shell unset _JAVA_OPTIONS && java -version 2>&1)
+-javac_version_str := $(shell unset _JAVA_OPTIONS && javac -version 2>&1)
++java_version_str := $(shell unset _JAVA_OPTIONS JAVA_TOOL_OPTIONS && java -version 2>&1)
++javac_version_str := $(shell unset _JAVA_OPTIONS JAVA_TOOL_OPTIONS && javac -version 2>&1)
+ 
+ # Check for the correct version of java, should be 1.7 by
+ # default, and 1.8 if EXPERIMENTAL_USE_JAVA8 is set

@@ -1,0 +1,81 @@
+diff --git a/init/init.cpp b/init/init.cpp
+index 320d20a..a3fc5fa 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -1162,9 +1162,11 @@
+         if (!action_queue_empty() || cur_action) {
+             timeout = 0;
+         }
+ 
++#if BOOTCHART
+         bootchart_sample(&timeout);
++#endif
+ 
+         epoll_event ev;
+         int nr = TEMP_FAILURE_RETRY(epoll_wait(epoll_fd, &ev, 1, timeout));
+         if (nr == -1) {
+diff --git a/init/Android.mk b/init/Android.mk
+index 320d2ba..13fc50a 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -33,18 +33,22 @@
+ include $(CLEAR_VARS)
+ LOCAL_CPPFLAGS := $(init_cflags)
+ LOCAL_SRC_FILES:= \
+-    bootchart.cpp \
+     builtins.cpp \
+     devices.cpp \
+     init.cpp \
+     keychords.cpp \
+     property_service.cpp \
+     signal_handler.cpp \
+     ueventd.cpp \
+     ueventd_parser.cpp \
+     watchdogd.cpp \
+     vendor_init.cpp
+ 
++ifeq ($(strip $(INIT_BOOTCHART)),true)
++LOCAL_SRC_FILES += bootchart.cpp
++LOCAL_CFLAGS    += -DBOOTCHART=1
++endif
++
+ SYSTEM_CORE_INIT_DEFINES := BOARD_CHARGING_MODE_BOOTING_LPM \
+     BOARD_CHARGING_CMDLINE_NAME \
+     BOARD_CHARGING_CMDLINE_VALUE \
+diff --git a/init/keywords.h b/init/keywords.h
+index 320d2b0..13fc50a 100644
+--- a/init/keywords.h
++++ b/init/keywords.h
+@@ -1,5 +1,7 @@
+ #ifndef KEYWORD
++#if BOOTCHART
+ int do_bootchart_init(int nargs, char **args);
++#endif
+ int do_class_start(int nargs, char **args);
+ int do_class_stop(int nargs, char **args);
+ int do_class_reset(int nargs, char **args);
+@@ -45,6 +45,8 @@
+     K_UNKNOWN,
+ #endif
++#if BOOTCHART
+     KEYWORD(bootchart_init,        COMMAND, 0, do_bootchart_init)
++#endif
+     KEYWORD(chmod,       COMMAND, 2, do_chmod)
+     KEYWORD(chown,       COMMAND, 2, do_chown)
+     KEYWORD(class,       OPTION,  0, 0)
+diff --git a/init/init_parser.cpp b/init/init_parser.cpp
+index 320d2b1..13fc50a 100644
+--- a/init/init_parser.cpp
++++ b/init/init_parser.cpp
+@@ -117,9 +117,11 @@
+ static int lookup_keyword(const char *s)
+ {
+     switch (*s++) {
++#if BOOTCHART
+     case 'b':
+         if (!strcmp(s, "ootchart_init")) return K_bootchart_init;
+         break;
++#endif
+     case 'c':
+         if (!strcmp(s, "opy")) return K_copy;
+         if (!strcmp(s, "lass")) return K_class;
