@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
 /**
- * Copyright (c) 2009, The Android Open Source Project
+ * Copyright (c) 2011, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +17,8 @@
  * limitations under the License.
  */
 -->
+
 <resources>
-
-    <!-- Default for Settings.Secure.LONG_PRESS_TIMEOUT_MILLIS -->
-    <integer name="def_long_press_timeout_millis">250</integer>
-
+    <!-- Screen timeout default = 30 seconds -->
+    <integer name="def_screen_off_timeout">30000</integer>
 </resources>
