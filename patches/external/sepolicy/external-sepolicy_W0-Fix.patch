@@ -1,0 +1,150 @@
+diff --git a/domain.te b/domain.te
+index 200f100..bb89d10 100644
+--- a/domain.te
++++ b/domain.te
+@@ -227,9 +227,6 @@
+ # system_server is for creating subdirectories under /data/security.
+ neverallow { domain -init -system_server } security_file:dir { create setattr };
+ # Only system_server can create subdirectories and files under /data/security.
+-neverallow { domain -system_server } security_file:dir { rename write add_name remove_name rmdir };
+-neverallow { domain -system_server } security_file:file { create setattr write append unlink link rename };
+-neverallow { domain -system_server } security_file:lnk_file { create setattr unlink rename };
+ 
+ # Only init prior to switching context should be able to set enforcing mode.
+ # init starts in kernel domain and switches to init domain via setcon in
+@@ -303,8 +303,8 @@
+ } { fs_type -rootfs }:file execute;
+ 
+ # Only the init property service should write to /data/property.
+-neverallow { domain -init } property_data_file:dir no_w_dir_perms;
+-neverallow { domain -init } property_data_file:file no_w_file_perms;
++# neverallow { domain -init } property_data_file:dir no_w_dir_perms;
++# neverallow { domain -init } property_data_file:file no_w_file_perms;
+ 
+ # Only recovery should be doing writes to /system
+ neverallow { domain -recovery } { system_file exec_type }:dir_file_class_set
+@@ -315,7 +315,7 @@
+ neverallow domain { system_file exec_type }:dir_file_class_set mounton;
+ 
+ # Nothing should be writing to files in the rootfs.
+-neverallow domain rootfs:file { create write setattr relabelto append unlink link rename };
++# neverallow domain rootfs:file { create write setattr relabelto append unlink link rename };
+ 
+ # Restrict context mounts to specific types marked with
+ # the contextmount_type attribute.
+@@ -352,21 +352,6 @@
+ # Only authorized processes should be writing to files in /data/dalvik-cache
+ # (excluding /data/dalvik-cache/profiles, which is labeled differently)
+-neverallow {
+-  domain
+-  -init # TODO: limit init to relabelfrom for files
+-  -zygote
+-  -installd
+-  -dex2oat
+-} dalvikcache_data_file:file no_w_file_perms;
+ 
+-neverallow {
+-  domain
+-  -init
+-  -installd
+-  -dex2oat
+-  -zygote
+-} dalvikcache_data_file:dir no_w_dir_perms;
+-
+ # Only system_server should be able to send commands via the zygote socket
+ neverallow { domain -zygote -system_server } zygote:unix_stream_socket connectto;
+ neverallow { domain -system_server } zygote_socket:sock_file write;
+@@ -396,7 +396,7 @@
+ # Nobody should be able to execute su on user builds.
+ # On userdebug/eng builds, only dumpstate, shell, and
+ # su itself execute su.
+-neverallow { domain userdebug_or_eng(`-dumpstate -shell -su') } su_exec:file no_x_file_perms;
++# neverallow { domain userdebug_or_eng(`-dumpstate -shell -su') } su_exec:file no_x_file_perms;
+ 
+ # Do not allow the introduction of new execmod rules. Text relocations
+ # and modification of executable pages are unsafe.
+@@ -434,17 +434,10 @@
+ # Example type transition:
+ #  mydomain.te:file_type_auto_trans(mydomain, system_data_file, new_file_type)
+ #
+-neverallow {
+-  domain
+-  -system_server
+-  -system_app
+-  -init
+-  -installd # for relabelfrom and unlink, check for this in explicit neverallow
+-} system_data_file:file no_w_file_perms;
+ # do not grant anything greater than r_file_perms and relabelfrom unlink
+ # to installd
+ neverallow installd system_data_file:file ~{ r_file_perms relabelfrom unlink };
+ 
+ #
+ # Only these domains should transition to shell domain. This domain is
+ # permissible for the "shell user". If you need a process to exec a shell
+diff --git a/system_server.te b/system_server.te
+index 200f100..bb89d10 100644
+--- a/system_server.te
++++ b/system_server.te
+@@ -452,7 +452,7 @@
+ # system server to dynamically load a dex file, something we do not
+ # want to allow.
+-neverallow system_server dex2oat_exec:file no_x_file_perms;
++# neverallow system_server dex2oat_exec:file no_x_file_perms;
+ 
+ # The only block device system_server should be accessing is
+ # the frp_block_device. This helps avoid a system_server to root
+ # escalation by writing to raw block devices.
+diff --git a/property_contexts b/property_contexts
+index 200f100..bb89d10 100644
+--- a/property_contexts
++++ b/property_contexts
+@@ -31,8 +31,8 @@
+ debug.db.               u:object_r:debuggerd_prop:s0
+ log.                    u:object_r:shell_prop:s0
+ service.adb.root        u:object_r:shell_prop:s0
+-service.adb.tcp.port    u:object_r:shell_prop:s0
++service.adb.tcp.port*   u:object_r:shell_prop:s0
+ 
+ persist.audio.          u:object_r:audio_prop:s0
+ persist.logd.           u:object_r:logd_prop:s0
+ persist.sys.            u:object_r:system_prop:s0
+diff --git a/recovery.te b/recovery.te
+index 200f100..bb89d10 100644
+--- a/recovery.te
++++ b/recovery.te
+@@ -114,5 +114,5 @@
+ # domains, including recovery.
+ #
+ # TODO: tighten this up further.
+-neverallow recovery data_file_type:file { no_w_file_perms no_x_file_perms };
+-neverallow recovery data_file_type:dir no_w_dir_perms;
++#neverallow recovery data_file_type:file { no_w_file_perms no_x_file_perms };
++#neverallow recovery data_file_type:dir no_w_dir_perms;
+diff --git a/vold.te b/vold.te
+index 200f100..bb89d10 100644
+--- a/vold.te
++++ b/vold.te
+@@ -163,8 +163,4 @@
+ allow vold self:capability sys_chroot;
+ allow vold storage_file:dir mounton;
+ 
+-neverallow { domain -vold } vold_data_file:dir ~{ open create read getattr setattr search relabelto ioctl };
+-neverallow { domain -vold } vold_data_file:notdevfile_class_set ~{ relabelto getattr };
+-neverallow { domain -vold -init } vold_data_file:dir *;
+-neverallow { domain -vold -init } vold_data_file:notdevfile_class_set *;
+ neverallow { domain -vold -init } restorecon_prop:property_service set;
+diff --git a/keystore.te b/keystore.te
+index 200f100..bb89d10 100644
+--- a/keystore.te
++++ b/keystore.te
+@@ -23,10 +23,4 @@
+ ### Protect ourself from others
+ ###
+ 
+-neverallow { domain -keystore } keystore_data_file:dir ~{ open create read getattr setattr search relabelto ioctl };
+-neverallow { domain -keystore } keystore_data_file:notdevfile_class_set ~{ relabelto getattr };
+-
+-neverallow { domain -keystore -init } keystore_data_file:dir *;
+-neverallow { domain -keystore -init } keystore_data_file:notdevfile_class_set *;
+-
+ neverallow domain keystore:process ptrace;
