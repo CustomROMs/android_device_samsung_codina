@@ -181,7 +181,6 @@ TARGET_KERNEL_CONFIG := codina_defconfig
 # TARGET_KERNEL_CONFIG := codina_cm13_defconfig
 # TARGET_KERNEL_CONFIG := codina_nodebug_defconfig
 # TARGET_KERNEL_CONFIG := codina_selinux_defconfig
-PLATFORM_LINARO_4.9 := true
 
 # Bluetooth
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(LOCAL_PATH)/configs/bluetooth/include
