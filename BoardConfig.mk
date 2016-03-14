@@ -20,11 +20,6 @@ LOCAL_PATH := device/samsung/codina
 TARGET_SPECIFIC_HEADER_PATH := $(LOCAL_PATH)/include
 PRODUCT_VENDOR_KERNEL_HEADERS := $(LOCAL_PATH)/kernel-headers
 
-# kernel 3.1
-DEVICE_ENABLE_KERNEL_3 := true
-# gnueabihf-linaro-gcc-4.9.4
-DEVICE_ENABLE_TOOLCHAIN := true
-
 # Don't generate block based zips
 BLOCK_BASED_OTA := false
 COMMON_GLOBAL_CFLAGS += -DDISABLE_ASHMEM_TRACKING
@@ -76,13 +71,8 @@ BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_BASE := 0x40000000
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/codina/shbootimg.mk
 
-ifeq ($(DEVICE_ENABLE_TOOLCHAIN),true)
-# KERNEL_TOOLCHAIN := /home/sergeyl/eabi/prebuilt/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin
-# KERNEL_TOOLCHAIN_PREFIX := arm-linux-gnueabihf-
-# KERNEL_TOOLCHAIN_PREFIX:=$(ANDROID_BUILD_TOP)/prebuilts/gcc/$(HOST_OS)-x86/arm/arm-eabi-5.3/bin/arm-eabi-
-KERNEL_TOOLCHAIN := /home/sergeyl/eabi/prebuilt/armv7a-linux-gnueabihf-gcc-5.2.0_with_isl_x86/bin
-KERNEL_TOOLCHAIN_PREFIX := armv7a-linux-gnueabihf-
-endif
+KERNEL_TOOLCHAIN := /home/chrono/root/prebuilt/gcc/linux-x86/arm/armv-eabi-5.2/bin
+KERNEL_TOOLCHAIN_PREFIX := arm-eabi-5.2
 
 # Graphics
 USE_OPENGL_RENDERER := true
@@ -153,11 +143,6 @@ BOARD_CUSTOM_RECOVERY_KEYMAPPING := ../../../device/samsung/codina/recovery/reco
 #BOARD_HAS_LARGE_FILESYSTEM := true
 BOARD_CANT_BUILD_RECOVERY_FROM_BOOT_PATCH := true
 
-# SELinux
-BOARD_SEPOLICY_DIRS := \
-    $(BOARD_SEPOLICY_DIRS) \
-    $(LOCAL_PATH)/sepolicy
-
 # Delete the line below when SELinux is enabled on all devices
 COMMON_GLOBAL_CFLAGS += -DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR
 
@@ -176,12 +161,7 @@ COMMON_GLOBAL_CPPFLAGS += -DNO_SECURE_DISCARD
 # == BEGIN LOCAL CONFIG ==
 TARGET_OTA_ASSERT_DEVICE := codina,codinap,i8160,GT-I8160
 
-# Kernel
-ifeq ($(DEVICE_ENABLE_KERNEL_3),true)
-TARGET_KERNEL_SOURCE := kernel/samsung/ChronoKerne3
-else
-TARGET_KERNEL_SOURCE := kernel/samsung/u8500
-endif
+TARGET_KERNEL_SOURCE := kernel/codina/chrono
 TARGET_KERNEL_CONFIG := codina_defconfig
 # TARGET_KERNEL_CONFIG := codina_cm13_defconfig
 # TARGET_KERNEL_CONFIG := codina_nodebug_defconfig
