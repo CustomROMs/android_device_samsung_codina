@@ -71,7 +71,7 @@ BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_BASE := 0x40000000
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/codina/shbootimg.mk
 
-KERNEL_TOOLCHAIN := /home/chrono/root/prebuilt/gcc/linux-x86/arm/armv-eabi-5.2/bin
+KERNEL_TOOLCHAIN := $(TOP)/prebuilt/gcc/linux-x86/arm/armv-eabi-5.2/bin
 KERNEL_TOOLCHAIN_PREFIX := arm-eabi-5.2
 
 # Graphics
