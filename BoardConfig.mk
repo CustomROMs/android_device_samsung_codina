@@ -145,6 +145,21 @@ BOARD_CANT_BUILD_RECOVERY_FROM_BOOT_PATCH := true
 # Delete the line below when SELinux is enabled on all devices
 COMMON_GLOBAL_CFLAGS += -DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR
 
+VIPER4ANDROID_MODE := NEON
+
+# FM
+#BOARD_HAVE_FMRADIO := true
+
+TARGET_USE_ST_ERICSSON_MULTIMEDIA := true
+MULTIMEDIA_SET_PLATFORM := u8500
+STE_PLATFORM := u8500
+
+# Superuser
+TARGET_NO_SUPERUSER := false
+ifneq ($(TARGET_NO_SUPERUSER),true)
+SUPERUSER_EMBEDDED := true
+endif
+
 # Releasetools
 # TARGET_RELEASETOOLS_EXTENSIONS := $(LOCAL_PATH)/releasetools
 
@@ -185,10 +200,25 @@ else
 -include $(LOCAL_PATH)/cwm.mk
 endif
 
-# Dex Pre-opt
-#WITH_DEXPREOPT_BOOT_IMG_ONLY ?= false
-#WITH_DEXPREOPT := false
-#DONT_DEXPREOPT_PREBUILTS := true
-
 BOARD_LPM_BOOT_ARGUMENT_NAME := lpm_boot
 BOARD_LPM_BOOT_ARGUMENT_VALUE := 1
+
+
+# Dex Pre-opt
+WITH_DEXPREOPT := true
+DONT_DEXPREOPT_PREBUILTS := true
+
+# Disable compression of precompiled odex with gzip
+WITH_DEXPREOPT_COMP := false
+ 
+# Enable position-independent code for odex files
+WITH_DEXPREOPT_PIC := true
+
+#FFAST_MATH := true
+#FORCE_GCC52 := true
+#FORCE_ARM := true
+#STRICT_ALIASING := true
+#FLOOP_NEST_OPTIMIZE := true
+#GRAPHITE_OPTS := true
+#ENABLE_LTO := true
+#UNSAFE_LOOPS_OPTIMIZATIONS := true
