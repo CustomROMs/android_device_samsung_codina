@@ -1,0 +1,96 @@
+From 7ec59244c6122c6162930c6c23fd5e44d511b770 Mon Sep 17 00:00:00 2001
+From: Stefan Berger <s.berger81@gmail.com>
+Date: Sun, 29 Mar 2015 14:38:24 +0200
+Subject: [PATCH] Telecomm: Fix low in-call volume
+
+Call resetAudioVolume() both when the audio state changes
+and the proximity sensor triggers a wakelock on incoming
+calls. Needed to address low in-call volume issues with
+STE audio blobs on Android L.
+
+Change-Id: I62e33492f84e9c9950698313281f60577170a24d
+---
+ .../android/server/telecom/CallAudioManager.java   | 30 ++++++++++++++++++++++
+ src/com/android/server/telecom/CallsManager.java   |  4 +++
+ .../server/telecom/ProximitySensorManager.java     |  2 ++
+ 3 files changed, 36 insertions(+)
+
+diff --git a/src/com/android/server/telecom/CallAudioManager.java b/src/com/android/server/telecom/CallAudioManager.java
+index 23284e3..fa7c753 100644
+--- a/src/com/android/server/telecom/CallAudioManager.java
++++ b/src/com/android/server/telecom/CallAudioManager.java
+@@ -324,6 +324,7 @@ final class CallAudioManager extends CallsManagerListenerBase
+             if (mCallAudioState.getRoute() == CallAudioState.ROUTE_SPEAKER) {
+                 setAudioRoute(CallAudioState.ROUTE_WIRED_OR_EARPIECE);
+             }
++            resetAudioStreamVolume();
+         }
+     }
+ 
+@@ -801,6 +802,35 @@ final class CallAudioManager extends CallsManagerListenerBase
+     }
+ 
+     /**
++     * Reset the audio stream volume to fix the low in-call volume bug.
++     *
++     * Due to a bug in the OMX system, the audio stream volume is set to 0 after it was set to it's default volume.
++     * Calling resetAudioStreamVolume() triggers the system to reset the volume.
++     *
++     * This should be called on every place where is switched between audio modes.
++     *
++     * REMARK: I think it only appears on the voice call stream, but to be sure I also do it on the bluetooth stream.
++     */
++    public void resetAudioStreamVolume() {
++        // determine actual streamType
++        int streamType = AudioManager.STREAM_VOICE_CALL;
++        if (mBluetoothManager.isBluetoothAudioConnectedOrPending()) {
++            streamType = AudioManager.STREAM_BLUETOOTH_SCO;
++        }
++        // determine volume and 1 level lower volume (lowest level can be 0)
++        int volume = mAudioManager.getStreamVolume(streamType);
++        int lowerVolume = volume - 1;
++        if (lowerVolume < 0) {
++            lowerVolume = 0;
++        }
++        Log.i(this,"resetAudioStreamVolume (streamType=" + streamType + ", streamVolume=" + volume + ")...");
++        // It's important to change it to another volume before restoring the original volume,
++        // otherwise the volume change will NOT be triggered!!
++        mAudioManager.setStreamVolume(streamType, lowerVolume, 0);
++        mAudioManager.setStreamVolume(streamType, volume, 0);
++    }
++
++    /**
+      * Dumps the state of the {@link CallAudioManager}.
+      *
+      * @param pw The {@code IndentingPrintWriter} to write the state to.
+diff --git a/src/com/android/server/telecom/CallsManager.java b/src/com/android/server/telecom/CallsManager.java
+index 195bd7c..dc2b8ab 100644
+--- a/src/com/android/server/telecom/CallsManager.java
++++ b/src/com/android/server/telecom/CallsManager.java
+@@ -461,6 +461,10 @@ public class CallsManager extends Call.ListenerBase implements VideoProviderProx
+         return mCallAudioManager.getCallAudioState();
+     }
+ 
++    void resetAudioStreamVolume() {
++        mCallAudioManager.resetAudioStreamVolume();
++    }
++
+     boolean isTtySupported() {
+         return mTtyManager.isTtySupported();
+     }
+diff --git a/src/com/android/server/telecom/ProximitySensorManager.java b/src/com/android/server/telecom/ProximitySensorManager.java
+index 5fddb89..6cb5528 100644
+--- a/src/com/android/server/telecom/ProximitySensorManager.java
++++ b/src/com/android/server/telecom/ProximitySensorManager.java
+@@ -66,6 +66,8 @@ public class ProximitySensorManager extends CallsManagerListenerBase {
+         if (!mProximityWakeLock.isHeld()) {
+             Log.i(this, "Acquiring proximity wake lock");
+             mProximityWakeLock.acquire();
++            // Reset audio stream volume when call is off hook
++            CallsManager.getInstance().resetAudioStreamVolume();
+         } else {
+             Log.i(this, "Proximity wake lock already acquired");
+         }
+-- 
+2.5.0
+

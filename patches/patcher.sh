@@ -9,16 +9,17 @@ if [ "$PATCHES" == "" ] ; then
 		 bionic \
 		 bootable/recovery \
 		 frameworks/av \
-		 frameworks/base \
-		 frameworks/native  \
+		 #frameworks/base \
+		 #frameworks/native  \
 		 frameworks/opt/net/wifi \
-		 frameworks/opt/telephony \
+		 frameworks/opt/net/ims \
+		 #frameworks/opt/telephony \
 		 external/libpng \
-		 external/sepolicy \
-		 hardware/libhardware \
+		 #hardware/libhardware \
 		 hardware/ril \
 		 packages/inputmethods/LatinIME \
 		 packages/providers/MediaProvider \
+		 packages/services/Telecomm \
 		 system/bt \
 		 system/core \
 		 system/media \

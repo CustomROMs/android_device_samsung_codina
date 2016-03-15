@@ -1,8 +1,18 @@
+From 4a678509c17bb1dbf7fb312923b61baaa1108798 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 14 Mar 2016 19:14:15 +0700
+Subject: [PATCH 03/18] system-core_Graphics-header.patch
+
+Change-Id: I616c3a4bc4783dcbfd563bce78cd8c054b8aac36
+---
+ include/system/graphics.h | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
 diff --git a/include/system/graphics.h b/include/system/graphics.h
-index b207ee8..8a70153 100644
+index afd9f7b..9715dce 100644
 --- a/include/system/graphics.h
 +++ b/include/system/graphics.h
-@@ -57,7 +57,9 @@ enum {
+@@ -57,6 +57,8 @@ enum {
      HAL_PIXEL_FORMAT_RGB_888            = 3,
      HAL_PIXEL_FORMAT_RGB_565            = 4,
      HAL_PIXEL_FORMAT_BGRA_8888          = 5,
@@ -11,8 +21,7 @@ index b207ee8..8a70153 100644
  
      /*
       * 0x100 - 0x1FF
-      *
-@@ -440,6 +440,21 @@ enum {
+@@ -440,6 +442,21 @@ enum {
      HAL_PIXEL_FORMAT_YCbCr_422_SP       = 0x10, // NV16
      HAL_PIXEL_FORMAT_YCrCb_420_SP       = 0x11, // NV21
      HAL_PIXEL_FORMAT_YCbCr_422_I        = 0x14, // YUY2
@@ -34,3 +43,6 @@ index b207ee8..8a70153 100644
  };
  
  /*
+-- 
+2.5.0
+

@@ -1,9 +1,9 @@
-From 731e4efd2600efd7ce155087c996085d258099b3 Mon Sep 17 00:00:00 2001
+From 21489aec708cda029545bedd3bef9f20b31c1226 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Fri, 4 Mar 2016 19:44:15 +0700
-Subject: [PATCH] rootdir: reset to aosp-6.0
+Date: Mon, 14 Mar 2016 19:14:15 +0700
+Subject: [PATCH 01/18] 0001-rootdir-reset-to-aosp-6.0.patch
 
-Change-Id: Ic993036f289610f8d4c4bb3f2da1260330a3ba1f
+Change-Id: Ifad0eb8936b0ef4232e241cb95b70f4b32d7c241
 ---
  rootdir/Android.mk         | 11 +++--------
  rootdir/init.environ.rc.in |  1 -
@@ -50,7 +50,7 @@ index 46ec1fb..b34ea01 100644
      export SYSTEMSERVERCLASSPATH %SYSTEMSERVERCLASSPATH%
 -    export LD_PRELOAD libsigchain.so%TARGET_LDPRELOAD%
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index 5c6b606..2c66da9 100644
+index 78adacc..6551dac 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
 @@ -10,9 +10,6 @@ import /init.${ro.hardware}.rc
@@ -63,7 +63,7 @@ index 5c6b606..2c66da9 100644
  
  on early-init
      # Set init and its forked children's oom_adj.
-@@ -50,7 +47,6 @@ on init
+@@ -52,7 +49,6 @@ on init
      write /sys/fs/cgroup/memory/sw/memory.move_charge_at_immigrate 1
      chown root system /sys/fs/cgroup/memory/sw/tasks
      chmod 0660 /sys/fs/cgroup/memory/sw/tasks
@@ -71,7 +71,7 @@ index 5c6b606..2c66da9 100644
  
      mkdir /system
      mkdir /data 0771 system system
-@@ -144,27 +140,23 @@ on init
+@@ -146,27 +142,23 @@ on init
      # sets up initial cpusets for ActivityManager
      mkdir /dev/cpuset
      mount cpuset none /dev/cpuset
@@ -108,7 +108,7 @@ index 5c6b606..2c66da9 100644
      chown system system /dev/cpuset
      chown system system /dev/cpuset/foreground
      chown system system /dev/cpuset/foreground/boost
-@@ -394,9 +386,6 @@ on post-fs-data
+@@ -402,9 +394,6 @@ on post-fs-data
  
      # Set SELinux security contexts on upgrade or policy update.
      restorecon_recursive /data
@@ -118,7 +118,7 @@ index 5c6b606..2c66da9 100644
  
      # Check any timezone data in /data is newer than the copy in /system, delete if not.
      exec - system system -- /system/bin/tzdatacheck /system/usr/share/zoneinfo /data/misc/zoneinfo
-@@ -407,6 +396,9 @@ on post-fs-data
+@@ -415,6 +404,9 @@ on post-fs-data
      # Set indication (checked by vold) that we have finished this action
      #setprop vold.post_fs_data_done 1
  
@@ -128,7 +128,7 @@ index 5c6b606..2c66da9 100644
  on boot
      # basic network init
      ifup lo
-@@ -646,7 +638,7 @@ service ril-daemon /system/bin/rild
+@@ -654,7 +646,7 @@ service ril-daemon /system/bin/rild
      socket sap_uim_socket1 stream 660 bluetooth bluetooth
      socket rild-debug stream 660 radio system
      user root
@@ -137,7 +137,7 @@ index 5c6b606..2c66da9 100644
  
  service surfaceflinger /system/bin/surfaceflinger
      class core
-@@ -663,7 +655,7 @@ service drm /system/bin/drmserver
+@@ -670,7 +662,7 @@ service drm /system/bin/drmserver
  service media /system/bin/mediaserver
      class main
      user media
@@ -146,7 +146,7 @@ index 5c6b606..2c66da9 100644
      ioprio rt 4
  
  # One shot invocation to deal with encrypted volume.
-@@ -674,7 +666,7 @@ service defaultcrypto /system/bin/vdc --wait cryptfs mountdefaultencrypted
+@@ -681,7 +673,7 @@ service defaultcrypto /system/bin/vdc --wait cryptfs mountdefaultencrypted
      # encryption) or trigger_restart_min_framework (other encryption)
  
  # One shot invocation to encrypt unencrypted volumes
@@ -155,7 +155,7 @@ index 5c6b606..2c66da9 100644
      disabled
      oneshot
      # vold will set vold.decrypt to trigger_restart_framework (default
-@@ -695,14 +687,9 @@ service installd /system/bin/installd
+@@ -702,14 +694,9 @@ service installd /system/bin/installd
      class main
      socket installd stream 600 system system
  

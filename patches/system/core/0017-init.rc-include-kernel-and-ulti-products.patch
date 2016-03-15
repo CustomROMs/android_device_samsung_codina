@@ -1,0 +1,26 @@
+From ddbdf9e7632a30ccbcb73309feba83afa3e680fc Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 15 Mar 2016 18:04:10 +0700
+Subject: [PATCH 17/18] init.rc: include kernel and ulti products
+
+Change-Id: Id0f837514b562b9d8475c56794e4deddb5bd4042
+---
+ rootdir/init.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 6551dac..e11e9ec 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -4,6 +4,8 @@
+ # This is a common source of Android security bugs.
+ #
+ 
++import /init.kernel.rc
++import /init.ulti.rc
+ import /init.environ.rc
+ import /init.usb.rc
+ import /init.${ro.hardware}.rc
+-- 
+2.5.0
+

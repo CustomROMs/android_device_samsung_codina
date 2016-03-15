@@ -1,7 +1,15 @@
-External storage: make writable to all apps by default 
+From e9d7790c6303f40d290c1c3c30d9f07747dd316d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 14 Mar 2016 19:14:16 +0700
+Subject: [PATCH 16/18] system-core_WW004-to-all-apps-by-default.patch
+
+Change-Id: Ia38b218b3d6ca390dbd7758eedf18e2b1d054693
+---
+ sdcard/sdcard.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
 diff --git a/sdcard/sdcard.c b/sdcard/sdcard.c
-index 110d2b1..13fc5fa 100644
+index 33b1509..a949239 100644
 --- a/sdcard/sdcard.c
 +++ b/sdcard/sdcard.c
 @@ -41,6 +41,8 @@
@@ -34,7 +42,7 @@ index 110d2b1..13fc5fa 100644
      if (node->perm == PERM_PRE_ROOT) {
          /* Top of multi-user view should always be visible to ensure
           * secondary users can traverse inside. */
-@@ -1904,7 +1912,15 @@ static void run(const char* source_path, const char* label, uid_t uid,
+@@ -1923,7 +1931,15 @@ static void run(const char* source_path, const char* label, uid_t uid,
      exit(1);
  }
  
@@ -50,3 +58,6 @@ index 110d2b1..13fc5fa 100644
      const char *source_path = NULL;
      const char *label = NULL;
      uid_t uid = 0;
+-- 
+2.5.0
+

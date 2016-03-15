@@ -1,8 +1,19 @@
+From 69ae0dc65672f4eb79a211d080a6ba42e5656271 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 14 Mar 2016 19:14:15 +0700
+Subject: [PATCH 07/18] system-core_Reverent-support-for-gzipped-firmware.patch
+
+Change-Id: Ic2e29c015169fee3e902d1286883c0cae89fd208
+---
+ init/Android.mk  |  1 -
+ init/devices.cpp | 52 +++++++++++++++-------------------------------------
+ 2 files changed, 15 insertions(+), 38 deletions(-)
+
 diff --git a/init/Android.mk b/init/Android.mk
-index 1110102..1391772 100644
+index 2f8e8fe..2b7d391 100644
 --- a/init/Android.mk
 +++ b/init/Android.mk
-@@ -66,7 +66,6 @@ endif
+@@ -73,7 +73,6 @@ endif
  
  LOCAL_MODULE:= init
  LOCAL_C_INCLUDES += \
@@ -11,7 +22,7 @@ index 1110102..1391772 100644
      system/core/mkbootimg
  
 diff --git a/init/devices.cpp b/init/devices.cpp
-index 1110103..1391772 100644
+index bb54cca..0763681 100644
 --- a/init/devices.cpp
 +++ b/init/devices.cpp
 @@ -48,7 +48,6 @@
@@ -22,7 +33,7 @@ index 1110103..1391772 100644
  
  #define SYSFS_PREFIX    "/sys"
  static const char *firmware_dirs[] = { "/etc/firmware",
-@@ -825,20 +826,23 @@ static void handle_device_event(struct uevent *uevent)
+@@ -833,20 +832,23 @@ static void handle_device_event(struct uevent *uevent)
      }
  }
  
@@ -52,7 +63,7 @@ index 1110103..1391772 100644
          if(!nr)
              break;
          if(nr < 0) {
-@@ -849,6 +849,7 @@ static int load_firmware(int fw_fd, int loading_fd, int data_fd)
+@@ -854,6 +856,7 @@ static int load_firmware(int fw_fd, gzFile gz_fd, int loading_fd, int data_fd)
              break;
          }
  
@@ -60,7 +71,7 @@ index 1110103..1391772 100644
          while (nr > 0) {
              ssize_t nw = 0;
  
-@@ -865,10 +865,8 @@ static int load_firmware(int fw_fd, int loading_fd, int data_fd)
+@@ -869,10 +872,8 @@ static int load_firmware(int fw_fd, gzFile gz_fd, int loading_fd, int data_fd)
  out:
      if(!ret)
          write(loading_fd, "0", 1);  /* successful end of transfer */
@@ -72,7 +83,7 @@ index 1110103..1391772 100644
  
      return ret;
  }
-@@ -876,29 +875,12 @@ static int is_booting(void)
+@@ -882,29 +883,12 @@ static int is_booting(void)
      return access("/dev/.booting", F_OK) == 0;
  }
  
@@ -102,7 +113,7 @@ index 1110103..1391772 100644
  
      INFO("firmware: loading '%s' for '%s'\n",
           uevent->firmware, uevent->path);
-@@ -914,18 +930,15 @@ static void process_firmware_event(struct uevent *uevent)
+@@ -937,18 +921,15 @@ try_loading_again:
              goto data_free_out;
          fw_fd = open(file, O_RDONLY|O_CLOEXEC);
          free(file);
@@ -124,7 +135,7 @@ index 1110103..1391772 100644
          if (booting) {
              /* If we're not fully booted, we may be missing
               * filesystems needed for firmware, wait and retry.
-@@ -936,10 +955,7 @@ static void process_firmware_event(struct uevent *uevent)
+@@ -962,10 +943,7 @@ try_loading_again:
          goto data_close_out;
      }
  
@@ -136,3 +147,6 @@ index 1110103..1391772 100644
  data_close_out:
      close(data_fd);
  loading_close_out:
+-- 
+2.5.0
+

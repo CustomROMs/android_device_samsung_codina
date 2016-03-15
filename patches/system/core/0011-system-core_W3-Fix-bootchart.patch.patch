@@ -1,0 +1,92 @@
+From d22a04183e8aaa021cd649dc8a2fdd225ab5e454 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 14 Mar 2016 19:14:16 +0700
+Subject: [PATCH 11/18] system-core_W3-Fix-bootchart.patch
+
+Change-Id: Ic9f4ed4662a5d2fef6b45c232b75fd96aecd1e96
+---
+ init/Android.mk      | 6 +++++-
+ init/init.cpp        | 2 ++
+ init/init_parser.cpp | 2 ++
+ init/keywords.h      | 4 ++++
+ 4 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/init/Android.mk b/init/Android.mk
+index e0feacc..c259947 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -33,7 +33,6 @@ include $(BUILD_STATIC_LIBRARY)
+ include $(CLEAR_VARS)
+ LOCAL_CPPFLAGS := $(init_cflags)
+ LOCAL_SRC_FILES:= \
+-    bootchart.cpp \
+     builtins.cpp \
+     devices.cpp \
+     init.cpp \
+@@ -45,6 +44,11 @@ LOCAL_SRC_FILES:= \
+     watchdogd.cpp \
+     vendor_init.cpp
+ 
++ifeq ($(strip $(INIT_BOOTCHART)),true)
++LOCAL_SRC_FILES += bootchart.cpp
++LOCAL_CFLAGS    += -DBOOTCHART=1
++endif
++
+ SYSTEM_CORE_INIT_DEFINES := BOARD_CHARGING_MODE_BOOTING_LPM \
+     BOARD_CHARGING_CMDLINE_NAME \
+     BOARD_CHARGING_CMDLINE_VALUE \
+diff --git a/init/init.cpp b/init/init.cpp
+index 78d24c2..07503a2 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -1167,7 +1167,9 @@ int main(int argc, char** argv) {
+             timeout = 0;
+         }
+ 
++#if BOOTCHART
+         bootchart_sample(&timeout);
++#endif
+ 
+         epoll_event ev;
+         int nr = TEMP_FAILURE_RETRY(epoll_wait(epoll_fd, &ev, 1, timeout));
+diff --git a/init/init_parser.cpp b/init/init_parser.cpp
+index c36d36e..d37eaab 100644
+--- a/init/init_parser.cpp
++++ b/init/init_parser.cpp
+@@ -117,9 +117,11 @@ void dump_parser_state() {
+ static int lookup_keyword(const char *s)
+ {
+     switch (*s++) {
++#if BOOTCHART
+     case 'b':
+         if (!strcmp(s, "ootchart_init")) return K_bootchart_init;
+         break;
++#endif
+     case 'c':
+         if (!strcmp(s, "opy")) return K_copy;
+         if (!strcmp(s, "lass")) return K_class;
+diff --git a/init/keywords.h b/init/keywords.h
+index 303685d..a2f57e6 100644
+--- a/init/keywords.h
++++ b/init/keywords.h
+@@ -1,5 +1,7 @@
+ #ifndef KEYWORD
++#if BOOTCHART
+ int do_bootchart_init(int nargs, char **args);
++#endif
+ int do_class_start(int nargs, char **args);
+ int do_class_stop(int nargs, char **args);
+ int do_class_reset(int nargs, char **args);
+@@ -44,7 +46,9 @@ int do_wait(int nargs, char **args);
+ enum {
+     K_UNKNOWN,
+ #endif
++#if BOOTCHART
+     KEYWORD(bootchart_init,        COMMAND, 0, do_bootchart_init)
++#endif
+     KEYWORD(chmod,       COMMAND, 2, do_chmod)
+     KEYWORD(chown,       COMMAND, 2, do_chown)
+     KEYWORD(class,       OPTION,  0, 0)
+-- 
+2.5.0
+

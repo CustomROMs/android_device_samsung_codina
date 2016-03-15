@@ -1,10 +1,15 @@
- libnetutils: Check socket() return value
+From 1d503c8fc834d1c91fa8a91b8d4b8e139141942f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 14 Mar 2016 19:14:16 +0700
+Subject: [PATCH 14/18] system-core_WW002-Check-socket-return-value.patch
 
-Add a check for socket() errors and make sure to preserve errno over the
-subsequent close() calls.
+Change-Id: I00e626f08cb9c999292e3c8a72053670de124137
+---
+ libnetutils/ifc_utils.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/libnetutils/ifc_utils.c b/libnetutils/ifc_utils.c
-index 010d2b1..13fc5fa 100644
+index 3bd59c7..a9a9849 100644
 --- a/libnetutils/ifc_utils.c
 +++ b/libnetutils/ifc_utils.c
 @@ -253,6 +253,7 @@ int ifc_act_on_address(int action, const char *name, const char *address,
@@ -39,3 +44,6 @@ index 010d2b1..13fc5fa 100644
      }
  
      // Parse the acknowledgement to find the return code.
+-- 
+2.5.0
+
