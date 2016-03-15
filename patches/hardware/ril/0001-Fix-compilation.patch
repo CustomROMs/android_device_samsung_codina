@@ -1,0 +1,827 @@
+From cd230e137a2055d87fb07d9232f620c015224971 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 15 Mar 2016 18:05:54 +0700
+Subject: [PATCH] Fix compilation
+
+Change-Id: I90aa3434d1a5c2403f1b320965c2932d1771a28c
+---
+ Android.mk                  |   2 -
+ rild/Android.mk             |  54 -------
+ rild/MODULE_LICENSE_APACHE2 |   0
+ rild/NOTICE                 | 190 ----------------------
+ rild/radiooptions.c         | 149 ------------------
+ rild/rild.c                 | 374 --------------------------------------------
+ 6 files changed, 769 deletions(-)
+ delete mode 100644 rild/Android.mk
+ delete mode 100644 rild/MODULE_LICENSE_APACHE2
+ delete mode 100644 rild/NOTICE
+ delete mode 100644 rild/radiooptions.c
+ delete mode 100644 rild/rild.c
+
+diff --git a/Android.mk b/Android.mk
+index 5e2c589..a5dc0fa 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -1,5 +1,3 @@
+ RIL_PATH := $(call my-dir)
+ 
+-ifeq ($(RIL_PATH),$(call project-path-for,ril))
+ include $(call first-makefiles-under,$(RIL_PATH))
+-endif
+diff --git a/rild/Android.mk b/rild/Android.mk
+deleted file mode 100644
+index 3db2cb8..0000000
+--- a/rild/Android.mk
++++ /dev/null
+@@ -1,54 +0,0 @@
+-# Copyright 2006 The Android Open Source Project
+-
+-ifneq ($(BOARD_PROVIDES_RILD),true)
+-
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-	rild.c
+-
+-
+-LOCAL_SHARED_LIBRARIES := \
+-	liblog \
+-	libcutils \
+-	libril \
+-	libdl
+-
+-# temporary hack for broken vendor rils
+-LOCAL_WHOLE_STATIC_LIBRARIES := \
+-	librilutils_static
+-
+-LOCAL_CFLAGS := -DRIL_SHLIB
+-#LOCAL_CFLAGS += -DANDROID_MULTI_SIM
+-
+-ifeq ($(SIM_COUNT), 2)
+-    LOCAL_CFLAGS += -DANDROID_SIM_COUNT_2
+-endif
+-
+-LOCAL_MODULE:= rild
+-LOCAL_MODULE_TAGS := optional
+-
+-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libril
+-
+-include $(BUILD_EXECUTABLE)
+-
+-# For radiooptions binary
+-# =======================
+-include $(CLEAR_VARS)
+-
+-LOCAL_SRC_FILES:= \
+-	radiooptions.c
+-
+-LOCAL_SHARED_LIBRARIES := \
+-	liblog \
+-	libcutils \
+-
+-LOCAL_CFLAGS := \
+-
+-LOCAL_MODULE:= radiooptions
+-LOCAL_MODULE_TAGS := debug
+-
+-include $(BUILD_EXECUTABLE)
+-
+-endif
+diff --git a/rild/MODULE_LICENSE_APACHE2 b/rild/MODULE_LICENSE_APACHE2
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/rild/NOTICE b/rild/NOTICE
+deleted file mode 100644
+index c5b1efa..0000000
+--- a/rild/NOTICE
++++ /dev/null
+@@ -1,190 +0,0 @@
+-
+-   Copyright (c) 2005-2008, The Android Open Source Project
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-
+-
+-                                 Apache License
+-                           Version 2.0, January 2004
+-                        http://www.apache.org/licenses/
+-
+-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+-
+-   1. Definitions.
+-
+-      "License" shall mean the terms and conditions for use, reproduction,
+-      and distribution as defined by Sections 1 through 9 of this document.
+-
+-      "Licensor" shall mean the copyright owner or entity authorized by
+-      the copyright owner that is granting the License.
+-
+-      "Legal Entity" shall mean the union of the acting entity and all
+-      other entities that control, are controlled by, or are under common
+-      control with that entity. For the purposes of this definition,
+-      "control" means (i) the power, direct or indirect, to cause the
+-      direction or management of such entity, whether by contract or
+-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+-      outstanding shares, or (iii) beneficial ownership of such entity.
+-
+-      "You" (or "Your") shall mean an individual or Legal Entity
+-      exercising permissions granted by this License.
+-
+-      "Source" form shall mean the preferred form for making modifications,
+-      including but not limited to software source code, documentation
+-      source, and configuration files.
+-
+-      "Object" form shall mean any form resulting from mechanical
+-      transformation or translation of a Source form, including but
+-      not limited to compiled object code, generated documentation,
+-      and conversions to other media types.
+-
+-      "Work" shall mean the work of authorship, whether in Source or
+-      Object form, made available under the License, as indicated by a
+-      copyright notice that is included in or attached to the work
+-      (an example is provided in the Appendix below).
+-
+-      "Derivative Works" shall mean any work, whether in Source or Object
+-      form, that is based on (or derived from) the Work and for which the
+-      editorial revisions, annotations, elaborations, or other modifications
+-      represent, as a whole, an original work of authorship. For the purposes
+-      of this License, Derivative Works shall not include works that remain
+-      separable from, or merely link (or bind by name) to the interfaces of,
+-      the Work and Derivative Works thereof.
+-
+-      "Contribution" shall mean any work of authorship, including
+-      the original version of the Work and any modifications or additions
+-      to that Work or Derivative Works thereof, that is intentionally
+-      submitted to Licensor for inclusion in the Work by the copyright owner
+-      or by an individual or Legal Entity authorized to submit on behalf of
+-      the copyright owner. For the purposes of this definition, "submitted"
+-      means any form of electronic, verbal, or written communication sent
+-      to the Licensor or its representatives, including but not limited to
+-      communication on electronic mailing lists, source code control systems,
+-      and issue tracking systems that are managed by, or on behalf of, the
+-      Licensor for the purpose of discussing and improving the Work, but
+-      excluding communication that is conspicuously marked or otherwise
+-      designated in writing by the copyright owner as "Not a Contribution."
+-
+-      "Contributor" shall mean Licensor and any individual or Legal Entity
+-      on behalf of whom a Contribution has been received by Licensor and
+-      subsequently incorporated within the Work.
+-
+-   2. Grant of Copyright License. Subject to the terms and conditions of
+-      this License, each Contributor hereby grants to You a perpetual,
+-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+-      copyright license to reproduce, prepare Derivative Works of,
+-      publicly display, publicly perform, sublicense, and distribute the
+-      Work and such Derivative Works in Source or Object form.
+-
+-   3. Grant of Patent License. Subject to the terms and conditions of
+-      this License, each Contributor hereby grants to You a perpetual,
+-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+-      (except as stated in this section) patent license to make, have made,
+-      use, offer to sell, sell, import, and otherwise transfer the Work,
+-      where such license applies only to those patent claims licensable
+-      by such Contributor that are necessarily infringed by their
+-      Contribution(s) alone or by combination of their Contribution(s)
+-      with the Work to which such Contribution(s) was submitted. If You
+-      institute patent litigation against any entity (including a
+-      cross-claim or counterclaim in a lawsuit) alleging that the Work
+-      or a Contribution incorporated within the Work constitutes direct
+-      or contributory patent infringement, then any patent licenses
+-      granted to You under this License for that Work shall terminate
+-      as of the date such litigation is filed.
+-
+-   4. Redistribution. You may reproduce and distribute copies of the
+-      Work or Derivative Works thereof in any medium, with or without
+-      modifications, and in Source or Object form, provided that You
+-      meet the following conditions:
+-
+-      (a) You must give any other recipients of the Work or
+-          Derivative Works a copy of this License; and
+-
+-      (b) You must cause any modified files to carry prominent notices
+-          stating that You changed the files; and
+-
+-      (c) You must retain, in the Source form of any Derivative Works
+-          that You distribute, all copyright, patent, trademark, and
+-          attribution notices from the Source form of the Work,
+-          excluding those notices that do not pertain to any part of
+-          the Derivative Works; and
+-
+-      (d) If the Work includes a "NOTICE" text file as part of its
+-          distribution, then any Derivative Works that You distribute must
+-          include a readable copy of the attribution notices contained
+-          within such NOTICE file, excluding those notices that do not
+-          pertain to any part of the Derivative Works, in at least one
+-          of the following places: within a NOTICE text file distributed
+-          as part of the Derivative Works; within the Source form or
+-          documentation, if provided along with the Derivative Works; or,
+-          within a display generated by the Derivative Works, if and
+-          wherever such third-party notices normally appear. The contents
+-          of the NOTICE file are for informational purposes only and
+-          do not modify the License. You may add Your own attribution
+-          notices within Derivative Works that You distribute, alongside
+-          or as an addendum to the NOTICE text from the Work, provided
+-          that such additional attribution notices cannot be construed
+-          as modifying the License.
+-
+-      You may add Your own copyright statement to Your modifications and
+-      may provide additional or different license terms and conditions
+-      for use, reproduction, or distribution of Your modifications, or
+-      for any such Derivative Works as a whole, provided Your use,
+-      reproduction, and distribution of the Work otherwise complies with
+-      the conditions stated in this License.
+-
+-   5. Submission of Contributions. Unless You explicitly state otherwise,
+-      any Contribution intentionally submitted for inclusion in the Work
+-      by You to the Licensor shall be under the terms and conditions of
+-      this License, without any additional terms or conditions.
+-      Notwithstanding the above, nothing herein shall supersede or modify
+-      the terms of any separate license agreement you may have executed
+-      with Licensor regarding such Contributions.
+-
+-   6. Trademarks. This License does not grant permission to use the trade
+-      names, trademarks, service marks, or product names of the Licensor,
+-      except as required for reasonable and customary use in describing the
+-      origin of the Work and reproducing the content of the NOTICE file.
+-
+-   7. Disclaimer of Warranty. Unless required by applicable law or
+-      agreed to in writing, Licensor provides the Work (and each
+-      Contributor provides its Contributions) on an "AS IS" BASIS,
+-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+-      implied, including, without limitation, any warranties or conditions
+-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+-      PARTICULAR PURPOSE. You are solely responsible for determining the
+-      appropriateness of using or redistributing the Work and assume any
+-      risks associated with Your exercise of permissions under this License.
+-
+-   8. Limitation of Liability. In no event and under no legal theory,
+-      whether in tort (including negligence), contract, or otherwise,
+-      unless required by applicable law (such as deliberate and grossly
+-      negligent acts) or agreed to in writing, shall any Contributor be
+-      liable to You for damages, including any direct, indirect, special,
+-      incidental, or consequential damages of any character arising as a
+-      result of this License or out of the use or inability to use the
+-      Work (including but not limited to damages for loss of goodwill,
+-      work stoppage, computer failure or malfunction, or any and all
+-      other commercial damages or losses), even if such Contributor
+-      has been advised of the possibility of such damages.
+-
+-   9. Accepting Warranty or Additional Liability. While redistributing
+-      the Work or Derivative Works thereof, You may choose to offer,
+-      and charge a fee for, acceptance of support, warranty, indemnity,
+-      or other liability obligations and/or rights consistent with this
+-      License. However, in accepting such obligations, You may act only
+-      on Your own behalf and on Your sole responsibility, not on behalf
+-      of any other Contributor, and only if You agree to indemnify,
+-      defend, and hold each Contributor harmless for any liability
+-      incurred by, or claims asserted against, such Contributor by reason
+-      of your accepting any such warranty or additional liability.
+-
+-   END OF TERMS AND CONDITIONS
+-
+diff --git a/rild/radiooptions.c b/rild/radiooptions.c
+deleted file mode 100644
+index 91c76da..0000000
+--- a/rild/radiooptions.c
++++ /dev/null
+@@ -1,149 +0,0 @@
+-/* //device/system/toolbox/resetradio.c
+-**
+-** Copyright 2006, The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <unistd.h>
+-#include <cutils/sockets.h>
+-
+-#define SOCKET_NAME_RIL_DEBUG	"rild-debug"	/* from ril.cpp */
+-#define SOCKET_NAME_RIL2_DEBUG	"rild2-debug"
+-
+-enum options {
+-    RADIO_RESET,
+-    RADIO_OFF,
+-    UNSOL_NETWORK_STATE_CHANGE,
+-    QXDM_ENABLE,
+-    QXDM_DISABLE,
+-    RADIO_ON,
+-    SETUP_PDP,
+-    DEACTIVATE_PDP,
+-    DIAL_CALL,
+-    ANSWER_CALL,
+-    END_CALL,
+-};
+-
+-
+-static void print_usage() {
+-    perror("Usage: radiooptions [option] [extra_socket_args]\n\
+-           0 - RADIO_RESET, \n\
+-           1 - RADIO_OFF, \n\
+-           2 - UNSOL_NETWORK_STATE_CHANGE, \n\
+-           3 - QXDM_ENABLE, \n\
+-           4 - QXDM_DISABLE, \n\
+-           5 - RADIO_ON, \n\
+-           6 apn- SETUP_PDP apn, \n\
+-           7 - DEACTIVE_PDP, \n\
+-           8 number - DIAL_CALL number, \n\
+-           9 - ANSWER_CALL, \n\
+-           10 - END_CALL \n\
+-          The argument before the last one must be SIM slot \n\
+-           0 - SIM1, \n\
+-           1 - SIM2, \n\
+-           2 - SIM3, \n\
+-           3 - SIM4, \n\
+-          The last argument must be modem-socket style \n\
+-           0 - one modem for one debug-socket, \n\
+-           1 - one modem for multiple debug socket \n");
+-}
+-
+-static int error_check(int argc, char * argv[]) {
+-    if (argc < 2) {
+-        return -1;
+-    }
+-    const int option = atoi(argv[1]);
+-    if (option < 0 || option > 10) {
+-        return 0;
+-    } else if ((option == DIAL_CALL || option == SETUP_PDP) && argc == 5) {
+-        return 0;
+-    } else if ((option != DIAL_CALL && option != SETUP_PDP) && argc == 4) {
+-        return 0;
+-    }
+-    return -1;
+-}
+-
+-static int get_number_args(char *argv[]) {
+-    const int option = atoi(argv[1]);
+-    if (option != DIAL_CALL && option != SETUP_PDP) {
+-        return 3;
+-    } else {
+-        return 4;
+-    }
+-}
+-
+-int main(int argc, char *argv[])
+-{
+-    int fd;
+-    int num_socket_args = 0;
+-    int i  = 0;
+-    int modem_socket_type = 0;
+-    int sim_id = 0;
+-    char socket_name[20];
+-
+-    if(error_check(argc, argv)) {
+-        print_usage();
+-        exit(-1);
+-    }
+-
+-    num_socket_args = get_number_args(argv);
+-    modem_socket_type = atoi(argv[(num_socket_args-1)]);
+-    sim_id = atoi(argv[(num_socket_args-2)]);
+-    memset(socket_name, 0, sizeof(char)*20);
+-    if (sim_id == 0 || modem_socket_type == 1) {
+-        strncpy(socket_name, SOCKET_NAME_RIL_DEBUG, 19);
+-    } else if (sim_id == 1) {
+-        strncpy(socket_name, SOCKET_NAME_RIL2_DEBUG, 19);
+-    }
+-    
+-    fd = socket_local_client(socket_name,
+-                                 ANDROID_SOCKET_NAMESPACE_RESERVED,
+-                                 SOCK_STREAM);
+-    if (fd < 0) {
+-        perror ("opening radio debug socket");
+-        exit(-1);
+-    }
+-
+-    
+-    /* It is not necessacry to pass the argument "modem-socket style" to rild */
+-    num_socket_args--;
+-    int ret = send(fd, (const void *)&num_socket_args, sizeof(int), 0);
+-    if(ret != sizeof(int)) {
+-        perror ("Socket write error when sending num args");
+-        close(fd);
+-        exit(-1);
+-    }
+-
+-    for (i = 0; i < num_socket_args; i++) {
+-        // Send length of the arg, followed by the arg.
+-        int len = strlen(argv[1 + i]);
+-        ret = send(fd, &len, sizeof(int), 0);
+-        if (ret != sizeof(int)) {
+-            perror("Socket write Error: when sending arg length");
+-            close(fd);
+-            exit(-1);
+-        }
+-        ret = send(fd, argv[1 + i], sizeof(char) * len, 0);
+-        if (ret != len * sizeof(char)) {
+-            perror ("Socket write Error: When sending arg");
+-            close(fd);
+-            exit(-1);
+-        }
+-    }
+-
+-    close(fd);
+-    return 0;
+-}
+diff --git a/rild/rild.c b/rild/rild.c
+deleted file mode 100644
+index efc7c9d..0000000
+--- a/rild/rild.c
++++ /dev/null
+@@ -1,374 +0,0 @@
+-/* //device/system/rild/rild.c
+-**
+-** Copyright 2006 The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <dlfcn.h>
+-#include <string.h>
+-#include <stdint.h>
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include <errno.h>
+-
+-#include <telephony/ril.h>
+-#define LOG_TAG "RILD"
+-#include <utils/Log.h>
+-#include <cutils/properties.h>
+-#include <cutils/sockets.h>
+-#include <sys/capability.h>
+-#include <sys/prctl.h>
+-#include <sys/stat.h>
+-#include <sys/types.h>
+-#include <libril/ril_ex.h>
+-
+-#include <private/android_filesystem_config.h>
+-#include "hardware/qemu_pipe.h"
+-
+-#define LIB_PATH_PROPERTY   "rild.libpath"
+-#define LIB_ARGS_PROPERTY   "rild.libargs"
+-#define MAX_LIB_ARGS        16
+-#define MAX_CAP_NUM         (CAP_TO_INDEX(CAP_LAST_CAP) + 1)
+-
+-static void usage(const char *argv0) {
+-    fprintf(stderr, "Usage: %s -l <ril impl library> [-- <args for impl library>]\n", argv0);
+-    exit(EXIT_FAILURE);
+-}
+-
+-extern char rild[MAX_SOCKET_NAME_LENGTH] __attribute__((weak));
+-
+-extern void RIL_register (const RIL_RadioFunctions *callbacks);
+-
+-extern void RIL_register_socket (RIL_RadioFunctions *(*rilUimInit)
+-        (const struct RIL_Env *, int, char **), RIL_SOCKET_TYPE socketType, int argc, char **argv);
+-
+-extern void RIL_onRequestComplete(RIL_Token t, RIL_Errno e,
+-        void *response, size_t responselen);
+-
+-extern void RIL_setRilSocketName(char *);
+-
+-#if defined(ANDROID_MULTI_SIM)
+-extern void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
+-        size_t datalen, RIL_SOCKET_ID socket_id);
+-#else
+-extern void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
+-        size_t datalen);
+-#endif
+-
+-extern void RIL_requestTimedCallback (RIL_TimedCallback callback,
+-        void *param, const struct timeval *relativeTime);
+-
+-extern void RIL_setRilSocketName(char * s) __attribute__((weak));
+-
+-static struct RIL_Env s_rilEnv = {
+-    RIL_onRequestComplete,
+-    RIL_onUnsolicitedResponse,
+-    RIL_requestTimedCallback
+-};
+-
+-extern void RIL_startEventLoop();
+-
+-static int make_argv(char * args, char ** argv) {
+-    // Note: reserve argv[0]
+-    int count = 1;
+-    char * tok;
+-    char * s = args;
+-
+-    while ((tok = strtok(s, " \0"))) {
+-        argv[count] = tok;
+-        s = NULL;
+-        count++;
+-    }
+-    return count;
+-}
+-
+-/*
+- * switchUser - Switches UID to radio, preserving CAP_NET_ADMIN capabilities.
+- * Our group, cache, was set by init.
+- */
+-void switchUser() {
+-    char debuggable[PROP_VALUE_MAX];
+-
+-    prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0);
+-    setuid(AID_RADIO);
+-
+-    struct __user_cap_header_struct header;
+-    memset(&header, 0, sizeof(header));
+-    header.version = _LINUX_CAPABILITY_VERSION_3;
+-    header.pid = 0;
+-
+-    struct __user_cap_data_struct data[MAX_CAP_NUM];
+-    memset(&data, 0, sizeof(data));
+-
+-    data[CAP_TO_INDEX(CAP_NET_ADMIN)].effective |= CAP_TO_MASK(CAP_NET_ADMIN);
+-    data[CAP_TO_INDEX(CAP_NET_ADMIN)].permitted |= CAP_TO_MASK(CAP_NET_ADMIN);
+-
+-    data[CAP_TO_INDEX(CAP_NET_RAW)].effective |= CAP_TO_MASK(CAP_NET_RAW);
+-    data[CAP_TO_INDEX(CAP_NET_RAW)].permitted |= CAP_TO_MASK(CAP_NET_RAW);
+-
+-    data[CAP_TO_INDEX(CAP_BLOCK_SUSPEND)].effective |= CAP_TO_MASK(CAP_BLOCK_SUSPEND);
+-    data[CAP_TO_INDEX(CAP_BLOCK_SUSPEND)].permitted |= CAP_TO_MASK(CAP_BLOCK_SUSPEND);
+-
+-    if (capset(&header, &data[0]) == -1) {
+-        RLOGE("capset failed: %s", strerror(errno));
+-        exit(EXIT_FAILURE);
+-    }
+-
+-    /*
+-     * Debuggable build only:
+-     * Set DUMPABLE that was cleared by setuid() to have tombstone on RIL crash
+-     */
+-    property_get("ro.debuggable", debuggable, "0");
+-    if (strcmp(debuggable, "1") == 0) {
+-        prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+-    }
+-}
+-
+-int main(int argc, char **argv) {
+-    const char * rilLibPath = NULL;
+-    char **rilArgv;
+-    void *dlHandle;
+-    const RIL_RadioFunctions *(*rilInit)(const struct RIL_Env *, int, char **);
+-    const RIL_RadioFunctions *(*rilUimInit)(const struct RIL_Env *, int, char **);
+-    char *err_str = NULL;
+-
+-    const RIL_RadioFunctions *funcs;
+-    char libPath[PROPERTY_VALUE_MAX];
+-    unsigned char hasLibArgs = 0;
+-
+-    int i;
+-    const char *clientId = NULL;
+-    RLOGD("**RIL Daemon Started**");
+-    RLOGD("**RILd param count=%d**", argc);
+-
+-    umask(S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
+-    for (i = 1; i < argc ;) {
+-        if (0 == strcmp(argv[i], "-l") && (argc - i > 1)) {
+-            rilLibPath = argv[i + 1];
+-            i += 2;
+-        } else if (0 == strcmp(argv[i], "--")) {
+-            i++;
+-            hasLibArgs = 1;
+-            break;
+-        } else if (0 == strcmp(argv[i], "-c") &&  (argc - i > 1)) {
+-            clientId = argv[i+1];
+-            i += 2;
+-        } else {
+-            usage(argv[0]);
+-        }
+-    }
+-
+-    if (clientId == NULL) {
+-        clientId = "0";
+-    } else if (atoi(clientId) >= MAX_RILDS) {
+-        RLOGE("Max Number of rild's supported is: %d", MAX_RILDS);
+-        exit(0);
+-    }
+-    if (strncmp(clientId, "0", MAX_CLIENT_ID_LENGTH)) {
+-        if (RIL_setRilSocketName) {
+-            RIL_setRilSocketName(strncat(rild, clientId, MAX_SOCKET_NAME_LENGTH));
+-        } else {
+-            RLOGE("Trying to instantiate multiple rild sockets without a compatible libril!");
+-        }
+-    }
+-
+-    if (rilLibPath == NULL) {
+-        if ( 0 == property_get(LIB_PATH_PROPERTY, libPath, NULL)) {
+-            // No lib sepcified on the command line, and nothing set in props.
+-            // Assume "no-ril" case.
+-            goto done;
+-        } else {
+-            rilLibPath = libPath;
+-        }
+-    }
+-
+-    /* special override when in the emulator */
+-#if 1
+-    {
+-        static char*  arg_overrides[5];
+-        static char   arg_device[32];
+-        int           done = 0;
+-
+-#define  REFERENCE_RIL_PATH  "libreference-ril.so"
+-
+-        /* first, read /proc/cmdline into memory */
+-        char          buffer[1024], *p, *q;
+-        int           len;
+-        int           fd = open("/proc/cmdline",O_RDONLY);
+-
+-        if (fd < 0) {
+-            RLOGD("could not open /proc/cmdline:%s", strerror(errno));
+-            goto OpenLib;
+-        }
+-
+-        do {
+-            len = read(fd,buffer,sizeof(buffer)); }
+-        while (len == -1 && errno == EINTR);
+-
+-        if (len < 0) {
+-            RLOGD("could not read /proc/cmdline:%s", strerror(errno));
+-            close(fd);
+-            goto OpenLib;
+-        }
+-        close(fd);
+-
+-        if (strstr(buffer, "android.qemud=") != NULL)
+-        {
+-            /* the qemud daemon is launched after rild, so
+-            * give it some time to create its GSM socket
+-            */
+-            int  tries = 5;
+-#define  QEMUD_SOCKET_NAME    "qemud"
+-
+-            while (1) {
+-                int  fd;
+-
+-                sleep(1);
+-
+-                fd = qemu_pipe_open("qemud:gsm");
+-                if (fd < 0) {
+-                    fd = socket_local_client(
+-                                QEMUD_SOCKET_NAME,
+-                                ANDROID_SOCKET_NAMESPACE_RESERVED,
+-                                SOCK_STREAM );
+-                }
+-                if (fd >= 0) {
+-                    close(fd);
+-                    snprintf( arg_device, sizeof(arg_device), "%s/%s",
+-                                ANDROID_SOCKET_DIR, QEMUD_SOCKET_NAME );
+-
+-                    arg_overrides[1] = "-s";
+-                    arg_overrides[2] = arg_device;
+-                    done = 1;
+-                    break;
+-                }
+-                RLOGD("could not connect to %s socket: %s",
+-                    QEMUD_SOCKET_NAME, strerror(errno));
+-                if (--tries == 0)
+-                    break;
+-            }
+-            if (!done) {
+-                RLOGE("could not connect to %s socket (giving up): %s",
+-                    QEMUD_SOCKET_NAME, strerror(errno));
+-                while(1)
+-                    sleep(0x00ffffff);
+-            }
+-        }
+-
+-        /* otherwise, try to see if we passed a device name from the kernel */
+-        if (!done) do {
+-#define  KERNEL_OPTION  "android.ril="
+-#define  DEV_PREFIX     "/dev/"
+-
+-            p = strstr( buffer, KERNEL_OPTION );
+-            if (p == NULL)
+-                break;
+-
+-            p += sizeof(KERNEL_OPTION)-1;
+-            q  = strpbrk( p, " \t\n\r" );
+-            if (q != NULL)
+-                *q = 0;
+-
+-            snprintf( arg_device, sizeof(arg_device), DEV_PREFIX "%s", p );
+-            arg_device[sizeof(arg_device)-1] = 0;
+-            arg_overrides[1] = "-d";
+-            arg_overrides[2] = arg_device;
+-            done = 1;
+-
+-        } while (0);
+-
+-        if (done) {
+-            argv = arg_overrides;
+-            argc = 3;
+-            i    = 1;
+-            hasLibArgs = 1;
+-            rilLibPath = REFERENCE_RIL_PATH;
+-
+-            RLOGD("overriding with %s %s", arg_overrides[1], arg_overrides[2]);
+-        }
+-    }
+-OpenLib:
+-#endif
+-    switchUser();
+-
+-    dlHandle = dlopen(rilLibPath, RTLD_NOW);
+-
+-    if (dlHandle == NULL) {
+-        RLOGE("dlopen failed: %s", dlerror());
+-        exit(EXIT_FAILURE);
+-    }
+-
+-    RIL_startEventLoop();
+-
+-    rilInit =
+-        (const RIL_RadioFunctions *(*)(const struct RIL_Env *, int, char **))
+-        dlsym(dlHandle, "RIL_Init");
+-
+-    if (rilInit == NULL) {
+-        RLOGE("RIL_Init not defined or exported in %s\n", rilLibPath);
+-        exit(EXIT_FAILURE);
+-    }
+-
+-    dlerror(); // Clear any previous dlerror
+-    rilUimInit =
+-        (const RIL_RadioFunctions *(*)(const struct RIL_Env *, int, char **))
+-        dlsym(dlHandle, "RIL_SAP_Init");
+-    err_str = dlerror();
+-    if (err_str) {
+-        RLOGW("RIL_SAP_Init not defined or exported in %s: %s\n", rilLibPath, err_str);
+-    } else if (!rilUimInit) {
+-        RLOGW("RIL_SAP_Init defined as null in %s. SAP Not usable\n", rilLibPath);
+-    }
+-
+-    if (hasLibArgs) {
+-        rilArgv = argv + i - 1;
+-        argc = argc -i + 1;
+-    } else {
+-        static char * newArgv[MAX_LIB_ARGS];
+-        static char args[PROPERTY_VALUE_MAX];
+-        rilArgv = newArgv;
+-        property_get(LIB_ARGS_PROPERTY, args, "");
+-        argc = make_argv(args, rilArgv);
+-    }
+-
+-    rilArgv[argc++] = "-c";
+-    rilArgv[argc++] = clientId;
+-    RLOGD("RIL_Init argc = %d clientId = %s", argc, rilArgv[argc-1]);
+-
+-    // Make sure there's a reasonable argv[0]
+-    rilArgv[0] = argv[0];
+-
+-    funcs = rilInit(&s_rilEnv, argc, rilArgv);
+-    RLOGD("RIL_Init rilInit completed");
+-
+-    RIL_register(funcs);
+-
+-    RLOGD("RIL_Init RIL_register completed");
+-
+-    if (rilUimInit) {
+-        RLOGD("RIL_register_socket started");
+-        RIL_register_socket(rilUimInit, RIL_SAP_SOCKET, argc, rilArgv);
+-    }
+-
+-    RLOGD("RIL_register_socket completed");
+-
+-done:
+-
+-    RLOGD("RIL_Init starting sleep loop");
+-    while (true) {
+-        sleep(UINT32_MAX);
+-    }
+-}
+-- 
+2.5.0
+
