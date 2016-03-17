@@ -11,7 +11,7 @@ diff --git a/media/libmedia/ToneGenerator.cpp b/media/libmedia/ToneGenerator.cpp
 index 44c7edc..b108078 100644
 --- a/media/libmedia/ToneGenerator.cpp
 +++ b/media/libmedia/ToneGenerator.cpp
-@@ -861,6 +861,7 @@ ToneGenerator::~ToneGenerator() {
+@@ -865,6 +865,7 @@ ToneGenerator::~ToneGenerator() {
          ALOGV("Delete Track: %p", mpAudioTrack.get());
          mpAudioTrack.clear();
      }

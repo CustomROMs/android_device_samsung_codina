@@ -12,7 +12,7 @@ diff --git a/media/libstagefright/OMXClient.cpp b/media/libstagefright/OMXClient
 index fb87de0..fbc4045 100644
 --- a/media/libstagefright/OMXClient.cpp
 +++ b/media/libstagefright/OMXClient.cpp
-@@ -25,6 +25,10 @@
+@@ -30,6 +30,10 @@
  #include <utils/KeyedVector.h>
  
  #include "include/OMX.h"
@@ -23,7 +23,7 @@ index fb87de0..fbc4045 100644
  
  namespace android {
  
-@@ -241,7 +245,23 @@ status_t MuxOMX::sendCommand(
+@@ -264,7 +270,23 @@ status_t MuxOMX::sendCommand(
  status_t MuxOMX::getParameter(
          node_id node, OMX_INDEXTYPE index,
          void *params, size_t size) {

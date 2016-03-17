@@ -2,7 +2,7 @@ diff --git a/media/libstagefright/MediaBufferGroup.cpp b/media/libstagefright/Me
 index 1116b13..465d89d 100644
 --- a/media/libstagefright/MediaBufferGroup.cpp
 +++ b/media/libstagefright/MediaBufferGroup.cpp
-@@ -54,6 +54,13 @@
+@@ -55,6 +55,13 @@
      mLastBuffer = buffer;
  }
  

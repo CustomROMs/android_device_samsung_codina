@@ -2,7 +2,7 @@ diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright
 index de08e18..7a8e094 100644
 --- a/media/libstagefright/omx/OMXNodeInstance.cpp
 +++ b/media/libstagefright/omx/OMXNodeInstance.cpp
-@@ -558,13 +558,20 @@ status_t OMXNodeInstance::useGraphicBuffer(
+@@ -759,13 +759,20 @@ status_t OMXNodeInstance::useGraphicBuffer(
  
      // See if the newer version of the extension is present.
      OMX_INDEXTYPE index;

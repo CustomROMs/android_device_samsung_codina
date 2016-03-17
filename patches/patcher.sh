@@ -8,7 +8,7 @@ if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
 		 bionic \
 		 bootable/recovery \
-		 frameworks/av \
+		 #frameworks/av \
 		 #frameworks/base \
 		 #frameworks/native  \
 		 frameworks/opt/net/wifi \

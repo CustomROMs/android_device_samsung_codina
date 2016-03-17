@@ -2,7 +2,7 @@ diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
 index fb87de0..fbc4048 100644
 --- a/media/libstagefright/Android.mk
 +++ b/media/libstagefright/Android.mk
-@@ -130,7 +130,7 @@ LOCAL_SHARED_LIBRARIES += \
+@@ -155,7 +155,7 @@ LOCAL_SHARED_LIBRARIES += \
          libdl \
          libRScpp \
  
@@ -15,7 +15,7 @@ diff --git a/media/libmediaplayerservice/Android.mk b/media/libmediaplayerservic
 index fb87de0..fbc4049 100644
 --- a/media/libmediaplayerservice/Android.mk
 +++ b/media/libmediaplayerservice/Android.mk
-@@ -57,9 +57,9 @@ LOCAL_C_INCLUDES :=                                                 \
+@@ -58,9 +58,9 @@ LOCAL_C_INCLUDES :=                                                 \
      $(TOP)/external/tremolo/Tremolo                                 \
      $(TOP)/frameworks/av/media/libavextensions                      \
  
@@ -43,7 +43,7 @@ diff --git a/services/audioflinger/Android.mk b/services/audioflinger/Android.mk
 index fb87de0..1bc4049 100644
 --- a/services/audioflinger/Android.mk
 +++ b/services/audioflinger/Android.mk
-@@ -68,6 +68,8 @@ endif
+@@ -88,6 +88,8 @@ endif
  endif
  #QTI Resampler
  

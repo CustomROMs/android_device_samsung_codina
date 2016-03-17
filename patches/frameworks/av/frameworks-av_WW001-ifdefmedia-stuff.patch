@@ -2,7 +2,7 @@ diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
 index 1ca9a4f..4eab70d 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
-@@ -1008,7 +1008,11 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+@@ -1028,7 +1028,11 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
      // This check was present in KitKat.
      if (def.nBufferCountActual < def.nBufferCountMin + *minUndequeuedBuffers) {
  #endif

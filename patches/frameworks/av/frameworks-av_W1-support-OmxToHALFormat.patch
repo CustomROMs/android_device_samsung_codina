@@ -2,7 +2,7 @@ diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.c
 index 8d890da..344a52f 100644
 --- a/media/libstagefright/OMXCodec.cpp
 +++ b/media/libstagefright/OMXCodec.cpp
-@@ -1869,6 +1869,10 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+@@ -1885,6 +1885,10 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
              def.format.video.nFrameWidth,
              def.format.video.nFrameHeight,
 -            def.format.video.eColorFormat,

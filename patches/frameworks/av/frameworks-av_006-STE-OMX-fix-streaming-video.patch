@@ -14,7 +14,7 @@ diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
 index a3d54a4..340c873 100755
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
-@@ -488,11 +488,15 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+@@ -784,11 +784,15 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
  
      status_t err;
      if (mNativeWindow != NULL && portIndex == kPortIndexOutput) {

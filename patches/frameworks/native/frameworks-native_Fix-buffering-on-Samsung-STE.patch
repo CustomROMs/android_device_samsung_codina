@@ -19,7 +19,7 @@ diff --git a/include/ui/FramebufferNativeWindow.h b/include/ui/FramebufferNative
 index 5cd8101..14def01 100644
 --- a/include/ui/FramebufferNativeWindow.h
 +++ b/include/ui/FramebufferNativeWindow.h
-@@ -30,8 +30,12 @@
+@@ -32,8 +32,12 @@
  #include <ui/ANativeObjectBase.h>
  #include <ui/Rect.h>
  
@@ -32,7 +32,7 @@ index 5cd8101..14def01 100644
  
  extern "C" EGLNativeWindowType android_createDisplaySurface(void);
  
-@@ -80,7 +84,11 @@ private:
+@@ -82,7 +86,11 @@ private:
      framebuffer_device_t* fbDev;
      alloc_device_t* grDev;
  
