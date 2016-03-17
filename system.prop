@@ -33,7 +33,6 @@ persist.sys.usb.config=mtp,adb
 # ro.disableWifiApFirmwareReload=false
 
 # Hardware
-persist.sys.scrollingcache=2
 camera2.portability.force_api=1
 debug.composition.type=gpu
 # debug.composition.type=dyn
@@ -43,9 +42,9 @@ ro.sys.fw.use_trim_settings=true
 ro.sys.fw.empty_app_percent=25
 ro.sys.fw.trim_empty_percent=50
 ro.sys.fw.trim_cache_percent=50
-ro.sys.fw.bg_apps_limit=16
+# ro.sys.fw.bg_apps_limit=16
 # ro.telephony.call_ring.delay=1000
-# persist.sys.dalvik.multithread=true
+persist.sys.dalvik.multithread=true
 persist.sys.strictmode.disable=true
 
 # art optimization
