@@ -35,8 +35,8 @@ persist.sys.usb.config=mtp,adb
 # Hardware
 persist.sys.scrollingcache=2
 camera2.portability.force_api=1
-# debug.composition.type=gpu
-debug.composition.type=dyn
+debug.composition.type=gpu
+# debug.composition.type=dyn
 # ro.sys.fw.trim_enable_memory=805306368
 ro.sys.fw.trim_enable_memory=536870912
 ro.sys.fw.use_trim_settings=true
@@ -49,10 +49,11 @@ ro.sys.fw.bg_apps_limit=16
 persist.sys.strictmode.disable=true
 
 # art optimization
-dalvik.vm.image-dex2oat-filter=speed
-dalvik.vm.dex2oat-filter=interpret-only
-# dalvik.vm.image-dex2oat-filter=everything
-# dalvik.vm.dex2oat-filter=everything
+dalvik.vm.image-dex2oat-filter=everything
+dalvik.vm.dex2oat-filter=everything
+#dalvik.vm.image-dex2oat-filter=speed
+#dalvik.vm.dex2oat-filter=interpret-only
+
 
 # hwui
 ro.hwui.drop_shadow_cache_size=1
