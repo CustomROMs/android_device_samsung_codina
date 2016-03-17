@@ -6,7 +6,6 @@ KERNEL_PATCH="kernel/codina/chrono"
 
 if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
-		 bionic \
 		 bootable/recovery \
 		 #frameworks/av \
 		 #frameworks/base \
