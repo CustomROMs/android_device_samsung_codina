@@ -6,7 +6,7 @@ TARGET_SCREEN_HEIGHT := 800
 TARGET_SCREEN_WIDTH := 480
 
 # Inherit some common AOSP stuff.
-$(call inherit-product, vendor/aosp/config/common.mk)
+#$(call inherit-product, vendor/aosp/config/common.mk)
 
 # Inherit device configuration
 $(call inherit-product, device/samsung/codina/ulti_codina.mk)

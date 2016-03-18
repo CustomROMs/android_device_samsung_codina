@@ -205,6 +205,12 @@ endif
 BOARD_LPM_BOOT_ARGUMENT_NAME := lpm_boot
 BOARD_LPM_BOOT_ARGUMENT_VALUE := 1
 
+# Superuser
+TARGET_NO_SUPERUSER := false
+ifneq ($(TARGET_NO_SUPERUSER),true)
+SUPERUSER_EMBEDDED := true
+endif
+
 
 # Dex Pre-opt
 WITH_DEXPREOPT := true

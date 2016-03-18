@@ -109,39 +109,6 @@ PRODUCT_PACKAGES += \
     libaudioutils \
     libtinyalsa
 
-
-# Audio Effects
-PRODUCT_PACKAGES += \
-    ViPER4Android \
-    libv4a_fx_ics \
-    android-visualizer 
-
-# NFC
-#PRODUCT_PACKAGES += \
-#    libnfc \
-#    libnfc_jni \
-#    Nfc \
-#    Tag \
-#    com.android.nfc_extras
-
-#PRODUCT_COPY_FILES += \
-#    $(LOCAL_PATH)/configs/nfcee_access.xml:system/etc/nfcee_access.xml
-
-# Fm radio
-#PRODUCT_PACKAGES += \
-#    FMRadio
-
-# Superuser
-ifneq ($(TARGET_NO_SUPERUSER),true)
-
-PRODUCT_PACKAGES += \
-    su
-
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.sys.root_access=3
-
-endif
-
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
 
@@ -243,7 +210,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # SELinux
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.boot.selinux=permissive
+    ro.boot.selinux=disabled
 
 # Storage switch
 PRODUCT_PROPERTY_OVERRIDES += \
