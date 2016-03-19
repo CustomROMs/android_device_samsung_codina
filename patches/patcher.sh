@@ -15,6 +15,7 @@ if [ "$PATCHES" == "" ] ; then
 		 #frameworks/opt/telephony \
 		 external/libpng \
 		 external/jhead \
+		 external/noto-fonts \
 		 #hardware/libhardware \
 		 hardware/ril \
 		 packages/inputmethods/LatinIME \
