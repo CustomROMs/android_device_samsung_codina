@@ -14,6 +14,7 @@ if [ "$PATCHES" == "" ] ; then
 		 frameworks/opt/net/ims \
 		 #frameworks/opt/telephony \
 		 external/libpng \
+		 external/jhead \
 		 #hardware/libhardware \
 		 hardware/ril \
 		 packages/inputmethods/LatinIME \
