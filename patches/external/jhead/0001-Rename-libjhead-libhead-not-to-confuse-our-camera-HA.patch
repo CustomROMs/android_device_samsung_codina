@@ -1,15 +1,15 @@
-From 93395f3fc4c8e62227aecc558586aa6d8bc69ec1 Mon Sep 17 00:00:00 2001
+From 3efb517206088a25cb77d33e83597f54784b2e2c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 19 Mar 2016 07:40:11 +0700
 Subject: [PATCH] Rename libjhead -> libhead not to confuse our camera HAL
 
 Change-Id: I88f31f1034d13dba9d1089a022b332711273fc57
 ---
- Android.mk | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/Android.mk b/Android.mk
-index 99a1766..85f17c5 100644
+index 99a1766..fc987c9 100644
 --- a/Android.mk
 +++ b/Android.mk
 @@ -28,7 +28,7 @@ LOCAL_SRC_FILES:= \
@@ -21,6 +21,15 @@ index 99a1766..85f17c5 100644
  
  LOCAL_SHARED_LIBRARIES := \
  	libcutils \
+@@ -57,7 +57,7 @@ LOCAL_SHARED_LIBRARIES := \
+ 	libcutils \
+ 	libutils \
+ 	liblog \
+-	libjhead
++	libhead
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
 -- 
 2.5.0
 
