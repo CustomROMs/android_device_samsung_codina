@@ -1,6 +1,5 @@
 on boot
     write /proc/sys/vm/page-cluster 0
-    start adbd
 
 on property:sys.boot_completed=1
     stop auditd
