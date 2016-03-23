@@ -223,7 +223,7 @@ WITH_DEXPREOPT_COMP := false
 # Enable position-independent code for odex files
 WITH_DEXPREOPT_PIC := true
 
-#FFAST_MATH := true
+FFAST_MATH := true
 FORCE_GCC52 := true
 FORCE_ARM := true
 #STRICT_ALIASING := true
