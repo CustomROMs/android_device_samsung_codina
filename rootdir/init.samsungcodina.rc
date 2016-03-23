@@ -19,7 +19,7 @@ on init
     setprop ro.vold.primary_physical 1
 
     # Setup the global environment
-    export LD_SHIM_LIBS /system/bin/gpsd|libshim_gps.so:/system/lib/libicuuc.so|libicuuc_51.so:/system/lib/hw/camera.montblanc.so|libcamera_symbols.so:/system/lib/libril.so|libste_ril.so:/system/bin/rild|libste_ril.so
+    export LD_SHIM_LIBS /system/bin/gpsd|libshim_gps.so:/system/lib/hw/camera.montblanc.so|libcamera_symbols.so
     export LD_LIBRARY_PATH /vendor/lib:/system/lib:/system/lib/ste_omxcomponents
     export OMX_STE_ENS_COMPONENTS_DIR /system/lib/ste_omxcomponents/
     export OMX_BELLAGIO_LOADER_REGISTRY /system/etc/omxloaders
