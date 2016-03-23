@@ -255,12 +255,6 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
                 mSamsungu8500RILThread = null;
                 mSamsungu8500RILHandler = null;
             }
-
-            if (!setPreferredNetworkTypeSeen) {
-                riljLog("SamsungU8500RIL: need to reboot modem!");
-                setRadioPower(false, null);
-                setPreferredNetworkTypeSeen = true;
-            }
             sendPreferedNetworktype(networkType, response);
         }
 
@@ -700,10 +694,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
 
                 // Initial conditions
                 setRadioPower(false, null);
-                if (needsOldRilFeature("setPrefNwTypeOnUnsolConnected")) {
-                    sendPreferedNetworktype(mPreferredNetworkType, null);
-                }
-                // sendPreferedNetworktype(mPreferredNetworkType, null);
+                sendPreferedNetworktype(mPreferredNetworkType, null);
                 setCdmaSubscriptionSource(mCdmaSubscription, null);
                 notifyRegistrantsRilConnectionChanged(((int[])ret)[0]);
                 break;
@@ -1030,3 +1021,4 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         return failCause;
     }
 }
+
