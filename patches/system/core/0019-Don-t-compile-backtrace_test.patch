@@ -1,0 +1,29 @@
+From e87afe13506774e66b8f799784f59cab1472975f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 23 Mar 2016 01:01:54 +0700
+Subject: [PATCH 19/19] Don't compile backtrace_test
+
+Change-Id: Iec4323c3e1080a9b7110262161583dfec5f4d6a0
+---
+ libbacktrace/Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libbacktrace/Android.mk b/libbacktrace/Android.mk
+index 6a689a6..cd46b46 100644
+--- a/libbacktrace/Android.mk
++++ b/libbacktrace/Android.mk
+@@ -132,9 +132,9 @@ module_tag := debug
+ build_type := target
+ build_target := NATIVE_TEST
+ backtrace_test_multilib := both
+-include $(LOCAL_PATH)/Android.build.mk
++#include $(LOCAL_PATH)/Android.build.mk
+ build_type := host
+-include $(LOCAL_PATH)/Android.build.mk
++#include $(LOCAL_PATH)/Android.build.mk
+ 
+ #----------------------------------------------------------------------------
+ # Special truncated libbacktrace library for mac.
+-- 
+2.5.0
+
