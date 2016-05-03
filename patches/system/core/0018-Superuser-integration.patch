@@ -1,7 +1,7 @@
-From 57fc23b91d698d81c89a7a6f060b388c76e5508c Mon Sep 17 00:00:00 2001
+From 55b6d1894d9beb8b5310595aa79498a9bf3eb182 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 20 Mar 2016 01:50:56 +0700
-Subject: [PATCH 18/18] Superuser integration (?)
+Subject: [PATCH 2/2] Superuser integration (?)
 
 Change-Id: I50a34ef2b7a2fe6b1d39530bd786c8ebdad89aaf
 ---

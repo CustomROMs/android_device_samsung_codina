@@ -1,15 +1,15 @@
-From 21489aec708cda029545bedd3bef9f20b31c1226 Mon Sep 17 00:00:00 2001
+From 3ab85fb62430418b8c569c32893c390d78d0353a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 14 Mar 2016 19:14:15 +0700
-Subject: [PATCH 01/18] 0001-rootdir-reset-to-aosp-6.0.patch
+Subject: [PATCH 1/2] 0001-rootdir-reset-to-aosp-6.0.patch
 
 Change-Id: Ifad0eb8936b0ef4232e241cb95b70f4b32d7c241
 ---
  rootdir/Android.mk         | 11 +++--------
  rootdir/init.environ.rc.in |  1 -
  rootdir/init.rc            | 49 +++++++++++++++++-----------------------------
- rootdir/ueventd.rc         | 42 +--------------------------------------
- 4 files changed, 22 insertions(+), 81 deletions(-)
+ rootdir/ueventd.rc         |  2 +-
+ 4 files changed, 22 insertions(+), 41 deletions(-)
 
 diff --git a/rootdir/Android.mk b/rootdir/Android.mk
 index 836e585..7ab76b8 100644
@@ -50,10 +50,10 @@ index 46ec1fb..b34ea01 100644
      export SYSTEMSERVERCLASSPATH %SYSTEMSERVERCLASSPATH%
 -    export LD_PRELOAD libsigchain.so%TARGET_LDPRELOAD%
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index 78adacc..6551dac 100644
+index 7850a21..e11e9ec 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -10,9 +10,6 @@ import /init.${ro.hardware}.rc
+@@ -12,9 +12,6 @@ import /init.${ro.hardware}.rc
  import /init.usb.configfs.rc
  import /init.${ro.zygote}.rc
  import /init.trace.rc
@@ -63,7 +63,7 @@ index 78adacc..6551dac 100644
  
  on early-init
      # Set init and its forked children's oom_adj.
-@@ -52,7 +49,6 @@ on init
+@@ -54,7 +51,6 @@ on init
      write /sys/fs/cgroup/memory/sw/memory.move_charge_at_immigrate 1
      chown root system /sys/fs/cgroup/memory/sw/tasks
      chmod 0660 /sys/fs/cgroup/memory/sw/tasks
@@ -71,7 +71,7 @@ index 78adacc..6551dac 100644
  
      mkdir /system
      mkdir /data 0771 system system
-@@ -146,27 +142,23 @@ on init
+@@ -148,27 +144,23 @@ on init
      # sets up initial cpusets for ActivityManager
      mkdir /dev/cpuset
      mount cpuset none /dev/cpuset
@@ -108,7 +108,7 @@ index 78adacc..6551dac 100644
      chown system system /dev/cpuset
      chown system system /dev/cpuset/foreground
      chown system system /dev/cpuset/foreground/boost
-@@ -402,9 +394,6 @@ on post-fs-data
+@@ -404,9 +396,6 @@ on post-fs-data
  
      # Set SELinux security contexts on upgrade or policy update.
      restorecon_recursive /data
@@ -118,7 +118,7 @@ index 78adacc..6551dac 100644
  
      # Check any timezone data in /data is newer than the copy in /system, delete if not.
      exec - system system -- /system/bin/tzdatacheck /system/usr/share/zoneinfo /data/misc/zoneinfo
-@@ -415,6 +404,9 @@ on post-fs-data
+@@ -417,6 +406,9 @@ on post-fs-data
      # Set indication (checked by vold) that we have finished this action
      #setprop vold.post_fs_data_done 1
  
@@ -128,7 +128,7 @@ index 78adacc..6551dac 100644
  on boot
      # basic network init
      ifup lo
-@@ -654,7 +646,7 @@ service ril-daemon /system/bin/rild
+@@ -656,7 +648,7 @@ service ril-daemon /system/bin/rild
      socket sap_uim_socket1 stream 660 bluetooth bluetooth
      socket rild-debug stream 660 radio system
      user root
@@ -137,7 +137,7 @@ index 78adacc..6551dac 100644
  
  service surfaceflinger /system/bin/surfaceflinger
      class core
-@@ -670,7 +662,7 @@ service drm /system/bin/drmserver
+@@ -672,7 +664,7 @@ service drm /system/bin/drmserver
  service media /system/bin/mediaserver
      class main
      user media
@@ -146,7 +146,7 @@ index 78adacc..6551dac 100644
      ioprio rt 4
  
  # One shot invocation to deal with encrypted volume.
-@@ -681,7 +673,7 @@ service defaultcrypto /system/bin/vdc --wait cryptfs mountdefaultencrypted
+@@ -683,7 +675,7 @@ service defaultcrypto /system/bin/vdc --wait cryptfs mountdefaultencrypted
      # encryption) or trigger_restart_min_framework (other encryption)
  
  # One shot invocation to encrypt unencrypted volumes
@@ -155,7 +155,7 @@ index 78adacc..6551dac 100644
      disabled
      oneshot
      # vold will set vold.decrypt to trigger_restart_framework (default
-@@ -702,14 +694,9 @@ service installd /system/bin/installd
+@@ -704,14 +696,9 @@ service installd /system/bin/installd
      class main
      socket installd stream 600 system system
  
@@ -174,7 +174,7 @@ index 78adacc..6551dac 100644
  service racoon /system/bin/racoon
      class main
 diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
-index f82d899..b735dc3 100644
+index 67eaabc..270281d 100644
 --- a/rootdir/ueventd.rc
 +++ b/rootdir/ueventd.rc
 @@ -28,7 +28,7 @@ subsystem adf
@@ -186,50 +186,6 @@ index f82d899..b735dc3 100644
  /dev/diag_arm9            0660   radio      radio
  /dev/android_adb          0660   adb        adb
  /dev/android_adb_enable   0660   adb        adb
-@@ -98,43 +98,3 @@ subsystem adf
- 
- # DVB API device nodes
- /dev/dvb*                 0660   root       system
--
--# Governor permissions
--/sys/devices/system/cpu/cpu*   cpufreq/scaling_governor   0664  system system
--
--/sys/devices/system/cpu/cpufreq ondemand/boostfreq   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/boostpulse  0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/boosttime   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/down_differential   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/down_differential_multi_core   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/ignore_nice_load   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/input_boost   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/io_is_busy      0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/optimal_freq   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/powersave_bias  0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/sampling_down_factor    0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/sampling_rate   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/sampling_rate_min   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/sync_freq   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/up_threshold   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/up_threshold_any_cpu_load   0664    system  system
--/sys/devices/system/cpu/cpufreq ondemand/up_threshold_multi_core   0664    system  system
--
--/sys/devices/system/cpu/cpufreq interactive/above_hispeed_delay 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/align_windows 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/boost  0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/boostpulse  0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/boostpulse_duration  0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/go_hispeed_load 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/hispeed_freq    0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/io_is_busy      0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/max_freq_hysteresis 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/min_sample_rate 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/min_sample_time 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/sampling_down_factor 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/sync_freq 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/target_loads 0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/timer_rate  0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/timer_slack      0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/up_threshold_any_cpu_freq      0664    system  system
--/sys/devices/system/cpu/cpufreq interactive/up_threshold_any_cpu_load      0664    system  system
 -- 
 2.5.0
 
