@@ -173,13 +173,6 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     private boolean mIsSamsungCdma = SystemProperties.getBoolean("ro.ril.samsung_cdma", false);
     protected int mPreferredNetworkType;
 
-    public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription) {
-        this(context, networkMode, cdmaSubscription, null);
-        mPreferredNetworkType = networkMode;
-        mQANElements = 5;
-        mContext = context;
-    }
-
     public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription, Integer instanceId) {
         super(context, networkMode, cdmaSubscription, instanceId);
         mPreferredNetworkType = networkMode;
@@ -1021,4 +1014,3 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         return failCause;
     }
 }
-
