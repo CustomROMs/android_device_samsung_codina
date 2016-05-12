@@ -1,0 +1,26 @@
+From 60c4963074f669df6f4d083203c660b28540d8d2 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 12 May 2016 19:08:12 +0700
+Subject: [PATCH] recovery: don't use CLANG
+
+Change-Id: I05ecd25025598639e502a172992004e231b7cf31
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 2aeefde..00bae49 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -62,7 +62,7 @@ RECOVERY_API_VERSION := 3
+ RECOVERY_FSTAB_VERSION := 2
+ LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
+ LOCAL_CFLAGS += -Wno-unused-parameter
+-LOCAL_CLANG := true
++#LOCAL_CLANG := true
+ 
+ LOCAL_C_INCLUDES += \
+     system/vold \
+-- 
+2.5.0
+

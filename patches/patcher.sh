@@ -6,7 +6,7 @@ KERNEL_PATCH="kernel/codina/chrono"
 
 if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
-		 #bootable/recovery \
+		 bootable/recovery \
 		 #frameworks/av \
 		 #frameworks/base \
 		 #frameworks/native  \
@@ -15,6 +15,7 @@ if [ "$PATCHES" == "" ] ; then
 		 #frameworks/opt/telephony \
 		 external/libpng \
 		 external/jhead \
+		 external/webrtc \
 		 #hardware/libhardware \
 		 hardware/libhardware_legacy \
 		 hardware/ril \
@@ -23,6 +24,7 @@ if [ "$PATCHES" == "" ] ; then
 		 packages/services/Telecomm \
 		 system/bt \
 		 system/core \
+		 system/keymaster \
 		 system/media \
 		 system/vold"
 

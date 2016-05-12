@@ -1,0 +1,25 @@
+From ae159d0f54a72a8d42e0426a2717adaa53a70afa Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 12 May 2016 19:05:03 +0700
+Subject: [PATCH] webrtc: enable CLANG
+
+Change-Id: I52a32b432768b63cf8bd053ba209a5736b06da33
+---
+ Android.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Android.mk b/Android.mk
+index d79d19d..2971828 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -39,6 +39,7 @@ LOCAL_SHARED_LIBRARIES := \
+     libdl \
+     libprotobuf-cpp-lite \
+ 
++LOCAL_CLANG := true
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+-- 
+2.5.0
+

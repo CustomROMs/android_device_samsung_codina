@@ -1,0 +1,25 @@
+From decf6c5e04a64642bfb3c40526ffaf72e195a0fb Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 12 May 2016 19:02:21 +0700
+Subject: [PATCH] keymaster1: enable CLANG
+
+Change-Id: I030ecd0e97cab8d5de69e8a33bc87c7dae75c19c
+---
+ Android.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Android.mk b/Android.mk
+index 5a6dbb4..d86bf34 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -78,6 +78,7 @@ LOCAL_CFLAGS = -Wall -Werror -Wunused
+ LOCAL_CLANG_CFLAGS += -Wno-error=unused-const-variable -Wno-error=unused-private-field
+ # Ignore benign warnings for now.
+ LOCAL_CLANG_CFLAGS += -Wno-error=unused-private-field
++LOCAL_CLANG := true
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+-- 
+2.5.0
+
