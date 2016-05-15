@@ -1,0 +1,31 @@
+From a5684890283e443f92cb5b8d780ae9056b0c2ad0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 15 May 2016 22:42:58 +0700
+Subject: [PATCH 2/2] Relax WRITE_MEDIA_STORAGE permission check
+
+Change-Id: Icb493ea69dcadaee336a92f8df9d8791cd2c2d2c
+---
+ src/com/android/providers/media/MediaProvider.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/com/android/providers/media/MediaProvider.java b/src/com/android/providers/media/MediaProvider.java
+index d4a649e..6af8ce7 100755
+--- a/src/com/android/providers/media/MediaProvider.java
++++ b/src/com/android/providers/media/MediaProvider.java
+@@ -4729,11 +4729,13 @@ public class MediaProvider extends ContentProvider {
+                 }
+             }
+             if (isWrite) {
++/*
+                 if (c.checkCallingOrSelfUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                         != PackageManager.PERMISSION_GRANTED) {
+                     c.enforceCallingOrSelfPermission(
+                             WRITE_MEDIA_STORAGE, "External path: " + path);
+                 }
++*/
+             }
+         } else if (isWrite) {
+             // don't write to non-cache, non-sdcard files.
+-- 
+2.5.0
+

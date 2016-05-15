@@ -1,0 +1,57 @@
+From 6a615062bc24f2a56107a592a79114496d479fc5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 15 May 2016 22:46:49 +0700
+Subject: [PATCH 2/2] Add infinite request timeout and disable mTimeLeft
+
+---
+ .../src/com/koushikdutta/superuser/MultitaskSuRequestActivity.java    | 2 +-
+ .../src/com/koushikdutta/superuser/SettingsFragmentInternal.java      | 4 +++-
+ Superuser/src/com/koushikdutta/superuser/util/Settings.java           | 2 +-
+ 3 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/Superuser/src/com/koushikdutta/superuser/MultitaskSuRequestActivity.java b/Superuser/src/com/koushikdutta/superuser/MultitaskSuRequestActivity.java
+index 820c6e1..33e00cd 100644
+--- a/Superuser/src/com/koushikdutta/superuser/MultitaskSuRequestActivity.java
++++ b/Superuser/src/com/koushikdutta/superuser/MultitaskSuRequestActivity.java
+@@ -63,7 +63,7 @@ public class MultitaskSuRequestActivity extends FragmentActivity {
+ 
+     Handler mHandler = new Handler();
+ 
+-    int mTimeLeft = 3;
++    int mTimeLeft = 0;
+ 
+     Button mAllow;
+     Button mDeny;
+diff --git a/Superuser/src/com/koushikdutta/superuser/SettingsFragmentInternal.java b/Superuser/src/com/koushikdutta/superuser/SettingsFragmentInternal.java
+index 86a5403..c469477 100644
+--- a/Superuser/src/com/koushikdutta/superuser/SettingsFragmentInternal.java
++++ b/Superuser/src/com/koushikdutta/superuser/SettingsFragmentInternal.java
+@@ -318,9 +318,11 @@ public class SettingsFragmentInternal extends BetterListFragmentInternal {
+                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                 builder.setTitle(R.string.request_timeout);
+                 String[] seconds = new String[3];
+-                for (int i = 0; i < seconds.length; i++) {
++                for (int i = 0; i < seconds.length - 1; i++) {
+                     seconds[i] = getString(R.string.number_seconds, (i + 1) * 10);
+                 }
++
++		seconds[2] = getString(R.string.number_seconds, 2147483647);
+                 builder.setItems(seconds, new OnClickListener() {
+                     @Override
+                     public void onClick(DialogInterface dialog, int which) {
+diff --git a/Superuser/src/com/koushikdutta/superuser/util/Settings.java b/Superuser/src/com/koushikdutta/superuser/util/Settings.java
+index 4255f8c..fa3ca7c 100755
+--- a/Superuser/src/com/koushikdutta/superuser/util/Settings.java
++++ b/Superuser/src/com/koushikdutta/superuser/util/Settings.java
+@@ -110,7 +110,7 @@ public class Settings {
+     }
+ 
+     private static final String KEY_TIMEOUT = "timeout";
+-    public static final int REQUEST_TIMEOUT_DEFAULT = 30;
++    public static final int REQUEST_TIMEOUT_DEFAULT = 2147483647;
+     public static int getRequestTimeout(Context context) {
+         return getInt(context, KEY_TIMEOUT, REQUEST_TIMEOUT_DEFAULT);
+     }
+-- 
+2.5.0
+

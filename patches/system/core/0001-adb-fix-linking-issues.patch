@@ -1,0 +1,38 @@
+From 74d71167922628ba7de0f4fb8cacea301e129571 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 15 May 2016 19:24:16 +0700
+Subject: [PATCH] adb: fix linking issues
+
+Change-Id: Id18879513a6ddb7ee4a85cc260a7d90c11a3a9d3
+---
+ adb/Android.mk | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/adb/Android.mk b/adb/Android.mk
+index 425bf9b..860cc68 100644
+--- a/adb/Android.mk
++++ b/adb/Android.mk
+@@ -241,7 +241,7 @@ endif
+ 
+ LOCAL_MODULE := adbd
+ 
+-LOCAL_FORCE_STATIC_EXECUTABLE := true
++#LOCAL_FORCE_STATIC_EXECUTABLE := true
+ LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT_SBIN)
+ LOCAL_UNSTRIPPED_PATH := $(TARGET_ROOT_OUT_SBIN_UNSTRIPPED)
+ LOCAL_C_INCLUDES += system/extras/ext4_utils
+@@ -252,9 +252,10 @@ LOCAL_STATIC_LIBRARIES := \
+     libfs_mgr \
+     liblog \
+     libcutils \
+-    libc \
+     libmincrypt \
+     libselinux \
+     libext4_utils_static \
+ 
++LOCAL_SHARED_LIBRARIES := libc
++
+ include $(BUILD_EXECUTABLE)
+-- 
+2.5.0
+

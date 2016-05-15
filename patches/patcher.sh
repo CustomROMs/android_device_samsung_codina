@@ -15,6 +15,8 @@ if [ "$PATCHES" == "" ] ; then
 		 #frameworks/opt/telephony \
 		 external/libpng \
 		 external/jhead \
+		 external/koush/Superuser \
+		 external/vixl \
 		 external/webrtc \
 		 #hardware/libhardware \
 		 hardware/libhardware_legacy \
@@ -24,6 +26,7 @@ if [ "$PATCHES" == "" ] ; then
 		 packages/services/Telecomm \
 		 system/bt \
 		 system/core \
+		 system/extras \
 		 system/keymaster \
 		 system/media \
 		 system/vold"
