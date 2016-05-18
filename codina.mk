@@ -243,6 +243,10 @@ $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.m
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/ste_modem.sh:system/etc/ste_modem.sh
 
+# UMS config
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/ums_init.sh:system/bin/ums_init.sh
+
 # Audio
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/adm.sqlite-u8500:system/etc/adm.sqlite-u8500
