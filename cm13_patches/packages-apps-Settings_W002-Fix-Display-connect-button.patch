@@ -1,0 +1,18 @@
+ Display connect button in the wifi connection menu
+
+When you quickly try to reconnect after forgeting the AP, the connection
+is in DISCONNECTED state and we may still display the connect button
+
+diff --git a/src/com/android/settings/wifi/WifiConfigController.java b/src/com/android/settings/wifi/WifiConfigController.java
+index 190f270..2189091 100644
+--- a/src/com/android/settings/wifi/WifiConfigController.java
++++ b/src/com/android/settings/wifi/WifiConfigController.java
+@@ -269,7 +269,7 @@ public WifiConfigController(
+                 final DetailedState state = mAccessPoint.getDetailedState();
+                 final String signalLevel = getSignalString();
+ 
+-                if (state == null && signalLevel != null) {
++                if ((state == null || state == DetailedState.DISCONNECTED) && signalLevel != null) {
+                     mConfigUi.setSubmitButton(res.getString(R.string.wifi_connect));
+                 } else {
+                     if (state != null) {

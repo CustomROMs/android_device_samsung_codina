@@ -1,0 +1,19 @@
+ Fix NullPointerException in DhcpPacket.getTransactionId()
+
+Method getTransactionId() can be call on a null pointer due to
+'return null' in the decodeFullPacket function (DhcpPacket.java
+line 807). The fix handle this null pointer case.
+
+diff --git a/services/net/java/android/net/dhcp/DhcpClient.java b/services/net/java/android/net/dhcp/DhcpClient.java
+index 9708a5a..024f6bb 100644
+--- a/services/net/java/android/net/dhcp/DhcpClient.java
++++ b/services/net/java/android/net/dhcp/DhcpClient.java
+@@ -645,6 +645,8 @@ public boolean processMessage(Message message) {
+ 
+     public boolean isValidPacket(DhcpPacket packet) {
+         // TODO: check checksum.
++        if (packet == null)
++            return false;
+         int xid = packet.getTransactionId();
+         if (xid != mTransactionId) {
+             Log.d(TAG, "Unexpected transaction ID " + xid + ", expected " + mTransactionId);

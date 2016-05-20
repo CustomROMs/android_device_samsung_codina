@@ -1,0 +1,42 @@
+ Fix screen timeout exception in Display Settings
+
+Exception was: java.lang.ArrayIndexOutOfBoundsException: length=7; index=7
+This happens when non-English languages files do not have
+all values, i.e. a commit e.g. adds a screen timeout value
+but does not add it to all language files.
+
+diff --git a/src/com/android/settings/DisplaySettings.java b/src/com/android/settings/DisplaySettings.java
+index 0005526..00ec124 100644
+--- a/src/com/android/settings/DisplaySettings.java
++++ b/src/com/android/settings/DisplaySettings.java
+@@ -420,22 +420,22 @@ private static boolean isCameraGestureAvailable(Resources res) {
+     private void updateTimeoutPreferenceDescription(long currentTimeout) {
+         ListPreference preference = mScreenTimeoutPreference;
+         String summary;
+-        if (currentTimeout < 0) {
+-            // Unsupported value
+-            summary = "";
+-        } else {
++        summary = "";
++        if (currentTimeout >= 0) {
+             final CharSequence[] entries = preference.getEntries();
+             final CharSequence[] values = preference.getEntryValues();
+-            if (entries == null || entries.length == 0) {
+-                summary = "";
+-            } else {
++            if (entries != null && entries.length > 0) {
++                int maxEntries = Math.min(entries.length, values.length);
+                 int best = 0;
+-                for (int i = 0; i < values.length; i++) {
++                for (int i = 0; i < maxEntries; i++) {
+                     long timeout = Long.parseLong(values[i].toString());
+                     if (currentTimeout >= timeout) {
+                         best = i;
+                     }
+                 }
++                if (best >= entries.length) {
++                  best = entries.length - 1;
++                }
+                 summary = preference.getContext().getString(R.string.screen_timeout_summary,
+                         entries[best]);
+             }

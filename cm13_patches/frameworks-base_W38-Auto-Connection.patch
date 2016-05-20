@@ -1,0 +1,19 @@
+ Wifi: Interface provision to configure the Auto Connection.
+
+Auto connection dictates capability of hand-off between LTE and Wi-Fi
+network and also selection of a specific Wi-Fi network. This commit
+introduces an interface to the UI to set/reset this requirement
+based on which the framework shall act accordingly
+
+diff --git a/core/res/res/values/bools.xml b/core/res/res/values/bools.xml
+index 1008a50..080f6bb 100644
+--- a/core/res/res/values/bools.xml
++++ b/core/res/res/values/bools.xml
+@@ -31,6 +31,6 @@
+     <bool name="allow_stacked_button_bar">false</bool>
+     <!-- Whether to enable softap extention feature -->
+     <bool name="config_softap_extention">true</bool>
+     <!-- Whether to enable auto connection feature -->
+-    <bool name="wifi_autocon">false</bool>
++    <bool name="wifi_autocon">true</bool>
+ </resources>

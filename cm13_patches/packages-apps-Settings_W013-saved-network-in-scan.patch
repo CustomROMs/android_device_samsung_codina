@@ -1,0 +1,24 @@
+From cab05e3efbaaa404de82e6ccd53d670822a78643 Mon Sep 17 00:00:00 2001
+From: Om Prakash Singh <omp@nvidia.com>
+Date: Fri, 08 Jan 2016 18:22:55 +0530
+Subject: [PATCH] do not include saved network in scan list
+
+if includeSaved is enabled WiFi Settings shows
+saved networks in scan list even if AP is not available
+
+Change-Id: I35a45e91444387a1a762a81e66942276cc22896f
+---
+
+diff --git a/src/com/android/settings/wifi/WifiSettings.java b/src/com/android/settings/wifi/WifiSettings.java
+index 7eded24..5f18d44 100644
+--- a/src/com/android/settings/wifi/WifiSettings.java
++++ b/src/com/android/settings/wifi/WifiSettings.java
+@@ -199,7 +199,7 @@ public void onActivityCreated(Bundle savedInstanceState) {
+         super.onActivityCreated(savedInstanceState);
+ 
+         mWifiTracker =
+-                new WifiTracker(getActivity(), this, mBgThread.getLooper(), true, true, false);
++                new WifiTracker(getActivity(), this, mBgThread.getLooper(), false, true, false);
+         mWifiManager = mWifiTracker.getManager();
+ 
+         mConnectListener = new WifiManager.ActionListener() {

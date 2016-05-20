@@ -1,0 +1,67 @@
+ Don't crash if we get a DHCP packet with the wrong port.
+
+This should only happen if we get a packet in the small time
+window between binding the packet socket and programming the
+BPF filter on it.
+
+diff --git a/services/net/java/android/net/dhcp/DhcpPacket.java b/services/net/java/android/net/dhcp/DhcpPacket.java
+index 1108a5a..080f6b0 100644
+--- a/services/net/java/android/net/dhcp/DhcpPacket.java
++++ b/services/net/java/android/net/dhcp/DhcpPacket.java
+@@ -804,7 +804,11 @@ public static DhcpPacket decodeFullPacket(ByteBuffer packet, int pktType) throws
+             // server-to-server packets, e.g. for relays.
+             if (!isPacketToOrFromClient(udpSrcPort, udpDstPort) &&
+                 !isPacketServerToServer(udpSrcPort, udpDstPort)) {
+-                return null;
++                // This should almost never happen because we use SO_ATTACH_FILTER on the packet
++                // socket to drop packets that don't have the right source ports. However, it's
++                // possible that a packet arrives between when the socket is bound and when the
++                // filter is set. http://b/26696823 .
++                throw new ParseException("Unexpected UDP ports %d->%d", udpSrcPort, udpDstPort);
+             }
+         }
+ 
+diff --git a/services/tests/servicestests/src/android/net/dhcp/DhcpPacketTest.java b/services/tests/servicestests/src/android/net/dhcp/DhcpPacketTest.java
+index 1108a5a..080f6b1 100644
+--- a/services/tests/servicestests/src/android/net/dhcp/DhcpPacketTest.java
++++ b/services/tests/servicestests/src/android/net/dhcp/DhcpPacketTest.java
+@@ -552,6 +552,39 @@ public void testUdpServerAnySourcePort() throws Exception {
+     }
+ 
+     @SmallTest
++    public void testUdpInvalidDstPort() throws Exception {
++        final ByteBuffer packet = ByteBuffer.wrap(HexEncoding.decode((
++            // Ethernet header.
++            "9cd917000000001c2e0000000800" +
++            // IP header.
++            "45a00148000040003d115087d18194fb0a0f7af2" +
++            // UDP header. TODO: fix invalid checksum (due to MAC address obfuscation).
++            // NOTE: The destination port is a non-DHCP port.
++            "0043aaaa01341268" +
++            // BOOTP header.
++            "02010600d628ba8200000000000000000a0f7af2000000000a0fc818" +
++            // MAC address.
++            "9cd91700000000000000000000000000" +
++            // Server name.
++            "0000000000000000000000000000000000000000000000000000000000000000" +
++            "0000000000000000000000000000000000000000000000000000000000000000" +
++            // File.
++            "0000000000000000000000000000000000000000000000000000000000000000" +
++            "0000000000000000000000000000000000000000000000000000000000000000" +
++            "0000000000000000000000000000000000000000000000000000000000000000" +
++            "0000000000000000000000000000000000000000000000000000000000000000" +
++            // Options.
++            "6382536335010236040a0169fc3304000151800104ffff000003040a0fc817060cd1818003d1819403" +
++            "d18180060f0777766d2e6564751c040a0fffffff000000"
++        ).toCharArray(), false));
++
++        try {
++            DhcpPacket.decodeFullPacket(packet, ENCAP_L2);
++            fail("Packet with invalid dst port did not throw ParseException");
++        } catch (ParseException expected) {}
++    }
++
++    @SmallTest
+     public void testMultipleRouters() throws Exception {
+         final ByteBuffer packet = ByteBuffer.wrap(HexEncoding.decode((
+             // Ethernet header.

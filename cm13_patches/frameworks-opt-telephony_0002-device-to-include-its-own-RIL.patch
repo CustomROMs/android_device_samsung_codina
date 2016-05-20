@@ -1,0 +1,39 @@
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 59d0e00..d8a5177 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -3084,6 +3084,7 @@
+             case RIL_UNSOL_ON_SS: ret =  responseSsData(p); break;
+             case RIL_UNSOL_STK_CC_ALPHA_NOTIFY: ret =  responseString(p); break;
+             case RIL_UNSOL_LCEDATA_RECV: ret = responseLceData(p); break;
++            case RIL_UNSOL_STK_SEND_SMS_RESULT: ret = responseInts(p); break; // Samsung STK
+ 
+             default:
+                 throw new RuntimeException("Unrecognized unsol response: " + response);
+@@ -3518,6 +3519,18 @@
+ 
+                 if (mLceInfoRegistrant != null) {
+                     mLceInfoRegistrant.notifyRegistrant(new AsyncResult(null, ret, null));
++                }
++                break;
++            // Samsung STK
++            case RIL_UNSOL_STK_SEND_SMS_RESULT:
++                if (Resources.getSystem().
++                        getBoolean(com.android.internal.R.bool.config_samsung_stk)) {
++                    if (RILJ_LOGD) unsljLogRet(response, ret);
++
++                    if (mCatSendSmsResultRegistrant != null) {
++                        mCatSendSmsResultRegistrant.notifyRegistrant(
++                                new AsyncResult (null, ret, null));
++                    }
+                 }
+                 break;
+         }
+@@ -4520,6 +4533,7 @@
+             case RIL_UNSOL_ON_SS: return "UNSOL_ON_SS";
+             case RIL_UNSOL_STK_CC_ALPHA_NOTIFY: return "UNSOL_STK_CC_ALPHA_NOTIFY";
+             case RIL_UNSOL_LCEDATA_RECV: return "UNSOL_LCE_INFO_RECV";
++            case RIL_UNSOL_STK_SEND_SMS_RESULT: return "RIL_UNSOL_STK_SEND_SMS_RESULT";
+             default: return "<unknown response>";
+         }
+     }

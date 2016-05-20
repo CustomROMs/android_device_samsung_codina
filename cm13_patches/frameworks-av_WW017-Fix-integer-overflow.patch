@@ -1,0 +1,21 @@
+ Fix integer overflow in estimateMoovBoxSize
+
+On 200GB SD Card the Camera reported an expected max file duration
+of 89158000000 us, this later overflowed the calculation in
+estimateMoovBoxSize. Move the division in before the multiplication
+to avoid the overflow (this gives different result for <1ms duration
+limits but this should not be noticeable in the end).
+
+diff --git a/media/libstagefright/MPEG4Writer.cpp b/media/libstagefright/MPEG4Writer.cpp
+index 74fc498..6069839 100644
+--- a/media/libstagefright/MPEG4Writer.cpp
++++ b/media/libstagefright/MPEG4Writer.cpp
+@@ -620,7 +620,7 @@ int64_t MPEG4Writer::estimateMoovBoxSize(int32_t bitRate) {
+     if (mMaxFileDurationLimitUs != 0) {
+         if (bitRate > 0) {
+             int64_t size2 =
+-                ((mMaxFileDurationLimitUs * bitRate * 6) / 1000 / 8000000);
++                ((mMaxFileDurationLimitUs / 1000) * bitRate * 6) / 8000000;
+             if (mMaxFileSizeLimitBytes != 0 && mIsFileSizeLimitExplicitlyRequested) {
+                 // When both file size and duration limits are set,
+                 // we use the smaller limit of the two.

@@ -1,0 +1,27 @@
+From f58e4c63ded4d10eb6495caaeadd9e1bc607a808 Mon Sep 17 00:00:00 2001
+From: Om Prakash Singh <omp@nvidia.com>
+Date: Sun, 17 Jan 2016 14:00:49 +0530
+Subject: [PATCH] enable submit button when editing is enabled
+
+Wifi setting : No "Connect" button while entering password for AP
+Test:
+Select any AP
+Enter wrong password.
+Use "Forgot" for same AP after getting Authentication problem.
+Select same AP , enter password.
+
+Change-Id: I0bcdaa6ec28be4b3167233cdb90d4acf35c3c48a
+---
+
+diff --git a/src/com/android/settings/wifi/WifiConfigController.java b/src/com/android/settings/wifi/WifiConfigController.java
+index 774c54b..1695d59 100644
+--- a/src/com/android/settings/wifi/WifiConfigController.java
++++ b/src/com/android/settings/wifi/WifiConfigController.java
+@@ -261,6 +261,7 @@ public WifiConfigController(
+                     ((CheckBox)mView.findViewById(R.id.wifi_advanced_togglebox)).setChecked(true);
+                     mView.findViewById(R.id.wifi_advanced_fields).setVisibility(View.VISIBLE);
+                 }
++                mConfigUi.setSubmitButton(res.getString(R.string.wifi_connect));
+             }
+ 
+             if (mModify) {

@@ -1,0 +1,89 @@
+ Add force move app storage option.
+
+Allows apps that don't declare an install location
+in their manifest to be moved.
+
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 4bb5524..59ec124 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -46,4 +46,14 @@
+     <string name="disable_fc_notifications_title">Disable FC Notifications</string>
+     <string name="disable_fc_notifications_summary">This will hide all force close notificaitons</string>
+ 
++    <!-- Title of dialog to force change [CHAR LIMIT=25] -->
++    <string name="force_change">Force change</string>
++    <!-- Title of dialog to force change storage [CHAR LIMIT=25] -->
++    <string name="force_change_storage">Force change storage</string>
++    <string name="storage_wizard_move_confirm_force_info">\n\nWARNING: This app does not declare the ability for it to be moved to adopted storage.
++        You may forcibly move it regardless but app data may need to be cleared in order for it to function correctly.</string>
++    <string name="storage_wizard_move_confirm_body_cm">Moving <xliff:g id="app" example="Calculator">^1</xliff:g> and its data to <xliff:g id="name" example="SD card">^2</xliff:g> will take only a few moments. You won\u2019t be able to use the app until the move is complete.
++\n\nDon\u2019t remove the <xliff:g id="name" example="SD card">^2</xliff:g> during the move.<xliff:g id="forcetext">^3</xliff:g>
++    </string>
++
+ </resources>
+diff --git a/src/com/android/settings/applications/AppStorageSettings.java b/src/com/android/settings/applications/AppStorageSettings.java
+index 29a4819..acfb53c 100644
+--- a/src/com/android/settings/applications/AppStorageSettings.java
++++ b/src/com/android/settings/applications/AppStorageSettings.java
+@@ -345,8 +345,15 @@ private void initMoveDialog() {
+         final Context context = getActivity();
+         final StorageManager storage = context.getSystemService(StorageManager.class);
+ 
+-        final List<VolumeInfo> candidates = context.getPackageManager()
++        boolean requiresForce = false;
++        List<VolumeInfo> candidates = context.getPackageManager()
+                 .getPackageCandidateVolumes(mAppEntry.info);
++        if (candidates.size() < 2) {
++            // try forceable volume list
++            candidates = context.getPackageManager()
++                .getPackageCandidateVolumesForceable(mAppEntry.info);
++            requiresForce = true;
++        }
+         if (candidates.size() > 1) {
+             Collections.sort(candidates, VolumeInfo.getDescriptionComparator());
+ 
+@@ -359,9 +366,12 @@ private void initMoveDialog() {
+                 }
+                 labels[i] = volDescrip;
+             }
++            if (requiresForce) {
++                mChangeStorageButton.setText(R.string.force_change);
++            }
+             mCandidates = candidates.toArray(new VolumeInfo[candidates.size()]);
+             mDialogBuilder = new AlertDialog.Builder(getContext())
+-                    .setTitle(R.string.change_storage)
++                    .setTitle(requiresForce ? R.string.force_change_storage : R.string.change_storage)
+                     .setSingleChoiceItems(labels, current, this)
+                     .setNegativeButton(R.string.cancel, null);
+         } else {
+diff --git a/src/com/android/settings/deviceinfo/StorageWizardMoveConfirm.java b/src/com/android/settings/deviceinfo/StorageWizardMoveConfirm.java
+index 607369f..057ae23 100644
+--- a/src/com/android/settings/deviceinfo/StorageWizardMoveConfirm.java
++++ b/src/com/android/settings/deviceinfo/StorageWizardMoveConfirm.java
+@@ -51,15 +51,22 @@ protected void onCreate(Bundle savedInstanceState) {
+         }
+ 
+         // Sanity check that target volume is candidate
+-        Preconditions.checkState(
+-                getPackageManager().getPackageCandidateVolumes(mApp).contains(mVolume));
++        // and determine if the move was forced
++        boolean forcedMove = false;
++        if (!getPackageManager().getPackageCandidateVolumes(mApp).contains(mVolume)) {
++            Preconditions.checkState(
++                    getPackageManager().getPackageCandidateVolumesForceable(mApp).contains(mVolume));
++            forcedMove = true;
++        }
+ 
+         final String appName = getPackageManager().getApplicationLabel(mApp).toString();
+         final String volumeName = mStorage.getBestVolumeDescription(mVolume);
+ 
+         setIllustrationInternal(true);
+         setHeaderText(R.string.storage_wizard_move_confirm_title, appName);
+-        setBodyText(R.string.storage_wizard_move_confirm_body, appName, volumeName);
++        final String forceText = forcedMove ?
++                getString(R.string.storage_wizard_move_confirm_force_info) : "";
++        setBodyText(R.string.storage_wizard_move_confirm_body_cm, appName, volumeName, forceText);
+ 
+         getNextButton().setText(R.string.move_app);
+     }

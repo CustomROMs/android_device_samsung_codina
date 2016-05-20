@@ -1,0 +1,70 @@
+ Ensure packages on adopted media do not move when updated
+
+Packages not installed with PackageInstaller.Session that
+are moved to adopted storage via android storage settings
+will get moved back to private internal storage when the
+package is later updated.  This causes the app to lose
+it's data (and leaves the data dir dangling on the original
+adopted location).
+
+play market installs do not have this problem (because
+they use an installer session) but pretty much every other
+app install route does.  eg adb install and other app stores.
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 4987c9e..5621446 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -11233,7 +11233,7 @@ public MoveInfo(int moveId, String fromUuid, String toUuid, String packageName,
+         final IPackageInstallObserver2 observer;
+         int installFlags;
+         final String installerPackageName;
+-        final String volumeUuid;
++        String volumeUuid;
+         final VerificationParams verificationParams;
+         private InstallArgs mArgs;
+         private int mRet;
+@@ -11438,6 +11438,28 @@ public void handleStartCopy() throws RemoteException {
+                 }
+             }
+ 
++            // Check whether we're replacing an existing package that's
++            // installed on adopted storage.  If yes, override the new
++            // package location to match.
++            if (move == null && (installFlags & PackageManager.INSTALL_REPLACE_EXISTING) != 0) {
++                synchronized (mPackages) {
++                    PackageParser.Package pkg = mPackages.get(pkgLite.packageName);
++                    if (pkg != null && isExternalAdopted(pkg)) {
++                        // Check whether anything will actually change
++                        // so that we log only when a fixup was needed
++                        if (!((installFlags & PackageManager.INSTALL_INTERNAL) != 0
++                                && (installFlags & PackageManager.INSTALL_EXTERNAL) == 0
++                                && Objects.equals(volumeUuid, pkg.volumeUuid))) {
++                            installFlags |= PackageManager.INSTALL_INTERNAL;
++                            installFlags &= ~PackageManager.INSTALL_EXTERNAL;
++                            volumeUuid = pkg.volumeUuid;
++                            Slog.w(TAG, "Replacing package on adopted storage, updating "
++                                    +"new package destination to volumeUuid "+volumeUuid);
++                        }
++                    }
++                }
++            }
++
+             final InstallArgs args = createInstallArgs(this);
+             mArgs = args;
+ 
+@@ -13391,6 +13413,14 @@ private static boolean isExternal(ApplicationInfo info) {
+         return (info.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0;
+     }
+ 
++    // Package is assumed to be on adopted storage if:
++    //   FLAG_EXTERNAL_STORAGE is set
++    //   volumeUuid is neither private internal (null) nor primary physical
++    private static boolean isExternalAdopted(PackageParser.Package pkg) {
++        return isExternal(pkg) && !TextUtils.isEmpty(pkg.volumeUuid)
++                && !Objects.equals(pkg.volumeUuid, StorageManager.UUID_PRIMARY_PHYSICAL);
++    }
++
+     private static boolean isSystemApp(PackageParser.Package pkg) {
+         return (pkg.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+     }

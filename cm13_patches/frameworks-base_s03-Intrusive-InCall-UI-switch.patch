@@ -1,0 +1,69 @@
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 8e00007..0840501 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -3129,6 +3129,16 @@ public boolean validate(String value) {
+         public static final Validator VIBRATE_WHEN_RINGING_VALIDATOR = sBooleanValidator;
+ 
+         /**
++         * Whether the incoming call should be shown as intrusive fullscreen pop-up.
++         * The value is boolean (1 or 0).
++         *    0 - Non-intrusive
++         *    1 - Fullscreen
++         *
++         * @hide
++         */
++        public static final String USE_INTRUSIVE_CALL = "use_intrusive_call";
++
++        /**
+          * Whether the audible DTMF tones are played by the dialer when dialing. The value is
+          * boolean (1 or 0).
+          */
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
+index 8e00008..0840501 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
+@@ -2167,7 +2167,9 @@ protected boolean shouldInterrupt(Entry entry, StatusBarNotification sbn) {
+             return false;
+         }
+ 
+-        if (isSnoozedPackage(sbn)) {
++        // Give incoming call free passage here,
++        // we'll decide later if intrusive notification will be allowed
++        if (isSnoozedPackage(sbn) && !isIncomingCall(sbn)) {
+             return false;
+         }
+ 
+@@ -2181,9 +2181,15 @@ protected boolean shouldInterrupt(Entry entry, StatusBarNotification sbn) {
+                 || notification.vibrate != null;
+         boolean isHighPriority = sbn.getScore() >= INTERRUPTION_THRESHOLD;
+         boolean isFullscreen = notification.fullScreenIntent != null;
++
++        // incoming call should be allowed to process
++        // to handle non-intrusive ui correctly
++        int defHeadsUp = (isIncomingCall(sbn) && isIntrusiveEnabled())
++                ? Notification.HEADS_UP_NEVER
++                : Notification.HEADS_UP_ALLOWED;
+         boolean hasTicker = mHeadsUpTicker && !TextUtils.isEmpty(notification.tickerText);
+         boolean isAllowed = notification.extras.getInt(Notification.EXTRA_AS_HEADS_UP,
+-                Notification.HEADS_UP_ALLOWED) != Notification.HEADS_UP_NEVER;
++                defHeadsUp) != Notification.HEADS_UP_NEVER;
+         boolean accessibilityForcesLaunch = isFullscreen
+                 && mAccessibilityManager.isTouchExplorationEnabled();
+         boolean justLaunchedFullScreenIntent = entry.hasJustLaunchedFullScreenIntent();
+@@ -2211,6 +2211,15 @@ protected boolean shouldInterrupt(Entry entry, StatusBarNotification sbn) {
+         return interrupt;
+     }
+ 
++    private boolean isIncomingCall(StatusBarNotification sbn) {
++        return sbn.getPackageName().equals("com.android.dialer");
++    }
++
++    private boolean isIntrusiveEnabled() {
++        return Settings.System.getInt(mContext.getContentResolver(),
++                Settings.System.USE_INTRUSIVE_CALL, 0) != 0;
++    }
++
+     protected abstract boolean isSnoozedPackage(StatusBarNotification sbn);
+ 
+     public void setInteracting(int barWindow, boolean interacting) {

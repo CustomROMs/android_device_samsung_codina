@@ -1,0 +1,42 @@
+  Transit to correct state after alarm is fired
+
+Symptom:
+When AlarmClock fires in IDLE, state is changed to ACTIVE.
+But the ACTIVE state continues under some conditions.
+
+Root cause:
+Transition from IDLE state to ACTIVE state when AlarmClock fires
+ 1.	Send ACTION_STEP_IDLE_STATE intent
+ 2.	Calles onReceive() in BroadcastReceiver
+ 3.	Calles stepIdleStateLocked()
+ 4.	Calles becomeActiveLocked()　
+
+Check point (1) to change from ACTIVE state to INACTIVE
+(Display On -> Off)
+ 1.	onDisplayChanged()
+ 2.	updateDisplayLocked()
+ 3.	becomeInactiveIfAppropriateLocked()
+
+Check point (2) to change from ACTIVE state to INACTIVE
+(charging -> not charging)
+ 1.	ACTION_BATTERY_CHANGED
+ 2.	updateChargingLocked()
+ 3.	becomeInactiveIfAppropriateLocked()
+
+There are only two check points to change from ACTIVE to INACTIVE.
+If state transition, from IDLE to ACTIVE,
+happened by AlarmClock when display is off and not charging,
+ACTIVE state will be kept and never changes to INACTIVE state.
+
+diff --git a/services/core/java/com/android/server/DeviceIdleController.java b/services/core/java/com/android/server/DeviceIdleController.java
+index 2308a5a..004f6bb 100644
+--- a/services/core/java/com/android/server/DeviceIdleController.java
++++ b/services/core/java/com/android/server/DeviceIdleController.java
+@@ -1331,6 +1331,7 @@ void stepIdleStateLocked() {
+             // Whoops, there is an upcoming alarm.  We don't actually want to go idle.
+             if (mState != STATE_ACTIVE) {
+                 becomeActiveLocked("alarm", Process.myUid());
++                becomeInactiveIfAppropriateLocked();
+             }
+             return;
+         }

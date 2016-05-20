@@ -1,0 +1,24 @@
+ Fix race in AppOpsManager client library
+
+If the service stays down for more than 10 seconds, client threads
+will time out attempting to obtain a reference, and never release
+the mutex.  This causes deadlock on the next attempt to speak
+with the AppOpsManager.
+
+Test: System without AppOpsManager service no longer hangs in camera
+      code.
+
+diff --git a/libs/binder/AppOpsManager.cpp b/libs/binder/AppOpsManager.cpp
+index 97e5b4d..9634db7 100644
+--- a/libs/binder/AppOpsManager.cpp
++++ b/libs/binder/AppOpsManager.cpp
+@@ -53,7 +53,8 @@ sp<IAppOpsService> AppOpsManager::getService()
+                 ALOGI("Waiting for app ops service");
+             } else if ((uptimeMillis()-startTime) > 10000) {
+                 ALOGW("Waiting too long for app ops service, giving up");
+-                return NULL;
++                service = NULL;
++                break;
+             }
+             sleep(1);
+         } else {

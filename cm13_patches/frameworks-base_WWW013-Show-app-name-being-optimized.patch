@@ -1,0 +1,133 @@
+ BootMessage: Show each app name being optimized during boot
+
+Below the message that says "Optimizing app x of y" the name of
+the current app is displayed.
+
+Bootmsg: The app name is now displayed in bold text. 
+
+diff --git a/core/java/android/view/WindowManagerPolicy.java b/core/java/android/view/WindowManagerPolicy.java
+index 58f26fa..2082ae0 100644
+--- a/core/java/android/view/WindowManagerPolicy.java
++++ b/core/java/android/view/WindowManagerPolicy.java
+@@ -1166,6 +1166,11 @@ public boolean rotationHasCompatibleMetricsLw(@ActivityInfo.ScreenOrientation in
+     public void systemBooted();
+ 
+     /**
++     * name of package being worked on during boot time message
++     */
++    public void setPackageName(String pkgName);
++
++    /**
+      * Show boot time message to the user.
+      */
+     public void showBootMessage(final CharSequence msg, final boolean always);
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 58f26fa..2082ae1 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -218,6 +218,8 @@
+ import android.util.SparseIntArray;
+ import android.util.Xml;
+ import android.view.Display;
++import android.view.WindowManager;
++import android.view.WindowManagerPolicy;
+ 
+ import cyanogenmod.providers.CMSettings;
+ import cyanogenmod.themes.IThemeService;
+@@ -246,6 +248,7 @@
+ import com.android.server.FgThread;
+ import com.android.server.IntentResolver;
+ import com.android.server.LocalServices;
++import com.android.server.policy.PhoneWindowManager;
+ import com.android.server.ServiceThread;
+ import com.android.server.SystemConfig;
+ import com.android.server.Watchdog;
+@@ -984,6 +987,9 @@ public void clear() {
+     // Stores a list of users whose package restrictions file needs to be updated
+     private ArraySet<Integer> mDirtyUsers = new ArraySet<Integer>();
+ 
++    WindowManager mWindowManager;
++    private final WindowManagerPolicy mPolicy; // to set packageName
++
+     final private DefaultContainerConnection mDefContainerConn =
+             new DefaultContainerConnection();
+     class DefaultContainerConnection implements ServiceConnection {
+@@ -1936,6 +1942,11 @@ public PackageManagerService(Context context, Installer installer,
+             mSeparateProcesses = null;
+         }
+ 
++        mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
++        Display d = mWindowManager.getDefaultDisplay();
++        mPolicy = new PhoneWindowManager();
++        d.getMetrics(mMetrics);
++
+         mInstaller = installer;
+         mPackageDexOptimizer = new PackageDexOptimizer(this);
+         mMoveCallbacks = new MoveCallbacks(FgThread.get().getLooper());
+@@ -6440,6 +6451,14 @@ private void performBootDexOpt(PackageParser.Package pkg, int curr, int total) {
+         if (DEBUG_DEXOPT) {
+             Log.i(TAG, "Optimizing app " + curr + " of " + total + ": " + pkg.packageName);
+         }
++        // give the packagename to the PhoneWindowManager
++        ApplicationInfo ai;
++        try {
++            ai = mContext.getPackageManager().getApplicationInfo(pkg.packageName, 0);
++        } catch (Exception e) {
++            ai = null;
++        }
++        mPolicy.setPackageName((String) (ai != null ? mContext.getPackageManager().getApplicationLabel(ai) : pkg.packageName));
+         try {
+             ActivityManagerNative.getDefault().showBootMessage(
+                     mContext.getResources().getString(R.string.android_upgrading_apk,
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 58f26fa..2082ae2 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -6951,6 +6951,18 @@ public void systemBooted() {
+ 
+     AlertDialog mBootMsgDialog = null;
+ 
++    /**
++     * name of package currently being dex optimized
++     * as shown through this.showBootMessage(msg, always);
++     */
++    static String currentPackageName;
++    public void setPackageName(String pkgName) {
++        if (pkgName == null) {
++            pkgName = "stop.looking.at.me.swan";
++        }
++        this.currentPackageName = pkgName;
++    }
++
+     /** {@inheritDoc} */
+     @Override
+     public void showBootMessage(final CharSequence msg, final boolean always) {
+@@ -7010,7 +7022,15 @@ public void showBootMessage(final CharSequence msg, final boolean always) {
+                     mBootMsgDialog.setMessage("");
+                     mBootMsgDialog.show();
+                 }
+-                mBootMsgDialog.setMessage(msg);
++
++                if (always && (currentPackageName != null)) {
++                    // Only display the current package name if the main message says "Optimizing app N of M".
++                    // We don't want to do this when the message says "Starting apps" or "Finishing boot", etc.
++                    mBootMsgDialog.setMessage(Html.fromHtml(msg + "<br><b>" + currentPackageName + "</b>"));
++                }
++                else {
++                    mBootMsgDialog.setMessage(msg);
++                }
+             }
+         });
+     }
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 58f26fa..2082ae3 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -91,6 +91,7 @@
+ import cyanogenmod.hardware.CMHardwareManager;
+ import cyanogenmod.providers.CMSettings;
+ import dalvik.system.DexClassLoader;
++import android.text.Html;
+ import android.util.DisplayMetrics;
+ import android.util.EventLog;
+ import android.util.Log;

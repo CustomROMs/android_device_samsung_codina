@@ -1,0 +1,18 @@
+ Fix MTP_TYPE_UINT128 data conversion issue
+
+If type is MTP_TYPE_UINT128, use MtpDataPacket.putUInt128()
+not MtpDataPacket.putInt128() to write data to the packet.
+
+diff --git a/media/jni/android_mtp_MtpDatabase.cpp b/media/jni/android_mtp_MtpDatabase.cpp
+index b13ac3b..71e84c0 100644
+--- a/media/jni/android_mtp_MtpDatabase.cpp
++++ b/media/jni/android_mtp_MtpDatabase.cpp
+@@ -429,7 +429,7 @@ MtpResponseCode MyMtpDatabase::getObjectPropertyValue(MtpObjectHandle handle,
+                 packet.putInt128(longValue);
+                 break;
+             case MTP_TYPE_UINT128:
+-                packet.putInt128(longValue);
++                packet.putUInt128(longValue);
+                 break;
+             case MTP_TYPE_STR:
+             {

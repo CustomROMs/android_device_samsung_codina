@@ -1,0 +1,18 @@
+ audioflinger: clear mMixerBuffer if frame is not ready
+
+Clear the mMixerBuffer if frame is not ready before the FastMixer
+starts processing. Otherwise it might result in large glitches on
+output device due to junk data present in the mixbuffer.
+
+diff --git a/services/audioflinger/FastMixer.cpp b/services/audioflinger/FastMixer.cpp
+index 64c7edc..b108078 100644
+--- a/services/audioflinger/FastMixer.cpp
++++ b/services/audioflinger/FastMixer.cpp
+@@ -392,6 +392,7 @@ void FastMixer::onWork()
+                     underruns.mBitFields.mEmpty++;
+                     underruns.mBitFields.mMostRecent = UNDERRUN_EMPTY;
+                     mMixer->disable(name);
++                    memset(mMixerBuffer, 0, mMixerBufferSize);
+                 } else {
+                     // allow mixing partial buffer
+                     underruns.mBitFields.mPartial++;

@@ -1,0 +1,35 @@
+ Change SQL to improve performance.
+
+To know the number of images, use "COUNT(*)" instead of "_id" in SQL.
+Using "_id" gets all result set. and when getCount() is called, CursorWindow is filled.
+But using "COUNT(*)" gets just 1by1 data.
+So using "COUNT(*)" is more faster than now.
+And this SQL is called everytime per a file during a file transfer in MTP
+The better way is by using "EXIST".
+But if using "EXIST", modify MediaProvider.call() method.
+So i applied just a "COUNT(*)"
+
+diff --git a/media/java/android/media/MediaScanner.java b/media/java/android/media/MediaScanner.java
+index 1afccae..cad8c59 100644
+--- a/media/java/android/media/MediaScanner.java
++++ b/media/java/android/media/MediaScanner.java
+@@ -1259,10 +1259,15 @@ private void prescan(String filePath, boolean prescanFiles) throws RemoteExcepti
+ 
+         // compute original size of images
+         mOriginalCount = 0;
+-        c = mMediaProvider.query(mPackageName, mImagesUri, ID_PROJECTION, null, null, null, null);
+-        if (c != null) {
+-            mOriginalCount = c.getCount();
+-            c.close();
++        try {
++            c = mMediaProvider.query(mPackageName, mImagesUri, new String[] {"COUNT(*)"}, null, null, null, null);
++            if (c.moveToFirst()) {
++                mOriginalCount = c.getInt(0);
++            }
++        } finally {
++            if (c != null && !c.isClosed()) {
++                c.close();
++            }
+         }
+     }
+ 

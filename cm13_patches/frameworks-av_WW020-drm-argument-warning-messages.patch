@@ -1,0 +1,748 @@
+ drm: unused argument warning messages
+
+diff --git a/drm/drmserver/DrmManager.cpp b/drm/drmserver/DrmManager.cpp
+index d8aeb0c..7c53fea 100644
+--- a/drm/drmserver/DrmManager.cpp
++++ b/drm/drmserver/DrmManager.cpp
+@@ -370,7 +370,7 @@
+ }
+ 
+ status_t DrmManager::getAllSupportInfo(
+-                    int uniqueId, int* length, DrmSupportInfo** drmSupportInfoArray) {
++                    int /*uniqueId*/, int* length, DrmSupportInfo** drmSupportInfoArray) {
+     Mutex::Autolock _l(mLock);
+     Vector<String8> plugInPathList = mPlugInManager.getPlugInIdList();
+     int size = plugInPathList.size();
+diff --git a/drm/drmserver/main_drmserver.cpp b/drm/drmserver/main_drmserver.cpp
+index 434d561..b9ad7d1 100644
+--- a/drm/drmserver/main_drmserver.cpp
++++ b/drm/drmserver/main_drmserver.cpp
+@@ -26,7 +26,7 @@
+ 
+ using namespace android;
+ 
+-int main(int argc, char** argv)
++int main(int, char**)
+ {
+     sp<ProcessState> proc(ProcessState::self());
+     sp<IServiceManager> sm = defaultServiceManager();
+diff --git a/drm/libdrmframework/DrmManagerClientImpl.cpp b/drm/libdrmframework/DrmManagerClientImpl.cpp
+index 9457bb6..6afb23b 100644
+--- a/drm/libdrmframework/DrmManagerClientImpl.cpp
++++ b/drm/libdrmframework/DrmManagerClientImpl.cpp
+@@ -350,7 +350,7 @@
+     }
+ }
+ 
+-void DrmManagerClientImpl::DeathNotifier::binderDied(const wp<IBinder>& who) {
++void DrmManagerClientImpl::DeathNotifier::binderDied(const wp<IBinder>& /*who*/) {
+     Mutex::Autolock lock(sMutex);
+     DrmManagerClientImpl::sDrmManagerService.clear();
+     ALOGW("DrmManager server died!");
+diff --git a/drm/libdrmframework/NoOpDrmManagerClientImpl.cpp b/drm/libdrmframework/NoOpDrmManagerClientImpl.cpp
+index dab583d..cbecc43 100644
+--- a/drm/libdrmframework/NoOpDrmManagerClientImpl.cpp
++++ b/drm/libdrmframework/NoOpDrmManagerClientImpl.cpp
+@@ -18,134 +18,160 @@
+ 
+ namespace android {
+ 
+-void NoOpDrmManagerClientImpl::remove(int uniqueId) {
++void NoOpDrmManagerClientImpl::remove(int /* uniqueId */) {
+ }
+ 
+-void NoOpDrmManagerClientImpl::addClient(int uniqueId) {
++void NoOpDrmManagerClientImpl::addClient(int /* uniqueId */) {
+ }
+ 
+-void NoOpDrmManagerClientImpl::removeClient(int uniqueId) {
++void NoOpDrmManagerClientImpl::removeClient(int /* uniqueId */) {
+ }
+ 
+ status_t NoOpDrmManagerClientImpl::setOnInfoListener(
+-            int uniqueId, const sp<DrmManagerClient::OnInfoListener>& infoListener) {
++            int /* uniqueId */,
++            const sp<DrmManagerClient::OnInfoListener>& /* infoListener */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-DrmConstraints* NoOpDrmManagerClientImpl::getConstraints(int uniqueId, const String8* path, const int action) {
++DrmConstraints* NoOpDrmManagerClientImpl::getConstraints(int /* uniqueId */,
++            const String8* /* path */, const int /* action */) {
+     return NULL;
+ }
+ 
+-DrmMetadata* NoOpDrmManagerClientImpl::getMetadata(int uniqueId, const String8* path) {
++DrmMetadata* NoOpDrmManagerClientImpl::getMetadata(int /* uniqueId */,
++            const String8* /* path */) {
+     return NULL;
+ }
+ 
+-bool NoOpDrmManagerClientImpl::canHandle(int uniqueId, const String8& path, const String8& mimeType) {
++bool NoOpDrmManagerClientImpl::canHandle(int /* uniqueId */,
++            const String8& /* path */, const String8& /* mimeType */) {
+     return false;
+ }
+ 
+-DrmInfoStatus* NoOpDrmManagerClientImpl::processDrmInfo(int uniqueId, const DrmInfo* drmInfo) {
++DrmInfoStatus* NoOpDrmManagerClientImpl::processDrmInfo(int /* uniqueId */,
++            const DrmInfo* /* drmInfo */) {
+     return NULL;
+ }
+ 
+-DrmInfo* NoOpDrmManagerClientImpl::acquireDrmInfo(int uniqueId, const DrmInfoRequest* drmInfoRequest) {
++DrmInfo* NoOpDrmManagerClientImpl::acquireDrmInfo(int /* uniqueId */,
++            const DrmInfoRequest* /* drmInfoRequest */) {
+     return NULL;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::saveRights(int uniqueId, const DrmRights& drmRights,
+-            const String8& rightsPath, const String8& contentPath) {
++status_t NoOpDrmManagerClientImpl::saveRights(int /* uniqueId */,
++            const DrmRights& /* drmRights */, const String8& /* rightsPath */,
++            const String8& /* contentPath */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-String8 NoOpDrmManagerClientImpl::getOriginalMimeType(int uniqueId, const String8& path, int fd) {
++String8 NoOpDrmManagerClientImpl::getOriginalMimeType(int /* uniqueId */,
++            const String8& /* path */, int /* fd */) {
+     return String8();
+ }
+ 
+-int NoOpDrmManagerClientImpl::getDrmObjectType(int uniqueId, const String8& path, const String8& mimeType) {
++int NoOpDrmManagerClientImpl::getDrmObjectType(int /* uniqueId */,
++            const String8& /* path */, const String8& /* mimeType */) {
+     return -1;
+ }
+ 
+-int NoOpDrmManagerClientImpl::checkRightsStatus(int uniqueId, const String8& path, int action) {
++int NoOpDrmManagerClientImpl::checkRightsStatus(int /* uniqueId */,
++            const String8& /* path */, int /* action */) {
+     return -1;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::consumeRights(int uniqueId, sp<DecryptHandle> &decryptHandle, int action, bool reserve) {
++status_t NoOpDrmManagerClientImpl::consumeRights(int /* uniqueId */,
++            sp<DecryptHandle>& /* decryptHandle */, int /* action */,
++            bool /* reserve */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+ status_t NoOpDrmManagerClientImpl::setPlaybackStatus(
+-            int uniqueId, sp<DecryptHandle> &decryptHandle, int playbackStatus, int64_t position) {
++            int /* uniqueId */, sp<DecryptHandle>& /* decryptHandle */,
++            int /* playbackStatus */, int64_t /* position */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-bool NoOpDrmManagerClientImpl::validateAction(
+-        int uniqueId, const String8& path, int action, const ActionDescription& description) {
++bool NoOpDrmManagerClientImpl::validateAction(int /* uniqueId */,
++            const String8& /* path */, int /* action */,
++            const ActionDescription& /* description */) {
+     return false;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::removeRights(int uniqueId, const String8& path) {
++status_t NoOpDrmManagerClientImpl::removeRights(int /* uniqueId */,
++            const String8& /* path */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::removeAllRights(int uniqueId) {
++status_t NoOpDrmManagerClientImpl::removeAllRights(int /* uniqueId */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-int NoOpDrmManagerClientImpl::openConvertSession(int uniqueId, const String8& mimeType) {
++int NoOpDrmManagerClientImpl::openConvertSession(int /* uniqueId */,
++            const String8& /* mimeType */) {
+     return -1;
+ }
+ 
+-DrmConvertedStatus* NoOpDrmManagerClientImpl::convertData(int uniqueId, int convertId, const DrmBuffer* inputData) {
++DrmConvertedStatus* NoOpDrmManagerClientImpl::convertData(int /* uniqueId */,
++            int /* convertId */, const DrmBuffer* /* inputData */) {
+     return NULL;
+ }
+ 
+-DrmConvertedStatus* NoOpDrmManagerClientImpl::closeConvertSession(int uniqueId, int convertId) {
++DrmConvertedStatus* NoOpDrmManagerClientImpl::closeConvertSession(
++            int /* uniqueId */, int /* convertId */) {
+     return NULL;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::getAllSupportInfo(int uniqueId, int* length, DrmSupportInfo** drmSupportInfoArray) {
++status_t NoOpDrmManagerClientImpl::getAllSupportInfo(int /* uniqueId */,
++            int* /* length */, DrmSupportInfo** /* drmSupportInfoArray */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+ sp<DecryptHandle> NoOpDrmManagerClientImpl::openDecryptSession(
+-            int uniqueId, int fd, off64_t offset, off64_t length, const char* mime) {
++            int /* uniqueId */, int /* fd */, off64_t /* offset */,
++            off64_t /* length */, const char* /* mime */) {
+     return NULL;
+ }
+ 
+ sp<DecryptHandle> NoOpDrmManagerClientImpl::openDecryptSession(
+-            int uniqueId, const char* uri, const char* mime) {
++            int /* uniqueId */, const char* /* uri */, const char* /* mime */) {
+     return NULL;
+ }
+ 
+-sp<DecryptHandle> NoOpDrmManagerClientImpl::openDecryptSession(int uniqueId, const DrmBuffer& buf,
+-            const String8& mimeType) {
++sp<DecryptHandle> NoOpDrmManagerClientImpl::openDecryptSession(int /* uniqueId */,
++            const DrmBuffer& /* buf */, const String8& /* mimeType */) {
+     return NULL;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::closeDecryptSession(int uniqueId, sp<DecryptHandle> &decryptHandle) {
++status_t NoOpDrmManagerClientImpl::closeDecryptSession(int /* uniqueId */,
++            sp<DecryptHandle>& /* decryptHandle */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::initializeDecryptUnit(int uniqueId, sp<DecryptHandle> &decryptHandle,
+-            int decryptUnitId, const DrmBuffer* headerInfo) {
++status_t NoOpDrmManagerClientImpl::initializeDecryptUnit(int /* uniqueId */,
++            sp<DecryptHandle>& /* decryptHandle */, int /* decryptUnitId */,
++            const DrmBuffer* /* headerInfo */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::decrypt(int uniqueId, sp<DecryptHandle> &decryptHandle, int decryptUnitId,
+-            const DrmBuffer* encBuffer, DrmBuffer** decBuffer, DrmBuffer* IV) {
++status_t NoOpDrmManagerClientImpl::decrypt(int /* uniqueId */,
++            sp<DecryptHandle>& /* decryptHandle */, int /* decryptUnitId */,
++            const DrmBuffer* /* encBuffer */, DrmBuffer** /* decBuffer */,
++            DrmBuffer* /* IV */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::finalizeDecryptUnit(int uniqueId, sp<DecryptHandle> &decryptHandle, int decryptUnitId) {
++status_t NoOpDrmManagerClientImpl::finalizeDecryptUnit(int /* uniqueId */,
++            sp<DecryptHandle>& /* decryptHandle */, int /* decryptUnitId */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+-ssize_t NoOpDrmManagerClientImpl::pread(int uniqueId, sp<DecryptHandle> &decryptHandle,
+-            void* buffer, ssize_t numBytes, off64_t offset) {
++ssize_t NoOpDrmManagerClientImpl::pread(int /* uniqueId */,
++            sp<DecryptHandle>& /* decryptHandle */,
++            void* /* buffer */, ssize_t /* numBytes */, off64_t /* offset */) {
+     return -1;
+ }
+ 
+-status_t NoOpDrmManagerClientImpl::notify(const DrmInfoEvent& event) {
++status_t NoOpDrmManagerClientImpl::notify(const DrmInfoEvent& /* event */) {
+     return UNKNOWN_ERROR;
+ }
+ 
+diff --git a/drm/libdrmframework/plugins/common/include/DrmEngineBase.h b/drm/libdrmframework/plugins/common/include/DrmEngineBase.h
+index fa51c13..c55eda2 100644
+--- a/drm/libdrmframework/plugins/common/include/DrmEngineBase.h
++++ b/drm/libdrmframework/plugins/common/include/DrmEngineBase.h
+@@ -398,9 +398,9 @@
+      *     DRM_ERROR_CANNOT_HANDLE for failure and DRM_NO_ERROR for success
+      */
+     virtual status_t onOpenDecryptSession(
+-            int uniqueId, DecryptHandle* decryptHandle,
+-            int fd, off64_t offset, off64_t length,
+-            const char* mime) {
++            int /*uniqueId*/, DecryptHandle* /*decryptHandle*/,
++            int /*fd*/, off64_t /*offset*/, off64_t /*length*/,
++            const char* /*mime*/) {
+ 
+         return DRM_ERROR_CANNOT_HANDLE;
+     }
+@@ -430,8 +430,8 @@
+      *     DRM_ERROR_CANNOT_HANDLE for failure and DRM_NO_ERROR for success
+      */
+     virtual status_t onOpenDecryptSession(
+-            int uniqueId, DecryptHandle* decryptHandle,
+-            const char* uri, const char* mime) {
++            int /*uniqueId*/, DecryptHandle* /*decryptHandle*/,
++            const char* /*uri*/, const char* /*mime*/) {
+ 
+         return DRM_ERROR_CANNOT_HANDLE;
+     }
+@@ -446,8 +446,8 @@
+      * @return
+      *     DRM_ERROR_CANNOT_HANDLE for failure and DRM_NO_ERROR for success
+      */
+-    virtual status_t onOpenDecryptSession(int uniqueId, DecryptHandle* decryptHandle,
+-            const DrmBuffer& buf, const String8& mimeType) {
++    virtual status_t onOpenDecryptSession(int /*uniqueId*/, DecryptHandle* /*decryptHandle*/,
++            const DrmBuffer& /*buf*/, const String8& /*mimeType*/) {
+         return DRM_ERROR_CANNOT_HANDLE;
+     }
+ 
+diff --git a/drm/libdrmframework/plugins/common/util/src/MimeTypeUtil.cpp b/drm/libdrmframework/plugins/common/util/src/MimeTypeUtil.cpp
+index 576ed15..3b1566f 100644
+--- a/drm/libdrmframework/plugins/common/util/src/MimeTypeUtil.cpp
++++ b/drm/libdrmframework/plugins/common/util/src/MimeTypeUtil.cpp
+@@ -115,7 +115,7 @@
+  * replacement mimetype otherwise the original mimetype
+  * is returned.
+  *
+- * If the mimetype is of unsupported group i.e. application/*
++ * If the mimetype is of unsupported group i.e. application/...
+  * then "unsupported/drm.mimetype" will be returned.
+  *
+  * @param mimeType - mimetype in lower case to convert.
+diff --git a/drm/libdrmframework/plugins/forward-lock/FwdLockEngine/src/FwdLockEngine.cpp b/drm/libdrmframework/plugins/forward-lock/FwdLockEngine/src/FwdLockEngine.cpp
+index f400732..efbd547 100644
+--- a/drm/libdrmframework/plugins/forward-lock/FwdLockEngine/src/FwdLockEngine.cpp
++++ b/drm/libdrmframework/plugins/forward-lock/FwdLockEngine/src/FwdLockEngine.cpp
+@@ -119,7 +119,7 @@
+     return drmConstraints;
+ }
+ 
+-DrmMetadata* FwdLockEngine::onGetMetadata(int uniqueId, const String8* path) {
++DrmMetadata* FwdLockEngine::onGetMetadata(int /*uniqueId*/, const String8* path) {
+     DrmMetadata* drmMetadata = NULL;
+ 
+     LOG_VERBOSE("FwdLockEngine::onGetMetadata");
+@@ -132,7 +132,7 @@
+     return drmMetadata;
+ }
+ 
+-android::status_t FwdLockEngine::onInitialize(int uniqueId) {
++android::status_t FwdLockEngine::onInitialize(int /*uniqueId*/) {
+     LOG_VERBOSE("FwdLockEngine::onInitialize");
+ 
+     if (FwdLockGlue_InitializeKeyEncryption()) {
+@@ -146,14 +146,14 @@
+ }
+ 
+ android::status_t
+-FwdLockEngine::onSetOnInfoListener(int uniqueId, const IDrmEngine::OnInfoListener* infoListener) {
++FwdLockEngine::onSetOnInfoListener(int /*uniqueId*/, const IDrmEngine::OnInfoListener* /*infoListener*/) {
+     // Not used
+     LOG_VERBOSE("FwdLockEngine::onSetOnInfoListener");
+ 
+     return DRM_NO_ERROR;
+ }
+ 
+-android::status_t FwdLockEngine::onTerminate(int uniqueId) {
++android::status_t FwdLockEngine::onTerminate(int /*uniqueId*/) {
+     LOG_VERBOSE("FwdLockEngine::onTerminate");
+ 
+     return DRM_NO_ERROR;
+@@ -207,7 +207,7 @@
+     return false;
+ }
+ 
+-DrmSupportInfo* FwdLockEngine::onGetSupportInfo(int uniqueId) {
++DrmSupportInfo* FwdLockEngine::onGetSupportInfo(int /*uniqueId*/) {
+     DrmSupportInfo* pSupportInfo = new DrmSupportInfo();
+ 
+     LOG_VERBOSE("FwdLockEngine::onGetSupportInfo");
+@@ -222,14 +222,14 @@
+     return pSupportInfo;
+ }
+ 
+-bool FwdLockEngine::onCanHandle(int uniqueId, const String8& path) {
++bool FwdLockEngine::onCanHandle(int /*uniqueId*/, const String8& path) {
+     bool result = false;
+ 
+     String8 extString = path.getPathExtension();
+     return IsFileSuffixSupported(extString);
+ }
+ 
+-DrmInfoStatus* FwdLockEngine::onProcessDrmInfo(int uniqueId, const DrmInfo* drmInfo) {
++DrmInfoStatus* FwdLockEngine::onProcessDrmInfo(int /*uniqueId*/, const DrmInfo* /*drmInfo*/) {
+     DrmInfoStatus *drmInfoStatus = NULL;
+ 
+     // Nothing to process
+@@ -242,16 +242,16 @@
+ }
+ 
+ status_t FwdLockEngine::onSaveRights(
+-            int uniqueId,
+-            const DrmRights& drmRights,
+-            const String8& rightsPath,
+-            const String8& contentPath) {
++            int /*uniqueId*/,
++            const DrmRights& /*drmRights*/,
++            const String8& /*rightsPath*/,
++            const String8& /*contentPath*/) {
+     // No rights to save. Return
+     LOG_VERBOSE("FwdLockEngine::onSaveRights");
+     return DRM_ERROR_UNKNOWN;
+ }
+ 
+-DrmInfo* FwdLockEngine::onAcquireDrmInfo(int uniqueId, const DrmInfoRequest* drmInfoRequest) {
++DrmInfo* FwdLockEngine::onAcquireDrmInfo(int /*uniqueId*/, const DrmInfoRequest* /*drmInfoRequest*/) {
+     DrmInfo* drmInfo = NULL;
+ 
+     // Nothing to be done for Forward Lock file
+@@ -290,10 +290,10 @@
+     return result;
+ }
+ 
+-status_t FwdLockEngine::onConsumeRights(int uniqueId,
+-                                        DecryptHandle* decryptHandle,
+-                                        int action,
+-                                        bool reserve) {
++status_t FwdLockEngine::onConsumeRights(int /*uniqueId*/,
++                                        DecryptHandle* /*decryptHandle*/,
++                                        int /*action*/,
++                                        bool /*reserve*/) {
+     // No rights consumption
+     LOG_VERBOSE("FwdLockEngine::onConsumeRights");
+     return DRM_NO_ERROR;
+@@ -302,14 +302,14 @@
+ bool FwdLockEngine::onValidateAction(int uniqueId,
+                                      const String8& path,
+                                      int action,
+-                                     const ActionDescription& description) {
++                                     const ActionDescription& /*description*/) {
+     LOG_VERBOSE("FwdLockEngine::onValidateAction");
+ 
+     // For the forwardlock engine checkRights and ValidateAction are the same.
+     return (onCheckRightsStatus(uniqueId, path, action) == RightsStatus::RIGHTS_VALID);
+ }
+ 
+-String8 FwdLockEngine::onGetOriginalMimeType(int uniqueId, const String8& path, int fd) {
++String8 FwdLockEngine::onGetOriginalMimeType(int /*uniqueId*/, const String8& /*path*/, int fd) {
+     LOG_VERBOSE("FwdLockEngine::onGetOriginalMimeType");
+     String8 mimeString = String8("");
+     int fileDesc = dup(fd);
+@@ -354,31 +354,31 @@
+     return DrmObjectType::UNKNOWN;
+ }
+ 
+-status_t FwdLockEngine::onRemoveRights(int uniqueId, const String8& path) {
++status_t FwdLockEngine::onRemoveRights(int /*uniqueId*/, const String8& /*path*/) {
+     // No Rights to remove
+     LOG_VERBOSE("FwdLockEngine::onRemoveRights");
+     return DRM_NO_ERROR;
+ }
+ 
+-status_t FwdLockEngine::onRemoveAllRights(int uniqueId) {
++status_t FwdLockEngine::onRemoveAllRights(int /*uniqueId*/) {
+     // No rights to remove
+     LOG_VERBOSE("FwdLockEngine::onRemoveAllRights");
+     return DRM_NO_ERROR;
+ }
+ 
+ #ifdef USE_64BIT_DRM_API
+-status_t FwdLockEngine::onSetPlaybackStatus(int uniqueId, DecryptHandle* decryptHandle,
+-                                            int playbackStatus, int64_t position) {
++status_t FwdLockEngine::onSetPlaybackStatus(int /*uniqueId*/, DecryptHandle* /*decryptHandle*/,
++                                            int /*playbackStatus*/, int64_t /*position*/) {
+ #else
+-status_t FwdLockEngine::onSetPlaybackStatus(int uniqueId, DecryptHandle* decryptHandle,
+-                                            int playbackStatus, int position) {
++status_t FwdLockEngine::onSetPlaybackStatus(int /*uniqueId*/, DecryptHandle* /*decryptHandle*/,
++                                            int /*playbackStatus*/, int /*position*/) {
+ #endif
+     // Not used
+     LOG_VERBOSE("FwdLockEngine::onSetPlaybackStatus");
+     return DRM_NO_ERROR;
+ }
+ 
+-status_t FwdLockEngine::onOpenConvertSession(int uniqueId,
++status_t FwdLockEngine::onOpenConvertSession(int /*uniqueId*/,
+                                          int convertId) {
+     status_t result = DRM_ERROR_UNKNOWN;
+     LOG_VERBOSE("FwdLockEngine::onOpenConvertSession");
+@@ -396,7 +396,7 @@
+     return result;
+ }
+ 
+-DrmConvertedStatus* FwdLockEngine::onConvertData(int uniqueId,
++DrmConvertedStatus* FwdLockEngine::onConvertData(int /*uniqueId*/,
+                                                  int convertId,
+                                                  const DrmBuffer* inputData) {
+     FwdLockConv_Status_t retStatus = FwdLockConv_Status_InvalidArgument;
+@@ -432,7 +432,7 @@
+     return new DrmConvertedStatus(getConvertedStatus(retStatus), convResult, offset);
+ }
+ 
+-DrmConvertedStatus* FwdLockEngine::onCloseConvertSession(int uniqueId,
++DrmConvertedStatus* FwdLockEngine::onCloseConvertSession(int /*uniqueId*/,
+                                                          int convertId) {
+     FwdLockConv_Status_t retStatus = FwdLockConv_Status_InvalidArgument;
+     DrmBuffer *convResult = new DrmBuffer(NULL, 0);
+@@ -464,17 +464,17 @@
+ }
+ 
+ #ifdef USE_64BIT_DRM_API
+-status_t FwdLockEngine::onOpenDecryptSession(int uniqueId,
++status_t FwdLockEngine::onOpenDecryptSession(int /*uniqueId*/,
+                                              DecryptHandle* decryptHandle,
+                                              int fd,
+                                              off64_t offset,
+-                                             off64_t length) {
++                                             off64_t /*length*/) {
+ #else
+-status_t FwdLockEngine::onOpenDecryptSession(int uniqueId,
++status_t FwdLockEngine::onOpenDecryptSession(int /*uniqueId*/,
+                                              DecryptHandle* decryptHandle,
+                                              int fd,
+                                              int offset,
+-                                             int length) {
++                                             int /*length*/) {
+ #endif
+     status_t result = DRM_ERROR_CANNOT_HANDLE;
+     int fileDesc = -1;
+@@ -552,7 +552,7 @@
+     return result;
+ }
+ 
+-status_t FwdLockEngine::onCloseDecryptSession(int uniqueId,
++status_t FwdLockEngine::onCloseDecryptSession(int /*uniqueId*/,
+                                               DecryptHandle* decryptHandle) {
+     status_t result = DRM_ERROR_UNKNOWN;
+     LOG_VERBOSE("FwdLockEngine::onCloseDecryptSession");
+@@ -584,37 +584,39 @@
+     return result;
+ }
+ 
+-status_t FwdLockEngine::onInitializeDecryptUnit(int uniqueId,
+-                                                DecryptHandle* decryptHandle,
+-                                                int decryptUnitId,
+-                                                const DrmBuffer* headerInfo) {
++status_t FwdLockEngine::onInitializeDecryptUnit(int /*uniqueId*/,
++                                                DecryptHandle* /*decryptHandle*/,
++                                                int /*decryptUnitId*/,
++                                                const DrmBuffer* /*headerInfo*/) {
+     ALOGE("FwdLockEngine::onInitializeDecryptUnit is not supported for this DRM scheme");
+     return DRM_ERROR_UNKNOWN;
+ }
+ 
+-status_t FwdLockEngine::onDecrypt(int uniqueId, DecryptHandle* decryptHandle, int decryptUnitId,
+-            const DrmBuffer* encBuffer, DrmBuffer** decBuffer, DrmBuffer* IV) {
++status_t FwdLockEngine::onDecrypt(int /*uniqueId*/,
++            DecryptHandle* /*decryptHandle*/, int /*decryptUnitId*/,
++            const DrmBuffer* /*encBuffer*/, DrmBuffer** /*decBuffer*/,
++            DrmBuffer* /*IV*/) {
+     ALOGE("FwdLockEngine::onDecrypt is not supported for this DRM scheme");
+     return DRM_ERROR_UNKNOWN;
+ }
+ 
+-status_t FwdLockEngine::onDecrypt(int uniqueId,
+-                                  DecryptHandle* decryptHandle,
+-                                  int decryptUnitId,
+-                                  const DrmBuffer* encBuffer,
+-                                  DrmBuffer** decBuffer) {
++status_t FwdLockEngine::onDecrypt(int /*uniqueId*/,
++                                  DecryptHandle* /*decryptHandle*/,
++                                  int /*decryptUnitId*/,
++                                  const DrmBuffer* /*encBuffer*/,
++                                  DrmBuffer** /*decBuffer*/) {
+     ALOGE("FwdLockEngine::onDecrypt is not supported for this DRM scheme");
+     return DRM_ERROR_UNKNOWN;
+ }
+ 
+-status_t FwdLockEngine::onFinalizeDecryptUnit(int uniqueId,
+-                                              DecryptHandle* decryptHandle,
+-                                              int decryptUnitId) {
++status_t FwdLockEngine::onFinalizeDecryptUnit(int /*uniqueId*/,
++                                              DecryptHandle* /*decryptHandle*/,
++                                              int /*decryptUnitId*/) {
+     ALOGE("FwdLockEngine::onFinalizeDecryptUnit is not supported for this DRM scheme");
+     return DRM_ERROR_UNKNOWN;
+ }
+ 
+-ssize_t FwdLockEngine::onRead(int uniqueId,
++ssize_t FwdLockEngine::onRead(int /*uniqueId*/,
+                               DecryptHandle* decryptHandle,
+                               void* buffer,
+                               int numBytes) {
+@@ -640,10 +642,10 @@
+ }
+ 
+ #ifdef USE_64BIT_DRM_API
+-off64_t FwdLockEngine::onLseek(int uniqueId, DecryptHandle* decryptHandle,
++off64_t FwdLockEngine::onLseek(int /*uniqueId*/, DecryptHandle* decryptHandle,
+                                off64_t offset, int whence) {
+ #else
+-off_t FwdLockEngine::onLseek(int uniqueId, DecryptHandle* decryptHandle,
++off_t FwdLockEngine::onLseek(int /*uniqueId*/, DecryptHandle* decryptHandle,
+                              off_t offset, int whence) {
+ #endif
+     off_t offval = -1;
+diff --git a/drm/libdrmframework/plugins/passthru/src/DrmPassthruPlugIn.cpp b/drm/libdrmframework/plugins/passthru/src/DrmPassthruPlugIn.cpp
+index 084e323..7f5b0ec 100644
+--- a/drm/libdrmframework/plugins/passthru/src/DrmPassthruPlugIn.cpp
++++ b/drm/libdrmframework/plugins/passthru/src/DrmPassthruPlugIn.cpp
+@@ -52,12 +52,12 @@
+ 
+ }
+ 
+-DrmMetadata* DrmPassthruPlugIn::onGetMetadata(int uniqueId, const String8* path) {
++DrmMetadata* DrmPassthruPlugIn::onGetMetadata(int /*uniqueId*/, const String8* /*path*/) {
+     return NULL;
+ }
+ 
+ DrmConstraints* DrmPassthruPlugIn::onGetConstraints(
+-        int uniqueId, const String8* path, int action) {
++        int uniqueId, const String8* /*path*/, int /*action*/) {
+     ALOGV("DrmPassthruPlugIn::onGetConstraints From Path: %d", uniqueId);
+     DrmConstraints* drmConstraints = new DrmConstraints();
+ 
+@@ -108,7 +108,7 @@
+ }
+ 
+ status_t DrmPassthruPlugIn::onSetOnInfoListener(
+-            int uniqueId, const IDrmEngine::OnInfoListener* infoListener) {
++            int uniqueId, const IDrmEngine::OnInfoListener* /*infoListener*/) {
+     ALOGV("DrmPassthruPlugIn::onSetOnInfoListener : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+@@ -135,8 +135,8 @@
+     return drmSupportInfo;
+ }
+ 
+-status_t DrmPassthruPlugIn::onSaveRights(int uniqueId, const DrmRights& drmRights,
+-            const String8& rightsPath, const String8& contentPath) {
++status_t DrmPassthruPlugIn::onSaveRights(int uniqueId, const DrmRights& /*drmRights*/,
++            const String8& /*rightsPath*/, const String8& /*contentPath*/) {
+     ALOGV("DrmPassthruPlugIn::onSaveRights : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+@@ -157,49 +157,50 @@
+     return drmInfo;
+ }
+ 
+-bool DrmPassthruPlugIn::onCanHandle(int uniqueId, const String8& path) {
++bool DrmPassthruPlugIn::onCanHandle(int /*uniqueId*/, const String8& path) {
+     ALOGV("DrmPassthruPlugIn::canHandle: %s ", path.string());
+     String8 extension = path.getPathExtension();
+     extension.toLower();
+     return (String8(".passthru") == extension);
+ }
+ 
+-String8 DrmPassthruPlugIn::onGetOriginalMimeType(int uniqueId, const String8& path, int fd) {
++String8 DrmPassthruPlugIn::onGetOriginalMimeType(int uniqueId,
++            const String8& /*path*/, int /*fd*/) {
+     ALOGV("DrmPassthruPlugIn::onGetOriginalMimeType() : %d", uniqueId);
+     return String8("video/passthru");
+ }
+ 
+ int DrmPassthruPlugIn::onGetDrmObjectType(
+-            int uniqueId, const String8& path, const String8& mimeType) {
++            int uniqueId, const String8& /*path*/, const String8& /*mimeType*/) {
+     ALOGV("DrmPassthruPlugIn::onGetDrmObjectType() : %d", uniqueId);
+     return DrmObjectType::UNKNOWN;
+ }
+ 
+-int DrmPassthruPlugIn::onCheckRightsStatus(int uniqueId, const String8& path, int action) {
++int DrmPassthruPlugIn::onCheckRightsStatus(int uniqueId, const String8& /*path*/, int /*action*/) {
+     ALOGV("DrmPassthruPlugIn::onCheckRightsStatus() : %d", uniqueId);
+     int rightsStatus = RightsStatus::RIGHTS_VALID;
+     return rightsStatus;
+ }
+ 
+-status_t DrmPassthruPlugIn::onConsumeRights(int uniqueId, DecryptHandle* decryptHandle,
+-            int action, bool reserve) {
++status_t DrmPassthruPlugIn::onConsumeRights(int uniqueId,
++            DecryptHandle* /*decryptHandle*/, int /*action*/, bool /*reserve*/) {
+     ALOGV("DrmPassthruPlugIn::onConsumeRights() : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+ 
+-status_t DrmPassthruPlugIn::onSetPlaybackStatus(int uniqueId, DecryptHandle* decryptHandle,
+-            int playbackStatus, int64_t position) {
++status_t DrmPassthruPlugIn::onSetPlaybackStatus(int uniqueId,
++            DecryptHandle* /*decryptHandle*/, int /*playbackStatus*/, int64_t /*position*/) {
+     ALOGV("DrmPassthruPlugIn::onSetPlaybackStatus() : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+ 
+-bool DrmPassthruPlugIn::onValidateAction(int uniqueId, const String8& path,
+-            int action, const ActionDescription& description) {
++bool DrmPassthruPlugIn::onValidateAction(int uniqueId,
++            const String8& /*path*/, int /*action*/, const ActionDescription& /*description*/) {
+     ALOGV("DrmPassthruPlugIn::onValidateAction() : %d", uniqueId);
+     return true;
+ }
+ 
+-status_t DrmPassthruPlugIn::onRemoveRights(int uniqueId, const String8& path) {
++status_t DrmPassthruPlugIn::onRemoveRights(int uniqueId, const String8& /*path*/) {
+     ALOGV("DrmPassthruPlugIn::onRemoveRights() : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+@@ -209,13 +210,13 @@
+     return DRM_NO_ERROR;
+ }
+ 
+-status_t DrmPassthruPlugIn::onOpenConvertSession(int uniqueId, int convertId) {
++status_t DrmPassthruPlugIn::onOpenConvertSession(int uniqueId, int /*convertId*/) {
+     ALOGV("DrmPassthruPlugIn::onOpenConvertSession() : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+ 
+ DrmConvertedStatus* DrmPassthruPlugIn::onConvertData(
+-            int uniqueId, int convertId, const DrmBuffer* inputData) {
++            int uniqueId, int /*convertId*/, const DrmBuffer* inputData) {
+     ALOGV("DrmPassthruPlugIn::onConvertData() : %d", uniqueId);
+     DrmBuffer* convertedData = NULL;
+ 
+@@ -229,13 +230,13 @@
+     return new DrmConvertedStatus(DrmConvertedStatus::STATUS_OK, convertedData, 0 /*offset*/);
+ }
+ 
+-DrmConvertedStatus* DrmPassthruPlugIn::onCloseConvertSession(int uniqueId, int convertId) {
++DrmConvertedStatus* DrmPassthruPlugIn::onCloseConvertSession(int uniqueId, int /*convertId*/) {
+     ALOGV("DrmPassthruPlugIn::onCloseConvertSession() : %d", uniqueId);
+     return new DrmConvertedStatus(DrmConvertedStatus::STATUS_OK, NULL, 0 /*offset*/);
+ }
+ 
+ status_t DrmPassthruPlugIn::onOpenDecryptSession(
+-            int uniqueId, DecryptHandle* decryptHandle, int fd, off64_t offset, off64_t length) {
++            int uniqueId, DecryptHandle* decryptHandle, int /*fd*/, off64_t /*offset*/, off64_t /*length*/) {
+     ALOGV("DrmPassthruPlugIn::onOpenDecryptSession() : %d", uniqueId);
+ 
+ #ifdef ENABLE_PASSTHRU_DECRYPTION
+@@ -250,7 +251,7 @@
+ }
+ 
+ status_t DrmPassthruPlugIn::onOpenDecryptSession(
+-            int uniqueId, DecryptHandle* decryptHandle, const char* uri) {
++            int /*uniqueId*/, DecryptHandle* /*decryptHandle*/, const char* /*uri*/) {
+     return DRM_ERROR_CANNOT_HANDLE;
+ }
+ 
+@@ -265,14 +266,14 @@
+     return DRM_NO_ERROR;
+ }
+ 
+-status_t DrmPassthruPlugIn::onInitializeDecryptUnit(int uniqueId, DecryptHandle* decryptHandle,
+-            int decryptUnitId, const DrmBuffer* headerInfo) {
++status_t DrmPassthruPlugIn::onInitializeDecryptUnit(int uniqueId, DecryptHandle* /*decryptHandle*/,
++            int /*decryptUnitId*/, const DrmBuffer* /*headerInfo*/) {
+     ALOGV("DrmPassthruPlugIn::onInitializeDecryptUnit() : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+ 
+-status_t DrmPassthruPlugIn::onDecrypt(int uniqueId, DecryptHandle* decryptHandle,
+-            int decryptUnitId, const DrmBuffer* encBuffer, DrmBuffer** decBuffer, DrmBuffer* IV) {
++status_t DrmPassthruPlugIn::onDecrypt(int uniqueId, DecryptHandle* /*decryptHandle*/,
++            int /*decryptUnitId*/, const DrmBuffer* encBuffer, DrmBuffer** decBuffer, DrmBuffer* /*IV*/) {
+     ALOGV("DrmPassthruPlugIn::onDecrypt() : %d", uniqueId);
+     /**
+      * As a workaround implementation passthru would copy the given
+@@ -293,13 +294,13 @@
+ }
+ 
+ status_t DrmPassthruPlugIn::onFinalizeDecryptUnit(
+-            int uniqueId, DecryptHandle* decryptHandle, int decryptUnitId) {
++            int uniqueId, DecryptHandle* /*decryptHandle*/, int /*decryptUnitId*/) {
+     ALOGV("DrmPassthruPlugIn::onFinalizeDecryptUnit() : %d", uniqueId);
+     return DRM_NO_ERROR;
+ }
+ 
+-ssize_t DrmPassthruPlugIn::onPread(int uniqueId, DecryptHandle* decryptHandle,
+-            void* buffer, ssize_t numBytes, off64_t offset) {
++ssize_t DrmPassthruPlugIn::onPread(int uniqueId, DecryptHandle* /*decryptHandle*/,
++            void* /*buffer*/, ssize_t /*numBytes*/, off64_t /*offset*/) {
+     ALOGV("DrmPassthruPlugIn::onPread() : %d", uniqueId);
+     return 0;
+ }

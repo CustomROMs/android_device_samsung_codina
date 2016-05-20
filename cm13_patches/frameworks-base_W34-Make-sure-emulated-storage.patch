@@ -1,0 +1,20 @@
+ Make sure emulated storage index preceed non-emulated ones and succeed primary storage.
+
+diff --git a/services/core/java/com/android/server/MountService.java b/services/core/java/com/android/server/MountService.java
+index 1008a5a..080f6bb 100644
+--- a/services/core/java/com/android/server/MountService.java
++++ b/services/core/java/com/android/server/MountService.java
+@@ -2742,6 +2742,13 @@ public int mkdirs(String callingPkg, String appPath) {
+                     if (vol.isPrimary()) {
+                         res.add(0, userVol);
+                         foundPrimary = true;
++                    } else if (userVol.isEmulated()) {
++                        // In case of emulated non primary storages (valid case for adopted storage)
++                        // we need them to be high on the list, but behind the primary storage
++                        int l = 0;
++                        while ((l < res.size()) && (res.get(l).isPrimary() || res.get(l).isEmulated()))
++                            l++;
++                        res.add(l, userVol);
+                     } else {
+                         res.add(userVol);
+                     }

@@ -1,0 +1,21 @@
+diff --git a/src/com/android/calculator2/Calculator.java b/src/com/android/calculator2/Calculator.java
+index 4f0f35f..bb89d10 100644
+--- a/src/com/android/calculator2/Calculator.java
++++ b/src/com/android/calculator2/Calculator.java
+@@ -294,6 +294,7 @@
+         mFormulaText.setOnTextSizeChangeListener(this);
+         mFormulaText.setOnPasteListener(this);
+         mDeleteButton.setOnLongClickListener(this);
++        mClearButton.setOnLongClickListener(this);
+ 
+         onInverseToggled(mInverseToggle.isSelected());
+         onModeChanged(mEvaluator.getDegreeMode());
+@@ -564,7 +564,7 @@
+     public boolean onLongClick(View view) {
+         mCurrentButton = view;
+ 
+-        if (view.getId() == R.id.del) {
++        if (view.getId() == R.id.del || view.getId() == R.id.clr) {
+             onClear();
+             return true;
+         }

@@ -1,0 +1,20 @@
+diff --git a/libc/arch-arm/bionic/libgcc_compat.c b/libc/arch-arm/bionic/libgcc_compat.c
+index 01f3469..04802c9 100644
+--- a/libc/arch-arm/bionic/libgcc_compat.c
++++ b/libc/arch-arm/bionic/libgcc_compat.c
+@@ -22,6 +22,7 @@ extern char __aeabi_f2d;
+ extern char __aeabi_f2iz;
+ extern char __aeabi_f2uiz;
+ extern char __aeabi_fadd;
++extern char __aeabi_fcmplt;
+ extern char __aeabi_fcmpun;
+ extern char __aeabi_fdiv;
+ extern char __aeabi_fmul;
+@@ -101,6 +102,7 @@ void* __bionic_libgcc_compat_symbols[] = {
+     &__aeabi_f2iz,
+     &__aeabi_f2uiz,
+     &__aeabi_fadd,
++    &__aeabi_fcmplt,
+     &__aeabi_fcmpun,
+     &__aeabi_fdiv,
+     &__aeabi_fmul,

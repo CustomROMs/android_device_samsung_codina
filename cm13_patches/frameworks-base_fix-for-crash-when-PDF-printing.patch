@@ -1,0 +1,42 @@
+ [PDF] fix for crash when PDF printing in Chrome
+
+Symptom: open some site and print to PDF will crash
+
+Root Cause: the pdfium library use a global memory management but
+jni initialize/destroy it twice in different thread, that also make
+memory leak.
+Solution: keep one count and mutex for initial/destory pdfium
+library for PdfEditor and PdfRenderer
+
+diff --git a/core/jni/android/graphics/pdf/PdfEditor.cpp b/core/jni/android/graphics/pdf/PdfEditor.cpp
+index 1182020..ff6f6bb 100644
+--- a/core/jni/android/graphics/pdf/PdfEditor.cpp
++++ b/core/jni/android/graphics/pdf/PdfEditor.cpp
+@@ -51,9 +51,9 @@ static struct {
+     jfieldID bottom;
+ } gRectClassInfo;
+ 
+-static Mutex sLock;
++Mutex sLock;
+ 
+-static int sUnmatchedInitRequestCount = 0;
++int sUnmatchedInitRequestCount = 0;
+ 
+ static void initializeLibraryIfNeeded() {
+     Mutex::Autolock _l(sLock);
+diff --git a/core/jni/android/graphics/pdf/PdfRenderer.cpp b/core/jni/android/graphics/pdf/PdfRenderer.cpp
+index 1182025..ff6f6bb 100644
+--- a/core/jni/android/graphics/pdf/PdfRenderer.cpp
++++ b/core/jni/android/graphics/pdf/PdfRenderer.cpp
+@@ -43,9 +43,9 @@ static struct {
+     jfieldID y;
+ } gPointClassInfo;
+ 
+-static Mutex sLock;
++extern Mutex sLock;
+ 
+-static int sUnmatchedInitRequestCount = 0;
++extern int sUnmatchedInitRequestCount;
+ 
+ static void initializeLibraryIfNeeded() {
+     Mutex::Autolock _l(sLock);

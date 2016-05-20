@@ -1,0 +1,27 @@
+ Fix NPE when rotating "Saved networks" screen
+
+The AccessPointPreference instance is lost from mSelectedAccessPoint's
+tag on configuration change, which causes a NullPointerException.
+In this change, mSelectedAccessPoint is set to a valid AccessPoint
+which has the AccessPointPreference in tag.
+
+diff --git a/src/com/android/settings/wifi/SavedAccessPointsWifiSettings.java b/src/com/android/settings/wifi/SavedAccessPointsWifiSettings.java
+index 0005529..00ec120 100644
+--- a/src/com/android/settings/wifi/SavedAccessPointsWifiSettings.java
++++ b/src/com/android/settings/wifi/SavedAccessPointsWifiSettings.java
+@@ -281,6 +281,15 @@ public int compare(AccessPoint lhs, AccessPoint rhs) {
+             }
+             preference.setOrder(i);
+             preferenceScreen.addPreference(preference);
++
++            // If this is re-launch from saved state, mDlgAccessPoint is not null
++            // as onCreateDialog() have been already called. Otherwise it's null.
++            if (mDlgAccessPoint != null &&
++                    mDlgAccessPoint.getSsidStr().equals(accessPoints.get(i).getSsidStr())) {
++                // In this case, restored mSelectedAccessPoint needs to be updated because
++                // it haven't been set a tag of the corresponding AccessPointPreference.
++                mSelectedAccessPoint = preference.getAccessPoint();
++            }
+         }
+ 
+         if (getPreferenceScreen().getPreferenceCount() < 1) {

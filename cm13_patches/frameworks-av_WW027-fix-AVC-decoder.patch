@@ -1,0 +1,15 @@
+codecs: fix AVC decoder resolution change
+
+diff --git a/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp b/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
+index afbe230..d159bb7 100644
+--- a/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
++++ b/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
+@@ -628,6 +628,8 @@
+                 mChangingResolution = false;
+                 resetDecoder();
+                 resetPlugin();
++                mStride = outputBufferWidth();
++                setParams(mStride);
+                 continue;
+             }
+ 

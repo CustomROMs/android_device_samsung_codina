@@ -1,0 +1,84 @@
+ Trace SQLite operations
+
+Inefficient SQLite use can have non-obvious effects on performance.  For
+example, insert and update operations can trigger a surprising number of
+fsync() calls, especially if they're not grouped together into
+transactions.
+
+Add tracepoints around SQLite operations, to make it easier to pinpoint
+their effects on the rest of the system.
+
+diff --git a/core/java/android/database/sqlite/SQLiteConnection.java b/core/java/android/database/sqlite/SQLiteConnection.java
+index f832fef..0730b0f 100644
+--- a/core/java/android/database/sqlite/SQLiteConnection.java
++++ b/core/java/android/database/sqlite/SQLiteConnection.java
+@@ -26,6 +26,7 @@
+ import android.os.CancellationSignal;
+ import android.os.OperationCanceledException;
+ import android.os.ParcelFileDescriptor;
++import android.os.Trace;
+ import android.util.Log;
+ import android.util.LruCache;
+ import android.util.Printer;
+@@ -1332,6 +1333,10 @@ public int beginOperation(String kind, String sql, Object[] bindArgs) {
+                     }
+                 }
+                 operation.mCookie = newOperationCookieLocked(index);
++                if (Trace.isTagEnabled(Trace.TRACE_TAG_DATABASE)) {
++                    Trace.asyncTraceBegin(Trace.TRACE_TAG_DATABASE, operation.getTraceMethodName(),
++                            operation.mCookie);
++                }
+                 mIndex = index;
+                 return operation.mCookie;
+             }
+@@ -1369,6 +1374,10 @@ public void logOperation(int cookie, String detail) {
+         private boolean endOperationDeferLogLocked(int cookie) {
+             final Operation operation = getOperationLocked(cookie);
+             if (operation != null) {
++                if (Trace.isTagEnabled(Trace.TRACE_TAG_DATABASE)) {
++                    Trace.asyncTraceEnd(Trace.TRACE_TAG_DATABASE, operation.getTraceMethodName(),
++                            operation.mCookie);
++                }
+                 operation.mEndTime = System.currentTimeMillis();
+                 operation.mFinished = true;
+                 return SQLiteDebug.DEBUG_LOG_SLOW_QUERIES && SQLiteDebug.shouldLogSlowQuery(
+@@ -1441,6 +1450,12 @@ public void dump(Printer printer, boolean verbose) {
+     }
+ 
+     private static final class Operation {
++        // Trim all SQL statements to 256 characters inside the trace marker.
++        // This limit gives plenty of context while leaving space for other
++        // entries in the trace buffer (and ensures atrace doesn't truncate the
++        // marker for us, potentially losing metadata in the process).
++        private static final int MAX_TRACE_METHOD_NAME_LEN = 256;
++
+         public long mStartTime;
+         public long mEndTime;
+         public String mKind;
+@@ -1494,6 +1509,13 @@ private String getStatus() {
+             return mException != null ? "failed" : "succeeded";
+         }
+ 
++        private String getTraceMethodName() {
++            String methodName = mKind + " " + mSql;
++            if (methodName.length() > MAX_TRACE_METHOD_NAME_LEN)
++                return methodName.substring(0, MAX_TRACE_METHOD_NAME_LEN);
++            return methodName;
++        }
++
+         private String getFormattedStartTime() {
+             // Note: SimpleDateFormat is not thread-safe, cannot be compile-time created, and is
+             //       relatively expensive to create during preloading. This method is only used
+diff --git a/core/java/android/os/Trace.java b/core/java/android/os/Trace.java
+index 3a1714c..0eae642 100644
+--- a/core/java/android/os/Trace.java
++++ b/core/java/android/os/Trace.java
+@@ -75,6 +75,8 @@
+     public static final long TRACE_TAG_BIONIC = 1L << 16;
+     /** @hide */
+     public static final long TRACE_TAG_POWER = 1L << 17;
++    /** @hide */
++    public static final long TRACE_TAG_DATABASE = 1L << 20;
+ 
+     private static final long TRACE_TAG_NOT_READY = 1L << 63;
+     private static final int MAX_SECTION_NAME_LEN = 127;

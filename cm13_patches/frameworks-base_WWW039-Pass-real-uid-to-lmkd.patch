@@ -1,0 +1,17 @@
+ Pass real uid to lmkd.
+
+Isolated process does not use ApplicationInfo uid.
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 128448e..27ddd2f 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -19088,7 +19088,7 @@
+         int changes = 0;
+ 
+         if (app.curAdj != app.setAdj) {
+-            ProcessList.setOomAdj(app.pid, app.info.uid, app.curAdj);
++            ProcessList.setOomAdj(app.pid, app.uid, app.curAdj);
+             if (DEBUG_SWITCH || DEBUG_OOM_ADJ) Slog.v(TAG_OOM_ADJ,
+                     "Set " + app.pid + " " + app.processName + " adj " + app.curAdj + ": "
+                     + app.adjType);

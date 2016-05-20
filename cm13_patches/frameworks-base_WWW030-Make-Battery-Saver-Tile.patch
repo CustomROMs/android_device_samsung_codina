@@ -1,0 +1,17 @@
+ SysUI: Make Battery Saver Tile VISIBLE to All Devices
+
+ --Remove Performance Profile Dependency crap. It was Really Not necesarry
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java
+index 1108a5a..046f609 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/BatterySaverTile.java
+@@ -68,7 +68,7 @@ public void handleLongClick() {
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
+         state.value = arg instanceof Boolean ? (boolean) arg : mPm.isPowerSaveMode();
+-        state.visible =  !mHasPowerProfiles;
++        state.visible =  true;
+         state.label = mContext.getString(R.string.quick_settings_battery_saver_label);
+         if (state.value) {
+             state.icon = ResourceIcon.get(R.drawable.ic_qs_battery_saver_on);

@@ -1,0 +1,29 @@
+ JobScheduler: handle connectivity action in bg looper
+
+in rare cases InputDispatcher relies on the SystemServer to enqueue
+the input events and wake it up (eg. with some accessibility services
+enabled which have their own inputfilters).Receivers in the main thread
+may block events dispatching and then we will peceive jank in windows.
+
+diff --git a/services/core/java/com/android/server/job/controllers/ConnectivityController.java b/services/core/java/com/android/server/job/controllers/ConnectivityController.java
+index 1008a53..080f6b1 100644
+--- a/services/core/java/com/android/server/job/controllers/ConnectivityController.java
++++ b/services/core/java/com/android/server/job/controllers/ConnectivityController.java
+@@ -27,6 +27,7 @@
+ import android.os.UserHandle;
+ import android.util.Slog;
+ 
++import com.android.internal.os.BackgroundThread;
+ import com.android.server.ConnectivityService;
+ import com.android.server.job.JobSchedulerService;
+ import com.android.server.job.StateChangedListener;
+@@ -70,7 +71,8 @@ private ConnectivityController(StateChangedListener stateChangedListener, Contex
+         IntentFilter intentFilter = new IntentFilter();
+         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+         mContext.registerReceiverAsUser(
+-                mConnectivityChangedReceiver, UserHandle.ALL, intentFilter, null, null);
++                mConnectivityChangedReceiver, UserHandle.ALL, intentFilter, null,
++                BackgroundThread.getHandler());
+         ConnectivityService cs =
+                 (ConnectivityService)ServiceManager.getService(Context.CONNECTIVITY_SERVICE);
+         if (cs != null) {

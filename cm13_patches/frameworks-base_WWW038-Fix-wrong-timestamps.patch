@@ -1,0 +1,66 @@
+ ZipUtils: Fix wrong timestamps when getEntryInfo
+
+"tm_mon" format should align with "ZipEntry::setModWhen" in aapt.
+"tm_isdst" should be initialized, or it will because random value
+and cause error in function mktime().
+
+diff --git a/include/androidfw/ZipUtils.h b/include/androidfw/ZipUtils.h
+index 094eaa8..55575d7 100644
+--- a/include/androidfw/ZipUtils.h
++++ b/include/androidfw/ZipUtils.h
+@@ -21,6 +21,7 @@
+ #define __LIBS_ZIPUTILS_H
+ 
+ #include <stdint.h>
++#include <string.h>
+ #include <stdio.h>
+ #include <time.h>
+ 
+@@ -63,16 +64,21 @@
+ 
+     /*
+      * Utility function to convert ZIP's time format to a timespec struct.
++     *
++     * NOTE: this method will clear all existing state from |timespec|.
+      */
+     static inline void zipTimeToTimespec(uint32_t when, struct tm* timespec) {
+         const uint32_t date = when >> 16;
++
++        memset(timespec, 0, sizeof(struct tm));
+         timespec->tm_year = ((date >> 9) & 0x7F) + 80; // Zip is years since 1980
+-        timespec->tm_mon = (date >> 5) & 0x0F;
++        timespec->tm_mon = ((date >> 5) & 0x0F) - 1;
+         timespec->tm_mday = date & 0x1F;
+ 
+         timespec->tm_hour = (when >> 11) & 0x1F;
+         timespec->tm_min = (when >> 5) & 0x3F;
+         timespec->tm_sec = (when & 0x1F) << 1;
++        timespec->tm_isdst = -1;
+     }
+ private:
+     ZipUtils() {}
+diff --git a/libs/androidfw/tests/ZipUtils_test.cpp b/libs/androidfw/tests/ZipUtils_test.cpp
+index c6038b5..7293843 100644
+--- a/libs/androidfw/tests/ZipUtils_test.cpp
++++ b/libs/androidfw/tests/ZipUtils_test.cpp
+@@ -45,7 +45,7 @@
+     EXPECT_EQ(2011, t.tm_year + 1900)
+             << "Year was improperly converted.";
+ 
+-    EXPECT_EQ(6, t.tm_mon)
++    EXPECT_EQ(5, t.tm_mon)
+             << "Month was improperly converted.";
+ 
+     EXPECT_EQ(29, t.tm_mday)
+@@ -59,6 +59,11 @@
+ 
+     EXPECT_EQ(40, t.tm_sec)
+             << "Second was improperly converted.";
++
++    // We don't have enough information to determine timezone related info.
++    EXPECT_EQ(-1, t.tm_isdst);
++    EXPECT_EQ(0, t.tm_gmtoff);
++    EXPECT_EQ(nullptr, t.tm_zone);
+ }
+ 
+ }

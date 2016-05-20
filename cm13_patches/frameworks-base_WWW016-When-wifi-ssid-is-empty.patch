@@ -1,0 +1,33 @@
+ When wifi ssid is empty, return WifiSsid.NONE
+
+When WifistateMachine enter Roaming State, WifiInfo
+getSSID will return 0x, statusbar show "0x", because
+roaming State do not update WifiInfo mWifiSsid.
+
+diff --git a/wifi/java/android/net/wifi/WifiInfo.java b/wifi/java/android/net/wifi/WifiInfo.java
+index e25b38c..c3fc915 100644
+--- a/wifi/java/android/net/wifi/WifiInfo.java
++++ b/wifi/java/android/net/wifi/WifiInfo.java
+@@ -320,7 +320,8 @@
+             if (!TextUtils.isEmpty(unicode)) {
+                 return "\"" + unicode + "\"";
+             } else {
+-                return mWifiSsid.getHexString();
++                String hex = mWifiSsid.getHexString();
++                return (hex != null) ? hex : WifiSsid.NONE;
+             }
+         }
+         return WifiSsid.NONE;
+diff --git a/wifi/java/android/net/wifi/WifiSsid.java b/wifi/java/android/net/wifi/WifiSsid.java
+index f8ba95d..c53cd3c 100644
+--- a/wifi/java/android/net/wifi/WifiSsid.java
++++ b/wifi/java/android/net/wifi/WifiSsid.java
+@@ -205,7 +205,7 @@
+         for (int i = 0; i < octets.size(); i++) {
+             out += String.format(Locale.US, "%02x", ssidbytes[i]);
+         }
+-        return out;
++        return (octets.size() > 0) ? out : null;
+     }
+ 
+     /** Implement the Parcelable interface {@hide} */

@@ -1,0 +1,14 @@
+ Remove Fix slow wifi connection from QS. 
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java
+index 86ac282..21f4f46 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java
+@@ -79,6 +79,7 @@ protected SignalState newTileState() {
+     public void setListening(boolean listening) {
+         if (listening) {
+             mController.addSignalCallback(mSignalCallback);
++            mWifiController.addAccessPointCallback(mDetailAdapter);
+         } else {
+             mController.removeSignalCallback(mSignalCallback);
+         }

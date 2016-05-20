@@ -1,0 +1,17 @@
+MobileNetworkSettings: Don't crash because of missing resource. 
+
+diff --git a/src/com/android/phone/MobileNetworkSettings.java b/src/com/android/phone/MobileNetworkSettings.java
+index 03034b0..6f30d6d 100644
+--- a/src/com/android/phone/MobileNetworkSettings.java
++++ b/src/com/android/phone/MobileNetworkSettings.java
+@@ -1396,6 +1396,10 @@ private static boolean show4GForLTE(Context context) {
+         } catch (NameNotFoundException e) {
+             loge("NameNotFoundException for show4GFotLTE");
+             return false;
++        } catch (Exception e) {
++            // Don't crash because of a missing resource.
++            // This is due to us having a togglable 4G option instead. 
++            return false;
+         }
+     }
+ 

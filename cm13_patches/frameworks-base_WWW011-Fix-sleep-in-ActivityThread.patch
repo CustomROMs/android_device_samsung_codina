@@ -1,0 +1,35 @@
+ Remove unnecessary sleep in ActivityThread
+
+This attachApplication function is working when ActivityThread is created and it takes 30~40 milliseconds in G3.
+At that time, ActivityThread goes to sleep even it is not necessary.
+Parallel processing can be helpful in this case.
+After merging this code, there is no sleep time during attachApplication function and
+starting application time is reduced.
+
+sleep time 30ms -> 0ms in G3.
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 86ac282..21f4f46 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -5283,11 +5283,15 @@ public void run() {
+                                                     UserHandle.myUserId());
+             RuntimeInit.setApplicationObject(mAppThread.asBinder());
+             final IActivityManager mgr = ActivityManagerNative.getDefault();
+-            try {
+-                mgr.attachApplication(mAppThread);
+-            } catch (RemoteException ex) {
+-                // Ignore
+-            }
++            new Thread() {
++                public void run() {
++                    try {
++                        mgr.attachApplication(mAppThread);
++                    } catch (RemoteException ex) {
++                        // Ignore
++                    }
++                }
++            }.start();
+             // Watch for getting close to heap limit.
+             BinderInternal.addGcWatcher(new Runnable() {
+                 @Override public void run() {

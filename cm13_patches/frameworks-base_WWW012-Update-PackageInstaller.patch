@@ -1,0 +1,208 @@
+ Update PackageInstaller install handing
+
+* Allow forcing permission check. We want to modify the PackageInstaller to
+use the PackageInstallerSession for better security / remove deprecated APIs.
+In order to do this and continue to prompt for permissions, we need to prevent
+the PakcageInstaller from auto-approving the permissions.
+
+* Add originating UID to SessionParams. This is used for package verifier
+checks.
+
+diff --git a/api/current.txt b/api/current.txt
+index 74645d5..41a7d5b 100644
+--- a/api/current.txt
++++ b/api/current.txt
+@@ -9167,6 +9167,7 @@
+     method public void setAppLabel(java.lang.CharSequence);
+     method public void setAppPackageName(java.lang.String);
+     method public void setInstallLocation(int);
++    method public void setOriginatingUid(int);
+     method public void setOriginatingUri(android.net.Uri);
+     method public void setReferrerUri(android.net.Uri);
+     method public void setSize(long);
+diff --git a/api/system-current.txt b/api/system-current.txt
+index f17c2f1..7db6074 100644
+--- a/api/system-current.txt
++++ b/api/system-current.txt
+@@ -9451,6 +9451,7 @@
+     method public void setAppPackageName(java.lang.String);
+     method public void setGrantedRuntimePermissions(java.lang.String[]);
+     method public void setInstallLocation(int);
++    method public void setOriginatingUid(int);
+     method public void setOriginatingUri(android.net.Uri);
+     method public void setReferrerUri(android.net.Uri);
+     method public void setSize(long);
+diff --git a/core/java/android/content/pm/PackageInstaller.java b/core/java/android/content/pm/PackageInstaller.java
+index 9341be1..3283005 100644
+--- a/core/java/android/content/pm/PackageInstaller.java
++++ b/core/java/android/content/pm/PackageInstaller.java
+@@ -868,6 +868,9 @@
+         public static final int MODE_INHERIT_EXISTING = 2;
+ 
+         /** {@hide} */
++        public static final int UID_UNKNOWN = -1;
++
++        /** {@hide} */
+         public int mode = MODE_INVALID;
+         /** {@hide} */
+         public int installFlags;
+@@ -885,6 +888,8 @@
+         public long appIconLastModified = -1;
+         /** {@hide} */
+         public Uri originatingUri;
++        /** {@hide} */
++        public int originatingUid = UID_UNKNOWN;
+         /** {@hide} */
+         public Uri referrerUri;
+         /** {@hide} */
+@@ -915,6 +920,7 @@
+             appIcon = source.readParcelable(null);
+             appLabel = source.readString();
+             originatingUri = source.readParcelable(null);
++            originatingUid = source.readInt();
+             referrerUri = source.readParcelable(null);
+             abiOverride = source.readString();
+             volumeUuid = source.readString();
+@@ -983,6 +989,15 @@
+         }
+ 
+         /**
++         * Sets the UID that initiated package installation. Used for verification purposes.
++         *
++         * @see PackageManager#EXTRA_VERIFICATION_INSTALLER_UID
++         */
++        public void setOriginatingUid(int originatingUid) {
++            this.originatingUid = originatingUid;
++        }
++
++        /**
+          * Optionally set the URI that referred you to install this package. Used
+          * for verification purposes.
+          *
+@@ -1022,6 +1037,11 @@
+         }
+ 
+         /** {@hide} */
++        public void setInstallFlagsForcePermissionPrompt() {
++            installFlags |= PackageManager.INSTALL_FORCE_PERMISSION_PROMPT;
++        }
++
++        /** {@hide} */
+         public void dump(IndentingPrintWriter pw) {
+             pw.printPair("mode", mode);
+             pw.printHexPair("installFlags", installFlags);
+@@ -1031,6 +1051,7 @@
+             pw.printPair("appIcon", (appIcon != null));
+             pw.printPair("appLabel", appLabel);
+             pw.printPair("originatingUri", originatingUri);
++            pw.printPair("originatingUid", originatingUid);
+             pw.printPair("referrerUri", referrerUri);
+             pw.printPair("abiOverride", abiOverride);
+             pw.printPair("volumeUuid", volumeUuid);
+@@ -1053,6 +1074,7 @@
+             dest.writeParcelable(appIcon, flags);
+             dest.writeString(appLabel);
+             dest.writeParcelable(originatingUri, flags);
++            dest.writeInt(originatingUid);
+             dest.writeParcelable(referrerUri, flags);
+             dest.writeString(abiOverride);
+             dest.writeString(volumeUuid);
+diff --git a/core/java/android/content/pm/PackageManager.java b/core/java/android/content/pm/PackageManager.java
+index c8e9402..054dafe 100644
+--- a/core/java/android/content/pm/PackageManager.java
++++ b/core/java/android/content/pm/PackageManager.java
+@@ -422,6 +422,15 @@
+     public static final int INSTALL_FORCE_VOLUME_UUID = 0x00000200;
+ 
+     /**
++     * Flag parameter for {@link #installPackage} to indicate that we always want to force
++     * the prompt for permission approval. This overrides any special behaviour for internal
++     * components.
++     *
++     * @hide
++     */
++    public static final int INSTALL_FORCE_PERMISSION_PROMPT = 0x00000400;
++
++    /**
+      * Flag parameter for
+      * {@link #setComponentEnabledSetting(android.content.ComponentName, int, int)} to indicate
+      * that you don't want to kill the app containing the component.  Be careful when you set this
+diff --git a/services/core/java/com/android/server/pm/PackageInstallerService.java b/services/core/java/com/android/server/pm/PackageInstallerService.java
+index 0366fff..cf09b84 100644
+--- a/services/core/java/com/android/server/pm/PackageInstallerService.java
++++ b/services/core/java/com/android/server/pm/PackageInstallerService.java
+@@ -140,6 +140,7 @@
+     private static final String ATTR_APP_ICON = "appIcon";
+     private static final String ATTR_APP_LABEL = "appLabel";
+     private static final String ATTR_ORIGINATING_URI = "originatingUri";
++    private static final String ATTR_ORIGINATING_UID = "originatingUid";
+     private static final String ATTR_REFERRER_URI = "referrerUri";
+     private static final String ATTR_ABI_OVERRIDE = "abiOverride";
+     private static final String ATTR_VOLUME_UUID = "volumeUuid";
+@@ -405,6 +406,8 @@
+         params.appIcon = readBitmapAttribute(in, ATTR_APP_ICON);
+         params.appLabel = readStringAttribute(in, ATTR_APP_LABEL);
+         params.originatingUri = readUriAttribute(in, ATTR_ORIGINATING_URI);
++        params.originatingUid =
++                readIntAttribute(in, ATTR_ORIGINATING_UID, SessionParams.UID_UNKNOWN);
+         params.referrerUri = readUriAttribute(in, ATTR_REFERRER_URI);
+         params.abiOverride = readStringAttribute(in, ATTR_ABI_OVERRIDE);
+         params.volumeUuid = readStringAttribute(in, ATTR_VOLUME_UUID);
+@@ -477,6 +480,7 @@
+         writeStringAttribute(out, ATTR_APP_PACKAGE_NAME, params.appPackageName);
+         writeStringAttribute(out, ATTR_APP_LABEL, params.appLabel);
+         writeUriAttribute(out, ATTR_ORIGINATING_URI, params.originatingUri);
++        writeIntAttribute(out, ATTR_ORIGINATING_UID, params.originatingUid);
+         writeUriAttribute(out, ATTR_REFERRER_URI, params.referrerUri);
+         writeStringAttribute(out, ATTR_ABI_OVERRIDE, params.abiOverride);
+         writeStringAttribute(out, ATTR_VOLUME_UUID, params.volumeUuid);
+diff --git a/services/core/java/com/android/server/pm/PackageInstallerSession.java b/services/core/java/com/android/server/pm/PackageInstallerSession.java
+index 4a473fd..a441cb2 100644
+--- a/services/core/java/com/android/server/pm/PackageInstallerSession.java
++++ b/services/core/java/com/android/server/pm/PackageInstallerSession.java
+@@ -222,11 +222,17 @@
+         // waived if the installer is the device owner.
+         DevicePolicyManager dpm = (DevicePolicyManager) mContext.getSystemService(
+                 Context.DEVICE_POLICY_SERVICE);
++        final boolean isPermissionGranted =
++                (mPm.checkUidPermission(android.Manifest.permission.INSTALL_PACKAGES, installerUid)
++                        == PackageManager.PERMISSION_GRANTED);
++        final boolean isInstallerRoot = (installerUid == Process.ROOT_UID);
++        final boolean forcePermissionPrompt =
++                (params.installFlags & PackageManager.INSTALL_FORCE_PERMISSION_PROMPT) != 0;
+         mIsInstallerDeviceOwner = (dpm != null) && dpm.isDeviceOwnerApp(installerPackageName);
+-        if ((mPm.checkUidPermission(android.Manifest.permission.INSTALL_PACKAGES, installerUid)
+-                == PackageManager.PERMISSION_GRANTED)
+-                || (installerUid == Process.ROOT_UID)
+-                || mIsInstallerDeviceOwner) {
++        if ((isPermissionGranted
++                        || isInstallerRoot
++                        || mIsInstallerDeviceOwner)
++                && !forcePermissionPrompt) {
+             mPermissionsAccepted = true;
+         } else {
+             mPermissionsAccepted = false;
+@@ -963,7 +969,9 @@
+ 
+         if (accepted) {
+             // Mark and kick off another install pass
+-            mPermissionsAccepted = true;
++            synchronized (mLock) {
++                mPermissionsAccepted = true;
++            }
+             mHandler.obtainMessage(MSG_COMMIT).sendToTarget();
+         } else {
+             destroyInternal();
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index ae73fa4..9a49178 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -10324,7 +10324,7 @@
+             IPackageInstallObserver2 observer, PackageInstaller.SessionParams params,
+             String installerPackageName, int installerUid, UserHandle user) {
+         final VerificationParams verifParams = new VerificationParams(null, params.originatingUri,
+-                params.referrerUri, installerUid, null);
++                params.referrerUri, params.originatingUid, null);
+         verifParams.setInstallerUid(installerUid);
+ 
+         final OriginInfo origin;

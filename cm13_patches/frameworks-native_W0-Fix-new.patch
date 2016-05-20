@@ -1,0 +1,70 @@
+diff --git a/libs/gui/Android.mk b/libs/gui/Android.mk
+index 9770da2..033e764 100644
+--- a/libs/gui/Android.mk
++++ b/libs/gui/Android.mk
+@@ -16,8 +16,8 @@
+ include $(CLEAR_VARS)
+ 
+ LOCAL_CLANG := true
+-LOCAL_CPPFLAGS := -std=c++1y -Weverything -Werror
++LOCAL_CPPFLAGS := -std=c++1y -Weverything
+ 
+ # The static constructors and destructors in this library have not been noted to
+ # introduce significant overheads
+ LOCAL_CPPFLAGS += -Wno-exit-time-destructors
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index 9770da2..033e764 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -98,11 +98,11 @@
+ ifeq ($(BOARD_USE_BGRA_8888),true)
+     LOCAL_CFLAGS += -DUSE_BGRA_8888
+ endif
+ 
+-LOCAL_CFLAGS += -fvisibility=hidden -Werror=format
+-LOCAL_CFLAGS += -std=c++11
++LOCAL_CFLAGS += -fvisibility=hidden -Werror=format
++LOCAL_CFLAGS += -std=c++11
+ 
+ LOCAL_SHARED_LIBRARIES := \
+     libcutils \
+     liblog \
+     libdl \
+@@ -134,11 +134,11 @@
+     LOCAL_CFLAGS += -DUI_BLUR
+ endif
+ 
+ LOCAL_MODULE := libsurfaceflinger
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ ###############################################################
+ # build surfaceflinger's executable
+@@ -172,10 +172,10 @@
+ ifdef TARGET_32_BIT_SURFACEFLINGER
+ LOCAL_32_BIT_ONLY := true
+ endif
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code
+ 
+ include $(BUILD_EXECUTABLE)
+ 
+ ###############################################################
+ # uses jni which may not be available in PDK
+@@ -193,11 +193,11 @@
+ LOCAL_SHARED_LIBRARIES := \
+     libcutils \
+     liblog \
+     libdl
+ 
+ LOCAL_MODULE := libsurfaceflinger_ddmconnection
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ endif # libnativehelper

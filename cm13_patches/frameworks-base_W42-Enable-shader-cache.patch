@@ -1,0 +1,25 @@
+ Enable shader cache for applications that shared UID with multiple packages too
+
+Frameworks supported a mature mechanism for shader cache per each package already,
+but as a special case such as Settings APP, if there are several packages in this
+application which means that multiple packages shared the same SharedUserID with it,
+it won't initialize the graphics disk caches, thereby APP like Settings have to
+rebuild and relink shader every time during launch, which cause a bad launching
+performance, so here to enable the GFX and RS cache initialization for multiple
+shared packages case too.
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 1008a52..080f6b1 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -4447,9 +4447,7 @@ private void setupGraphicsSupport(LoadedApk info, File cacheDir) {
+             int uid = Process.myUid();
+             String[] packages = getPackageManager().getPackagesForUid(uid);
+ 
+-            // If there are several packages in this application we won't
+-            // initialize the graphics disk caches
+-            if (packages != null && packages.length == 1) {
++            if (packages != null) {
+                 HardwareRenderer.setupDiskCache(cacheDir);
+                 RenderScriptCacheDir.setupDiskCache(cacheDir);
+             }

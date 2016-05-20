@@ -1,0 +1,32 @@
+QSList: Option to restore old items height 
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/QSDetailItemsList.java b/packages/SystemUI/src/com/android/systemui/qs/QSDetailItemsList.java
+index 1008a5a..107f6bb 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/QSDetailItemsList.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/QSDetailItemsList.java
+@@ -160,10 +160,16 @@ private static Context getPackageContext(String pkg, Context context) {
+     public static class QSDetailListAdapter extends ArrayAdapter<QSDetailItems.Item> {
+         private QSDetailItems.Callback mCallback;
+ 
++        private boolean biggerHeight = true;
++
+         public QSDetailListAdapter(Context context, List<QSDetailItems.Item> objects) {
+             super(context, R.layout.qs_detail_item, objects);
+         }
+ 
++        public void setBiggerHeight(boolean bool) {
++            biggerHeight = bool;
++        }
++
+         public void setCallback(QSDetailItems.Callback cb) {
+             mCallback = cb;
+         }
+@@ -194,7 +200,7 @@ public View getView(int position, View convertView, ViewGroup parent) {
+             summary.setVisibility(twoLines ? VISIBLE : GONE);
+             summary.setText(twoLines ? item.line2 : null);
+             view.setMinimumHeight(getContext().getResources().getDimensionPixelSize(
+-                    twoLines ? R.dimen.qs_detail_item_height_twoline : R.dimen.qs_detail_item_height));
++                    twoLines && biggerHeight ? R.dimen.qs_detail_item_height_twoline : R.dimen.qs_detail_item_height));
+ 
+             final ImageView disconnect = (ImageView) view.findViewById(android.R.id.icon2);
+             disconnect.setVisibility(item.canDisconnect ? VISIBLE : GONE);

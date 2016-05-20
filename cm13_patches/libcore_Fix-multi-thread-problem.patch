@@ -1,0 +1,30 @@
+ Fix multi-thread problem in BigInteger hashCode method
+
+Don't change hashCode when calculate it, using tmp variable.
+
+diff --git a/luni/src/main/java/java/math/BigInteger.java b/luni/src/main/java/java/math/BigInteger.java
+index de40601..1391772 100644
+--- a/luni/src/main/java/java/math/BigInteger.java
++++ b/luni/src/main/java/java/math/BigInteger.java
+@@ -825,14 +825,14 @@ public BigInteger max(BigInteger value) {
+ 
+     @Override
+     public int hashCode() {
+-        if (hashCode != 0) {
+-            return hashCode;
+-        }
+-        prepareJavaRepresentation();
+-        for (int i = 0; i < numberLength; ++i) {
+-            hashCode = hashCode * 33 + digits[i];
++        if (hashCode == 0) {
++            prepareJavaRepresentation();
++            int hash = 0;
++            for (int i = 0; i < numberLength; ++i) {
++                hash = hash * 33 + digits[i];
++            }
++            hashCode = hash * sign;
+         }
+-        hashCode = hashCode * sign;
+         return hashCode;
+     }
+ 

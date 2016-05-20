@@ -1,0 +1,172 @@
+ Add check whether wallpaper's size has changed
+
+If we are in an activity that shows wallpaper(such as Launcher),
+when rotating screen, there will be a short time that wallpaper
+shows improperly, maybe showing black in some places.
+
+When the wallpaper's size has changed, wallpaper will redraw itself,
+which is not contained in the original rotating logic.
+
+To avoid this, we add check when rotating screen, if wallpaper needs to
+be resized, wait for wallpaper redraw itself, then stop freezing screen.
+
+diff --git a/core/java/android/service/wallpaper/WallpaperService.java b/core/java/android/service/wallpaper/WallpaperService.java
+index b13ac30..71e84c0 100644
+--- a/core/java/android/service/wallpaper/WallpaperService.java
++++ b/core/java/android/service/wallpaper/WallpaperService.java
+@@ -828,7 +828,9 @@ void updateSurface(boolean forceRelayout, boolean forceReport, boolean redrawNee
+                                         + this);
+                             onVisibilityChanged(false);
+                         }
+-
++                        if (sizeChanged) {
++                            mSession.setWallpaperResized();
++                        }
+                     } finally {
+                         mIsCreating = false;
+                         mSurfaceCreated = true;
+diff --git a/core/java/android/view/IWindowSession.aidl b/core/java/android/view/IWindowSession.aidl
+index b13ac31..71e84c0 100644
+--- a/core/java/android/view/IWindowSession.aidl
++++ b/core/java/android/view/IWindowSession.aidl
+@@ -200,6 +200,7 @@ interface IWindowSession {
+ 
+     void wallpaperCommandComplete(IBinder window, in Bundle result);
+ 
++    void setWallpaperResized();
+     /**
+      * Notifies that a rectangle on the screen has been requested.
+      */
+diff --git a/services/core/java/com/android/server/wm/Session.java b/services/core/java/com/android/server/wm/Session.java
+index b13ac32..71e84c0 100644
+--- a/services/core/java/com/android/server/wm/Session.java
++++ b/services/core/java/com/android/server/wm/Session.java
+@@ -475,6 +475,11 @@ public void wallpaperCommandComplete(IBinder window, Bundle result) {
+         mService.wallpaperCommandComplete(window, result);
+     }
+ 
++    @Override
++    public void setWallpaperResized() {
++        mService.setWallpaperResized();
++    }
++
+     public void onRectangleOnScreenRequested(IBinder token, Rect rectangle) {
+         synchronized(mService.mWindowMap) {
+             final long identity = Binder.clearCallingIdentity();
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index b13ac33..71e84c0 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -23,6 +23,7 @@
+ import android.app.IActivityManager;
+ import android.app.StatusBarManager;
+ import android.app.admin.DevicePolicyManager;
++import android.app.WallpaperManager;
+ import android.content.BroadcastReceiver;
+ import android.content.ContentResolver;
+ import android.content.Context;
+@@ -644,6 +645,9 @@ public void onChange(boolean selfChange, Uri uri) {
+     // target and isn't done animating in.
+     WindowState mDeferredHideWallpaper = null;
+ 
++    boolean mWallpaperHasResized = false;
++    WallpaperManager mWallpaperManager = null;
++
+     AppWindowToken mFocusedApp = null;
+ 
+     PowerManager mPowerManager;
+@@ -2397,6 +2401,36 @@ private void updateWallpaperVisibilityLocked() {
+         }
+     }
+ 
++    public void setWallpaperResized() {
++        synchronized (mWindowMap) {
++            mWallpaperHasResized = true;
++        }
++    }
++
++    public boolean checkWallpaperResizeNeeded() {
++        if (mWallpaperManager == null) {
++            mWallpaperManager = (WallpaperManager) mContext.getSystemService(Context.WALLPAPER_SERVICE);
++        }
++
++        if (mWallpaperManager != null) {
++            boolean show = false;
++            synchronized(mWindowMap) {
++                final WindowList windows = getDefaultWindowListLocked();
++                final int N = windows.size();
++                for (int i = 0; i < N; i++) {
++                    WindowState ws = windows.get(i);
++                    if (ws.isOnScreen() && (ws.mAttrs.flags & FLAG_SHOW_WALLPAPER) != 0) {
++                        show = true;
++                    }
++                }
++            }
++            int maxWH = getDefaultDisplayContentLocked().getDisplay().getMaximumSizeDimension();
++            return show && ((mWallpaperManager.getDesiredMinimumWidth() < maxWH) || (mWallpaperManager.getDesiredMinimumHeight() < maxWH));
++        }
++
++        return false;
++    }
++
+     public int addWindow(Session session, IWindow client, int seq,
+             WindowManager.LayoutParams attrs, int viewVisibility, int displayId,
+             Rect outContentInsets, Rect outStableInsets, Rect outOutsets,
+@@ -6662,6 +6696,8 @@ public boolean updateRotationUncheckedLocked(boolean inTransaction) {
+         mAltOrientation = altOrientation;
+         mPolicy.setRotationLw(mRotation);
+ 
++        mWallpaperHasResized = false;
++        mH.sendEmptyMessageDelayed(H.WALLPAPER_RESIZE_TIMEOUT, 2000);
+         mWindowsFreezingScreen = WINDOWS_FREEZING_SCREENS_ACTIVE;
+         mH.removeMessages(H.WINDOW_FREEZE_TIMEOUT);
+         mH.sendEmptyMessageDelayed(H.WINDOW_FREEZE_TIMEOUT, WINDOW_FREEZE_TIMEOUT_DURATION);
+@@ -7793,6 +7829,8 @@ public void systemReady() {
+         public static final int RESET_ANR_MESSAGE = 38;
+         public static final int WALLPAPER_DRAW_PENDING_TIMEOUT = 39;
+ 
++        public static final int WALLPAPER_RESIZE_TIMEOUT = 40;
++
+         @Override
+         public void handleMessage(Message msg) {
+             if (DEBUG_WINDOW_TRACE) {
+@@ -8325,6 +8363,17 @@ public void handleMessage(Message msg) {
+                     }
+                 }
+                 break;
++                case WALLPAPER_RESIZE_TIMEOUT: {
++                    synchronized (mWindowMap) {
++                        if (DEBUG_ORIENTATION || DEBUG_WALLPAPER) Slog.v(TAG,
++                                    "*** WALLPAPER RESIZE TIMEOUT");
++                        mWallpaperHasResized = true;
++                        if (mInnerFields.mOrientationChangeComplete) {
++                            stopFreezingDisplayLocked();
++                        }
++                    }
++                }
++                break;
+             }
+             if (DEBUG_WINDOW_TRACE) {
+                 Slog.v(TAG, "handleMessage: exit");
+@@ -10944,16 +10993,19 @@ private void stopFreezingDisplayLocked() {
+ 
+         if (mWaitingForConfig || mAppsFreezingScreen > 0
+                 || mWindowsFreezingScreen == WINDOWS_FREEZING_SCREENS_ACTIVE
+-                || mClientFreezingScreen || !mOpeningApps.isEmpty()) {
++                || mClientFreezingScreen || !mOpeningApps.isEmpty() || (checkWallpaperResizeNeeded() && !mWallpaperHasResized)) {
+             if (DEBUG_ORIENTATION) Slog.d(TAG,
+                 "stopFreezingDisplayLocked: Returning mWaitingForConfig=" + mWaitingForConfig
+                 + ", mAppsFreezingScreen=" + mAppsFreezingScreen
+                 + ", mWindowsFreezingScreen=" + mWindowsFreezingScreen
+                 + ", mClientFreezingScreen=" + mClientFreezingScreen
+-                + ", mOpeningApps.size()=" + mOpeningApps.size());
++                + ", mOpeningApps.size()=" + mOpeningApps.size()
++                + ", checkWallpaperResizeNeeded() = " + checkWallpaperResizeNeeded()
++                + ", mWallpaperHasResized = " + mWallpaperHasResized);
+             return;
+         }
+ 
++        mH.removeMessages(H.WALLPAPER_RESIZE_TIMEOUT);
+         mDisplayFrozen = false;
+         mLastDisplayFreezeDuration = (int)(SystemClock.elapsedRealtime() - mDisplayFreezeTime);
+         StringBuilder sb = new StringBuilder(128);

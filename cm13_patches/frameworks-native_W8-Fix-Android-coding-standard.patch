@@ -1,0 +1,176 @@
+ 1 Parcel: LOG_TAG cleanup
+   NB: several ALOG messages behind comments, recommend removal
+ 2 Parcel: include Android coding standard
+ 3 Parcel: file descriptor leak
+   Resolve a file descriptor leak when a request for ashmem size adjustment is not filed.
+ 4 system_server BINDER_TYPE_FD sockets using ashmem accessors
+   check if device is a character device, before calling
+   ashmem_get_size_region. We do not check if the st_rdev
+   matches /dev/ashmem. So this at least eliminates making
+   this call when associated with a socket.
+ 5 Binder: Add log output in IPCThreadState::self()
+   In the failure case, and on shutdown, add log output. It's highly
+   likely the client will crash when a null value is returned. Displaying
+   a possible root cause helps diagnosing issues.
+   Bug: 26865304
+
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 90e5b00..9634db7 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -48,9 +48,9 @@
+ #endif
+ 
+ #define LOG_REFS(...)
+-//#define LOG_REFS(...) ALOG(LOG_DEBUG, "Parcel", __VA_ARGS__)
++//#define LOG_REFS(...) ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+ #define LOG_ALLOC(...)
+-//#define LOG_ALLOC(...) ALOG(LOG_DEBUG, "Parcel", __VA_ARGS__)
++//#define LOG_ALLOC(...) ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+ 
+ // ---------------------------------------------------------------------------
+ 
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 90e5b01..9634db7 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -17,32 +17,31 @@
+ #define LOG_TAG "Parcel"
+ //#define LOG_NDEBUG 0
+ 
+-#include <binder/Parcel.h>
++#include <errno.h>
++#include <inttypes.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/mman.h>
+ 
+-#include <binder/IPCThreadState.h>
+ #include <binder/Binder.h>
+ #include <binder/BpBinder.h>
++#include <binder/IPCThreadState.h>
++#include <binder/Parcel.h>
+ #include <binder/ProcessState.h>
+ #include <binder/TextOutput.h>
+ 
+-#include <errno.h>
++#include <cutils/ashmem.h>
+ #include <utils/Debug.h>
++#include <utils/Flattenable.h>
+ #include <utils/Log.h>
++#include <utils/misc.h>
+ #include <utils/String8.h>
+ #include <utils/String16.h>
+-#include <utils/misc.h>
+-#include <utils/Flattenable.h>
+-#include <cutils/ashmem.h>
+ 
+ #include <private/binder/binder_module.h>
+ #include <private/binder/Static.h>
+ 
+-#include <inttypes.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <stdint.h>
+-#include <sys/mman.h>
+-
+ #ifndef INT32_MAX
+ #define INT32_MAX ((int32_t)(2147483647))
+ #endif
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 90e5b02..9634db7 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -172,19 +172,15 @@ static void release_object(const sp<ProcessState>& proc,
+             return;
+         }
+         case BINDER_TYPE_FD: {
+-            if (outAshmemSize != NULL) {
+-                if (obj.cookie != 0) {
++            if (obj.cookie != 0) { // owned
++                if (outAshmemSize != NULL) {
+                     int size = ashmem_get_size_region(obj.handle);
+                     if (size > 0) {
+                         *outAshmemSize -= size;
+                     }
+-
+-                    close(obj.handle);
+                 }
+-#ifdef DISABLE_ASHMEM_TRACKING
+-            } else if (obj.cookie != 0) {
++
+                 close(obj.handle);
+-#endif
+             }
+             return;
+         }
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 90e5b03..9634db7 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -23,6 +23,9 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <sys/mman.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
+ 
+ #include <binder/Binder.h>
+ #include <binder/BpBinder.h>
+@@ -122,8 +125,10 @@ void acquire_object(const sp<ProcessState>& proc,
+             return;
+         }
+         case BINDER_TYPE_FD: {
+-            if (obj.cookie != 0) {
+-                if (outAshmemSize != NULL) {
++            if ((obj.cookie != 0) && (outAshmemSize != NULL)) {
++                struct stat st;
++                int ret = fstat(obj.handle, &st);
++                if ((ret != 0) && S_ISCHR(st.st_mode)) {
+                     // If we own an ashmem fd, keep track of how much memory it refers to.
+                     int size = ashmem_get_size_region(obj.handle);
+                     if (size > 0) {
+@@ -174,9 +179,13 @@ static void release_object(const sp<ProcessState>& proc,
+         case BINDER_TYPE_FD: {
+             if (obj.cookie != 0) { // owned
+                 if (outAshmemSize != NULL) {
+-                    int size = ashmem_get_size_region(obj.handle);
+-                    if (size > 0) {
+-                        *outAshmemSize -= size;
++                    struct stat st;
++                    int ret = fstat(obj.handle, &st);
++                    if (!ret && S_ISCHR(st.st_mode)) {
++                        int size = ashmem_get_size_region(obj.handle);
++                        if (size > 0) {
++                            *outAshmemSize -= size;
++                        }
+                     }
+                 }
+ 
+diff --git a/libs/binder/IPCThreadState.cpp b/libs/binder/IPCThreadState.cpp
+index 90e5b04..9634db7 100644
+--- a/libs/binder/IPCThreadState.cpp
++++ b/libs/binder/IPCThreadState.cpp
+@@ -287,12 +287,18 @@ IPCThreadState* IPCThreadState::self()
+         return new IPCThreadState;
+     }
+     
+-    if (gShutdown) return NULL;
++    if (gShutdown) {
++        ALOGW("Calling IPCThreadState::self() during shutdown is dangerous, expect a crash.\n");
++        return NULL;
++    }
+     
+     pthread_mutex_lock(&gTLSMutex);
+     if (!gHaveTLS) {
+-        if (pthread_key_create(&gTLS, threadDestructor) != 0) {
++        int key_create_value = pthread_key_create(&gTLS, threadDestructor);
++        if (key_create_value != 0) {
+             pthread_mutex_unlock(&gTLSMutex);
++            ALOGW("IPCThreadState::self() unable to create TLS key, expect a crash: %s\n",
++                    strerror(key_create_value));
+             return NULL;
+         }
+         gHaveTLS = true;

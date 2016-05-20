@@ -1,0 +1,21 @@
+ Give LockClock the location permission by default
+
+* Otherwise, users may not know why weather doesn't work by default with the widget
+
+diff --git a/services/core/java/com/android/server/pm/DefaultPermissionGrantPolicy.java b/services/core/java/com/android/server/pm/DefaultPermissionGrantPolicy.java
+index 1afccae..cad8c39 100644
+--- a/services/core/java/com/android/server/pm/DefaultPermissionGrantPolicy.java
++++ b/services/core/java/com/android/server/pm/DefaultPermissionGrantPolicy.java
+@@ -572,6 +572,12 @@ private void grantDefaultSystemHandlerPermissions(int userId) {
+                 grantRuntimePermissionsLPw(musicPackage, STORAGE_PERMISSIONS, userId);
+             }
+ 
++	    // LockClock
++	    PackageParser.Package lockClock = getDefaultProviderAuthorityPackageLPr(
++		    "com.cyanogenmod.lockclock", userId);
++	    if (lockClock != null) {
++		grantRuntimePermissionsLPw(lockClock, LOCATION_PERMISSIONS, true, userId);
++	    }
+             // Android Wear Home
+             if (mService.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+                 Intent homeIntent = new Intent(Intent.ACTION_MAIN);

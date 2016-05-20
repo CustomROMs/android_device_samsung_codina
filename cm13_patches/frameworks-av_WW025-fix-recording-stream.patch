@@ -1,0 +1,16 @@
+Camera: fix recording stream update logic
+
+Will be merged internally.
+
+diff --git a/services/camera/libcameraservice/api1/client2/StreamingProcessor.cpp b/services/camera/libcameraservice/api1/client2/StreamingProcessor.cpp
+index 66d7b00..75c6f00 100644
+--- a/services/camera/libcameraservice/api1/client2/StreamingProcessor.cpp
++++ b/services/camera/libcameraservice/api1/client2/StreamingProcessor.cpp
+@@ -401,6 +401,7 @@
+             currentFormat != (uint32_t)mRecordingFormat ||
+             currentDataSpace != mRecordingDataSpace) {
+         *needsUpdate = true;
++        return res;
+     }
+     *needsUpdate = false;
+     return res;

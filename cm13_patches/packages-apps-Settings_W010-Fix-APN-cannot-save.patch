@@ -1,0 +1,47 @@
+From 28fa4401167e9d03b0cbb6c4ef843fb340e15405 Mon Sep 17 00:00:00 2001
+From: yifan.bai <yifan.bai@spreadtrum.com>
+Date: Mon, 11 Apr 2016 10:43:41 +0800
+Subject: [PATCH] Fix APN cannot save after ApnEditor is paused.
+
+When ApnEditor is paused and user does not enter name or APN,
+the new APN URI will be deleted in validateAndSave() method.
+After the activity is resumed, the APN will not able to be
+saved because the database record has been deleted.
+
+Change-Id: I19f5246020e4a52239a7fc0ac86a281372e34b90
+---
+
+diff --git a/src/com/android/settings/ApnEditor.java b/src/com/android/settings/ApnEditor.java
+index 8299c67..d958440 100644
+--- a/src/com/android/settings/ApnEditor.java
++++ b/src/com/android/settings/ApnEditor.java
+@@ -267,6 +267,21 @@ protected int getMetricsCategory() {
+     @Override
+     public void onResume() {
+         super.onResume();
++
++        if (mUri == null && mNewApn) {
++            // The URI could have been deleted when activity is paused,
++            // therefore, it needs to be restored.
++            mUri = getContentResolver().insert(getIntent().getData(), new ContentValues());
++            if (mUri == null) {
++                Log.w(TAG, "Failed to insert new telephony provider into "
++                        + getIntent().getData());
++                finish();
++                return;
++            }
++            mCursor = managedQuery(mUri, sProjection, null, null);
++            mCursor.moveToFirst();
++        }
++
+         getPreferenceScreen().getSharedPreferences()
+                 .registerOnSharedPreferenceChangeListener(this);
+     }
+@@ -643,6 +658,7 @@ private boolean validateAndSave(boolean force) {
+         // If it's a new APN and a name or apn haven't been entered, then erase the entry
+         if (force && mNewApn && name.length() < 1 && apn.length() < 1) {
+             getContentResolver().delete(mUri, null, null);
++            mUri = null;
+             return false;
+         }
+ 

@@ -1,0 +1,219 @@
+diff --git a/include/telephony/ril.h b/include/telephony/ril.h
+index 8aae88d..b47935f 100644
+--- a/include/telephony/ril.h
++++ b/include/telephony/ril.h
+@@ -5059,6 +5059,95 @@ typedef struct {
+  */
+ #define RIL_UNSOL_LCEDATA_RECV 1045
+ 
++
++#define SAMSUNG_UNSOL_RESPONSE_BASE 11000
++
++#define RIL_REQUEST_GET_CELL_BROADCAST_CONFIG 10002
++
++#define RIL_REQUEST_SEND_ENCODED_USSD 10005
++#define RIL_REQUEST_SET_PDA_MEMORY_STATUS 10006
++#define RIL_REQUEST_GET_PHONEBOOK_STORAGE_INFO 10007
++#define RIL_REQUEST_GET_PHONEBOOK_ENTRY 10008
++#define RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY 10009
++#define RIL_REQUEST_DIAL_VIDEO_CALL 10010
++#define RIL_REQUEST_CALL_DEFLECTION 10011
++#define RIL_REQUEST_READ_SMS_FROM_SIM 10012
++#define RIL_REQUEST_USIM_PB_CAPA 10013
++#define RIL_REQUEST_LOCK_INFO 10014
++
++#define RIL_REQUEST_DIAL_EMERGENCY 10016
++#define RIL_REQUEST_GET_STOREAD_MSG_COUNT 10017
++#define RIL_REQUEST_STK_SIM_INIT_EVENT 10018
++#define RIL_REQUEST_GET_LINE_ID 10019
++#define RIL_REQUEST_SET_LINE_ID 10020
++#define RIL_REQUEST_GET_SERIAL_NUMBER 10021
++#define RIL_REQUEST_GET_MANUFACTURE_DATE_NUMBER 10022
++#define RIL_REQUEST_GET_BARCODE_NUMBER 10023
++#define RIL_REQUEST_UICC_GBA_AUTHENTICATE_BOOTSTRAP 10024
++#define RIL_REQUEST_UICC_GBA_AUTHENTICATE_NAF 10025
++#define RIL_REQUEST_SIM_TRANSMIT_BASIC 10026
++#define RIL_REQUEST_SIM_OPEN_CHANNEL 10027
++#define RIL_REQUEST_SIM_CLOSE_CHANNEL 10028
++#define RIL_REQUEST_SIM_TRANSMIT_CHANNEL 10029
++#define RIL_REQUEST_SIM_AUTH 10030
++#define RIL_REQUEST_PS_ATTACH 10031
++#define RIL_REQUEST_PS_DETACH 10032
++#define RIL_REQUEST_ACTIVATE_DATA_CALL 10033
++#define RIL_REQUEST_CHANGE_SIM_PERSO 10034
++#define RIL_REQUEST_ENTER_SIM_PERSO 10035
++#define RIL_REQUEST_GET_TIME_INFO 10036
++#define RIL_REQUEST_OMADM_SETUP_SESSION 10037
++#define RIL_REQUEST_OMADM_SERVER_START_SESSION 10038
++#define RIL_REQUEST_OMADM_CLIENT_START_SESSION 10039
++#define RIL_REQUEST_OMADM_SEND_DATA 10040
++#define RIL_REQUEST_CDMA_GET_DATAPROFILE 10041
++#define RIL_REQUEST_CDMA_SET_DATAPROFILE 10042
++#define RIL_REQUEST_CDMA_GET_SYSTEMPROPERTIES 10043
++#define RIL_REQUEST_CDMA_SET_SYSTEMPROPERTIES 10044
++#define RIL_REQUEST_SEND_SMS_COUNT 10045
++#define RIL_REQUEST_SEND_SMS_MSG 10046
++#define RIL_REQUEST_SEND_SMS_MSG_READ_STATUS 10047
++#define RIL_REQUEST_MODEM_HANGUP 10048
++#define RIL_REQUEST_SET_SIM_POWER 10049
++#define RIL_REQUEST_SET_PREFERRED_NETWORK_LIST 10050
++#define RIL_REQUEST_GET_PREFERRED_NETWORK_LIST 10051
++#define RIL_REQUEST_HANGUP_VT 10052
++
++#define RIL_UNSOL_RELEASE_COMPLETE_MESSAGE 11001
++#define RIL_UNSOL_STK_SEND_SMS_RESULT 11002
++#define RIL_UNSOL_STK_CALL_CONTROL_RESULT 11003
++#define RIL_UNSOL_DUN_CALL_STATUS 11004
++
++#define RIL_UNSOL_O2_HOME_ZONE_INFO 11007
++#define RIL_UNSOL_DEVICE_READY_NOTI 11008
++#define RIL_UNSOL_GPS_NOTI 11009
++#define RIL_UNSOL_AM 11010
++#define RIL_UNSOL_DUN_PIN_CONTROL_SIGNAL 11011
++#define RIL_UNSOL_DATA_SUSPEND_RESUME 11012
++#define RIL_UNSOL_SAP 11013
++
++#define RIL_UNSOL_SIM_SMS_STORAGE_AVAILALE 11015
++#define RIL_UNSOL_HSDPA_STATE_CHANGED 11016
++
++#define RIL_UNSOL_WB_AMR_STATE 11017
++
++#define RIL_UNSOL_TWO_MIC_STATE 11018
++#define RIL_UNSOL_DHA_STATE 11019
++#define RIL_UNSOL_UART 11020
++#define RIL_UNSOL_RESPONSE_HANDOVER 11021
++#define RIL_UNSOL_IPV6_ADDR 11022
++#define RIL_UNSOL_NWK_INIT_DISC_REQUEST 11023
++#define RIL_UNSOL_RTS_INDICATION 11024
++#define RIL_UNSOL_OMADM_SEND_DATA 11025
++#define RIL_UNSOL_DUN 11026
++#define RIL_UNSOL_SYSTEM_REBOOT 11027
++#define RIL_UNSOL_VOICE_PRIVACY_CHANGED 11028
++#define RIL_UNSOL_UTS_GETSMSCOUNT 11029
++#define RIL_UNSOL_UTS_GETSMSMSG 11030
++#define RIL_UNSOL_UTS_GET_UNREAD_SMS_STATUS 11031
++#define RIL_UNSOL_MIP_CONNECT_STATUS 11032
++
++
+ /***********************************************************************/
+ 
+ 
+diff --git a/rild/rild.c b/rild/rild.c
+index c63da38..42ea12c 100644
+--- a/rild/rild.c
++++ b/rild/rild.c
+@@ -195,114 +195,7 @@
+         }
+     }
+ 
+-    /* special override when in the emulator */
+-#if 1
+-    {
+-        static char*  arg_overrides[5];
+-        static char   arg_device[32];
+-        int           done = 0;
+-
+-#define  REFERENCE_RIL_PATH  "libreference-ril.so"
+-
+-        /* first, read /proc/cmdline into memory */
+-        char          buffer[1024], *p, *q;
+-        int           len;
+-        int           fd = open("/proc/cmdline",O_RDONLY);
+-
+-        if (fd < 0) {
+-            RLOGD("could not open /proc/cmdline:%s", strerror(errno));
+-            goto OpenLib;
+-        }
+-
+-        do {
+-            len = read(fd,buffer,sizeof(buffer)); }
+-        while (len == -1 && errno == EINTR);
+-
+-        if (len < 0) {
+-            RLOGD("could not read /proc/cmdline:%s", strerror(errno));
+-            close(fd);
+-            goto OpenLib;
+-        }
+-        close(fd);
+-
+-        if (strstr(buffer, "android.qemud=") != NULL)
+-        {
+-            /* the qemud daemon is launched after rild, so
+-            * give it some time to create its GSM socket
+-            */
+-            int  tries = 5;
+-#define  QEMUD_SOCKET_NAME    "qemud"
+-
+-            while (1) {
+-                int  fd;
+-
+-                sleep(1);
+-
+-                fd = qemu_pipe_open("qemud:gsm");
+-                if (fd < 0) {
+-                    fd = socket_local_client(
+-                                QEMUD_SOCKET_NAME,
+-                                ANDROID_SOCKET_NAMESPACE_RESERVED,
+-                                SOCK_STREAM );
+-                }
+-                if (fd >= 0) {
+-                    close(fd);
+-                    snprintf( arg_device, sizeof(arg_device), "%s/%s",
+-                                ANDROID_SOCKET_DIR, QEMUD_SOCKET_NAME );
+-
+-                    arg_overrides[1] = "-s";
+-                    arg_overrides[2] = arg_device;
+-                    done = 1;
+-                    break;
+-                }
+-                RLOGD("could not connect to %s socket: %s",
+-                    QEMUD_SOCKET_NAME, strerror(errno));
+-                if (--tries == 0)
+-                    break;
+-            }
+-            if (!done) {
+-                RLOGE("could not connect to %s socket (giving up): %s",
+-                    QEMUD_SOCKET_NAME, strerror(errno));
+-                while(1)
+-                    sleep(0x00ffffff);
+-            }
+-        }
+-
+-        /* otherwise, try to see if we passed a device name from the kernel */
+-        if (!done) do {
+-#define  KERNEL_OPTION  "android.ril="
+-#define  DEV_PREFIX     "/dev/"
+-
+-            p = strstr( buffer, KERNEL_OPTION );
+-            if (p == NULL)
+-                break;
+-
+-            p += sizeof(KERNEL_OPTION)-1;
+-            q  = strpbrk( p, " \t\n\r" );
+-            if (q != NULL)
+-                *q = 0;
+-
+-            snprintf( arg_device, sizeof(arg_device), DEV_PREFIX "%s", p );
+-            arg_device[sizeof(arg_device)-1] = 0;
+-            arg_overrides[1] = "-d";
+-            arg_overrides[2] = arg_device;
+-            done = 1;
+-
+-        } while (0);
+-
+-        if (done) {
+-            argv = arg_overrides;
+-            argc = 3;
+-            i    = 1;
+-            hasLibArgs = 1;
+-            rilLibPath = REFERENCE_RIL_PATH;
+-
+-            RLOGD("overriding with %s %s", arg_overrides[1], arg_overrides[2]);
+-        }
+-    }
+-OpenLib:
+-#endif
+     switchUser();
+ 
+     dlHandle = dlopen(rilLibPath, RTLD_NOW);
+ 

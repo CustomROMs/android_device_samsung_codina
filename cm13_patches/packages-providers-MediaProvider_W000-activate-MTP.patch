@@ -1,0 +1,28 @@
+diff --git a/src/com/android/providers/media/MtpService.java b/src/com/android/providers/media/MtpService.java
+index 5f0f620..0189d10 100644
+--- a/src/com/android/providers/media/MtpService.java
++++ b/src/com/android/providers/media/MtpService.java
+@@ -33,6 +33,10 @@
+ 
+ import java.io.File;
+ import java.util.HashMap;
++import android.os.SystemProperties;
++import android.app.KeyguardManager;
++import android.content.Context;
++
+ 
+ public class MtpService extends Service {
+     private static final String TAG = "MtpService";
+@@ -110,7 +114,11 @@ public void onCreate() {
+ 
+     @Override
+     public int onStartCommand(Intent intent, int flags, int startId) {
+-        mUnlocked = intent.getBooleanExtra(UsbManager.USB_DATA_UNLOCKED, false);
++        boolean usbConfargingOnly = SystemProperties.get("persist.usbconfiguration", "mtp").equals("none");
++        KeyguardManager kg = (KeyguardManager) getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
++        boolean lockedDevice = kg != null && kg.inKeyguardRestrictedInputMode();
++
++        mUnlocked = (!lockedDevice && !usbConfargingOnly)? true: intent.getBooleanExtra(UsbManager.USB_DATA_UNLOCKED, true);
+         if (LOGD) { Log.d(TAG, "onStartCommand intent=" + intent + " mUnlocked=" + mUnlocked); }
+         synchronized (mBinder) {
+             updateDisabledStateLocked();

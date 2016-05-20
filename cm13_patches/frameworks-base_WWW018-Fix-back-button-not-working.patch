@@ -1,0 +1,43 @@
+ SystemUI Tuner: Fix back button not working in StatusBarBLacklistFrag…
+
+…ment
+
+diff --git a/packages/SystemUI/src/com/android/systemui/tuner/StatusBarIconBlacklistFragment.java b/packages/SystemUI/src/com/android/systemui/tuner/StatusBarIconBlacklistFragment.java
+index e25b38c..c3fc917 100644
+--- a/packages/SystemUI/src/com/android/systemui/tuner/StatusBarIconBlacklistFragment.java
++++ b/packages/SystemUI/src/com/android/systemui/tuner/StatusBarIconBlacklistFragment.java
+@@ -19,8 +19,9 @@
+ import android.os.Bundle;
+ import android.preference.Preference;
+ import android.preference.PreferenceFragment;
+-
+ import android.preference.PreferenceGroup;
++import android.view.MenuItem;
++
+ import com.android.systemui.R;
+ import com.android.systemui.statusbar.phone.StatusBarIconController;
+ 
+@@ -29,6 +30,8 @@
+     public void onCreate(@Nullable Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         addPreferencesFromResource(R.xml.tuner_statusbar_icons);
++
++        setHasOptionsMenu(true);
+     }
+ 
+     @Override
+@@ -68,4 +71,14 @@ private void unregisterPrefs(PreferenceGroup group) {
+             }
+         }
+     }
++
++    @Override
++    public boolean onOptionsItemSelected(MenuItem item) {
++        switch (item.getItemId()) {
++            case android.R.id.home:
++                getFragmentManager().popBackStack();
++                break;
++        }
++        return super.onOptionsItemSelected(item);
++    }
+ }

@@ -1,0 +1,41 @@
+ Replace usages of ShortNumberUtil with ShortNumberInfo
+
+The ShortNumberInfo class appears to support the exact same
+methods as the ShortNumberUtil class (at least in terms of the
+methods used by this project) but is a singleton and so
+instances cannot be created directly but instead must be
+retrieved using the static getInstance() method.
+
+The ShortNumberUtil class was deprecated in version 5.8 and
+removed in 7.2.3 of libphonenumber. This change is required in
+order to allow libphonenumber to be upgraded to 7.2.4.
+
+
+diff --git a/telephony/java/android/telephony/PhoneNumberUtils.java b/telephony/java/android/telephony/PhoneNumberUtils.java
+index 9708a5a..034f6bb 100644
+--- a/telephony/java/android/telephony/PhoneNumberUtils.java
++++ b/telephony/java/android/telephony/PhoneNumberUtils.java
+@@ -21,7 +21,7 @@
+ import com.android.i18n.phonenumbers.PhoneNumberUtil;
+ import com.android.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
+ import com.android.i18n.phonenumbers.Phonenumber.PhoneNumber;
+-import com.android.i18n.phonenumbers.ShortNumberUtil;
++import com.android.i18n.phonenumbers.ShortNumberInfo;
+ 
+ import android.content.Context;
+ import android.content.Intent;
+@@ -1970,11 +1970,11 @@ private static boolean isEmergencyNumberInternal(int subId, String number,
+ 
+         // No ecclist system property, so use our own list.
+         if (defaultCountryIso != null) {
+-            ShortNumberUtil util = new ShortNumberUtil();
++            ShortNumberInfo info = ShortNumberInfo.getInstance();
+             if (useExactMatch) {
+-                return util.isEmergencyNumber(number, defaultCountryIso);
++                return info.isEmergencyNumber(number, defaultCountryIso);
+             } else {
+-                return util.connectsToEmergencyNumber(number, defaultCountryIso);
++                return info.connectsToEmergencyNumber(number, defaultCountryIso);
+             }
+         }
+ 

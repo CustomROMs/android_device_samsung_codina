@@ -1,0 +1,27 @@
+ Fix for launching App from Recent Apps on first click
+
+The issue is resulting as the stack focus is not appropriate
+as there are no running activities in the stack in which the
+activity/task is going to be launched. So, the appropriate
+stack focus is set to resolve this issue.
+
+diff --git a/services/core/java/com/android/server/am/ActivityStackSupervisor.java b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+index 9708a5a..014f6bb 100644
+--- a/services/core/java/com/android/server/am/ActivityStackSupervisor.java
++++ b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+@@ -2432,7 +2432,14 @@ final int startActivityUncheckedLocked(final ActivityRecord r, ActivityRecord so
+                 return ActivityManager.START_RETURN_LOCK_TASK_MODE_VIOLATION;
+             }
+             targetStack = inTask.stack;
+-            targetStack.moveTaskToFrontLocked(inTask, noAnimation, options, r.appTimeTracker,
++
++            // When there is no activity in the stack, the focusedStack will be set to
++            // home stack when we try to move the task to front. So, to set the focus
++            // on the correct stack, we check for running activities in the targetStack
++            if (targetStack.topRunningActivityLocked(null) == null)
++                targetStack.moveToFront("restartingTaskFromRecents");
++            else
++                targetStack.moveTaskToFrontLocked(inTask, noAnimation, options, r.appTimeTracker,
+                     "inTaskToFront");
+ 
+             // Check whether we should actually launch the new activity in to the task,
