@@ -1,0 +1,40 @@
+From 1478bab51ef2cbb84cd2bb333643a75fc0b57aa3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 25 May 2016 03:31:49 +0700
+Subject: [PATCH] HACK: fix wifi autoconnect
+
+Note, this commit requires http://github.com/UltimateROM/android_system_core/commit/45c02ac693781627b086229b42049855914a5764 change.
+
+Change-Id: I77c17fa5b62a6902c498dc1f010b9382353ba8bd
+Signed-off-by: Shilin Victor <chrono.monochrome@gmail.com>
+---
+ service/java/com/android/server/wifi/WifiStateMachine.java | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/service/java/com/android/server/wifi/WifiStateMachine.java b/service/java/com/android/server/wifi/WifiStateMachine.java
+index f435136..fd183a7 100644
+--- a/service/java/com/android/server/wifi/WifiStateMachine.java
++++ b/service/java/com/android/server/wifi/WifiStateMachine.java
+@@ -3080,6 +3080,10 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                 break;
+             case CMD_AUTO_CONNECT:
+             case WifiManager.CONNECT_NETWORK:
++                // Chrono: WiFi autoconnect somehow doesn't work with the default system time
++                // detection method at least on Galaxy Ace 2. Set it to METHOD_CLOCK_GETTIME
++                // and then back to METHOD_IOCTL.
++                SystemProperties.set("debug.time_method", "0");
+                 sb.append(" ");
+                 sb.append(Integer.toString(msg.arg1));
+                 sb.append(" ");
+@@ -3102,6 +3106,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         sb.append(" ").append(config.visibility.toString());
+                     }
+                 }
++
++                SystemProperties.set("debug.time_method", "1");
+                 break;
+             case CMD_AUTO_ROAM:
+                 sb.append(" ");
+-- 
+2.5.0
+
