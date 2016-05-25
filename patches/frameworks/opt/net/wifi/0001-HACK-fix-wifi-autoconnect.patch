@@ -1,40 +1,767 @@
-From 1478bab51ef2cbb84cd2bb333643a75fc0b57aa3 Mon Sep 17 00:00:00 2001
+From 478e367796317bc04f6fd6d490c52b435c625fc2 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Wed, 25 May 2016 03:31:49 +0700
 Subject: [PATCH] HACK: fix wifi autoconnect
 
+see comment in the code below.
 Note, this commit requires http://github.com/UltimateROM/android_system_core/commit/45c02ac693781627b086229b42049855914a5764 change.
 
 Change-Id: I77c17fa5b62a6902c498dc1f010b9382353ba8bd
+
 Signed-off-by: Shilin Victor <chrono.monochrome@gmail.com>
 ---
- service/java/com/android/server/wifi/WifiStateMachine.java | 6 ++++++
- 1 file changed, 6 insertions(+)
+ .../com/android/server/wifi/WifiStateMachine.java  | 208 ++++++++++++++++++++-
+ 1 file changed, 207 insertions(+), 1 deletion(-)
 
 diff --git a/service/java/com/android/server/wifi/WifiStateMachine.java b/service/java/com/android/server/wifi/WifiStateMachine.java
-index f435136..fd183a7 100644
+index f435136..c59f294 100644
 --- a/service/java/com/android/server/wifi/WifiStateMachine.java
 +++ b/service/java/com/android/server/wifi/WifiStateMachine.java
-@@ -3080,6 +3080,10 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
-                 break;
-             case CMD_AUTO_CONNECT:
-             case WifiManager.CONNECT_NETWORK:
-+                // Chrono: WiFi autoconnect somehow doesn't work with the default system time
-+                // detection method at least on Galaxy Ace 2. Set it to METHOD_CLOCK_GETTIME
-+                // and then back to METHOD_IOCTL.
-+                SystemProperties.set("debug.time_method", "0");
-                 sb.append(" ");
-                 sb.append(Integer.toString(msg.arg1));
-                 sb.append(" ");
-@@ -3102,6 +3106,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
-                         sb.append(" ").append(config.visibility.toString());
-                     }
-                 }
+@@ -5740,6 +5740,11 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+     class DefaultState extends State {
+         @Override
+         public boolean processMessage(Message message) {
++            // Chrono: WiFi autoconnect somehow doesn't work with the default system time
++            // detection method at least on Galaxy Ace 2. Set it to METHOD_CLOCK_GETTIME
++            // and then back to METHOD_IOCTL.
++            SystemProperties.set("debug.time_method", "0");
 +
-+                SystemProperties.set("debug.time_method", "1");
-                 break;
-             case CMD_AUTO_ROAM:
-                 sb.append(" ");
+             logStateAndMessage(message, this);
+ 
+             switch (message.what) {
+@@ -6001,6 +6006,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     loge("Error! unhandled message" + message);
+                     break;
+             }
++
++            SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6032,6 +6040,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+             switch (message.what) {
+                 case CMD_START_SUPPLICANT:
+@@ -6104,8 +6114,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     }
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++            SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6143,6 +6157,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+ 
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6210,8 +6225,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++            SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6245,6 +6264,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+ 
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6354,8 +6374,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     mWifiConfigStore.resetSimNetworks();
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++            SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+ 
+@@ -6393,6 +6417,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6425,8 +6450,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6442,6 +6471,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6498,8 +6528,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     // the state machine
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6602,6 +6636,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+ 
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6756,8 +6791,11 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     break;
+                 }
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
+             return HANDLED;
+         }
+         @Override
+@@ -6800,6 +6838,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6827,8 +6866,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6836,6 +6879,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+     class DriverStoppingState extends State {
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6860,8 +6904,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6869,6 +6917,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+     class DriverStoppedState extends State {
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+             switch (message.what) {
+                 case WifiMonitor.SUPPLICANT_STATE_CHANGE_EVENT:
+@@ -6887,8 +6936,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     transitionTo(mDriverStartingState);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -6901,6 +6954,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -6938,7 +6992,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         mOperationalMode = CONNECT_MODE;
+                         transitionTo(mDisconnectedState);
+                     } else {
+-                        // Nothing to do
++                                    SystemProperties.set("debug.time_method", "1");
++
+                         return HANDLED;
+                     }
+                     break;
+@@ -6952,8 +7007,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     if(DBG) log("SupplicantState= " + state);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -7452,6 +7511,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+ 
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             WifiConfiguration config;
+             int netId;
+             boolean ok;
+@@ -8247,8 +8308,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     processPnoNetworkFound((ScanResult[])message.obj);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -8552,6 +8617,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+ 
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch (message.what) {
+@@ -8704,6 +8771,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                                         + " rx=" + String.format("%.2f", mWifiInfo.rxSuccessRate));
+                                     }
+                                     messageHandlingStatus = MESSAGE_HANDLING_STATUS_REFUSED;
++
++                                                  SystemProperties.set("debug.time_method", "1");
++
+                                     return HANDLED;
+                                 }
+                             }
+@@ -8768,6 +8838,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         }
+                     } else {
+                         // Not scan alarm source
++                        SystemProperties.set("debug.time_method", "1");
++
+                         return NOT_HANDLED;
+                     }
+                     break;
+@@ -8777,6 +8849,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     if (mWifiInfo.getNetworkId() == netId) {
+                         break;
+                     }
++
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+                 case WifiMonitor.NETWORK_CONNECTION_EVENT:
+                     mWifiInfo.setBSSID((String) message.obj);
+@@ -8884,12 +8958,20 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                             transitionTo(mDisconnectingState);
+                         }
+                     }
++
++                    SystemProperties.set("debug.time_method", "1");
++
+                     /* allow parent state to reset data for other networks */
+                     return NOT_HANDLED;
+                 default:
++
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
+ 
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -8974,6 +9056,7 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+       @Override
+       public boolean processMessage(Message message) {
++          SystemProperties.set("debug.time_method", "0");
+           logStateAndMessage(message, this);
+ 
+           switch(message.what) {
+@@ -9013,8 +9096,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                   messageHandlingStatus = MESSAGE_HANDLING_STATUS_DISCARD;
+                   break;
+               default:
++                  SystemProperties.set("debug.time_method", "1");
++
+                   return NOT_HANDLED;
+           }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+           return HANDLED;
+       }
+     }
+@@ -9033,6 +9121,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch (message.what) {
+@@ -9047,8 +9137,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     break;
+                 default:
+                     if (DBG) log(getName() + " what=" + message.what + " NOT_HANDLED");
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -9097,6 +9192,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+             WifiConfiguration config;
+             switch (message.what) {
+@@ -9107,12 +9204,19 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         mWifiConfigStore.noteRoamingFailure(config,
+                                 WifiConfiguration.ROAMING_FAILURE_IP_CONFIG);
+                     }
++
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+                 case WifiWatchdogStateMachine.POOR_LINK_DETECTED:
+                     if (DBG) log("Roaming and Watchdog reports poor link -> ignore");
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                     return HANDLED;
+                 case CMD_UNWANTED_NETWORK:
+                     if (DBG) log("Roaming and CS doesnt want the network -> ignore");
++
++                       SystemProperties.set("debug.time_method", "1");
+                     return HANDLED;
+                 case CMD_SET_OPERATIONAL_MODE:
+                     if (message.arg1 != CONNECT_MODE) {
+@@ -9204,13 +9308,20 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         handleNetworkDisconnect();
+                         transitionTo(mDisconnectingState);
+                     }
++
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+                 case CMD_START_SCAN:
+                     deferMessage(message);
+                     break;
+                 default:
++
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+ 
+@@ -9281,6 +9392,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++           SystemProperties.set("debug.time_method", "0");
++
+             WifiConfiguration config = null;
+             logStateAndMessage(message, this);
+ 
+@@ -9288,6 +9401,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                 case CMD_RESTART_AUTOJOIN_OFFLOAD:
+                     if ( (int)message.arg2 < mRestartAutoJoinOffloadCounter ) {
+                         messageHandlingStatus = MESSAGE_HANDLING_STATUS_OBSOLETE;
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                         return HANDLED;
+                     }
+                     /* If we are still in Disconnected state after having discovered a valid
+@@ -9344,6 +9460,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                             mWifiConfigStore.writeKnownNetworkHistory(false);
+                         }
+                     }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                     return HANDLED;
+                 case CMD_NETWORK_STATUS:
+                     if (message.arg1 == NetworkAgent.VALID_NETWORK) {
+@@ -9359,6 +9478,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                             mWifiConfigStore.writeKnownNetworkHistory(false);
+                         }
+                     }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                     return HANDLED;
+                 case CMD_ACCEPT_UNVALIDATED:
+                     boolean accept = (message.arg1 != 0);
+@@ -9366,6 +9488,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     if (config != null) {
+                         config.noInternetAccessExpected = accept;
+                     }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                     return HANDLED;
+                 case CMD_TEST_NETWORK_DISCONNECT:
+                     // Force a disconnect
+@@ -9381,6 +9506,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     if (toBSSID != null && !toBSSID.equals(mWifiInfo.getBSSID())) {
+                         mWifiConfigStore.driverRoamedFrom(mWifiInfo);
+                     }
++
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+                 case WifiMonitor.NETWORK_DISCONNECTION_EVENT:
+                     long lastRoam = 0;
+@@ -9426,6 +9554,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                                     + " reason=" + message.arg2
+                                     + " -> debounce");
+                         }
++                       SystemProperties.set("debug.time_method", "1");
++
+                         return HANDLED;
+                     } else {
+                         if (DBG) {
+@@ -9537,8 +9667,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         break;
+                     }
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+ 
+@@ -9580,6 +9715,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+ 
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+             switch (message.what) {
+                 case CMD_SET_OPERATIONAL_MODE:
+@@ -9589,6 +9726,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     break;
+                 case CMD_START_SCAN:
+                     deferMessage(message);
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return HANDLED;
+                 case CMD_DISCONNECTING_WATCHDOG_TIMER:
+                     if (disconnectingWatchdogCount == message.arg1) {
+@@ -9608,8 +9747,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     transitionTo(mDisconnectedState);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -9682,6 +9826,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             boolean ret = HANDLED;
+ 
+             logStateAndMessage(message, this);
+@@ -9750,6 +9896,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     if (!checkOrDeferScanAllowed(message)) {
+                         // The scan request was rescheduled
+                         messageHandlingStatus = MESSAGE_HANDLING_STATUS_REFUSED;
++                       SystemProperties.set("debug.time_method", "1");
++
+                         return HANDLED;
+                     }
+                     if (message.arg1 == SCAN_ALARM_SOURCE) {
+@@ -9768,6 +9916,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                                     + message.arg1
+                                     + " " + message.arg2 + ", " + mDelayedScanCounter
+                                     + " -> obsolete");
++                       SystemProperties.set("debug.time_method", "1");
++
+                             return HANDLED;
+                         }
+                         /* Disable background scan temporarily during a regular scan */
+@@ -9794,6 +9944,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                 case CMD_RESTART_AUTOJOIN_OFFLOAD:
+                     if ( (int)message.arg2 < mRestartAutoJoinOffloadCounter ) {
+                         messageHandlingStatus = MESSAGE_HANDLING_STATUS_OBSOLETE;
++                       SystemProperties.set("debug.time_method", "1");
++
+                         return HANDLED;
+                     }
+                     /* If we are still in Disconnected state after having discovered a valid
+@@ -9831,6 +9983,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                                 handlePnoFailError();
+                             }
+                         }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                         return HANDLED;
+                     }
+                     break;
+@@ -9932,6 +10087,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                 default:
+                     ret = NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return ret;
+         }
+ 
+@@ -9954,6 +10112,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++          SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch (message.what) {
+@@ -10043,8 +10203,12 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     // a WPS success or failure
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+ 
+@@ -10078,6 +10242,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++          SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -10113,8 +10279,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     transitionTo(mInitialState);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -10122,6 +10293,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+     class SoftApStartedState extends State {
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -10151,8 +10324,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     }
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -10166,6 +10344,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++            SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -10174,6 +10354,10 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     if (isWifiTethered(stateChange.active)) {
+                         transitionTo(mTetheredState);
+                     }
++
++                       SystemProperties.set("debug.time_method", "1");
++
++
+                     return HANDLED;
+                 case CMD_TETHER_NOTIFICATION_TIMED_OUT:
+                     if (message.arg1 == mTetherToken) {
+@@ -10198,8 +10382,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -10207,6 +10396,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+     class TetheredState extends State {
+         @Override
+         public boolean processMessage(Message message) {
++          SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -10217,6 +10408,9 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                         setHostApRunning(null, false);
+                         setHostApRunning(null, true);
+                     }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+                     return HANDLED;
+                 case CMD_STOP_AP:
+                     if (DBG) log("Untethering before stopping AP");
+@@ -10227,8 +10421,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
+@@ -10243,6 +10442,8 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+         }
+         @Override
+         public boolean processMessage(Message message) {
++          SystemProperties.set("debug.time_method", "0");
++
+             logStateAndMessage(message, this);
+ 
+             switch(message.what) {
+@@ -10274,8 +10475,13 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiPno
+                     deferMessage(message);
+                     break;
+                 default:
++                    SystemProperties.set("debug.time_method", "1");
++
+                     return NOT_HANDLED;
+             }
++
++                       SystemProperties.set("debug.time_method", "1");
++
+             return HANDLED;
+         }
+     }
 -- 
 2.5.0
 
