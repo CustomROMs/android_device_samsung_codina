@@ -183,7 +183,8 @@ PRODUCT_PACKAGES += \
 
 # Snap Camera
 PRODUCT_PACKAGES += \
-    Snap
+    Snap \
+    LockClock
 
 # Disable error Checking
 PRODUCT_PROPERTY_OVERRIDES += \

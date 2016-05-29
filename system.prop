@@ -65,3 +65,6 @@ ro.hwui.texture_cache_size=8
 # Instagram video upload fix
 ste.use_google_h264_encoder=true
 #ste.use_ffmpeg_h264_encoder=true
+
+# DriveDroid fix
+#sys.config.sd0_optdevice=/dev/null
