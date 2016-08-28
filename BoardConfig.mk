@@ -69,7 +69,7 @@ TARGET_GLOBAL_CPPFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 # BOARD_CUSTOM_BOOTIMG := true
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_BASE := 0x40000000
-BOARD_CUSTOM_BOOTIMG_MK := device/samsung/codina/shbootimg.mk
+#BOARD_CUSTOM_BOOTIMG_MK := device/samsung/codina/shbootimg.mk
 
 #PLATFORM_GOOGLE_4.9 := true
 
@@ -233,3 +233,4 @@ GRAPHITE_OPTS := true
 ENABLE_LTO := true
 UNSAFE_LOOPS_OPTIMIZATIONS := true
 #BUILD_FDO_INSTRUMENT=true
+TARGET_DISABLE_CMSDK := true
