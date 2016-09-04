@@ -1,0 +1,318 @@
+From a98e99174e8a3550e0d616dfbe592c58cfc8f3b3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 12 Mar 2016 14:19:56 +0700
+Subject: [PATCH 11/11] Revert "Implement framework for TelephonyPlugin."
+
+This reverts commit cd02699ee0515cd81e6c7520f816fa321cb43864.
+---
+ .../internal/telephony/DefaultTelephonyPlugin.java |  43 --------
+ .../internal/telephony/ProxyController.java        |   3 +-
+ .../internal/telephony/TelephonyPluginBase.java    |  59 -----------
+ .../telephony/TelephonyPluginDelegate.java         | 112 ---------------------
+ .../telephony/TelephonyPluginInterface.java        |  45 ---------
+ 5 files changed, 1 insertion(+), 261 deletions(-)
+ delete mode 100644 src/java/com/android/internal/telephony/DefaultTelephonyPlugin.java
+ delete mode 100644 src/java/com/android/internal/telephony/TelephonyPluginBase.java
+ delete mode 100644 src/java/com/android/internal/telephony/TelephonyPluginDelegate.java
+ delete mode 100644 src/java/com/android/internal/telephony/TelephonyPluginInterface.java
+
+diff --git a/src/java/com/android/internal/telephony/DefaultTelephonyPlugin.java b/src/java/com/android/internal/telephony/DefaultTelephonyPlugin.java
+deleted file mode 100644
+index 52b120c..0000000
+--- a/src/java/com/android/internal/telephony/DefaultTelephonyPlugin.java
++++ /dev/null
+@@ -1,43 +0,0 @@
+-/*
+- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions are met:
+- *    * Redistributions of source code must retain the above copyright
+- *      notice, this list of conditions and the following disclaimer.
+- *    * Redistributions in binary form must reproduce the above copyright
+- *      notice, this list of conditions and the following disclaimer in the
+- *      documentation and/or other materials provided with the distribution.
+- *    * Neither the name of Code Aurora nor
+- *      the names of its contributors may be used to endorse or promote
+- *      products derived from this software without specific prior written
+- *      permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-package com.android.internal.telephony;
+-
+-import android.content.Context;
+-
+-import com.android.internal.telephony.dataconnection.DcTracker;
+-import com.android.internal.telephony.dataconnection.DctController;
+-
+-/**
+- * Default implementation in Abstract class is sufficient for AOSP
+- * functionality.
+- */
+-public class DefaultTelephonyPlugin extends TelephonyPluginBase {
+-    private String TAG = "DefaultTelephonyPlugin";
+-
+-}
+diff --git a/src/java/com/android/internal/telephony/ProxyController.java b/src/java/com/android/internal/telephony/ProxyController.java
+index 77a4e9d..0b84800 100644
+--- a/src/java/com/android/internal/telephony/ProxyController.java
++++ b/src/java/com/android/internal/telephony/ProxyController.java
+@@ -133,8 +133,7 @@ public class ProxyController {
+         mUiccController = uiccController;
+         mCi = ci;
+ 
+-        mDctController = TelephonyPluginDelegate.getInstance()
+-            .makeDctController((PhoneProxy[])phoneProxy);
++        mDctController = DctController.makeDctController(phoneProxy);
+         mUiccPhoneBookController = new UiccPhoneBookController(mProxyPhones);
+         mPhoneSubInfoController = new PhoneSubInfoController(mProxyPhones);
+         mUiccSmsController = new UiccSmsController(mProxyPhones);
+diff --git a/src/java/com/android/internal/telephony/TelephonyPluginBase.java b/src/java/com/android/internal/telephony/TelephonyPluginBase.java
+deleted file mode 100644
+index 346c2ec..0000000
+--- a/src/java/com/android/internal/telephony/TelephonyPluginBase.java
++++ /dev/null
+@@ -1,59 +0,0 @@
+-/*
+- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions are met:
+- *    * Redistributions of source code must retain the above copyright
+- *      notice, this list of conditions and the following disclaimer.
+- *    * Redistributions in binary form must reproduce the above copyright
+- *      notice, this list of conditions and the following disclaimer in the
+- *      documentation and/or other materials provided with the distribution.
+- *    * Neither the name of Code Aurora nor
+- *      the names of its contributors may be used to endorse or promote
+- *      products derived from this software without specific prior written
+- *      permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-package com.android.internal.telephony;
+-
+-import android.content.Context;
+-
+-import com.android.internal.telephony.dataconnection.DcTracker;
+-import com.android.internal.telephony.dataconnection.DctController;
+-
+-public abstract class TelephonyPluginBase implements TelephonyPluginInterface {
+-    private String TAG = "TelephonyPluginBase";
+-
+-    @Override
+-    public void makeDefaultPhones(Context context) {
+-        PhoneFactory.makeDefaultPhones(context);
+-    }
+-
+-    @Override
+-    public DcTracker makeDcTracker(PhoneBase phone) {
+-       return new DcTracker(phone);
+-    }
+-
+-    @Override
+-    public DctController makeDctController(PhoneProxy[] phones) {
+-        return DctController.makeDctController(phones);
+-    }
+-
+-    @Override
+-    public void initSubscriptionController(Context context,
+-            CommandsInterface[] commandsInterfaces) {
+-        SubscriptionController.init(context, commandsInterfaces);
+-    }
+-}
+diff --git a/src/java/com/android/internal/telephony/TelephonyPluginDelegate.java b/src/java/com/android/internal/telephony/TelephonyPluginDelegate.java
+deleted file mode 100644
+index e2a0ee0..0000000
+--- a/src/java/com/android/internal/telephony/TelephonyPluginDelegate.java
++++ /dev/null
+@@ -1,112 +0,0 @@
+-/*
+- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions are met:
+- *    * Redistributions of source code must retain the above copyright
+- *      notice, this list of conditions and the following disclaimer.
+- *    * Redistributions in binary form must reproduce the above copyright
+- *      notice, this list of conditions and the following disclaimer in the
+- *      documentation and/or other materials provided with the distribution.
+- *    * Neither the name of Code Aurora nor
+- *      the names of its contributors may be used to endorse or promote
+- *      products derived from this software without specific prior written
+- *      permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-package com.android.internal.telephony;
+-
+-import android.content.Context;
+-import android.util.Log;
+-import android.telephony.Rlog;
+-
+-import com.android.internal.telephony.dataconnection.DcTracker;
+-import com.android.internal.telephony.dataconnection.DctController;
+-import com.android.internal.telephony.TelephonyPluginBase;
+-import com.android.internal.telephony.DefaultTelephonyPlugin;
+-import com.android.internal.R;
+-
+-import dalvik.system.PathClassLoader;
+-
+-import java.lang.reflect.Method;
+-import java.lang.reflect.Constructor;
+-import java.io.File;
+-
+-public class TelephonyPluginDelegate {
+-    static final String LOG_TAG = "TelephonyPluginDelegate";
+-
+-    private static TelephonyPluginBase sPlugin = null;
+-    private static TelephonyPluginDelegate sMe = null;
+-
+-    private TelephonyPluginDelegate() {
+-    }
+-
+-    public static TelephonyPluginDelegate getInstance() {
+-        if (sMe == null) {
+-            Log.e(LOG_TAG, "error: TelephonyPluginDelegate instance is not created!!");
+-        }
+-        return sMe;
+-    }
+-
+-    public static void init(Context context) {
+-        if (sMe == null) {
+-            String fullClsName = context.getResources()
+-                .getString(R.string.telephony_plugin_class_name);
+-            String libPath = context.getResources().getString(R.string.telephony_plugin_lib_path);
+-
+-            PathClassLoader classLoader = new PathClassLoader(libPath,
+-                    ClassLoader.getSystemClassLoader());
+-            Rlog.d(LOG_TAG, "classLoader = " + classLoader);
+-
+-            if (fullClsName == null || fullClsName.length() == 0) {
+-                Rlog.d(LOG_TAG, "No customized TelephonyPlugin available, fallback to default");
+-                fullClsName = "com.android.internal.telephony.DefaultTelephonyPlugin";
+-            }
+-            Class<?> cls = null;
+-            try {
+-                cls = Class.forName(fullClsName, false, classLoader);
+-                Rlog.d(LOG_TAG, "cls = " + cls);
+-                Constructor custMethod = cls.getConstructor();
+-                Rlog.d(LOG_TAG, "constructor method = " + custMethod);
+-                sPlugin = (TelephonyPluginBase) custMethod.newInstance();
+-            } catch (Exception  e) {
+-                e.printStackTrace();
+-                Rlog.e(LOG_TAG, "Error loading TelephonyPlugin");
+-                sPlugin = new DefaultTelephonyPlugin();
+-            }
+-
+-            sMe = new TelephonyPluginDelegate();
+-        } else {
+-            Rlog.e(LOG_TAG, "Multiple init of TelephonyPluginDelegate not allowed");
+-        }
+-    }
+-
+-    public DcTracker makeDcTracker(PhoneBase phone) {
+-        return sPlugin.makeDcTracker(phone);
+-    }
+-
+-    public void makeDefaultPhones(Context context) {
+-        sPlugin.makeDefaultPhones(context);
+-    }
+-
+-    public DctController makeDctController(PhoneProxy[] phones) {
+-        return sPlugin.makeDctController(phones);
+-    }
+-
+-    public void initSubscriptionController(Context context,
+-            CommandsInterface[] commandsInterfaces) {
+-        sPlugin.initSubscriptionController(context, commandsInterfaces);
+-    }
+-}
+diff --git a/src/java/com/android/internal/telephony/TelephonyPluginInterface.java b/src/java/com/android/internal/telephony/TelephonyPluginInterface.java
+deleted file mode 100644
+index 3f70ad4..0000000
+--- a/src/java/com/android/internal/telephony/TelephonyPluginInterface.java
++++ /dev/null
+@@ -1,45 +0,0 @@
+-/*
+- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions are met:
+- *    * Redistributions of source code must retain the above copyright
+- *      notice, this list of conditions and the following disclaimer.
+- *    * Redistributions in binary form must reproduce the above copyright
+- *      notice, this list of conditions and the following disclaimer in the
+- *      documentation and/or other materials provided with the distribution.
+- *    * Neither the name of Code Aurora nor
+- *      the names of its contributors may be used to endorse or promote
+- *      products derived from this software without specific prior written
+- *      permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- * IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-package com.android.internal.telephony;
+-import android.content.Context;
+-
+-import com.android.internal.telephony.dataconnection.DcTracker;
+-import com.android.internal.telephony.dataconnection.DctController;
+-
+-public interface TelephonyPluginInterface {
+-
+-    public void makeDefaultPhones(Context context);
+-
+-    public DcTracker makeDcTracker(PhoneBase phone);
+-
+-    public DctController makeDctController(PhoneProxy[] phones);
+-
+-    public void initSubscriptionController(Context context,
+-            CommandsInterface[] commandsInterfaces);
+-}
+-- 
+2.5.0
+

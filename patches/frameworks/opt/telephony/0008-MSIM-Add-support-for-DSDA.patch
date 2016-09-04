@@ -1,0 +1,194 @@
+From d26a106a29c31076694a0e1d1d8da4cc62b5a172 Mon Sep 17 00:00:00 2001
+From: Sandeep Kunta <skunta@codeaurora.org>
+Date: Mon, 1 Sep 2014 17:21:50 +0530
+Subject: [PATCH 08/11] MSIM: Add support for DSDA
+
+1. inform to clients whenever active sub change information
+is received from telephony service.
+2. inform local call hold status to RIL, whenever update on
+the same is received.
+
+Change-Id: If45351cce38c1ef0ea20ca45a821edd1fa594c82
+---
+ .../android/internal/telephony/BaseCommands.java   |  4 ++
+ .../android/internal/telephony/CallManager.java    |  3 +-
+ .../internal/telephony/CommandsInterface.java      |  6 +++
+ src/java/com/android/internal/telephony/Phone.java |  5 +++
+ .../com/android/internal/telephony/PhoneBase.java  |  5 +++
+ .../com/android/internal/telephony/PhoneProxy.java |  5 +++
+ src/java/com/android/internal/telephony/RIL.java   | 45 ++++++++++++++++++++++
+ .../android/internal/telephony/gsm/GSMPhone.java   |  4 +-
+ 8 files changed, 75 insertions(+), 2 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/BaseCommands.java b/src/java/com/android/internal/telephony/BaseCommands.java
+index 7742973..672eece 100644
+--- a/src/java/com/android/internal/telephony/BaseCommands.java
++++ b/src/java/com/android/internal/telephony/BaseCommands.java
+@@ -899,4 +899,8 @@ public abstract class BaseCommands implements CommandsInterface {
+           mLceInfoRegistrant = null;
+       }
+     }
++
++    @Override
++    public void setLocalCallHold(boolean lchStatus) {
++    }
+ }
+diff --git a/src/java/com/android/internal/telephony/CallManager.java b/src/java/com/android/internal/telephony/CallManager.java
+index f4e3dca..98d4175 100644
+--- a/src/java/com/android/internal/telephony/CallManager.java
++++ b/src/java/com/android/internal/telephony/CallManager.java
+@@ -2319,7 +2319,8 @@ public final class CallManager {
+                     if (VDBG) Rlog.d(LOG_TAG, " handleMessage (EVENT_NEW_RINGING_CONNECTION)");
+                     Connection c = (Connection) ((AsyncResult) msg.obj).result;
+                     int subId = c.getCall().getPhone().getSubId();
+-                    if (getActiveFgCallState(subId).isDialing() || hasMoreThanOneRingingCall()) {
++                    if (getActiveFgCallState(subId).isDialing() ||
++                            hasMoreThanOneRingingCall(subId)) {
+                         try {
+                             Rlog.d(LOG_TAG, "silently drop incoming call: " + c.getCall());
+                             c.getCall().hangup();
+diff --git a/src/java/com/android/internal/telephony/CommandsInterface.java b/src/java/com/android/internal/telephony/CommandsInterface.java
+index 1101b93..e6be97a 100644
+--- a/src/java/com/android/internal/telephony/CommandsInterface.java
++++ b/src/java/com/android/internal/telephony/CommandsInterface.java
+@@ -2013,4 +2013,10 @@ public interface CommandsInterface {
+      * @param result Callback message contains the modem activity information
+      */
+     public void getModemActivityInfo(Message result);
++
++    /**
++     * Request to update the current local call hold state.
++     * @param lchStatus, true if call is in lch state
++     */
++    public void setLocalCallHold(boolean lchStatus);
+ }
+diff --git a/src/java/com/android/internal/telephony/Phone.java b/src/java/com/android/internal/telephony/Phone.java
+index dbf428f..a5fd75a 100644
+--- a/src/java/com/android/internal/telephony/Phone.java
++++ b/src/java/com/android/internal/telephony/Phone.java
+@@ -2114,4 +2114,9 @@ public interface Phone {
+      * Returns the modem activity information
+      */
+     public void getModemActivityInfo(Message response);
++
++    /** Request to update the current local call hold state.
++     * @param lchStatus, true if call is in lch state
++     */
++    public void setLocalCallHold(boolean lchStatus);
+ }
+diff --git a/src/java/com/android/internal/telephony/PhoneBase.java b/src/java/com/android/internal/telephony/PhoneBase.java
+index e4249d0..1f13049 100644
+--- a/src/java/com/android/internal/telephony/PhoneBase.java
++++ b/src/java/com/android/internal/telephony/PhoneBase.java
+@@ -2690,4 +2690,9 @@ public abstract class PhoneBase extends Handler implements Phone {
+     public void requestChangeCbPsw(String facility, String oldPwd, String newPwd, Message result) {
+         logUnexpectedCdmaMethodCall("requestChangeCbPsw");
+     }
++
++    @Override
++    public void setLocalCallHold(boolean lchStatus) {
++        mCi.setLocalCallHold(lchStatus);
++    }
+ }
+diff --git a/src/java/com/android/internal/telephony/PhoneProxy.java b/src/java/com/android/internal/telephony/PhoneProxy.java
+index 964acad..877229c 100644
+--- a/src/java/com/android/internal/telephony/PhoneProxy.java
++++ b/src/java/com/android/internal/telephony/PhoneProxy.java
+@@ -1680,4 +1680,9 @@ public class PhoneProxy extends Handler implements Phone {
+     public void requestChangeCbPsw(String facility, String oldPwd, String newPwd, Message result) {
+         mActivePhone.requestChangeCbPsw(facility, oldPwd, newPwd, result);
+     }
++
++    @Override
++    public void setLocalCallHold(boolean lchStatus) {
++        mActivePhone.setLocalCallHold(lchStatus);
++    }
+ }
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 4d2ded7..3c351a8 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -84,6 +84,8 @@ import java.io.FileDescriptor;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.PrintWriter;
++import java.nio.ByteBuffer;
++import java.nio.ByteOrder;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collections;
+@@ -242,6 +244,17 @@ public class RIL extends BaseCommands implements CommandsInterface {
+      * the vendor ril.
+      */
+     private static final int DEFAULT_WAKE_LOCK_TIMEOUT = 60000;
++    private static final int BYTE_SIZE = 1;
++
++    /** Starting number for OEMHOOK request and response IDs */
++    private static final int OEMHOOK_BASE = 0x80000;
++
++    /** Set Local Call Hold subscription */
++    private static final int OEMHOOK_EVT_HOOK_SET_LOCAL_CALL_HOLD = OEMHOOK_BASE + 13;
++
++    private static final int INT_SIZE = 4;
++    private static final String OEM_IDENTIFIER = "QOEMHOOK";
++    int mHeaderSize = OEM_IDENTIFIER.length() + 2 * INT_SIZE;
+ 
+     //***** Instance Variables
+ 
+@@ -2045,6 +2058,38 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         send(rr);
+     }
+ 
++
++    @Override
++    public void setLocalCallHold(boolean lchStatus) {
++        byte param = lchStatus ? (byte)1 : 0;
++        byte[] payload = new byte[]{param};
++        Rlog.d(RILJ_LOG_TAG, "setLocalCallHold: lchStatus is " + lchStatus);
++
++        sendOemRilRequestRaw(OEMHOOK_EVT_HOOK_SET_LOCAL_CALL_HOLD, 1, payload, null);
++    }
++
++    private void sendOemRilRequestRaw(int requestId, int numPayload, byte[] payload,
++            Message response) {
++        byte[] request = new byte[mHeaderSize + numPayload * BYTE_SIZE];
++
++        ByteBuffer buf= ByteBuffer.wrap(request);
++        buf.order(ByteOrder.nativeOrder());
++
++        // Add OEM identifier String
++        buf.put(OEM_IDENTIFIER.getBytes());
++        // Add Request ID
++        buf.putInt(requestId);
++        if (numPayload > 0 && payload != null) {
++            // Add Request payload length
++            buf.putInt(numPayload * BYTE_SIZE);
++            for (byte b : payload) {
++                buf.put(b);
++            }
++        }
++
++        invokeOemRilRequestRaw(request, response);
++    }
++
+     @Override
+     public void invokeOemRilRequestRaw(byte[] data, Message response) {
+         RILRequest rr
+diff --git a/src/java/com/android/internal/telephony/gsm/GSMPhone.java b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
+index f30f884..0d424e6 100644
+--- a/src/java/com/android/internal/telephony/gsm/GSMPhone.java
++++ b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
+@@ -933,7 +933,9 @@ public class GSMPhone extends PhoneBase {
+     @Override
+     public void
+     startDtmf(char c) {
+-        if (!PhoneNumberUtils.is12Key(c)) {
++        // in DSDA, char 'D' is used as DTMF char for playing supervisory tone for G/W.
++        // A, B, C & D are also supported as DTMF digits for G/W.
++        if (!(PhoneNumberUtils.is12Key(c) || (c >= 'A' && c <= 'D'))) {
+             Rlog.e(LOG_TAG,
+                 "startDtmf called with invalid character '" + c + "'");
+         } else {
+-- 
+2.5.0
+

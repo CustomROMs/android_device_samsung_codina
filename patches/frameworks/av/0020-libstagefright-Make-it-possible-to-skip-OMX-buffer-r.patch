@@ -1,0 +1,95 @@
+From 401ce1ab6b38e14bd70991d540ab79b07a050c13 Mon Sep 17 00:00:00 2001
+From: Michael Gernoth <michael@gernoth.net>
+Date: Mon, 24 Nov 2014 21:25:28 +0100
+Subject: [PATCH 20/20] libstagefright: Make it possible to skip OMX buffer
+ reallocation
+
+Some devices don't like the call to setParameter() at this point, so
+skip this call if enough buffers are already allocated. This check
+was present in KitKat but got removed when code to allocate extra-
+buffers was introduced.
+
+This is activated only for omap4 for now.
+
+Squashed 2nd commit: which does same for OMXCodec.cpp
+
+Change-Id: I9c1267c2a2a755bc16448a6049cb2e4aff0b65bb
+---
+ media/libstagefright/ACodec.cpp   |  9 +++++++++
+ media/libstagefright/Android.mk   |  4 ++++
+ media/libstagefright/OMXCodec.cpp | 10 +++++++++-
+ 3 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 54c0e7e..4778199 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -981,6 +981,12 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+     // 2. try to allocate two (2) additional buffers to reduce starvation from
+     //    the consumer
+     //    plus an extra buffer to account for incorrect minUndequeuedBufs
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    // Some devices don't like to set OMX_IndexParamPortDefinition at this
++    // point (even with an unmodified def), so skip it if possible.
++    // This check was present in KitKat.
++    if (def.nBufferCountActual < def.nBufferCountMin + *minUndequeuedBuffers) {
++#endif
+     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
+         OMX_U32 newBufferCount =
+             def.nBufferCountMin + *minUndequeuedBuffers + extraBuffers;
+@@ -1000,6 +1006,9 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+             return err;
+         }
+     }
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    }
++#endif
+ 
+     err = native_window_set_buffer_count(
+             mNativeWindow.get(), def.nBufferCountActual);
+diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
+index aadf2e8..f36e9de 100644
+--- a/media/libstagefright/Android.mk
++++ b/media/libstagefright/Android.mk
+@@ -130,6 +130,10 @@ ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+ LOCAL_CFLAGS += -DENABLE_STAGEFRIGHT_EXPERIMENTS
+ endif
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),omap4)
++LOCAL_CFLAGS += -DBOARD_CANT_REALLOCATE_OMX_BUFFERS
++endif
++
+ LOCAL_CLANG := true
+ LOCAL_SANITIZE := unsigned-integer-overflow signed-integer-overflow
+ 
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index e52778b..badf240 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -1884,7 +1884,12 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+     //    plus an extra buffer to account for incorrect minUndequeuedBufs
+     CODEC_LOGI("OMX-buffers: min=%u actual=%u undeq=%d+1",
+             def.nBufferCountMin, def.nBufferCountActual, minUndequeuedBufs);
+-
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    // Some devices don't like to set OMX_IndexParamPortDefinition at this
++    // point (even with an unmodified def), so skip it if possible.
++    // This check was present in KitKat.
++    if (def.nBufferCountActual < def.nBufferCountMin + minUndequeuedBufs) {
++#endif
+     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
+         OMX_U32 newBufferCount =
+             def.nBufferCountMin + minUndequeuedBufs + extraBuffers;
+@@ -1906,6 +1911,9 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+     }
+     CODEC_LOGI("OMX-buffers: min=%u actual=%u undeq=%d+1",
+             def.nBufferCountMin, def.nBufferCountActual, minUndequeuedBufs);
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    }
++#endif
+ 
+     err = native_window_set_buffer_count(
+             mNativeWindow.get(), def.nBufferCountActual);
+-- 
+2.5.0
+

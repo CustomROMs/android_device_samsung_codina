@@ -1,0 +1,25 @@
+From 110433f95eaac30a7d97d06c2759ab4ec7fc306f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 12 Mar 2016 14:42:55 +0700
+Subject: [PATCH 5/6] Revert "restorecon /property_contexts"
+
+This reverts commit e36a85cdcc93a84a6869fc8fc3fc82e3639d4398.
+---
+ init/init.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 4aef823..5712e26 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -614,7 +614,6 @@ int main(int argc, char** argv) {
+     restorecon("/dev");
+     restorecon("/dev/socket");
+     restorecon("/dev/__properties__");
+-    restorecon("/property_contexts");
+     restorecon_recursive("/sys");
+ 
+     epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+-- 
+2.5.0
+

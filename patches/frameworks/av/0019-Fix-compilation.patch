@@ -1,0 +1,30 @@
+From 2cf83415df1f3aa2c198babf39e874e6886ba02b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 12 Mar 2016 09:21:49 +0700
+Subject: [PATCH 19/19] Fix compilation
+
+Change-Id: Idb6a2539d5f2d700cf002635e61c03519933709b
+---
+ media/libstagefright/MediaDefs.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/media/libstagefright/MediaDefs.cpp b/media/libstagefright/MediaDefs.cpp
+index e81475b..2c8d54d 100644
+--- a/media/libstagefright/MediaDefs.cpp
++++ b/media/libstagefright/MediaDefs.cpp
+@@ -31,9 +31,9 @@ const char *MEDIA_MIMETYPE_VIDEO_H263_SW = "video/3gpp-sw";
+ #endif
+ const char *MEDIA_MIMETYPE_VIDEO_MPEG2 = "video/mpeg2";
+ const char *MEDIA_MIMETYPE_VIDEO_RAW = "video/raw";
+-//#ifdef STE_HARDWARE
+-//const char *MEDIA_MIMETYPE_VIDEO_VC1 = "video/vc1";
+-//#endif
++#ifdef STE_HARDWARE
++const char *MEDIA_MIMETYPE_VIDEO_VC1 = "video/vc1";
++#endif
+ 
+ const char *MEDIA_MIMETYPE_AUDIO_AMR_NB = "audio/3gpp";
+ const char *MEDIA_MIMETYPE_AUDIO_AMR_WB = "audio/amr-wb";
+-- 
+2.5.0
+

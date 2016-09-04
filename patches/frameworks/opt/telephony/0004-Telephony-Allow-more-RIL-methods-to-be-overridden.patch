@@ -1,0 +1,72 @@
+From b44d98daa95194e4568430c842cdb0efc1f6914c Mon Sep 17 00:00:00 2001
+From: Varun Chitre <varun.chitre15@gmail.com>
+Date: Tue, 1 Dec 2015 06:49:18 -0500
+Subject: [PATCH 04/11] Telephony: Allow more RIL methods to be overridden
+
+Change-Id: I7a18e16256da5b2205910d894008044a6b9478ae
+Signed-off-by: Varun Chitre <varun.chitre15@gmail.com>
+---
+ src/java/com/android/internal/telephony/RIL.java | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index 5fb77ef..0cd848f 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -2785,7 +2785,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return rr;
+     }
+ 
+-    private RadioCapability makeStaticRadioCapability() {
++    protected RadioCapability makeStaticRadioCapability() {
+         // default to UNKNOWN so we fail fast.
+         int raf = RadioAccessFamily.RAF_UNKNOWN;
+ 
+@@ -3404,7 +3404,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return response;
+     }
+ 
+-    private Object
++    protected Object
+     responseFailCause(Parcel p) {
+         LastCallFailCause failCause = new LastCallFailCause();
+         failCause.causeCode = p.readInt();
+@@ -4072,7 +4072,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+       return response;
+    }
+ 
+-    private Object
++    protected Object
+     responseRadioCapability(Parcel p) {
+         int version = p.readInt();
+         int session = p.readInt();
+@@ -4092,7 +4092,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return rc;
+     }
+ 
+-    private Object responseLceData(Parcel p) {
++    protected Object responseLceData(Parcel p) {
+         final ArrayList<Integer> capacityResponse = new ArrayList<Integer>();
+         final int capacityDownKbps = p.readInt();
+         final int confidenceLevel = p.readByte();
+@@ -4109,7 +4109,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return capacityResponse;
+     }
+ 
+-    private Object responseLceStatus(Parcel p) {
++    protected Object responseLceStatus(Parcel p) {
+         final ArrayList<Integer> statusResponse = new ArrayList<Integer>();
+         final int lceStatus = (int)p.readByte();
+         final int actualInterval = p.readInt();
+@@ -4122,7 +4122,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+         return statusResponse;
+     }
+ 
+-    private Object responseActivityData(Parcel p) {
++    protected Object responseActivityData(Parcel p) {
+         final int sleepModeTimeMs = p.readInt();
+         final int idleModeTimeMs = p.readInt();
+         int [] txModeTimeMs = new int[ModemActivityInfo.TX_POWER_LEVELS];
+-- 
+2.5.0
+

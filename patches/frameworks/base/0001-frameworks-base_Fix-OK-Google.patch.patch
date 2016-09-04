@@ -1,0 +1,26 @@
+From e5af01af11050164c5266b7a0c8d0ae6530035cf Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 12 Mar 2016 13:22:51 +0700
+Subject: [PATCH 1/6] frameworks-base_Fix-OK-Google.patch
+
+---
+ core/jni/android_media_AudioRecord.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/jni/android_media_AudioRecord.cpp b/core/jni/android_media_AudioRecord.cpp
+index b977e37..20cd6c5 100644
+--- a/core/jni/android_media_AudioRecord.cpp
++++ b/core/jni/android_media_AudioRecord.cpp
+@@ -257,6 +257,9 @@ android_media_AudioRecord_setup(JNIEnv *env, jobject thiz, jobject weak_this,
+     paa->flags = (audio_flags_mask_t)env->GetIntField(jaa, javaAudioAttrFields.fieldFlags);
+     ALOGV("AudioRecord_setup for source=%d tags=%s flags=%08x", paa->source, paa->tags, paa->flags);
+ 
++    if (paa->source == 1999)
++	paa->source == (audio_source_t)1;
++
+     audio_input_flags_t flags = AUDIO_INPUT_FLAG_NONE;
+     if (paa->flags & AUDIO_FLAG_HW_HOTWORD) {
+         flags = AUDIO_INPUT_FLAG_HW_HOTWORD;
+-- 
+2.5.0
+

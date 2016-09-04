@@ -1,0 +1,33 @@
+From 02cf64c5130ba9591a33dbf9df45cdb4c30800c7 Mon Sep 17 00:00:00 2001
+From: Caio Schnepper <caioschnepper@gmail.com>
+Date: Mon, 23 Nov 2015 18:39:58 -0200
+Subject: [PATCH 10/12] libgui: Don't assign handle to NULL after free
+
+This reverts c784dfc39fa1471b0f653206970ac9a256269256 for exynos4 devices
+with Mali 400 GPUs, which causes a fatal signal (SIGSEGV) and death of
+the graphics subsystem
+
+Change-Id: I6dbf8f8664fca01baf63fece7c64016609fe3e1c
+---
+ libs/ui/GraphicBuffer.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 0d77727..d823938 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -112,7 +112,11 @@ void GraphicBuffer::free_handle()
+         GraphicBufferAllocator& allocator(GraphicBufferAllocator::get());
+         allocator.free(handle);
+     }
++
++#ifndef EXYNOS4_ENHANCEMENTS
+     handle = NULL;
++#endif
++
+     mWrappedBuffer = 0;
+ }
+ 
+-- 
+2.5.0
+

@@ -6,29 +6,18 @@ KERNEL_PATCH="kernel/codina/chrono"
 
 if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
-		 bootable/recovery \
+		 bionic \
 		 #frameworks/av \
-		 #frameworks/base \
-		 #frameworks/native  \
+		 frameworks/base \
+		 frameworks/native  \
 		 frameworks/opt/net/wifi \
-		 frameworks/opt/net/ims \
-		 #frameworks/opt/telephony \
+		 frameworks/opt/telephony \
 		 external/libpng \
-		 external/jhead \
-		 external/koush/Superuser \
-		 external/vixl \
-		 external/webrtc \
-		 #hardware/libhardware \
-		 hardware/libhardware_legacy \
+		 hardware/libhardware \
 		 hardware/ril \
-		 libcore \
-		 packages/inputmethods/LatinIME \
 		 packages/providers/MediaProvider \
-		 packages/services/Telecomm \
 		 system/bt \
 		 system/core \
-		 system/extras \
-		 system/keymaster \
 		 system/media \
 		 system/vold"
 

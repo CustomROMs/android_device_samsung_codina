@@ -1,0 +1,48 @@
+From 5d966bdea8cf9e63be4421ba34613993a8b1ad45 Mon Sep 17 00:00:00 2001
+From: Caio Schnepper <caioschnepper@gmail.com>
+Date: Wed, 25 Nov 2015 17:51:30 -0200
+Subject: [PATCH 11/12] libgui: Don't assign handle to NULL after free is
+ common
+
+Reportedly Mali and PowerVR GPUs are crashing when setting handle to NULL
+So we will set a flag for the devices that might need this aswell
+
+Set BOARD_EGL_NEEDS_HANDLE_VALUE=true in BoardConfig.mk to use
+
+Change-Id: I6c967f62dc6adced7583d7b2045d11cf5b25fc80
+---
+ libs/ui/Android.mk        | 4 ++++
+ libs/ui/GraphicBuffer.cpp | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/libs/ui/Android.mk b/libs/ui/Android.mk
+index 54ff741..557d7bd 100644
+--- a/libs/ui/Android.mk
++++ b/libs/ui/Android.mk
+@@ -57,6 +57,10 @@ ifneq ($(BOARD_FRAMEBUFFER_FORCE_FORMAT),)
+ LOCAL_CFLAGS += -DFRAMEBUFFER_FORCE_FORMAT=$(BOARD_FRAMEBUFFER_FORCE_FORMAT)
+ endif
+ 
++ifeq ($(BOARD_EGL_NEEDS_HANDLE_VALUE),true)
++LOCAL_CFLAGS += -DEGL_NEEDS_HANDLE
++endif
++
+ LOCAL_MODULE := libui
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index d823938..992c1fe 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -113,7 +113,7 @@ void GraphicBuffer::free_handle()
+         allocator.free(handle);
+     }
+ 
+-#ifndef EXYNOS4_ENHANCEMENTS
++#ifndef EGL_NEEDS_HANDLE
+     handle = NULL;
+ #endif
+ 
+-- 
+2.5.0
+

@@ -1,0 +1,271 @@
+From b0f94a53a358c9798dcf304ce9cb1e70f2e4ee8b Mon Sep 17 00:00:00 2001
+From: Preeti Ahuja <preetia@codeaurora.org>
+Date: Fri, 18 Apr 2014 15:52:32 -0700
+Subject: [PATCH 10/11] Cat: Add support for Activate cmd and HCI connectivity
+ event
+
+Add support for Activate proactive command defined in ETSI TS
+102 223 [6.4.40] and HCI connectivity event defined in ETSI TS
+102 223 [7.5.18].
+
+Change-Id: I3755cb275a09a346d7b0b799242c818d969f8dff
+CRs-Fixed: 618962
+---
+ .../internal/telephony/cat/AppInterface.java       | 15 +++++++++++-
+ .../internal/telephony/cat/CatCmdMessage.java      |  2 ++
+ .../android/internal/telephony/cat/CatService.java | 22 ++++++++++++++++--
+ .../internal/telephony/cat/CommandDetails.java     |  9 ++++++++
+ .../internal/telephony/cat/CommandParams.java      | 10 ++++++++
+ .../telephony/cat/CommandParamsFactory.java        | 27 ++++++++++++++++++++++
+ .../telephony/cat/ComprehensionTlvTag.java         |  3 ++-
+ .../internal/telephony/cat/ValueParser.java        | 12 ++++++++++
+ 8 files changed, 96 insertions(+), 4 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/cat/AppInterface.java b/src/java/com/android/internal/telephony/cat/AppInterface.java
+index d48a82b..681f069 100644
+--- a/src/java/com/android/internal/telephony/cat/AppInterface.java
++++ b/src/java/com/android/internal/telephony/cat/AppInterface.java
+@@ -49,6 +49,18 @@ public interface AppInterface {
+     public static final String STK_PERMISSION = "android.permission.RECEIVE_STK_COMMANDS";
+ 
+     /*
++     * Intent action broadcasted by StkAppService when the ACTIVATE proactive command
++     * arrives.
++     */
++    public static final String CAT_ACTIVATE_NOTIFY_ACTION =
++                                    "org.codeaurora.intent.action.stk.activate_notify";
++    /*
++     * Intent action broadcasted by NfcService when the HCI Connectivity event occurs.
++     */
++    public static final String CAT_HCI_CONNECTIVITY_ACTION =
++                                    "org.codeaurora.intent.action.stk.hci_connectivity";
++
++    /*
+      * Callback function from app to telephony to pass a result code and user's
+      * input back to the ICC.
+      */
+@@ -81,7 +93,8 @@ public interface AppInterface {
+         CLOSE_CHANNEL(0x41),
+         RECEIVE_DATA(0x42),
+         SEND_DATA(0x43),
+-        GET_CHANNEL_STATUS(0x44);
++        GET_CHANNEL_STATUS(0x44),
++        ACTIVATE(0x70);
+ 
+         private int mValue;
+ 
+diff --git a/src/java/com/android/internal/telephony/cat/CatCmdMessage.java b/src/java/com/android/internal/telephony/cat/CatCmdMessage.java
+index 62d8869..994fa3f 100644
+--- a/src/java/com/android/internal/telephony/cat/CatCmdMessage.java
++++ b/src/java/com/android/internal/telephony/cat/CatCmdMessage.java
+@@ -63,6 +63,7 @@ public class CatCmdMessage implements Parcelable {
+         public static final int LANGUAGE_SELECTION_EVENT     = 0x07;
+         public static final int BROWSER_TERMINATION_EVENT    = 0x08;
+         public static final int BROWSING_STATUS_EVENT        = 0x0F;
++        public static final int HCI_CONNECTIVITY_EVENT       = 0x13;
+     }
+ 
+     public final class BrowserTerminationCauses {
+@@ -120,6 +121,7 @@ public class CatCmdMessage implements Parcelable {
+             mSetupEventListSettings = new SetupEventListSettings();
+             mSetupEventListSettings.eventList = ((SetEventListParams) cmdParams).mEventInfo;
+             break;
++        case ACTIVATE:
+         case PROVIDE_LOCAL_INFORMATION:
+         case REFRESH:
+         default:
+diff --git a/src/java/com/android/internal/telephony/cat/CatService.java b/src/java/com/android/internal/telephony/cat/CatService.java
+index b5776a1..976941c 100755
+--- a/src/java/com/android/internal/telephony/cat/CatService.java
++++ b/src/java/com/android/internal/telephony/cat/CatService.java
+@@ -49,6 +49,8 @@ import static com.android.internal.telephony.cat.CatCmdMessage.
+                    SetupEventListConstants.IDLE_SCREEN_AVAILABLE_EVENT;
+ import static com.android.internal.telephony.cat.CatCmdMessage.
+                    SetupEventListConstants.LANGUAGE_SELECTION_EVENT;
++import static com.android.internal.telephony.cat.CatCmdMessage.
++                   SetupEventListConstants.HCI_CONNECTIVITY_EVENT;
+ 
+ class RilMessage {
+     int mId;
+@@ -341,9 +343,13 @@ public class CatService extends Handler implements AppInterface {
+             CatLog.d(this,"Event: " + eventVal);
+             switch (eventVal) {
+                 /* Currently android is supporting only the below events in SetupEventList
+-                 * Language Selection.  */
++                 * Idle Screen Available,
++                 * Language Selection and
++                 * HCI Connectivity.
++                 */
+                 case IDLE_SCREEN_AVAILABLE_EVENT:
+                 case LANGUAGE_SELECTION_EVENT:
++                case HCI_CONNECTIVITY_EVENT:
+                     break;
+                 default:
+                     flag = false;
+@@ -500,6 +506,13 @@ public class CatService extends Handler implements AppInterface {
+                     sendTerminalResponse(cmdParams.mCmdDet, ResultCode.OK, false, 0, null);
+                 }
+                 break;
++            case ACTIVATE:
++                // TO DO: Retrieve the target of the ACTIVATE cmd from the cmd.
++                // Target : '01' = UICC-CFL interface according to TS 102 613 [39];
++                //          '00' and '02' to 'FF' = RFU (Reserved for Future Use).
++                resultCode = ResultCode.OK;
++                sendTerminalResponse(cmdParams.mCmdDet, resultCode, false, 0 ,null);
++                break;
+             default:
+                 CatLog.d(this, "Unsupported command");
+                 return;
+@@ -726,7 +739,9 @@ public class CatService extends Handler implements AppInterface {
+ 
+         /*
+          * Currently the below events are supported:
+-         * Language Selection Event.
++         * Idle Screen Available,
++         * Language Selection Event and
++         * HCI Connectivity.
+          * Other event download commands should be encoded similar way
+          */
+         /* TODO: eventDownload should be extended for other Envelope Commands */
+@@ -741,6 +756,9 @@ public class CatService extends Handler implements AppInterface {
+                 // Language length should be 2 byte
+                 buf.write(0x02);
+                 break;
++            case HCI_CONNECTIVITY_EVENT:
++                CatLog.d(this, " Sending HCI Connectivity event download to ICC");
++                break;
+             default:
+                 break;
+         }
+diff --git a/src/java/com/android/internal/telephony/cat/CommandDetails.java b/src/java/com/android/internal/telephony/cat/CommandDetails.java
+index aaa9d68..64ba7f5 100644
+--- a/src/java/com/android/internal/telephony/cat/CommandDetails.java
++++ b/src/java/com/android/internal/telephony/cat/CommandDetails.java
+@@ -121,3 +121,12 @@ class ItemsIconId extends ValueObject {
+         return ComprehensionTlvTag.ITEM_ICON_ID_LIST;
+     }
+ }
++
++class ActivateDescriptor extends ValueObject {
++    public int target;
++
++    @Override
++    ComprehensionTlvTag getTag() {
++        return ComprehensionTlvTag.ACTIVATE_DESCRIPTOR;
++    }
++}
+diff --git a/src/java/com/android/internal/telephony/cat/CommandParams.java b/src/java/com/android/internal/telephony/cat/CommandParams.java
+index 7dfedab..edb3772 100644
+--- a/src/java/com/android/internal/telephony/cat/CommandParams.java
++++ b/src/java/com/android/internal/telephony/cat/CommandParams.java
+@@ -224,3 +224,13 @@ class BIPClientParams extends CommandParams {
+         return false;
+     }
+ }
++class ActivateParams extends CommandParams {
++    int mActivateTarget;
++
++
++    ActivateParams(CommandDetails cmdDet, int target) {
++        super(cmdDet);
++        mActivateTarget = target;
++    }
++}
++
+diff --git a/src/java/com/android/internal/telephony/cat/CommandParamsFactory.java b/src/java/com/android/internal/telephony/cat/CommandParamsFactory.java
+index 2990da3..ff5bd52 100755
+--- a/src/java/com/android/internal/telephony/cat/CommandParamsFactory.java
++++ b/src/java/com/android/internal/telephony/cat/CommandParamsFactory.java
+@@ -35,6 +35,8 @@ import static com.android.internal.telephony.cat.CatCmdMessage.
+                    SetupEventListConstants.BROWSER_TERMINATION_EVENT;
+ import static com.android.internal.telephony.cat.CatCmdMessage.
+                    SetupEventListConstants.BROWSING_STATUS_EVENT;
++import static com.android.internal.telephony.cat.CatCmdMessage.
++                   SetupEventListConstants.HCI_CONNECTIVITY_EVENT;
+ /**
+  * Factory class, used for decoding raw byte arrays, received from baseband,
+  * into a CommandParams object.
+@@ -209,6 +211,9 @@ class CommandParamsFactory extends Handler {
+              case SEND_DATA:
+                  cmdPending = processBIPClient(cmdDet, ctlvs);
+                  break;
++            case ACTIVATE:
++                cmdPending = processActivate(cmdDet, ctlvs);
++                break;
+             default:
+                 // unsupported proactive commands
+                 mCmdParams = new CommandParams(cmdDet);
+@@ -763,6 +768,7 @@ class CommandParamsFactory extends Handler {
+                         case LANGUAGE_SELECTION_EVENT:
+                         case BROWSER_TERMINATION_EVENT:
+                         case BROWSING_STATUS_EVENT:
++                        case HCI_CONNECTIVITY_EVENT:
+                             eventList[i] = eventValue;
+                             i++;
+                             break;
+@@ -1039,6 +1045,27 @@ class CommandParamsFactory extends Handler {
+         return false;
+     }
+ 
++    private boolean processActivate(CommandDetails cmdDet,
++                                     List<ComprehensionTlv> ctlvs) throws ResultException {
++        AppInterface.CommandType commandType =
++                AppInterface.CommandType.fromInt(cmdDet.typeOfCommand);
++        CatLog.d(this, "process " + commandType.name());
++
++        ComprehensionTlv ctlv = null;
++        int target;
++
++        //parse activate descriptor
++        ctlv = searchForTag(ComprehensionTlvTag.ACTIVATE_DESCRIPTOR, ctlvs);
++        if (ctlv != null) {
++            target = ValueParser.retrieveTarget(ctlv);
++            mCmdParams = new CommandParams(cmdDet);
++            CatLog.d(this, "Activate cmd target = " + target);
++        } else {
++            CatLog.d(this, "ctlv is null");
++        }
++        return false;
++    }
++
+     public void dispose() {
+         mIconLoader.dispose();
+         mIconLoader = null;
+diff --git a/src/java/com/android/internal/telephony/cat/ComprehensionTlvTag.java b/src/java/com/android/internal/telephony/cat/ComprehensionTlvTag.java
+index 973dbc8..9e31c27 100644
+--- a/src/java/com/android/internal/telephony/cat/ComprehensionTlvTag.java
++++ b/src/java/com/android/internal/telephony/cat/ComprehensionTlvTag.java
+@@ -46,7 +46,8 @@ public enum ComprehensionTlvTag {
+     LANGUAGE(0x2d),
+     URL(0x31),
+     BROWSER_TERMINATION_CAUSE(0x34),
+-    TEXT_ATTRIBUTE(0x50);
++    TEXT_ATTRIBUTE(0x50),
++    ACTIVATE_DESCRIPTOR(0x7b);
+ 
+     private int mValue;
+ 
+diff --git a/src/java/com/android/internal/telephony/cat/ValueParser.java b/src/java/com/android/internal/telephony/cat/ValueParser.java
+index 91a6fd6..c6b16c7 100644
+--- a/src/java/com/android/internal/telephony/cat/ValueParser.java
++++ b/src/java/com/android/internal/telephony/cat/ValueParser.java
+@@ -354,4 +354,16 @@ abstract class ValueParser {
+             throw new ResultException(ResultCode.CMD_DATA_NOT_UNDERSTOOD);
+         }
+     }
++
++    static int retrieveTarget(ComprehensionTlv ctlv) throws ResultException {
++        ActivateDescriptor activateDesc = new ActivateDescriptor();
++        byte[] rawValue = ctlv.getRawValue();
++        int valueIndex = ctlv.getValueIndex();
++        try {
++            activateDesc.target = rawValue[valueIndex] & 0xff;
++            return activateDesc.target;
++        } catch (IndexOutOfBoundsException e) {
++            throw new ResultException(ResultCode.REQUIRED_VALUES_MISSING);
++        }
++    }
+ }
+-- 
+2.5.0
+

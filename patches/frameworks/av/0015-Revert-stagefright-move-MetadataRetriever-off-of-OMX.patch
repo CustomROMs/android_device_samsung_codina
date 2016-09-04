@@ -1,0 +1,179 @@
+From 14ed81870928e380a1a08dd1b1d6dc6e151b5c5f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 12 Mar 2016 02:53:09 +0700
+Subject: [PATCH 15/19] Revert "stagefright: move MetadataRetriever off of
+ OMXCodec"
+
+This reverts commit 9d73ec661e34f91f8d80a11cc5208a23997b75a0.
+
+Change-Id: I81271be62b0bfcfb286ccd2b89d674343fbc7989
+---
+ media/libmediaplayerservice/StagefrightRecorder.cpp  | 14 ++++++++++++++
+ media/libstagefright/MediaCodec.cpp                  |  1 +
+ .../libstagefright/StagefrightMetadataRetriever.cpp  | 20 +++++++++++---------
+ .../include/StagefrightMetadataRetriever.h           |  2 ++
+ .../libstagefright/tests/SurfaceMediaSource_test.cpp |  5 +++++
+ 5 files changed, 33 insertions(+), 9 deletions(-)
+
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 3b13f2a..36fe800 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -41,6 +41,8 @@
+ #include <media/stagefright/MediaDefs.h>
+ #include <media/stagefright/MetaData.h>
+ #include <media/stagefright/MediaCodecSource.h>
++#include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <media/MediaProfiles.h>
+ #include <camera/ICamera.h>
+ #include <camera/CameraParameters.h>
+@@ -1211,6 +1213,18 @@ void StagefrightRecorder::clipVideoFrameWidth() {
+ }
+ 
+ status_t StagefrightRecorder::checkVideoEncoderCapabilities() {
++    /* hardware codecs must support camera source meta data mode */
++    Vector<CodecCapabilities> codecs;
++    OMXClient client;
++    CHECK_EQ(client.connect(), (status_t)OK);
++    QueryCodecs(
++            client.interface(),
++            (mVideoEncoder == VIDEO_ENCODER_H263 ? MEDIA_MIMETYPE_VIDEO_H263 :
++             mVideoEncoder == VIDEO_ENCODER_MPEG_4_SP ? MEDIA_MIMETYPE_VIDEO_MPEG4 :
++             mVideoEncoder == VIDEO_ENCODER_VP8 ? MEDIA_MIMETYPE_VIDEO_VP8 :
++             mVideoEncoder == VIDEO_ENCODER_H264 ? MEDIA_MIMETYPE_VIDEO_AVC : ""),
++            false /* decoder */, true /* hwCodec */, &codecs);
++
+     if (!mCaptureFpsEnable) {
+         // Dont clip for time lapse capture as encoder will have enough
+         // time to encode because of slow capture rate of time lapse.
+diff --git a/media/libstagefright/MediaCodec.cpp b/media/libstagefright/MediaCodec.cpp
+index 01b29fa..47ec258 100644
+--- a/media/libstagefright/MediaCodec.cpp
++++ b/media/libstagefright/MediaCodec.cpp
+@@ -44,6 +44,7 @@
+ #include <media/stagefright/MediaFilter.h>
+ #include <media/stagefright/MetaData.h>
+ #include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <media/stagefright/PersistentSurface.h>
+ #include <media/stagefright/SurfaceUtils.h>
+ #include <mediautils/BatteryNotifier.h>
+diff --git a/media/libstagefright/StagefrightMetadataRetriever.cpp b/media/libstagefright/StagefrightMetadataRetriever.cpp
+index 08342cf..e37e909 100644
+--- a/media/libstagefright/StagefrightMetadataRetriever.cpp
++++ b/media/libstagefright/StagefrightMetadataRetriever.cpp
+@@ -35,12 +35,11 @@
+ #include <media/stagefright/FileSource.h>
+ #include <media/stagefright/MediaBuffer.h>
+ #include <media/stagefright/MediaCodec.h>
+-#include <media/stagefright/MediaCodecList.h>
+ #include <media/stagefright/MediaDefs.h>
+ #include <media/stagefright/MediaErrors.h>
+ #include <media/stagefright/MediaExtractor.h>
+-#include <media/stagefright/MediaSource.h>
+ #include <media/stagefright/MetaData.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <media/stagefright/Utils.h>
+ 
+ #include <CharacterEncodingDetector.h>
+@@ -56,11 +55,13 @@ StagefrightMetadataRetriever::StagefrightMetadataRetriever()
+     ALOGV("StagefrightMetadataRetriever()");
+ 
+     DataSource::RegisterDefaultSniffers();
++    CHECK_EQ(mClient.connect(), (status_t)OK);
+ }
+ 
+ StagefrightMetadataRetriever::~StagefrightMetadataRetriever() {
+     ALOGV("~StagefrightMetadataRetriever()");
+     clearMetadata();
++    mClient.disconnect();
+ }
+ 
+ status_t StagefrightMetadataRetriever::setDataSource(
+@@ -136,7 +137,7 @@ status_t StagefrightMetadataRetriever::setDataSource(
+ }
+ 
+ static VideoFrame *extractVideoFrame(
+-        const AString &componentName,
++        const char *componentName,
+         const sp<MetaData> &trackMeta,
+         const sp<MediaSource> &source,
+         int64_t frameTimeUs,
+@@ -160,7 +161,7 @@ static VideoFrame *extractVideoFrame(
+             looper, componentName, &err);
+ 
+     if (decoder.get() == NULL || err != OK) {
+-        ALOGW("Failed to instantiate decoder [%s]", componentName.c_str());
++        ALOGW("Failed to instantiate decoder [%s]", componentName);
+         return NULL;
+     }
+ 
+@@ -475,22 +476,23 @@ VideoFrame *StagefrightMetadataRetriever::getFrameAtTime(
+     const char *mime;
+     CHECK(trackMeta->findCString(kKeyMIMEType, &mime));
+ 
+-    Vector<AString> matchingCodecs;
+-    MediaCodecList::findMatchingCodecs(
++    Vector<OMXCodec::CodecNameAndQuirks> matchingCodecs;
++    OMXCodec::findMatchingCodecs(
+             mime,
+             false, /* encoder */
+-            MediaCodecList::kPreferSoftwareCodecs,
++            NULL, /* matchComponentName */
++            OMXCodec::kPreferSoftwareCodecs,
+             &matchingCodecs);
+ 
+     for (size_t i = 0; i < matchingCodecs.size(); ++i) {
+-        const AString &componentName = matchingCodecs[i];
++        const char *componentName = matchingCodecs[i].mName.string();
+         VideoFrame *frame =
+             extractVideoFrame(componentName, trackMeta, source, timeUs, option);
+ 
+         if (frame != NULL) {
+             return frame;
+         }
+-        ALOGV("%s failed to extract thumbnail, trying next decoder.", componentName.c_str());
++        ALOGV("%s failed to extract thumbnail, trying next decoder.", componentName);
+     }
+ 
+     return NULL;
+diff --git a/media/libstagefright/include/StagefrightMetadataRetriever.h b/media/libstagefright/include/StagefrightMetadataRetriever.h
+index 61bbf6c..fd739d0 100644
+--- a/media/libstagefright/include/StagefrightMetadataRetriever.h
++++ b/media/libstagefright/include/StagefrightMetadataRetriever.h
+@@ -20,6 +20,7 @@
+ 
+ #include <media/MediaMetadataRetrieverInterface.h>
+ 
++#include <media/stagefright/OMXClient.h>
+ #include <utils/KeyedVector.h>
+ 
+ namespace android {
+@@ -44,6 +45,7 @@ struct StagefrightMetadataRetriever : public MediaMetadataRetrieverInterface {
+     virtual const char *extractMetadata(int keyCode);
+ 
+ private:
++    OMXClient mClient;
+     sp<DataSource> mSource;
+     sp<MediaExtractor> mExtractor;
+ 
+diff --git a/media/libstagefright/tests/SurfaceMediaSource_test.cpp b/media/libstagefright/tests/SurfaceMediaSource_test.cpp
+index ad1e684..3860e9b 100644
+--- a/media/libstagefright/tests/SurfaceMediaSource_test.cpp
++++ b/media/libstagefright/tests/SurfaceMediaSource_test.cpp
+@@ -38,6 +38,11 @@
+ #include <binder/ProcessState.h>
+ 
+ #include <media/stagefright/foundation/ADebug.h>
++#include <media/stagefright/MediaBufferGroup.h>
++#include <media/stagefright/MediaDefs.h>
++#include <media/stagefright/MetaData.h>
++#include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <OMX_Component.h>
+ 
+ #include "DummyRecorder.h"
+-- 
+2.5.0
+
