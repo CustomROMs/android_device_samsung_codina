@@ -1,0 +1,41 @@
+From 877b5bc3f22997eea36596997fe0681d494887f9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 4 Sep 2016 02:44:09 +0700
+Subject: [PATCH 6/8] Introduce LOCAL_REPORT_FLAGS to report actually used
+ CFLAGS and LDFLAGS
+
+Change-Id: I02746c29b49288e4288d98ea67381a74368e0507
+---
+ core/binary.mk     | 6 ++++++
+ core/clear_vars.mk | 1 +
+ 2 files changed, 7 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 1b18813..2ab1e7c 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -1482,3 +1482,9 @@ endif
+ 
+ # Make sure export_includes gets generated when you are running mm/mmm
+ $(LOCAL_BUILT_MODULE) : | $(export_includes)
++
++ifneq ($(LOCAL_REPORT_FLAGS),)
++        $(warning $(LOCAL_MODULE) is built with CFLAGS=$(TARGET_GLOBAL_CFLAGS) \
++                  $(TARGET_thumb_CFLAGS) $(my_cflags) and my_ldflags=$(my_ldflags))
++
++endif
+diff --git a/core/clear_vars.mk b/core/clear_vars.mk
+index 1db77ff..5d202ad 100644
+--- a/core/clear_vars.mk
++++ b/core/clear_vars.mk
+@@ -54,6 +54,7 @@ LOCAL_CLANG_CONLYFLAGS:=
+ LOCAL_CLANG_CPPFLAGS:=
+ LOCAL_CONLYFLAGS:=
+ LOCAL_RTTI_FLAG:=
++LOCAL_REPORT_FLAGS:=
+ LOCAL_C_INCLUDES:=
+ LOCAL_EXPORT_C_INCLUDE_DIRS:=
+ LOCAL_LDFLAGS:=
+-- 
+2.5.0
+

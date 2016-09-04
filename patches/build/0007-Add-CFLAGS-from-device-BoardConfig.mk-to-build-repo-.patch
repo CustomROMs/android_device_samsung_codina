@@ -1,0 +1,49 @@
+From b6504301fd373d482824acc8a4c68d25d5d925fe Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 4 Sep 2016 02:44:11 +0700
+Subject: [PATCH 7/8] Add CFLAGS from device BoardConfig.mk to build repo for
+ now
+
+Change-Id: I3f72928874ed0ecb96f75a0ae070fa38b37b5d9e
+---
+ core/combo/select.mk | 24 ++++++++++++++++++------
+ 1 file changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/core/combo/select.mk b/core/combo/select.mk
+index 8e72589..d5d770b 100644
+--- a/core/combo/select.mk
++++ b/core/combo/select.mk
+@@ -33,12 +33,24 @@ $(combo_var_prefix)CXX := $(CXX)
+ $(combo_var_prefix)AR := $(AR)
+ $(combo_var_prefix)STRIP := $(STRIP)
+ 
+-$(combo_var_prefix)GLOBAL_CFLAGS += -fno-exceptions -Wno-multichar
+-$(combo_var_prefix)RELEASE_CFLAGS += -O2 -g -fno-strict-aliasing
+-$(combo_var_prefix)GLOBAL_CPPFLAGS +=
+-$(combo_var_prefix)GLOBAL_LDFLAGS +=
+-$(combo_var_prefix)GLOBAL_ARFLAGS += crsPD
+-$(combo_var_prefix)GLOBAL_LD_DIRS +=
++COMMON_GLOBAL_CFLAGS_ += -DSTE_HARDWARE -DSTE_SAMSUNG_HARDWARE -DTARGET_NEEDS_HWC_V0
++TARGET_GLOBAL_CFLAGS_ += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
++TARGET_GLOBAL_CPPFLAGS_ += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
++COMMON_GLOBAL_CFLAGS_ += -DFORCE_SCREENSHOT_CPU_PATH -DBOARD_CANT_REALLOCATE_OMX_BUFFERS
++COMMON_GLOBAL_CFLAGS_ += -DMR0_AUDIO_BLOB -DMR1_AUDIO_BLOB
++COMMON_GLOBAL_CFLAGS_ += -DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR
++COMMON_GLOBAL_CFLAGS_ += -DNEEDS_VECTORIMPL_SYMBOLS -DADD_LEGACY_ACQUIRE_BUFFER_SYMBOL
++COMMON_GLOBAL_CFLAGS_ += -DNO_SECURE_DISCARD
++COMMON_GLOBAL_CPPFLAGS_ += -DNO_SECURE_DISCARD
++
++DEVICE_FLAGS := $(COMMON_GLOBAL_CFLAGS_) $(TARGET_GLOBAL_CFLAGS_) $(COMMON_GLOBAL_CPPFLAGS_)
++
++$(combo_var_prefix)GLOBAL_CFLAGS := -fno-exceptions -Wno-multichar $(DEVICE_CFLAGS)
++$(combo_var_prefix)RELEASE_CFLAGS := -O2 -g -fno-strict-aliasing $(DEVICE_CFLAGS)
++$(combo_var_prefix)GLOBAL_CPPFLAGS := $(DEVICE_CFLAGS)
++$(combo_var_prefix)GLOBAL_LDFLAGS := 
++$(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
++$(combo_var_prefix)GLOBAL_LD_DIRS :=
+ 
+ $(combo_var_prefix)EXECUTABLE_SUFFIX :=
+ $(combo_var_prefix)SHLIB_SUFFIX := .so
+-- 
+2.5.0
+

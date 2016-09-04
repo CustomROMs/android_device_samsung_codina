@@ -1,0 +1,36 @@
+From 5b6903e2c9e1402e080946f3e1be3ea3d394734c Mon Sep 17 00:00:00 2001
+From: Simon Shields <keepcalm444@gmail.com>
+Date: Sun, 28 Aug 2016 01:52:11 +1000
+Subject: [PATCH 4/8] build: don't overwrite flags from BoardConfig
+
+Change-Id: Iff413c1ede334c8315a2082d9849e6c32d3aa8f7
+---
+ core/combo/select.mk | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/core/combo/select.mk b/core/combo/select.mk
+index df12e7e..8e72589 100644
+--- a/core/combo/select.mk
++++ b/core/combo/select.mk
+@@ -33,12 +33,12 @@ $(combo_var_prefix)CXX := $(CXX)
+ $(combo_var_prefix)AR := $(AR)
+ $(combo_var_prefix)STRIP := $(STRIP)
+ 
+-$(combo_var_prefix)GLOBAL_CFLAGS := -fno-exceptions -Wno-multichar
+-$(combo_var_prefix)RELEASE_CFLAGS := -O2 -g -fno-strict-aliasing
+-$(combo_var_prefix)GLOBAL_CPPFLAGS :=
+-$(combo_var_prefix)GLOBAL_LDFLAGS :=
+-$(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
+-$(combo_var_prefix)GLOBAL_LD_DIRS :=
++$(combo_var_prefix)GLOBAL_CFLAGS += -fno-exceptions -Wno-multichar
++$(combo_var_prefix)RELEASE_CFLAGS += -O2 -g -fno-strict-aliasing
++$(combo_var_prefix)GLOBAL_CPPFLAGS +=
++$(combo_var_prefix)GLOBAL_LDFLAGS +=
++$(combo_var_prefix)GLOBAL_ARFLAGS += crsPD
++$(combo_var_prefix)GLOBAL_LD_DIRS +=
+ 
+ $(combo_var_prefix)EXECUTABLE_SUFFIX :=
+ $(combo_var_prefix)SHLIB_SUFFIX := .so
+-- 
+2.5.0
+

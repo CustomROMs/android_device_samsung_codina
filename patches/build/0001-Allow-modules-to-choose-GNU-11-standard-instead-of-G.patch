@@ -1,0 +1,43 @@
+From 904fcf16b64ac7d3dbc05f9eb14074ad811de8ca Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 2 Sep 2016 20:09:20 +0700
+Subject: [PATCH 1/8] Allow modules to choose GNU++11 standard instead of
+ GNU++14
+
+Change-Id: Icfe0e849a2ae128954551c03ac3af0d1a87a4449
+---
+ core/binary.mk     | 4 ++++
+ core/clear_vars.mk | 1 +
+ 2 files changed, 5 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 20a830a..1b18813 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -235,7 +235,11 @@ else ifeq ($(my_clang),)
+     my_clang := true
+ endif
+ 
++ifneq ($(LOCAL_USE_STD_GNU_CPP11),true)
+ my_cpp_std_version := -std=gnu++14
++else
++my_cpp_std_version := -std=gnu++11
++endif
+ 
+ ifneq ($(my_clang),true)
+     # GCC uses an invalid C++14 ABI (emits calls to
+diff --git a/core/clear_vars.mk b/core/clear_vars.mk
+index 5ca5fb6..1db77ff 100644
+--- a/core/clear_vars.mk
++++ b/core/clear_vars.mk
+@@ -156,6 +156,7 @@ LOCAL_COMPATIBILITY_SUPPORT_FILES:=
+ LOCAL_CTS_TEST_PACKAGE:=
+ LOCAL_CTS_TEST_RUNNER:=
+ LOCAL_CLANG:=
++LOCAL_USE_STD_GNU_CPP11:=
+ LOCAL_JAR_EXCLUDE_FILES:=
+ LOCAL_JAR_PACKAGES:=
+ LOCAL_JAR_EXCLUDE_PACKAGES:=
+-- 
+2.5.0
+
