@@ -1,0 +1,27 @@
+From 30673cda23fbb6e6bf8421f751fe9149f9d117ed Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 4 Sep 2016 21:40:44 +0700
+Subject: [PATCH 6/6] init: remove -Werror
+
+Change-Id: Ie94b5b84005eea02c763a7b3901765b974649415
+---
+ init/Android.mk | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/init/Android.mk b/init/Android.mk
+index d24391d..99fd5d9 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -11,8 +11,7 @@ init_options += -DLOG_UEVENTS=0
+ init_cflags += \
+     $(init_options) \
+     -Wall -Wextra \
+-    -Wno-unused-parameter \
+-    -Werror \
++    -Wno-unused-parameter
+ 
+ # --
+ 
+-- 
+2.5.0
+

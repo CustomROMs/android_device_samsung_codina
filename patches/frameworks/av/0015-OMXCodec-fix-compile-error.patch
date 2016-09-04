@@ -1,0 +1,37 @@
+From d40336f3ed785259baee045c96383299cd6e7dd2 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 4 Sep 2016 04:02:24 +0700
+Subject: [PATCH 15/15] OMXCodec: fix compile error
+
+Change-Id: I5f605f919fd5092568961c0e5cf74c1ab19606a1
+---
+ media/libstagefright/OMXCodec.cpp | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index 4188908..120a48e 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -4055,7 +4055,8 @@ status_t OMXCodec::initNativeWindow() {
+     // Enable use of a GraphicBuffer as the output for this node.  This must
+     // happen before getting the IndexParamPortDefinition parameter because it
+     // will affect the pixel format that the node reports.
+-    status_t err = mOMX->enableNativeBuffers(mNode, kPortIndexOutput, OMX_TRUE);
++    status_t err = mOMX->enableNativeBuffers(mNode, kPortIndexOutput, OMX_TRUE /* graphic */,
++		 OMX_TRUE /* enable */);
+     if (err != 0) {
+         return err;
+     }
+@@ -4346,7 +4347,8 @@ status_t QueryCodec(
+ 
+     sp<OMXCodecObserver> observer = new OMXCodecObserver;
+     IOMX::node_id node;
+-    status_t err = omx->allocateNode(componentName, observer, &node);
++    status_t err = omx->allocateNode(componentName, observer,
++			NULL /* nodeBinder */, &node);
+ 
+     if (err != OK) {
+         return err;
+-- 
+2.5.0
+

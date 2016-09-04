@@ -1,0 +1,42 @@
+From 5de3ad3b049bf0cf6b4a78695ef0a4303c458cd5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 4 Sep 2016 04:05:53 +0700
+Subject: [PATCH 1/4] hardware-libhardware_Samsung-GPS-header.patch
+
+Change-Id: Ied7de2f765b76ec78f3e2cbeb9398730aeed32ea
+---
+ include/hardware/gps.h | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/include/hardware/gps.h b/include/hardware/gps.h
+index acf601b..f6c1c8b 100644
+--- a/include/hardware/gps.h
++++ b/include/hardware/gps.h
+@@ -507,6 +507,13 @@ typedef uint8_t                         GnssConstellationType;
+  */
+ #define GPS_GEOFENCING_INTERFACE   "gps_geofencing"
+ 
++#ifdef STE_SAMSUNG_HARDWARE
++/**
++ * The GPS chipset can use Psc for AGPS.
++ */
++#define AGPS_USE_PSC
++#endif
++
+ /**
+  * Name of the GPS Measurements interface.
+  */
+@@ -570,6 +577,10 @@ typedef struct {
+     float   elevation;
+     /** Azimuth of SV in degrees. */
+     float   azimuth;
++#ifdef STE_SAMSUNG_HARDWARE
++    /** Unknown Samsung element. */
++    int     padding;
++#endif
+ } GpsSvInfo;
+ 
+ typedef struct {
+-- 
+2.5.0
+

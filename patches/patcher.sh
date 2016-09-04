@@ -7,7 +7,7 @@ KERNEL_PATCH="kernel/codina/chrono"
 if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
 		 bionic \
-		 #frameworks/av \
+		 frameworks/av \
 		 frameworks/base \
 		 frameworks/native  \
 		 frameworks/opt/net/wifi \

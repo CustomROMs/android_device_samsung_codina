@@ -1,0 +1,52 @@
+From 93ae42a4ff8b6131cba74b3bfada42db209dbc5c Mon Sep 17 00:00:00 2001
+From: Ethan Chen <intervigil@gmail.com>
+Date: Wed, 28 Oct 2015 16:30:51 -0700
+Subject: [PATCH 11/15] camera: Allow devices to load custom CameraParameter
+ code
+
+* Some devices need additional code to load their cameras. Add a hook
+  for extra classes and symbols to be included.
+
+Change-Id: Ifbe79e25b7ab47c5d468f5179032a4283b3f0df5
+(cherry picked from commit 38681625992c0029d32eec98fc7e89d71b855b0e)
+---
+ camera/Android.mk | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/camera/Android.mk b/camera/Android.mk
+index 1a3382f..8a32299 100644
+--- a/camera/Android.mk
++++ b/camera/Android.mk
+@@ -38,7 +38,6 @@ LOCAL_SRC_FILES := \
+ LOCAL_SRC_FILES += \
+ 	Camera.cpp \
+ 	CameraMetadata.cpp \
+-	CameraParameters.cpp \
+ 	CaptureResult.cpp \
+ 	CameraParameters2.cpp \
+ 	ICamera.cpp \
+@@ -75,6 +74,21 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
+ 
+ LOCAL_CFLAGS += -Werror -Wall -Wextra
+ 
++ifneq ($(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY),)
++LOCAL_WHOLE_STATIC_LIBRARIES += $(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY)
++else
++LOCAL_WHOLE_STATIC_LIBRARIES += libcamera_parameters
++endif
++
+ LOCAL_MODULE:= libcamera_client
+ 
+ include $(BUILD_SHARED_LIBRARY)
++
++include $(CLEAR_VARS)
++
++LOCAL_SRC_FILES := \
++	CameraParameters.cpp
++
++LOCAL_MODULE := libcamera_parameters
++
++include $(BUILD_STATIC_LIBRARY)
+-- 
+2.5.0
+
