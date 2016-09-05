@@ -58,6 +58,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
+import android.telephony.RadioAccessFamily;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.text.TextUtils;
@@ -67,6 +68,7 @@ import com.android.internal.telephony.gsm.SmsBroadcastConfigInfo;
 import com.android.internal.telephony.gsm.SuppServiceNotification;
 import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
 import com.android.internal.telephony.cdma.CdmaInformationRecords;
+import com.android.internal.telephony.RadioCapability;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -249,6 +251,22 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
                 !((networkType == networkClass) || (networkType == 0 && networkClass == 2));
     }
 
+    private RadioCapability makeStaticRadioCapability() {
+        // default to UNKNOWN so we fail fast.
+        int raf = RadioAccessFamily.RAF_UNKNOWN;
+
+        String rafString = mContext.getResources().getString(
+                com.android.internal.R.string.config_radio_access_family);
+        if (TextUtils.isEmpty(rafString) == false) {
+            raf = RadioAccessFamily.rafTypeFromString(rafString);
+        }
+        RadioCapability rc = new RadioCapability(mInstanceId.intValue(), 0, 0, raf,
+                "", RadioCapability.RC_STATUS_SUCCESS);
+        if (RILJ_LOGD) riljLog("Faking RIL_REQUEST_GET_RADIO_CAPABILITY response using " + raf);
+        return rc;
+    }
+
+
     @Override
     public void setPreferredNetworkType(int networkType , Message response) {
         /* Samsung modem implementation does bad things when a datacall is running
@@ -428,7 +446,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     }
 
     @Override
-    protected RILRequest processSolicited (Parcel p) {
+    protected RILRequest processSolicited (Parcel p, int type) {
     int serial, error;
     boolean found = false;
 
@@ -1042,7 +1060,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             dataCall.cid = p.readInt();
             dataCall.active = p.readInt();
             dataCall.type = p.readString();
-            if (version < 4 || needsOldRilFeature("datacallapn")) {
+            if (version < 4 /*|| needsOldRilFeature("datacallapn")*/) {
                 p.readString(); // APN - not used
             }
             String addresses = p.readString();
@@ -1053,9 +1071,9 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             dataCall.ifname = Resources.getSystem().getString(com.android.internal.R.string.config_datause_iface);
         } else {
             dataCall.status = p.readInt();
-            if (needsOldRilFeature("usehcradio"))
-                dataCall.suggestedRetryTime = -1;
-            else
+            //if (needsOldRilFeature("usehcradio"))
+            //    dataCall.suggestedRetryTime = -1;
+            //else
                 dataCall.suggestedRetryTime = p.readInt();
             dataCall.cid = p.readInt();
             dataCall.active = p.readInt();
