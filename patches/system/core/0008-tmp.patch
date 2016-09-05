@@ -1,0 +1,127 @@
+From 5868ba03770cb28afe53cd506ac4c416cd64b41b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 5 Sep 2016 16:57:54 +0700
+Subject: [PATCH 8/9] tmp
+
+Change-Id: Ie49d3cb100490ebef8416bed913a7601d63ec1ef
+---
+ include/utils/Flattenable.h | 39 ---------------------------------------
+ init/init.cpp               |  4 +---
+ libutils/Android.mk         |  3 +++
+ 3 files changed, 4 insertions(+), 42 deletions(-)
+
+diff --git a/include/utils/Flattenable.h b/include/utils/Flattenable.h
+index 495b90d..6d0fdaf 100644
+--- a/include/utils/Flattenable.h
++++ b/include/utils/Flattenable.h
+@@ -79,35 +79,20 @@ public:
+  * Flattenable objects must implement this protocol.
+  */
+ 
+-#ifndef STE_HARDWARE
+-template <typename T>
+-#endif
+ class Flattenable {
+ public:
+     // size in bytes of the flattened object
+-#ifdef STE_HARDWARE
+     virtual size_t getFlattenedSize() const = 0;
+-#else
+-    inline size_t getFlattenedSize() const;
+-#endif
+ 
+     // number of file descriptors to flatten
+-#ifdef STE_HARDWARE
+     virtual size_t getFdCount() const = 0;
+-#else
+-    inline size_t getFdCount() const;
+-#endif
+ 
+     // flattens the object into buffer.
+     // size should be at least of getFlattenedSize()
+     // file descriptors are written in the fds[] array but ownership is
+     // not transfered (ie: they must be dupped by the caller of
+     // flatten() if needed).
+-#ifdef STE_HARDWARE
+     virtual status_t flatten(void*& buffer, size_t& size, int*& fds, size_t& count) const = 0;
+-#else
+-    inline status_t flatten(void*& buffer, size_t& size, int*& fds, size_t& count) const;
+-#endif
+ 
+     // unflattens the object from buffer.
+     // size should be equal to the value of getFlattenedSize() when the
+@@ -116,35 +101,11 @@ public:
+     // don't need to be dupped(). ie: the caller of unflatten doesn't
+     // keep ownership. If a fd is not retained by unflatten() it must be
+     // explicitly closed.
+-#ifdef STE_HARDWARE
+     virtual status_t unflatten(void const*& buffer, size_t& size, int const*& fds, size_t& count) = 0;
+ 
+ protected:
+     virtual ~Flattenable() = 0;
+ };
+-#else
+-    inline status_t unflatten(void const*& buffer, size_t& size, int const*& fds, size_t& count);
+-};
+-
+-template<typename T>
+-inline size_t Flattenable<T>::getFlattenedSize() const {
+-    return static_cast<T const*>(this)->T::getFlattenedSize();
+-}
+-template<typename T>
+-inline size_t Flattenable<T>::getFdCount() const {
+-    return static_cast<T const*>(this)->T::getFdCount();
+-}
+-template<typename T>
+-inline status_t Flattenable<T>::flatten(
+-        void*& buffer, size_t& size, int*& fds, size_t& count) const {
+-    return static_cast<T const*>(this)->T::flatten(buffer, size, fds, count);
+-}
+-template<typename T>
+-inline status_t Flattenable<T>::unflatten(
+-        void const*& buffer, size_t& size, int const*& fds, size_t& count) {
+-    return static_cast<T*>(this)->T::unflatten(buffer, size, fds, count);
+-}
+-#endif
+ 
+ /*
+  * LightFlattenable is a protocol allowing object to serialize themselves out
+diff --git a/init/init.cpp b/init/init.cpp
+index 911070a..9b1a721 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -262,9 +262,7 @@ ret:
+ }
+ 
+ static void security_failure() {
+-    ERROR("Security failure; rebooting into recovery mode...\n");
+-    android_reboot(ANDROID_RB_RESTART2, 0, "recovery");
+-    while (true) { pause(); }  // never reached
++	return;
+ }
+ 
+ #define MMAP_RND_PATH "/proc/sys/vm/mmap_rnd_bits"
+diff --git a/libutils/Android.mk b/libutils/Android.mk
+index 60cd53f..1fb3d3c 100644
+--- a/libutils/Android.mk
++++ b/libutils/Android.mk
+@@ -93,6 +93,8 @@ LOCAL_MODULE := libutils
+ LOCAL_CLANG := true
+ LOCAL_SANITIZE := integer
+ LOCAL_C_INCLUDES += external/safe-iop/include
++LOCAL_REPORT_FLAGS := true
++
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ # For the device, shared
+@@ -110,6 +112,7 @@ LOCAL_C_INCLUDES += external/safe-iop/include
+ 
+ LOCAL_CLANG := true
+ LOCAL_SANITIZE := integer
++LOCAL_REPORT_FLAGS := true
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+-- 
+2.5.0
+

@@ -8,10 +8,10 @@ if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
 		 bionic \
 		 frameworks/av \
-		 frameworks/base \
+		 #frameworks/base \
 		 frameworks/native  \
 		 frameworks/opt/net/wifi \
-		 frameworks/opt/telephony \
+		 #frameworks/opt/telephony \
 		 external/libpng \
 		 hardware/libhardware \
 		 hardware/ril \
