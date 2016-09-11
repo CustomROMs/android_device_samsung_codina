@@ -121,6 +121,9 @@ BOARD_GLOBAL_CFLAGS += -DMR0_AUDIO_BLOB -DMR1_AUDIO_BLOB
 USE_LEGACY_AUDIO_POLICY := 1
 TARGET_NEEDS_BOOSTED_SOUNDS := true
 
+BOARD_USES_GENERIC_AUDIO := true
+BOARD_USES_ALSA_AUDIO := false
+
 # Enable WEBGL in WebKit
 ENABLE_WEBGL := true
 
@@ -215,14 +218,14 @@ endif
 
 
 # Dex Pre-opt
-WITH_DEXPREOPT := true
-DONT_DEXPREOPT_PREBUILTS := true
+WITH_DEXPREOPT := false	
+#DONT_DEXPREOPT_PREBUILTS := true
 
 # Disable compression of precompiled odex with gzip
-WITH_DEXPREOPT_COMP := false
+#WITH_DEXPREOPT_COMP := false
  
 # Enable position-independent code for odex files
-WITH_DEXPREOPT_PIC := true
+#WITH_DEXPREOPT_PIC := true
 
 FTREE_VECTORIZE := true
 FFAST_MATH := true
