@@ -35,6 +35,9 @@ persist.sys.usb.config=mtp,adb
 # Hardware
 camera2.portability.force_api=1
 debug.composition.type=gpu
+
+# With audiopolicy enabled, the system_server will crash at boot
+ste.enable_audio_policy=false
 # debug.composition.type=dyn
 # ro.sys.fw.trim_enable_memory=805306368
 ro.sys.fw.trim_enable_memory=536870912
