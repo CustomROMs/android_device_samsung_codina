@@ -181,8 +181,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libstlport
 
-# Snap Camera
+# Camera
 PRODUCT_PACKAGES += \
+    libhead \
     Snap \
     LockClock
 

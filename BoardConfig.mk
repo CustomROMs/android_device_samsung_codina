@@ -218,14 +218,14 @@ endif
 
 
 # Dex Pre-opt
-WITH_DEXPREOPT := false	
+WITH_DEXPREOPT := true
 #DONT_DEXPREOPT_PREBUILTS := true
 
 # Disable compression of precompiled odex with gzip
 #WITH_DEXPREOPT_COMP := false
  
 # Enable position-independent code for odex files
-#WITH_DEXPREOPT_PIC := true
+WITH_DEXPREOPT_PIC := true
 
 FTREE_VECTORIZE := true
 FFAST_MATH := true
@@ -238,3 +238,4 @@ ENABLE_LTO := true
 UNSAFE_LOOPS_OPTIMIZATIONS := true
 #BUILD_FDO_INSTRUMENT=true
 TARGET_DISABLE_CMSDK := true
+USE_CLANG_PLATFORM_BUILD = false 
