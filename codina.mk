@@ -123,7 +123,7 @@ PRODUCT_PACKAGES += \
 # Shims
 PRODUCT_PACKAGES += \
     libLog \
-    libshim_gps
+    gps.montblanc
 
 # init.d
 PRODUCT_COPY_FILES += \
