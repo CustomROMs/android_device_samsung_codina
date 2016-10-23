@@ -99,7 +99,7 @@ ifeq ($(DEVICE_ENABLE_TOOLCHAIN),true)
 # KERNEL_TOOLCHAIN := /home/sergeyl/eabi/prebuilt/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin
 # KERNEL_TOOLCHAIN_PREFIX := arm-linux-gnueabihf-
 # KERNEL_TOOLCHAIN_PREFIX:=$(ANDROID_BUILD_TOP)/prebuilts/gcc/$(HOST_OS)-x86/arm/arm-eabi-5.3/bin/arm-eabi-
-KERNEL_TOOLCHAIN := /home/sergeyl/eabi/prebuilt/armv7a-linux-gnueabihf-gcc-5.2.0_with_isl_x86/bin
+KERNEL_TOOLCHAIN := /home/chrono/1/kernel/armv7a-linux-gnueabihf-5.2/bin
 KERNEL_TOOLCHAIN_PREFIX := armv7a-linux-gnueabihf-
 endif
 
@@ -207,11 +207,11 @@ BOARD_NO_SECURE_DISCARD := true
 TARGET_OTA_ASSERT_DEVICE := codina,i8160,GT-I8160
 
 # Kernel
-TARGET_KERNEL_SOURCE := kernel/samsung/ChronoKerne3
+TARGET_KERNEL_SOURCE := kernel/codina/chrono
 TARGET_KERNEL_CONFIG := codina_defconfig
 # TARGET_KERNEL_CONFIG := codina_nodebug_defconfig
 # TARGET_KERNEL_CONFIG := codina_selinux_defconfig
-PLATFORM_LINARO_4.9 := true
+#PLATFORM_LINARO_4.9 := true
 
 # Bluetooth
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(LOCAL_PATH)/configs/bluetooth/include
@@ -231,13 +231,13 @@ else
 -include $(LOCAL_PATH)/cwm.mk
 endif
 
-# Dex Pre-opt
-# WITH_DEXPREOPT := true
+#Dex Pre-opt
+WITH_DEXPREOPT := true
 # Enable position-independent code for odex files
-# WITH_DEXPREOPT_PIC := true
+WITH_DEXPREOPT_PIC := true
 # Disable compression of precompiled odex with gzip
-# WITH_DEXPREOPT_COMP := false
-# DONT_DEXPREOPT_PREBUILTS := true
+WITH_DEXPREOPT_COMP := false
+DONT_DEXPREOPT_PREBUILTS := true
 
 # BOARD_LPM_BOOT_ARGUMENT_NAME := lpm_boot
 # BOARD_LPM_BOOT_ARGUMENT_VALUE := 1
