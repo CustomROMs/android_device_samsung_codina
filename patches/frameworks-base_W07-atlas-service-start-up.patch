@@ -1,0 +1,32 @@
+Subject: [PATCH] SystemServer: Do not start Atlas Service on lowram devices.
+
+Provide an on/off switch to control atlas service at start-up. This
+service is disabled by default on lowram devices to save memory.
+Atlas service is responsible for pre-loading drawables which
+can be shareable among the applications. Found that the probability
+of using same drawables in different apps concurrently is very less.
+However it allocates fixed size of ion buffer based on config.
+So by disabling it this memory overhead can be avoided. We are safe
+to disable this service as it does not block any functionality.
+
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index fbd5cf9..aaf97c0 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -589,6 +589,7 @@
+                 false);
+         boolean isEmulator = SystemProperties.get("ro.kernel.qemu").equals("1");
+         boolean enableWigig = SystemProperties.getBoolean("persist.wigig.enable", false);
++        boolean disableAtlas = SystemProperties.getBoolean("config.disable_atlas", false);
+ 
+         String externalServer = context.getResources().getString(
+                 org.cyanogenmod.platform.internal.R.string.config_externalSystemServer);
+@@ -1162,7 +1163,7 @@
+                 mSystemServiceManager.startService(DreamManagerService.class);
+             }
+ 
+-            if (!disableNonCoreServices && ZygoteInit.PRELOAD_RESOURCES) {
++            if (!disableNonCoreServices && ZygoteInit.PRELOAD_RESOURCES && !disableAtlas) {
+                 traceBeginAndSlog("StartAssetAtlasService");
+                 try {
+                     atlas = new AssetAtlasService(context);

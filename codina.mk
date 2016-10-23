@@ -18,50 +18,66 @@ LOCAL_PATH := device/samsung/codina
 
 DEVICE_PACKAGE_OVERLAYS := $(LOCAL_PATH)/overlay
 
+# System properties
+-include $(LOCAL_PATH)/system_prop.mk
+
 # Our devices are HDPI
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
 
-# Graphics
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.opengles.version=131072 \
-    ro.zygote.disable_gl_preload=1 \
-    ro.bq.gpu_to_cpu_unsupported=1 \
-    debug.sf.hw=1 \
-    debug.hwui.render_dirty_regions=false
+# new google video codecs for low end devices
+DEVICE_ENABLE_LOV := true
+DEVICE_WiFi_NEW := true
+DEVICE_ENABLE_SUBMIX := true
+# DEVICE_ENABLE_XML_AUDIO := true
 
 # Media
+ifeq ($(DEVICE_ENABLE_LOV),true)
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/omxloaders:system/etc/omxloaders \
+    $(LOCAL_PATH)/configsnew/media_codecs.xml:system/etc/media_codecs.xml \
+    $(LOCAL_PATH)/configsnew/media_profiles.xml:system/etc/media_profiles.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:system/etc/media_codecs_google_video_le.xml
+else
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/omxloaders:system/etc/omxloaders \
     $(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
     $(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profiles.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
-    frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:system/etc/media_codecs_google_video_le.xml
+    frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:system/etc/media_codecs_google_video.xml
+endif
 
 # Wifi
+ifeq ($(DEVICE_WiFi_NEW),true)
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf \
-    $(LOCAL_PATH)/configs/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf
+    $(LOCAL_PATH)/configsnew/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf \
+    $(LOCAL_PATH)/configsnew/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf
+else
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
+
+$(call inherit-product, hardware/broadcom/wlan/bcmdhd/config/config-bcm.mk)
+endif
 
 PRODUCT_PACKAGES += \
     libnetcmdiface \
     wpa_supplicant \
     wpa_supplicant.conf
 
-PRODUCT_PROPERTY_OVERRIDES += \
-    wifi.interface=wlan0 \
-    wifi.supplicant_scan_interval=15
-
 # Wi-Fi firmware
-$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4330/device-bcm.mk)
+# $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4330/device-bcm.mk)
 
-# Wi-Fi test 
+# Wi-Fi test
 PRODUCT_PACKAGES += \
     libwpa_client \
-    hostapd \
-    hostapd_default.conf \
-    dhcpcd.conf
+    hostapd
+
+#PRODUCT_PACKAGES += \
+#    dhcpcd.conf
+#    hostapd_default.conf
 
 # Bluetooth
 PRODUCT_COPY_FILES += \
@@ -72,18 +88,32 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/cspsa.conf:system/etc/cspsa.conf \
     $(LOCAL_PATH)/configs/usbid_init.sh:system/bin/usbid_init.sh
 
-# RIL
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.ril.hsxpa=1 \
-    ro.ril.gprsclass=10 \
-    ro.telephony.ril_class=SamsungU8500RIL \
-    ro.telephony.sends_barcount=1 \
-    mobiledata.interfaces=pdp0,wlan0,gprs,ppp0
-
 # Audio
+ifeq ($(DEVICE_ENABLE_SUBMIX),true)
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configsnew/audio_policy.conf:system/etc/audio_policy.conf \
+    $(LOCAL_PATH)/configs/asound.conf:system/etc/asound.conf
+
+PRODUCT_PACKAGES += \
+    audio.r_submix.default
+
+else
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf \
     $(LOCAL_PATH)/configs/asound.conf:system/etc/asound.conf
+endif
+
+# XML Audio configuration files
+ifeq ($(DEVICE_ENABLE_XML_AUDIO),true)
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/audioconfiguration/audio_output_policy.conf:system/vendor/etc/audio_output_policy.conf \
+    $(LOCAL_PATH)/audioconfiguration/audio_policy_configuration.xml:system/etc/audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:system/etc/a2dp_audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:system/etc/audio_policy_volumes.xml \
+    frameworks/av/services/audiopolicy/config/default_volume_tables.xml:system/etc/default_volume_tables.xml \
+    frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:system/etc/r_submix_audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:system/etc/usb_audio_policy_configuration.xml
+endif
 
 PRODUCT_PACKAGES += \
     audio.usb.default \
@@ -94,41 +124,29 @@ PRODUCT_PACKAGES += \
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
 
-# USB
-ADDITIONAL_DEFAULT_PROPERTIES += \
-    ro.secure=0 \
-    ro.adb.secure=0 \
-    persist.service.adb.enable=1 \
-    persist.service.debuggable=1
-
-#PRODUCT_PROPERTY_OVERRIDES += \
-#    persist.sys.usb.config=mtp,adb
-
 # Charger
-#PRODUCT_PACKAGES += \
-#    charger \
-#    charger_res_images
+PRODUCT_PACKAGES += \
+    charger_res_images
 
 # Charger
 # Charger Prebuilt (temporary solution for lollipop)
 # Use prebuilt charger and images from KitKat
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/prebuilt/charger/charger:root/sbin/charger \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_0.png:root/res/images/charger/battery_0.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_1.png:root/res/images/charger/battery_1.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_2.png:root/res/images/charger/battery_2.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_3.png:root/res/images/charger/battery_3.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_4.png:root/res/images/charger/battery_4.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_5.png:root/res/images/charger/battery_5.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_charge.png:root/res/images/charger/battery_charge.png \
-    $(LOCAL_PATH)/prebuilt/charger/images/battery_fail.png:root/res/images/charger/battery_fail.png
+#PRODUCT_COPY_FILES += \
+#    $(LOCAL_PATH)/prebuilt/charger/charger:root/sbin/charger \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_0.png:root/res/images/charger/battery_0.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_1.png:root/res/images/charger/battery_1.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_2.png:root/res/images/charger/battery_2.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_3.png:root/res/images/charger/battery_3.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_4.png:root/res/images/charger/battery_4.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_5.png:root/res/images/charger/battery_5.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_charge.png:root/res/images/charger/battery_charge.png \
+#    $(LOCAL_PATH)/prebuilt/charger/images/battery_fail.png:root/res/images/charger/battery_fail.png
 
 # Misc Packages
 PRODUCT_PACKAGES += \
     com.android.future.usb.accessory \
     SamsungServiceMode \
-    Stk \
-    Torch
+    Stk
 
 # Filesystem management
 PRODUCT_PACKAGES += \
@@ -151,7 +169,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:system/etc/permissions/android.hardware.bluetooth.xml \
-    frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.camera.autofocus.xml:system/etc/permissions/android.hardware.camera.autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml \
@@ -172,6 +189,11 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/android.software.sip.xml:system/etc/permissions/android.software.sip.xml \
     frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
+    packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
+
+# These are the hardware-audio low
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml
 
 # Live Wallpapers
 PRODUCT_PACKAGES += \
@@ -181,39 +203,16 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libstlport
 
-# Camera
+# Snap Camera
 PRODUCT_PACKAGES += \
-    libhead \
-    Snap \
-    LockClock
+    Snap
 
-# Disable error Checking
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.kernel.android.checkjni=0 \
-    dalvik.vm.checkjni=false
+# Telephony-ext
+# PRODUCT_PACKAGES += telephony-ext
+# PRODUCT_BOOT_JARS += telephony-ext
 
-# SELinux
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.boot.selinux=disabled
-
-# Storage switch
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.sys.vold.switchablepair=sdcard0,sdcard1
-
-# Dalvik VM config for 768MB RAM devices
-PRODUCT_PROPERTY_OVERRIDES += \
-    dalvik.vm.dexopt-data-only=1 \
-    dalvik.vm.heapstartsize=5m \
-    dalvik.vm.heapgrowthlimit=48m \
-    dalvik.vm.heapsize=128m \
-    dalvik.vm.heaptargetutilization=0.75 \
-    dalvik.vm.heapminfree=512k \
-    dalvik.vm.heapmaxfree=4m
+# We have enough storage space to hold precise GC data
 PRODUCT_TAGS += dalvik.gc.type-precise
-
-# Art
-PRODUCT_PROPERTY_OVERRIDES += \
-    dalvik.vm.dex2oat-swap=false
 
 # Use the non-open-source parts, if they're present
 include vendor/samsung/u8500-common/vendor-common.mk
@@ -226,10 +225,6 @@ $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.m
 # STE Modem
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/ste_modem.sh:system/etc/ste_modem.sh
-
-# UMS config
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/ums_init.sh:system/bin/ums_init.sh
 
 # Audio
 PRODUCT_COPY_FILES += \

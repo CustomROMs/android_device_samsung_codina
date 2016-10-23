@@ -19,6 +19,10 @@ on early-fs
 
     mount j4fs /dev/block/mmcblk0p1 /mnt/.lfs wait
 
+    # Install Module
+    insmod /system/lib/modules/fuse.ko
+    insmod /system/lib/modules/sdcardfs.ko
+
 on boot
     service adbd /sbin/adbd recovery
     disabled

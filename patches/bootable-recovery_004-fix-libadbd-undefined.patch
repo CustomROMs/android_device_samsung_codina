@@ -1,0 +1,44 @@
+Subject: [PATCH] libminiadbd: fix libadbd undefined reference to 'android_pubkey_decode' functions                  link libcrypto_utils.so to libminiadbd.so
+
+diff --git a/minadbd/Android.mk b/minadbd/Android.mk
+index 3d675dd..0427912 100644
+--- a/minadbd/Android.mk
++++ b/minadbd/Android.mk
+@@ -30,7 +30,8 @@
+     LOCAL_SHARED_LIBRARIES += libmincrypttwrp
+     LOCAL_CFLAGS += -DUSE_MINCRYPT
+ else
+-    LOCAL_SHARED_LIBRARIES += libcrypto
++    LOCAL_C_INCLUDES += system/core/libcrypto_utils/include
++    LOCAL_SHARED_LIBRARIES += libcrypto libcrypto_utils
+ endif
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/prebuilt/Android.mk b/prebuilt/Android.mk
+index f7f8c91..b0dce35 100644
+--- a/prebuilt/Android.mk
++++ b/prebuilt/Android.mk
+@@ -93,6 +93,7 @@
+ endif
+ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -gt 23; echo $$?),0)
+     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
++    RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto_utils.so
+     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libpackagelistparser.so
+     RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/liblzma.so
+ endif
+diff --git a/updater/Android.mk b/updater/Android.mk
+index 23ba592..ea31a8b 100644
+--- a/updater/Android.mk
++++ b/updater/Android.mk
+@@ -45,6 +45,11 @@
+ endif
+ endif
+ 
++ifneq ($(wildcard system/core/libcrypto_utils/Android.mk),)
++     LOCAL_C_INCLUDES += system/core/libcrypto_utils/include
++     LOCAL_STATIC_LIBRARIES += libcrypto_utils_static
++endif
++
+ LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UPDATER_LIBS) $(TARGET_RECOVERY_UPDATER_EXTRA_LIBS)
+ LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libedify libmtdutils libminzip libz
+ LOCAL_STATIC_LIBRARIES += libflashutils libmmcutils libbmlutils

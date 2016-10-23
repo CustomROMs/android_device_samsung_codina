@@ -1,0 +1,154 @@
+diff --git a/Utils.cpp b/Utils.cpp
+index eb550c3..6a687e1 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -68,13 +68,8 @@
+     const char* cpath = path.c_str();
+     status_t res = 0;
+ 
+     char* secontext = nullptr;
+-    if (sehandle) {
+-        if (!selabel_lookup(sehandle, &secontext, cpath, S_IFBLK)) {
+-            setfscreatecon(secontext);
+-        }
+-    }
+ 
+     mode_t mode = 0660 | S_IFBLK;
+     if (mknod(cpath, mode, dev) < 0) {
+         if (errno != EEXIST) {
+@@ -83,13 +83,8 @@
+             res = -errno;
+         }
+     }
+ 
+-    if (secontext) {
+-        setfscreatecon(nullptr);
+-        freecon(secontext);
+-    }
+-
+     return res;
+ }
+ 
+ status_t DestroyDeviceNode(const std::string& path) {
+@@ -106,18 +106,8 @@
+ 
+     char* secontext = nullptr;
+-    if (sehandle) {
+-        if (!selabel_lookup(sehandle, &secontext, cpath, S_IFDIR)) {
+-            setfscreatecon(secontext);
+-        }
+-    }
+ 
+     int res = fs_prepare_dir(cpath, mode, uid, gid);
+ 
+-    if (secontext) {
+-        setfscreatecon(nullptr);
+-        freecon(secontext);
+-    }
+-
+     if (res == 0) {
+         return OK;
+     } else {
+diff --git a/Utils.cpp b/Utils.cpp
+index eb550c3..60687e1 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -262,16 +262,8 @@
+         }
+     }
+ 
+-    if (setexeccon(context)) {
+-        LOG(ERROR) << "Failed to setexeccon";
+-        abort();
+-    }
+     status_t res = android_fork_execvp(argc, argv, NULL, false, true);
+-    if (setexeccon(nullptr)) {
+-        LOG(ERROR) << "Failed to setexeccon";
+-        abort();
+-    }
+ 
+     free(argv);
+     return res;
+ }
+@@ -294,16 +286,8 @@
+     }
+     output.clear();
+ 
+-    if (setexeccon(context)) {
+-        LOG(ERROR) << "Failed to setexeccon";
+-        abort();
+-    }
+     FILE* fp = popen(cmd.c_str(), "r");
+-    if (setexeccon(nullptr)) {
+-        LOG(ERROR) << "Failed to setexeccon";
+-        abort();
+-    }
+ 
+     if (!fp) {
+         PLOG(ERROR) << "Failed to popen " << cmd;
+         return -errno;
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index eb550c3..6a687e1 100644
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -678,9 +678,4 @@
+     endmntent(fp);
+ 
+-    for (auto path : toUnmount) {
+-        SLOGW("Tearing down stale mount %s", path.c_str());
+-        android::vold::ForceUnmount(path);
+-    }
+-
+     return 0;
+ }
+diff --git a/Loop.cpp b/Loop.cpp
+index eb550c3..6a687e1 100644
+--- a/Loop.cpp
++++ b/Loop.cpp
+@@ -146,30 +146,16 @@
+         mode_t mode = 0660 | S_IFBLK;
+         unsigned int dev = (0xff & i) | ((i << 12) & 0xfff00000) | (7 << 8);
+ 
+-        if (sehandle) {
+-            rc = selabel_lookup(sehandle, &secontext, filename, S_IFBLK);
+-            if (rc == 0)
+-                setfscreatecon(secontext);
+-        }
+-
+         if (mknod(filename, mode, dev) < 0) {
+             if (errno != EEXIST) {
+                 int sverrno = errno;
+                 SLOGE("Error creating loop device node (%s)", strerror(errno));
+-                if (secontext) {
+-                    freecon(secontext);
+-                    setfscreatecon(NULL);
+-                }
+                 errno = sverrno;
+                 return -1;
+             }
+         }
+-        if (secontext) {
+-            freecon(secontext);
+-            setfscreatecon(NULL);
+-        }
+ 
+         if ((fd = open(filename, O_RDWR | O_CLOEXEC)) < 0) {
+             SLOGE("Unable to open %s (%s)", filename, strerror(errno));
+             return -1;
+         }
+diff --git a/main.cpp b/main.cpp
+index eb550c3..6a687e1 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -77,11 +77,6 @@
+ 
+     parse_args(argc, argv);
+ 
+-    sehandle = selinux_android_file_context_handle();
+-    if (sehandle) {
+-        selinux_android_set_sehandle(sehandle);
+-    }
+-
+     // Quickly throw a CLOEXEC on the socket we just inherited from init
+     fcntl(android_get_control_socket("vold"), F_SETFD, FD_CLOEXEC);
+     fcntl(android_get_control_socket("cryptd"), F_SETFD, FD_CLOEXEC);

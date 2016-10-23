@@ -1,0 +1,20 @@
+Subject: [PATCH] Use volume label for mount path, if available.
+
+diff --git a/PublicVolume.cpp b/PublicVolume.cpp
+index eb550c3..6a687e1 100644
+--- a/PublicVolume.cpp
++++ b/PublicVolume.cpp
+@@ -113,9 +113,11 @@
+         return -EIO;
+     }
+ 
+-    // Use UUID as stable name, if available
++    // Use volume label and otherwise UUID as stable name, if available
+     std::string stableName = getId();
+-    if (!mFsUuid.empty()) {
++    if (!mFsLabel.empty()) {
++        stableName = mFsLabel;
++    } else if (!mFsUuid.empty()) {
+         stableName = mFsUuid;
+     }
+ 

@@ -1,0 +1,30 @@
+ jemalloc: apply recommended optimizations
+
+The Jemalloc project suggests using -O3 and -funroll-loops for optimization.
+Let's enable these flags by default in order to improve the performance.
+ enable -Os Aggressive -O2, -O3 optimizations 
+
+diff --git a/Android.bp b/Android.bp
+index f65c934..3d55e6f 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -15,6 +15,7 @@
+ //
+ 
+ common_cflags = [
++    "-Os",
+     "-std=gnu99",
+     "-D_REENTRANT",
+     "-fvisibility=hidden",
+diff --git a/Android.mk b/Android.mk
+index a8819f9..4062660 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -17,6 +17,7 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+ jemalloc_common_cflags := \
++        -Os \
+ 	-std=gnu99 \
+ 	-D_REENTRANT \
+ 	-fvisibility=hidden \

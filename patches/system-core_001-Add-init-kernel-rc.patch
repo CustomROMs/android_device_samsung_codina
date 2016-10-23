@@ -1,0 +1,13 @@
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index b4a25fe..a0397a0 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -9,7 +9,7 @@
+ import /init.${ro.hardware}.rc
+ import /init.usb.configfs.rc
+ import /init.${ro.zygote}.rc
+-
++import /init.kernel.rc
+ # Include CM's extra init file
+ import /init.cm.rc
+ 

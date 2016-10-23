@@ -1,0 +1,65 @@
+diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
+index fb87de0..fbc4048 100644
+--- a/media/libstagefright/Android.mk
++++ b/media/libstagefright/Android.mk
+@@ -141,7 +141,7 @@ LOCAL_SHARED_LIBRARIES += \
+ LOCAL_CFLAGS += -DUSE_SAMSUNG_CAMERAFORMAT_NV21
+ endif
+ 
+-LOCAL_CFLAGS += -Wno-multichar -Werror -Wno-error=deprecated-declarations -Wall
++LOCAL_CFLAGS += -Wno-multichar -Wno-error=deprecated-declarations -Wall
+ 
+ LOCAL_C_INCLUDES += $(call project-path-for,qcom-media)/mm-core/inc
+ 
+diff --git a/media/libmediaplayerservice/Android.mk b/media/libmediaplayerservice/Android.mk
+index fb87de0..fbc4049 100644
+--- a/media/libmediaplayerservice/Android.mk
++++ b/media/libmediaplayerservice/Android.mk
+@@ -60,7 +60,7 @@
+     $(TOP)/frameworks/av/media/libavextensions                      \
+     $(TOP)/frameworks/av/media/libstagefright/mpeg2ts               \
+ 
+-LOCAL_CFLAGS += -Werror -Wno-error=deprecated-declarations -Wall
++LOCAL_CFLAGS += -Wno-error=deprecated-declarations -Wall
+ LOCAL_CLANG := true
+ 
+ LOCAL_MODULE:= libmediaplayerservice
+diff --git a/media/libstagefright/id3/Android.mk b/media/libstagefright/id3/Android.mk
+index fb87de0..0bc4049 100644
+--- a/media/libstagefright/id3/Android.mk
++++ b/media/libstagefright/id3/Android.mk
+@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := \
+ 	testid3.cpp
+ 
+-LOCAL_CFLAGS += -Werror -Wall
++LOCAL_CFLAGS += -Os
+ LOCAL_CLANG := true
+ 
+ LOCAL_SHARED_LIBRARIES := \
+diff --git a/services/audioflinger/Android.mk b/services/audioflinger/Android.mk
+index fb87de0..1bc4049 100644
+--- a/services/audioflinger/Android.mk
++++ b/services/audioflinger/Android.mk
+@@ -72,6 +72,8 @@ endif
+ endif
+ #QTI Resampler
+ 
++LOCAL_CFLAGS += -Os
++
+ LOCAL_MODULE:= libaudioflinger
+ 
+ LOCAL_SRC_FILES += \
+diff --git a/media/libavextensions/Android.mk b/media/libavextensions/Android.mk
+index fb87de0..fbc4008 100644
+--- a/media/libavextensions/Android.mk
++++ b/media/libavextensions/Android.mk
+@@ -16,7 +16,7 @@
+         $(TOP)/frameworks/av/media/libstagefright \
+         $(TOP)/frameworks/av/media/libstagefright/mpeg2ts \
+ 
+-LOCAL_CFLAGS += -Wno-multichar -Werror
++LOCAL_CFLAGS += -Wno-multichar
+ 
+ ifeq ($(TARGET_ENABLE_QC_AV_ENHANCEMENTS),true)
+        LOCAL_CFLAGS += -DENABLE_AV_ENHANCEMENTS

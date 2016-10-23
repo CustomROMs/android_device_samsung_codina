@@ -1,0 +1,15 @@
+ Singelton: Make sLock and sInstance public to keep compatibility with chagall klimt gpsd blob
+
+diff --git a/include/utils/Singleton.h b/include/utils/Singleton.h
+index 04a25f0..a039780 100644
+--- a/include/utils/Singleton.h
++++ b/include/utils/Singleton.h
+@@ -51,6 +51,8 @@ class ANDROID_API Singleton
+ private:
+     Singleton(const Singleton&);
+     Singleton& operator = (const Singleton&);
++
++public:
+     static Mutex sLock;
+     static TYPE* sInstance;
+ };

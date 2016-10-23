@@ -22,8 +22,6 @@ on property:sys.boot_completed=1
     chown system system /sys/kernel/abb-ponkey/emulator
     chown system system /sys/kernel/abb-regu/VOTG
     chown system system /sys/kernel/bln/blink_mode
-    chown system system /sys/kernel/bt404/doubletap2wake
-    chown system system /sys/kernel/bt404/sweep2wake
     chown system system /sys/kernel/debug/cpuidle/deepest_state
     chown system system /sys/kernel/fsync/mode
     chown system system /sys/kernel/mali/mali_auto_boost
@@ -33,8 +31,11 @@ on property:sys.boot_completed=1
     chown system system /sys/kernel/mali/mali_dvfs_config
     chown system system /sys/kernel/mali/mali_gpu_clock
     chown system system /sys/kernel/mali/mali_gpu_fullspeed
+    chown system system /sys/module/doubletap2wake/parameters/enable
+    chown system system /sys/module/sweep2wake/parameters/enable
     chown system system /sys/module/dhd/parameters/dhdpm_fast
     chown system system /sys/module/ktd259_bl/parameters/min_brightness
     chown system system /sys/module/mali/parameters/mali_l2_max_reads
     chown system system /sys/module/mali/parameters/pre_allocated_memory_size_max
     chown system system /sys/module/mmc_core/parameters/use_spi_crc
+    chown system system /sys/module/zram/parameters/max_zpage_size

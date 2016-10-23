@@ -1,0 +1,50 @@
+ nl80211: add ifndef on AP SME condition
+
+The condition causes problems on driver initialization if the
+NL80211_ATTR_DEVICE_AP_SME is not available. Needs
+BOARD_NO_APSME_ATTR:=true.
+
+diff --git a/hostapd/Android.mk b/hostapd/Android.mk
+index 200f321..bb89d10 100644
+--- a/hostapd/Android.mk
++++ b/hostapd/Android.mk
+@@ -34,6 +34,10 @@ ifeq ($(BOARD_LEGACY_NL80211_STA_EVENTS),true)
+ L_CFLAGS += -DANDROID_LIB_STUB
+ endif
+ 
++ifeq ($(BOARD_NO_APSME_ATTR),true)
++L_CFLAGS += -DNO_APSME_ATTR
++endif
++
+ # Use Android specific directory for control interface sockets
+ L_CFLAGS += -DCONFIG_CTRL_IFACE_CLIENT_DIR=\"/data/misc/wifi/sockets\"
+ L_CFLAGS += -DCONFIG_CTRL_IFACE_DIR=\"/data/system/hostapd\"
+diff --git a/src/drivers/driver_nl80211_capa.c b/src/drivers/driver_nl80211_capa.c
+index 200f322..bb89d10 100644
+--- a/src/drivers/driver_nl80211_capa.c
++++ b/src/drivers/driver_nl80211_capa.c
+@@ -615,7 +615,9 @@ static int wiphy_info_handler(struct nl_msg *msg, void *arg)
+ 	wiphy_info_tdls(capa, tb[NL80211_ATTR_TDLS_SUPPORT],
+ 			tb[NL80211_ATTR_TDLS_EXTERNAL_SETUP]);
+ 
++#ifndef NO_APSME_ATTR
+ 	if (tb[NL80211_ATTR_DEVICE_AP_SME])
++#endif
+ 		info->device_ap_sme = 1;
+ 
+ 	wiphy_info_feature_flags(info, tb[NL80211_ATTR_FEATURE_FLAGS]);
+diff --git a/wpa_supplicant/Android.mk b/wpa_supplicant/Android.mk
+index 200f323..bb89d10 100644
+--- a/wpa_supplicant/Android.mk
++++ b/wpa_supplicant/Android.mk
+@@ -32,6 +32,10 @@ ifeq ($(BOARD_WLAN_DEVICE), bcmdhd)
+ L_CFLAGS += -DANDROID_LIB_STUB
+ endif
+ 
++ifeq ($(BOARD_NO_APSME_ATTR),true)
++L_CFLAGS += -DNO_APSME_ATTR
++endif
++
+ # Disable roaming in wpa_supplicant
+ ifdef CONFIG_NO_ROAMING
+ L_CFLAGS += -DCONFIG_NO_ROAMING

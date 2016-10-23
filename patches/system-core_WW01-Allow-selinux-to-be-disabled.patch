@@ -1,0 +1,32 @@
+ Allow selinux to be disabled
+
+diff --git a/init/Android.mk b/init/Android.mk
+index 320d2ba..13fc5fa 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -4,12 +4,7 @@ LOCAL_PATH:= $(call my-dir)
+ 
+ # --
+ 
+-ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+ init_options += -DALLOW_LOCAL_PROP_OVERRIDE=1 -DALLOW_PERMISSIVE_SELINUX=1
+-else
+-init_options += -DALLOW_LOCAL_PROP_OVERRIDE=0 -DALLOW_PERMISSIVE_SELINUX=0
+-endif
+-
+ init_options += -DLOG_UEVENTS=0
+ 
+ ifneq ($(TARGET_INIT_COLDBOOT_TIMEOUT),)
+diff --git a/init/init.cpp b/init/init.cpp
+index b01f6f7..ac5818d 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -437,7 +437,7 @@ static void selinux_init_all_handles(void)
+ enum selinux_enforcing_status { SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+ 
+ static selinux_enforcing_status selinux_status_from_cmdline() {
+-    selinux_enforcing_status status = SELINUX_ENFORCING;
++    selinux_enforcing_status status = SELINUX_PERMISSIVE;
+ 
+     import_kernel_cmdline(false, [&](const std::string& key, const std::string& value, bool in_qemu) {
+         if (key == "androidboot.selinux" && value == "permissive") {

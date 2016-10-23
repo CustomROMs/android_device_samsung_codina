@@ -1,0 +1,40 @@
+Adding legacy CRYPTO_malloc call for blob gpsd 
+
+diff --git a/src/crypto/mem.c b/src/crypto/mem.c
+index 3e3ef2a..9f4005e 100644
+--- a/src/crypto/mem.c
++++ b/src/crypto/mem.c
+@@ -117,6 +117,11 @@ void OPENSSL_cleanse(void *ptr, size_t len) {
+ #endif  /* !OPENSSL_NO_ASM */
+ }
+ 
++/* Needed by gpsd */
++void *CRYPTO_malloc(int num, const char *file, int line) {
++  return OPENSSL_malloc(num);
++}
++
+ int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len) {
+   size_t i;
+   const uint8_t *a = in_a;
+diff --git a/src/include/openssl/mem.h b/src/include/openssl/mem.h
+index 4e3ef2a..9f4005e 100644
+--- a/src/include/openssl/mem.h
++++ b/src/include/openssl/mem.h
+@@ -79,6 +79,9 @@ extern "C" {
+ #define OPENSSL_realloc realloc
+ #define OPENSSL_free free
+ 
++/* Needed by gpsd */
++OPENSSL_EXPORT void *CRYPTO_malloc(int num, const char *file, int line);
++
+ /* OPENSSL_realloc_clean acts like |realloc|, but clears the previous memory
+  * buffer.  Because this is implemented as a wrapper around |malloc|, it needs
+  * to be given the size of the buffer pointed to by |ptr|. */
+@@ -95,6 +98,7 @@ OPENSSL_EXPORT void OPENSSL_cleanse(void *ptr, size_t len);
+  * non-zero. */
+ OPENSSL_EXPORT int CRYPTO_memcmp(const void *a, const void *b, size_t len);
+ 
++
+ /* OPENSSL_hash32 implements the 32 bit, FNV-1a hash. */
+ OPENSSL_EXPORT uint32_t OPENSSL_hash32(const void *ptr, size_t len);
+ 

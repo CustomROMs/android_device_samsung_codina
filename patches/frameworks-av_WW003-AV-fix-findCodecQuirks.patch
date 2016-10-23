@@ -1,0 +1,46 @@
+Subject: [PATCH] OMXCodec: fix findCodecQuirks
+
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index 4188908..120a48e 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -287,6 +287,26 @@ status_t OMXCodec::initNativeWindow() {
+     return quirks;
+ }
+ 
++// static
++bool OMXCodec::findCodecQuirks(const char *componentName, uint32_t *quirks) {
++    const sp<IMediaCodecList> list = MediaCodecList::getInstance();
++    if (list == NULL) {
++        return false;
++    }
++
++    ssize_t index = list->findCodecByName(componentName);
++
++    if (index < 0) {
++        return false;
++    }
++
++    const sp<MediaCodecInfo> info = list->getCodecInfo(index);
++    CHECK(info != NULL);
++    *quirks = getComponentQuirks(info);
++
++    return true;
++}
++
+ // static
+ sp<IMediaSource> OMXCodec::Create(
+         const sp<IOMX> &omx,
+diff --git a/include/media/stagefright/OMXCodec.h b/include/media/stagefright/OMXCodec.h
+index 4188908..120a480 100644
+--- a/include/media/stagefright/OMXCodec.h
++++ b/include/media/stagefright/OMXCodec.h
+@@ -124,6 +124,8 @@ struct OMXCodec : public BnMediaSource,
+     static uint32_t getComponentQuirks(
+             const sp<MediaCodecInfo> &list);
+ 
++    static bool findCodecQuirks(const char *componentName, uint32_t *quirks);
++
+ protected:
+     virtual ~OMXCodec();
+ 

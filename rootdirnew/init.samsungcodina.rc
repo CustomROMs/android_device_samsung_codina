@@ -12,21 +12,17 @@ on init
     mkdir /mnt/.lfs 0755 root root
 
     # Support legacy paths
-    symlink /sdcard /mnt/sdcard
+    # symlink /sdcard /mnt/sdcard
     symlink /sdcard /storage/sdcard
 
     # By default, primary storage is physical
     setprop ro.vold.primary_physical 1
 
     # Setup the global environment
-    export LD_SHIM_LIBS /system/bin/gpsd|libshim_gps.so:/system/lib/libicuuc.so|libicuuc_51.so:/system/lib/hw/camera.montblanc.so|libcamera_symbols.so:/system/lib/libril.so|libste_ril.so
     export LD_LIBRARY_PATH /vendor/lib:/system/lib:/system/lib/ste_omxcomponents
     export OMX_STE_ENS_COMPONENTS_DIR /system/lib/ste_omxcomponents/
     export OMX_BELLAGIO_LOADER_REGISTRY /system/etc/omxloaders
     export OMX_STE_CSCALL_COMPONENTS_DIR /system/lib/ste_omxcomponents/
-
-    # Preload libjhead for camera
-    export LD_PRELOAD /system/lib/libjhead.so
 
     # Vibetonz
     export VIBE_PIPE_PATH /dev/pipes
@@ -179,8 +175,6 @@ on post-fs-data
     chown system system /efs/wifi/.mac.info
     chmod 0664 /efs/wifi/.mac.info
 
-    mkdir /data/misc/camera 0770 camera camera
-
     # FactoryTest files permission
     mkdir /efs/FactoryApp 0775
     chown radio system /efs/FactoryApp
@@ -200,14 +194,6 @@ on post-fs-data
     mkdir /system/etc/security/.drm 0775
     chown root root /system/etc/security/.drm
     chmod 0775 /system/etc/security/.drm
-
-    # Added for Playready DRM Support
-    mkdir /data/data/.drm 0775
-    chown drm system /data/data/.drm
-    chmod 0775 /data/data/.drm
-    mkdir /data/data/.drm/.playready 0775
-    chown drm system /data/data/.drm/.playready
-    chmod 0775 /data/data/.drm/.playready
 
     # Added drm folder to copy drm plugins
     mkdir /system/lib/drm 0775
@@ -236,7 +222,13 @@ on post-fs-data
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
     mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
     chown wifi root /dev/rfkill
+
+    # for TRP/TIS
+    write /data/.psm.info 1
+    chown system root /data/.psm.info
+    chmod 0660 /data/.psm.info
 
     # Create directory for STE OMX debug logs
     mkdir /data/ste-debug 0777 root root
@@ -248,7 +240,6 @@ on post-fs-data
 
     # Change permissions for modem_log_relay config file
     chmod 666 /modemfs/trace_auto.conf
-
 
     # If there is no fs-post-data action in the init.<device>.rc file, you
     # must uncomment this line, otherwise encrypted filesystems
@@ -268,8 +259,7 @@ on early-boot
 on boot
 
     # debugfs
-    mount debugfs /sys/kernel/debug /sys/kernel/debug
-    setprop wifi.interface wlan0
+    mount debugfs /sys/kernel/debug /sys/kernel/debug mode=755
 
     chown radio radio /sys/class/usb_switch/FSA_SWITCH/jig_smd
     chown radio system /sys/class/usb_switch/FSA_SWITCH/smd_wakelock
@@ -300,7 +290,7 @@ on boot
 
     # Permissions for bluetooth
     # UART device
-    chown bluetooth net_bt_stack /dev/ttyAMA0
+    chown bluetooth bluetooth /dev/ttyAMA0
     chmod 0660 /dev/ttyAMA0
 
     # For bluetooth. Change access rights as btld runs as bluetooth user
@@ -370,9 +360,8 @@ on boot
     class_start modem
     class_start default
 
-    # Adaptive LMK
-    # write /sys/module/lowmemorykiller/parameters/enable_adaptive_lmk 1
-    # write /sys/module/lowmemorykiller/parameters/vmpressure_file_min 53059
+    # TapToWake
+    chown system system /sys/module/doubletap2wake/parameters/enable
 
 on charger
     write /sys/class/power_supply/battery/batt_lp_charging 1
@@ -380,7 +369,12 @@ on charger
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor conservative
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor conservative
 
-service charger /sbin/charger
+#service charger /sbin/charger
+#    class charger
+#    critical
+#    seclabel u:r:healthd:s0
+
+service charger /sbin/healthd -c
     class charger
     critical
     seclabel u:r:healthd:s0
@@ -426,7 +420,7 @@ service orientationd /system/bin/orientationd6x
 service gpsd /system/bin/gpsd -c /system/etc/gps.xml
     class main
     user gps
-    group system net_raw
+    group system wakelock net_raw
     ioprio be 0
     seclabel u:r:gpsd:s0
 
@@ -442,9 +436,9 @@ service ta_load /system/bin/ta_loader
     group radio
 
 # AT Distributor for factory test
-service at_distributor /system/bin/at_distributor
-    user root
-    group radio log
+#service at_distributor /system/bin/at_distributor
+#    user root
+#    group radio log
 
 service usbid_init /system/bin/usbid_init.sh
     class main
@@ -475,6 +469,7 @@ service p2p_supplicant /system/bin/wpa_supplicant \
     class main
     socket wpa_wlan0 dgram 660 wifi wifi
     disabled
+    group system wakelock
     oneshot
 
 service wpa_supplicant /system/bin/wpa_supplicant \
@@ -484,36 +479,7 @@ service wpa_supplicant /system/bin/wpa_supplicant \
     class main
     socket wpa_wlan0 dgram 660 wifi wifi
     disabled
-    oneshot
-
-service dhcpcd_wlan0 /system/bin/dhcpcd -aABDKL
-    class main
-    disabled
-    oneshot
-
-service dhcpcd_p2p /system/bin/dhcpcd -aABKL
-    class main
-    disabled
-    oneshot
-
-service dhcpcd_bt-pan /system/bin/dhcpcd -ABKL
-    class main
-    disabled
-    oneshot
-
-service iprenew_wlan0 /system/bin/dhcpcd -n
-    class main
-    disabled
-    oneshot
-
-service iprenew_p2p /system/bin/dhcpcd -n
-    class main
-    disabled
-    oneshot
-
-service iprenew_bt-pan /system/bin/dhcpcd -n
-    class main
-    disabled
+    group system wakelock
     oneshot
 
 on property:sys.boot_completed=1

@@ -1,0 +1,14 @@
+diff --git a/include/hardware/gps.h b/include/hardware/gps.h
+index fb1f669..e740697 100644
+--- a/include/hardware/gps.h
++++ b/include/hardware/gps.h
+@@ -664,6 +664,9 @@ typedef struct {
+      * might rely in the old (wrong) behavior.
+      */
+     uint16_t lac;
++#ifdef AGPS_USE_PSC
++    uint16_t psc;
++#endif
+     /** Cell id in 2G. Utran Cell id in 3G. Cell Global Id EUTRA in LTE. */
+     uint32_t cid;
+     /** Tracking Area Code in LTE. */

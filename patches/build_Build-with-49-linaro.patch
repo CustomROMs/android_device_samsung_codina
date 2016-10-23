@@ -1,0 +1,25 @@
+diff --git a/core/combo/TARGET_linux-arm.mk b/core/combo/TARGET_linux-arm.mk
+index 43c98e3..b22731f 100644
+--- a/core/combo/TARGET_linux-arm.mk
++++ b/core/combo/TARGET_linux-arm.mk
+@@ -33,13 +33,16 @@ ifeq ($(strip $(TARGET_$(combo_2nd_arch_prefix)ARCH_VARIANT)),)
+ TARGET_$(combo_2nd_arch_prefix)ARCH_VARIANT := armv5te
+ endif
+ 
+-# Decouple NDK library selection with platform compiler version
++ifeq ($(PLATFORM_LINARO_4.9),true)
++$(combo_2nd_arch_prefix)TARGET_NDK_GCC_VERSION := 4.9
++else
+ $(combo_2nd_arch_prefix)TARGET_NDK_GCC_VERSION := 4.9
++endif
+ 
+-ifeq ($(strip $(TARGET_GCC_VERSION_EXP)),)
+-$(combo_2nd_arch_prefix)TARGET_GCC_VERSION := 4.9
++ifeq ($(PLATFORM_LINARO_4.9),true)
++$(combo_2nd_arch_prefix)TARGET_GCC_VERSION := 4.9-linaro
+ else
+-$(combo_2nd_arch_prefix)TARGET_GCC_VERSION := $(TARGET_GCC_VERSION_EXP)
++$(combo_2nd_arch_prefix)TARGET_GCC_VERSION := 4.9
+ endif
+ 
+ TARGET_ARCH_SPECIFIC_MAKEFILE := $(BUILD_COMBOS)/arch/$(TARGET_$(combo_2nd_arch_prefix)ARCH)/$(TARGET_$(combo_2nd_arch_prefix)ARCH_VARIANT).mk
