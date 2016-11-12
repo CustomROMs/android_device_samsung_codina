@@ -96,31 +96,52 @@ static void power_hint_interactive(int on) {
 #endif
 }
 
-static void power_hint(struct power_module *module, power_hint_t hint,
-                       void *data) {
+static void power_hint_vsync(int on) {
+	if (on) {
+	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
+	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
+	} else {
+	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
+	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_NORMAL);
+	}
+}
 
-    int var = 0;
-    if(data != NULL)
-        var = *(int *) data;
-
-    switch (hint) {
-	case POWER_HINT_VSYNC:
-		DEBUG_LOG("POWER_HINT_VSYNC %d", var);
-		break;
-	case POWER_HINT_INTERACTION:
-		DEBUG_LOG("POWER_HINT_INTERACTION %d", var);
-		power_hint_interactive(var);
-		break;
+ static void power_hint(struct power_module *module, power_hint_t hint,
+                        void *data) {
+     int var = 0;
+     char * packageName;
+     int pid = 0;
+     switch (hint) {
+        case POWER_HINT_VSYNC:
+                if(data != NULL)
+                    var = *(int *) data;
+                DEBUG_LOG("POWER_HINT_VSYNC %d", var);
+                power_hint_vsync(var);
+                break;
+        case POWER_HINT_INTERACTION:
+                if(data != NULL)
+                    var = *(int *) data;
+                DEBUG_LOG("POWER_HINT_INTERACTION %d", var);
+                power_hint_interactive(var);
+                break;
 	case POWER_HINT_LOW_POWER:
 		DEBUG_LOG("POWER_HINT_LOW_POWER %d", var);
 		break;
 	case POWER_HINT_CPU_BOOST:
+		if(data != NULL)
+		    var = *(int *) data;
 		DEBUG_LOG("POWER_HINT_CPU_BOOST %d", var);
 		power_hint_cpu_boost(var);
 		break;
 	case POWER_HINT_LAUNCH_BOOST:
-		DEBUG_LOG("POWER_HINT_LAUNCH_BOOST %d", var);
-		power_hint_interactive(var);
+		packageName = ((launch_boost_info_t *)data)->packageName;
+		pid = ((launch_boost_info_t *)data)->pid;
+
+		/* Meticulus: not quite sure what to do with this info?
+		 * Set thread prio on the app???
+		 */
+		DEBUG_LOG("POWER_HINT_LAUNCH_BOOST app=%s pid=%d", packageName,pid);
+		power_hint_interactive(0);
 		break;
 	case POWER_HINT_AUDIO:
 		DEBUG_LOG("POWER_HINT_AUDIO %d", var);
