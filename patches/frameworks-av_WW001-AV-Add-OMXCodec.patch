@@ -4847,30 +4847,6 @@ index 0000000..1b62335
 +}
 +
 +}  // namespace android
-diff --git a/media/libstagefright/omx/tests/OMXHarness.cpp b/media/libstagefright/omx/tests/OMXHarness.cpp
-index 50bb0de..571b48c 100644
---- a/media/libstagefright/omx/tests/OMXHarness.cpp
-+++ b/media/libstagefright/omx/tests/OMXHarness.cpp
-@@ -38,6 +38,7 @@
- #include <media/stagefright/MediaSource.h>
- #include <media/stagefright/MetaData.h>
- #include <media/stagefright/SimpleDecodingSource.h>
-+#include <media/stagefright/OMXCodec.h>
- 
- #define DEFAULT_TIMEOUT         500000
- 
-@@ -576,8 +576,9 @@ status_t Harness::testSeek(
- 
-     CHECK_EQ(seekSource->start(), (status_t)OK);
- 
--    sp<IMediaSource> codec = SimpleDecodingSource::Create(
--            source, 0 /* flags */, NULL /* nativeWindow */, componentName);
-+    sp<IMediaSource> codec = OMXCodec::Create(
-+            mOMX, source->getFormat(), false /* createEncoder */,
-+            source, componentName);
- 
-     CHECK(codec != NULL);
- 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
 index d97d5b1..1898020 100644
 --- a/media/libstagefright/ACodec.cpp

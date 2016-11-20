@@ -2,8 +2,8 @@ diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
 index fb87de0..fbc4048 100644
 --- a/media/libstagefright/Android.mk
 +++ b/media/libstagefright/Android.mk
-@@ -141,7 +141,7 @@ LOCAL_SHARED_LIBRARIES += \
- LOCAL_CFLAGS += -DUSE_SAMSUNG_CAMERAFORMAT_NV21
+@@ -152,7 +152,7 @@ LOCAL_SHARED_LIBRARIES += \
+ endif
  endif
  
 -LOCAL_CFLAGS += -Wno-multichar -Werror -Wno-error=deprecated-declarations -Wall
@@ -41,7 +41,7 @@ diff --git a/services/audioflinger/Android.mk b/services/audioflinger/Android.mk
 index fb87de0..1bc4049 100644
 --- a/services/audioflinger/Android.mk
 +++ b/services/audioflinger/Android.mk
-@@ -72,6 +72,8 @@ endif
+@@ -74,6 +74,8 @@ endif
  endif
  #QTI Resampler
  
@@ -63,3 +63,34 @@ index fb87de0..fbc4008 100644
  
  ifeq ($(TARGET_ENABLE_QC_AV_ENHANCEMENTS),true)
         LOCAL_CFLAGS += -DENABLE_AV_ENHANCEMENTS
+diff --git a/services/audiopolicy/Android.mk b/services/audiopolicy/Android.mk
+index fb87de0..fb14008 100644
+--- a/services/audiopolicy/Android.mk
++++ b/services/audiopolicy/Android.mk
+@@ -50,7 +50,7 @@ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+ LOCAL_MODULE:= libaudiopolicyservice
+ 
+ LOCAL_CFLAGS += -fvisibility=hidden
+-LOCAL_CFLAGS += -Wall -Werror
++LOCAL_CFLAGS += -Wall
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+@@ -103,7 +103,7 @@ LOCAL_SHARED_LIBRARIES += libicuuc
+ LOCAL_CFLAGS += -DUSE_XML_AUDIO_POLICY_CONF
+ endif #ifeq ($(USE_XML_AUDIO_POLICY_CONF), 1)
+ 
+-LOCAL_CFLAGS += -Wall -Werror
++LOCAL_CFLAGS += -Wall
+ 
+ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+ 
+@@ -128,7 +128,7 @@ LOCAL_C_INCLUDES += \
+     $(TOPDIR)frameworks/av/services/audiopolicy/common/include \
+     $(TOPDIR)frameworks/av/services/audiopolicy/engine/interface
+ 
+-LOCAL_CFLAGS := -Wall -Werror
++LOCAL_CFLAGS := -Wall
+ 
+ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+ 

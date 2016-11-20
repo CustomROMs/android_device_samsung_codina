@@ -53,7 +53,7 @@ index 0b2943c..691de4a 100644
  
          // the first primary output opened designates the primary hw device
 +#ifdef STE_HARDWARE
-+        if ( mPrimaryHardwareDev == NULL ) {
++        if (mPrimaryHardwareDev == NULL) {
 +#else
          if ((mPrimaryHardwareDev == NULL) && (flags & AUDIO_OUTPUT_FLAG_PRIMARY)) {
 +#endif

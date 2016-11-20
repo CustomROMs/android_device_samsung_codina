@@ -2,7 +2,7 @@ diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/and
 index 5e3e084..207aa77 100644
 --- a/src/java/com/android/internal/telephony/RIL.java
 +++ b/src/java/com/android/internal/telephony/RIL.java
-@@ -3556,9 +3556,7 @@
+@@ -3600,9 +3600,7 @@
  
                  // Initial conditions
                  setRadioPower(false, null);

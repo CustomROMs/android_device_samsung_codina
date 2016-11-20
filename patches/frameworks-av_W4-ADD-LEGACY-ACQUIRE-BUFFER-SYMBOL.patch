@@ -4,8 +4,8 @@ diff --git a/media/libstagefright/foundation/MediaBufferGroup.cpp b/media/libsta
 index 9022324..27ba762 100644
 --- a/media/libstagefright/foundation/MediaBufferGroup.cpp
 +++ b/media/libstagefright/foundation/MediaBufferGroup.cpp
-@@ -55,6 +55,13 @@ void MediaBufferGroup::add_buffer(MediaBuffer *buffer) {
-     mLastBuffer = buffer;
+@@ -127,6 +127,13 @@ void MediaBufferGroup::add_buffer(MediaBuffer *buffer) {
+     return false;
  }
  
 +#ifdef ADD_LEGACY_ACQUIRE_BUFFER_SYMBOL

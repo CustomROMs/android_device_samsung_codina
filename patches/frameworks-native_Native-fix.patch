@@ -159,7 +159,7 @@ diff --git a/include/gui/ConsumerBase.h b/include/gui/ConsumerBase.h
 index 100bb26..97cfc82 100644
 --- a/include/gui/ConsumerBase.h
 +++ b/include/gui/ConsumerBase.h
-@@ -181,7 +181,10 @@ protected:
+@@ -185,7 +185,10 @@ protected:
              const sp<GraphicBuffer> graphicBuffer,
              EGLDisplay display, EGLSyncKHR eglFence);
  
@@ -259,7 +259,7 @@ diff --git a/include/gui/IGraphicBufferProducer.h b/include/gui/IGraphicBufferPr
 index f687fb1..38b713d 100644
 --- a/include/gui/IGraphicBufferProducer.h
 +++ b/include/gui/IGraphicBufferProducer.h
-@@ -290,8 +290,12 @@ public:
+@@ -292,8 +292,12 @@ public:
      //              * the slot was enqueued without requesting a buffer
      //              * crop rect is out of bounds of the buffer dimensions
  
@@ -306,7 +306,7 @@ diff --git a/include/ui/GraphicBuffer.h b/include/ui/GraphicBuffer.h
 index 3a5b10d..6f303e5 100644
 --- a/include/ui/GraphicBuffer.h
 +++ b/include/ui/GraphicBuffer.h
-@@ -38,10 +38,18 @@ class GraphicBufferMapper;
+@@ -39,10 +39,18 @@ class GraphicBufferMapper;
  // ===========================================================================
  
  class GraphicBuffer
@@ -472,7 +472,7 @@ diff --git a/libs/gui/Android.mk b/libs/gui/Android.mk
 index 9770da2..033e764 100644
 --- a/libs/gui/Android.mk
 +++ b/libs/gui/Android.mk
-@@ -81,7 +81,8 @@ LOCAL_SHARED_LIBRARIES := \
+@@ -82,7 +82,8 @@ LOCAL_SHARED_LIBRARIES := \
  	libsync \
  	libui \
  	libutils \
@@ -868,7 +868,7 @@ diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/D
 index 3a26c38..44e7d52 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
-@@ -211,7 +211,9 @@ private:
+@@ -216,7 +216,9 @@ private:
      wp<IBinder> mDisplayToken;
  
      // ANativeWindow this display is rendering into

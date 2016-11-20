@@ -15,7 +15,7 @@ diff --git a/core/main.mk b/core/main.mk
 index 8643ee3..d816ff4 100644
 --- a/core/main.mk
 +++ b/core/main.mk
-@@ -187,8 +187,8 @@
+@@ -188,8 +188,8 @@
  endif
  
  ifeq ($(JAVA_NOT_REQUIRED), false)

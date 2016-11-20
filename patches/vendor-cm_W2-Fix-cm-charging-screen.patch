@@ -7,9 +7,9 @@ index 9fed3dd..4480ec7 100644
 +ifneq ($(WITH_CM_CHARGER),false)
 +LOCAL_PATH := $(call my-dir)
  
- include $(CLEAR_VARS)
- LOCAL_SRC_FILES := healthd_board_cm.cpp
-@@ -53,4 +54,5 @@
+ # Set healthd_density to the density bucket of the device.
+ healthd_density := unknown
+@@ -67,4 +68,5 @@
  include $(BUILD_PHONY_PACKAGE)
  
  _add-charger-image :=

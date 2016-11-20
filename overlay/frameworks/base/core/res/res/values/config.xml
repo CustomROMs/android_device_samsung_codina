@@ -194,8 +194,8 @@
          format is UMTS|LTE|... -->
     <string translatable="false" name="config_radio_access_family">GPRS|EDGE|UMTS|HSDPA|HSUPA|GSM|WCDMA</string>
 
-    <!-- Boolean to enable stk functionality on Samsung phones
-    <bool name="config_samsung_stk">true</bool> -->
+    <!-- Boolean to enable stk functionality on Samsung phones -->
+    <bool name="config_samsung_stk">true</bool>
 
     <!-- Enable lockscreen translucent decor by default -->
     <bool name="config_enableLockScreenTranslucentDecor">true</bool>
@@ -217,13 +217,6 @@
 
     <!-- Display low battery warning when battery level dips to this value -->
     <integer name="config_lowBatteryWarningLevel">5</integer>
-
-    <!-- Package name providing default WebView implementation.
-    <string name="config_webViewPackageName" translatable="false">com.android.webview</string> -->
-
-    <!-- Package name providing alternate WebView implementation.
-         Fall back to config_webViewPackageName if not available.
-    <string name="config_alternateWebViewPackageName" translatable="false">com.google.android.webview</string> -->
 
     <!-- Screen brightness when dozing. -->
     <integer name="config_screenBrightnessDoze">20</integer>
@@ -280,8 +273,8 @@
     <!-- Wifi driver supports batched scan
     <bool translatable="false" name="config_wifi_batched_scan_supported">true</bool> -->
 
-    <!-- IpReachability monitor enable/Disable
-    <bool translatable="false" name="config_wifi_ipreachability_monitor">false</bool> -->
+    <!-- IpReachability monitor enable/Disable -->
+    <bool translatable="false" name="config_wifi_ipreachability_monitor">false</bool>
 
     <!-- Boolean indicating whether Hotspot 2.0/Passpoint and ANQP queries is enabled
     <bool translatable="false" name="config_wifi_hotspot2_enabled">true</bool> -->

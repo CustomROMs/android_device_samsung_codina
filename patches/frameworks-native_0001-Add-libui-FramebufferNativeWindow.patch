@@ -118,8 +118,8 @@ index d8cabad..f4f221d 100644
  	Fence.cpp \
 +	FramebufferNativeWindow.cpp \
  	FrameStats.cpp \
- 	GraphicBuffer.cpp \
- 	GraphicBufferAllocator.cpp \
+ 	Gralloc1.cpp \
+ 	Gralloc1On0Adapter.cpp \
 diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
 new file mode 100644
 index 0000000..59db157

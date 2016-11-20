@@ -2,7 +2,7 @@ diff --git a/services/core/java/com/android/server/am/ProcessList.java b/service
 index 2bf7bb2..08fc477 100755
 --- a/services/core/java/com/android/server/am/ProcessList.java
 +++ b/services/core/java/com/android/server/am/ProcessList.java
-@@ -212,14 +212,14 @@
+@@ -215,14 +215,14 @@
      // These are the low-end OOM level limits.  This is appropriate for an
      // HVGA or smaller phone with less than 512MB.  Values are in KB.
      private final int[] mOomMinFreeLow = new int[] {

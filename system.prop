@@ -28,16 +28,14 @@ ro.device.screen_res=3,8' 800x480 pixels ( ~246 ppi)
 persist.sys.usb.config=mtp,adb
 
 # sdcardfs
-# ro.sys.sdcardfs=true
-# ro.sdcardfs.enable=true
+ro.sys.sdcardfs=true
 
-# test
+# test media
 media.stagefright.legacyencoder=true
 media.stagefright.less-secure=true
 media.stagefright.codecremote=false
 media.stagefright.extractremote=false
 # audio.offload.disable=1
-# ro.disableWifiApFirmwareReload=true
 
 # test low ram
 # persist.sys.force_highendgfx=true
@@ -49,6 +47,7 @@ wifi.supplicant_scan_interval=150
 
 # fix Hardware
 # ste.use_google_h264_encoder=true
+# ro.egl.nofadeoff=true
 
 # Hardware
 camera2.portability.force_api=1
@@ -71,6 +70,7 @@ ro.sys.fw.bg_apps_limit=16
 ro.sys.fw.bservice_limit=3
 ro.sys.fw.bservice_age=3000
 ro.sys.fw.bservice_enable=true
+# ro.am.reschedule_service=true
 
 # art optimization
 # dalvik.vm.image-dex2oat-filter=speed

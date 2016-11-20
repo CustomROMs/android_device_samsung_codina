@@ -2,7 +2,7 @@ diff --git a/services/core/java/com/android/server/am/ActivityManagerService.jav
 index 3732105..ff6f6bb 100644
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -424,7 +424,7 @@
+@@ -425,7 +425,7 @@
  
      // Amount of time after a call to stopAppSwitches() during which we will
      // prevent further untrusted switches from happening.

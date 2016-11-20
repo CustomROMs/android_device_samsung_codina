@@ -1,27 +1,12 @@
 Subject: [PATCH] Camera HAL V1
-
+BOARD_GLOBAL_CFLAGS += -DTARGET_HAS_CAMERA_HAL_V1
 This is needed to fix video recording on devices using Camera HAL V1
 
-diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
-index 990d3d9..3227181 100644
---- a/media/libstagefright/Android.mk
-+++ b/media/libstagefright/Android.mk
-@@ -157,6 +157,10 @@
- endif
- endif
- 
-+ifeq ($(TARGET_HAS_CAMERA_HAL_V1),true)
-+  LOCAL_CFLAGS += -DTARGET_HAS_CAMERA_HAL_V1
-+endif
-+
- LOCAL_CLANG := true
- LOCAL_SANITIZE := unsigned-integer-overflow signed-integer-overflow
- 
 diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
 index 0e2fb41..44b9d2e 100644
 --- a/media/libstagefright/CameraSource.cpp
 +++ b/media/libstagefright/CameraSource.cpp
-@@ -1163,10 +1163,13 @@
+@@ -1157,10 +1157,13 @@
          int64_t token = IPCThreadState::self()->clearCallingIdentity();
          mCamera->releaseRecordingFrameHandle(handle);
          IPCThreadState::self()->restoreCallingIdentity(token);
@@ -36,24 +21,11 @@ index 0e2fb41..44b9d2e 100644
  }
  
  void CameraSource::recordingFrameHandleCallbackTimestamp(int64_t timestampUs,
-diff --git a/services/camera/libcameraservice/Android.mk b/services/camera/libcameraservice/Android.mk
-index ebe65e4..f00459a 100644
---- a/services/camera/libcameraservice/Android.mk
-+++ b/services/camera/libcameraservice/Android.mk
-@@ -89,4 +89,8 @@
- 
- LOCAL_MODULE:= libcameraservice
- 
-+ifeq ($(TARGET_HAS_CAMERA_HAL_V1),true)
-+  LOCAL_CFLAGS += -DTARGET_HAS_CAMERA_HAL_V1
-+endif
-+
- include $(BUILD_SHARED_LIBRARY)
 diff --git a/services/camera/libcameraservice/api1/CameraClient.cpp b/services/camera/libcameraservice/api1/CameraClient.cpp
 index 0d87fdd..31d2dd4 100644
 --- a/services/camera/libcameraservice/api1/CameraClient.cpp
 +++ b/services/camera/libcameraservice/api1/CameraClient.cpp
-@@ -530,9 +530,11 @@
+@@ -524,9 +524,11 @@
      metadata->pHandle = handle;
  
      mHardware->releaseRecordingFrame(dataPtr);
@@ -66,3 +38,37 @@ index 0d87fdd..31d2dd4 100644
  }
  
  status_t CameraClient::setVideoBufferMode(int32_t videoBufferMode) {
+diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
+index 0e2fb41..44b9d2e 100644
+--- a/media/libstagefright/Android.mk
++++ b/media/libstagefright/Android.mk
+@@ -147,12 +147,6 @@ ifeq ($(BOARD_USE_SAMSUNG_CAMERAFORMAT_NV21), true)
+ LOCAL_CFLAGS += -DUSE_SAMSUNG_CAMERAFORMAT_NV21
+ endif
+ 
+-ifneq ($(TARGET_USES_MEDIA_EXTENSIONS),true)
+-ifeq ($(TARGET_HAS_LEGACY_CAMERA_HAL1),true)
+-LOCAL_CFLAGS += -DCAMCORDER_GRALLOC_SOURCE
+-endif
+-endif
+-
+ LOCAL_CFLAGS += -Wno-multichar -Wno-error=deprecated-declarations -Wall
+ 
+ LOCAL_C_INCLUDES += $(call project-path-for,qcom-media)/mm-core/inc
+diff --git a/media/libstagefright/omx/Android.mk b/media/libstagefright/omx/Android.mk
+index 0e2fb41..44b9d20 100644
+--- a/media/libstagefright/omx/Android.mk
++++ b/media/libstagefright/omx/Android.mk
+@@ -37,12 +37,6 @@ LOCAL_CFLAGS += -DQTI_FLAC_DECODER
+ endif
+ endif
+ 
+-ifneq ($(TARGET_USES_MEDIA_EXTENSIONS),true)
+-ifeq ($(TARGET_HAS_LEGACY_CAMERA_HAL1),true)
+-LOCAL_CFLAGS += -DCAMCORDER_GRALLOC_SOURCE
+-endif
+-endif
+-
+ LOCAL_MODULE:= libstagefright_omx
+ LOCAL_CFLAGS += -Werror -Wall
+ LOCAL_CLANG := true

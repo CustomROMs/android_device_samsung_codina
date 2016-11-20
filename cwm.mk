@@ -12,7 +12,7 @@ RECOVERY_FSTAB_VERSION := 2
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/device_tunables.rc:root/device_tunables.rc \
     $(LOCAL_PATH)/rootdir/init.kernel.rc:root/init.kernel.rc \
-    $(LOCAL_PATH)/rootdirnew/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc \
     $(LOCAL_PATH)/rootdirnew/init.samsungcodina.rc:root/init.samsungcodina.rc \
     $(LOCAL_PATH)/rootdir/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc \
     $(LOCAL_PATH)/rootdirnew/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc

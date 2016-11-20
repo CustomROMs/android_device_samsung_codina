@@ -1,5 +1,5 @@
 def FullOTA_InstallEnd(info):
-	info.script.AppendExtra('symlink("/system/lib/modules/tun.ko", "/system/lib/modules/autoload/tun.ko");')
+#	info.script.AppendExtra('symlink("/system/lib/modules/tun.ko", "/system/lib/modules/autoload/tun.ko");')
 	info.script.AppendExtra('symlink("/system/lib/modules/cpufreq_zenx.ko", "/system/lib/modules/autoload/cpufreq_zenx.ko");')
 	info.script.AppendExtra('symlink("/system/lib/modules/cpufreq_ondemandplus.ko", "/system/lib/modules/autoload/cpufreq_ondemandplus.ko");')
 	info.script.AppendExtra('symlink("/system/lib/modules/logger.ko", "/system/lib/modules/autoload/logger.ko");')

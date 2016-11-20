@@ -16,7 +16,7 @@ index 02bb7c4..b75a1c2
  #endif
              mRotationDegrees,
              usage,
-@@ -6293,7 +6297,7 @@ bool ACodec::BaseState::onOMXFillBufferDone(
+@@ -6434,7 +6438,7 @@ bool ACodec::BaseState::onOMXFillBufferDone(
                  mCodec->mSkipCutBuffer->submit(info->mData);
              }
              info->mData->meta()->setInt64("timeUs", timeUs);
@@ -29,7 +29,7 @@ diff --git a/include/media/stagefright/ColorConverter.h b/include/media/stagefri
 index 85ba920..e34791c 100644
 --- a/include/media/stagefright/ColorConverter.h
 +++ b/include/media/stagefright/ColorConverter.h
-@@ -72,6 +72,11 @@ private:
+@@ -75,6 +75,11 @@ private:
  
      status_t convertQCOMYUV420SemiPlanar(
              const BitmapParams &src, const BitmapParams &dst);

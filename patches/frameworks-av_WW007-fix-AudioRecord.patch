@@ -8,15 +8,15 @@ diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.c
 index 0caada8..89e2084 100644
 --- a/services/audioflinger/Threads.cpp
 +++ b/services/audioflinger/Threads.cpp
-@@ -6088,6 +6088,7 @@ reacquire_wakelock:
+@@ -6292,6 +6292,7 @@ reacquire_wakelock:
          mTimestamp.mPosition[ExtendedTimestamp::LOCATION_SERVER] += framesRead;
          mTimestamp.mTimeNs[ExtendedTimestamp::LOCATION_SERVER] = systemTime();
  
 +#ifndef MR0_AUDIO_BLOB
          // Update server timestamp with kernel stats
-         if (mInput->stream->get_capture_position != nullptr) {
-             int64_t position, time;
-@@ -6102,6 +6103,7 @@ reacquire_wakelock:
+         if (mInput->stream->get_capture_position != nullptr
+                 && mPipeSource.get() == nullptr /* don't obtain for FastCapture, could block */) {
+@@ -6307,6 +6308,7 @@ reacquire_wakelock:
                  // as the read obtains a lock, preventing the timestamp call from executing.
              }
          }

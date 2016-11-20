@@ -2,7 +2,7 @@ diff --git a/InCallUI/src/com/android/incallui/CallList.java b/InCallUI/src/com/
 index 5f0f36f..bb89d10 100644
 --- a/InCallUI/src/com/android/incallui/CallList.java
 +++ b/InCallUI/src/com/android/incallui/CallList.java
-@@ -51,8 +51,8 @@public class CallList implements InCallPhoneListener {
+@@ -52,8 +52,8 @@public class CallList implements InCallPhoneListener {
  public class CallList {
  
      private static final int DISCONNECTED_CALL_SHORT_TIMEOUT_MS = 200;

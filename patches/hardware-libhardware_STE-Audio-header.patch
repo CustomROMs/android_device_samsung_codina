@@ -2,7 +2,7 @@ diff --git a/include/hardware/audio.h b/include/hardware/audio.h
 index c3cb740..6aef16a 100644
 --- a/include/hardware/audio.h
 +++ b/include/hardware/audio.h
-@@ -610,6 +610,19 @@ struct audio_hw_device {
+@@ -611,6 +611,19 @@ struct audio_hw_device {
      void (*close_output_stream)(struct audio_hw_device *dev,
                                  struct audio_stream_out* stream_out);
  

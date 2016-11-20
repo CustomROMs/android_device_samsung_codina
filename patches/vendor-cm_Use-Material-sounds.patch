@@ -2,7 +2,7 @@ diff --git a/config/common.mk b/config/common.mk
 index de2067a..1391772 100644
 --- a/config/common.mk
 +++ b/config/common.mk
-@@ -65,8 +65,8 @@
+@@ -56,8 +56,8 @@
  
  # Default notification/alarm sounds
  PRODUCT_PROPERTY_OVERRIDES += \

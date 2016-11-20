@@ -2,7 +2,7 @@ diff --git a/core/Makefile b/core/Makefile
 index 43c98e3..b22731f 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -2131,7 +2131,7 @@
+@@ -2223,7 +2223,7 @@
  	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
  	   $(BUILT_TARGET_FILES_PACKAGE) $@
  
@@ -15,7 +15,7 @@ diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
 index d70610d..2b7fdba 100755
 --- a/tools/releasetools/common.py
 +++ b/tools/releasetools/common.py
-@@ -1734,6 +1734,10 @@ def ParseCertificate(data):
+@@ -1742,6 +1742,10 @@ def ParseCertificate(data):
  
  def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
                        info_dict=None):
