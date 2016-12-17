@@ -1,0 +1,92 @@
+ Use the SystemService lifecycle mechanism for AudioService
+This will be needed to refactor user restriction handling.
+
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index d9658cc..2bae521 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -117,7 +117,6 @@
+ import com.android.internal.util.XmlUtils;
+ import com.android.server.EventLogTags;
+ import com.android.server.LocalServices;
+-import com.android.server.SystemService;
+ import com.android.server.pm.UserManagerService;
+ 
+ import org.xmlpull.v1.XmlPullParserException;
+@@ -620,27 +619,6 @@ public static String makeAlsaAddressString(int card, int device) {
+         return "card=" + card + ";device=" + device + ";";
+     }
+ 
+-    public static final class Lifecycle extends SystemService {
+-        private AudioService mService;
+-
+-        public Lifecycle(Context context) {
+-            super(context);
+-            mService = new AudioService(context);
+-        }
+-
+-        @Override
+-        public void onStart() {
+-            publishBinderService(Context.AUDIO_SERVICE, mService);
+-        }
+-
+-        @Override
+-        public void onBootPhase(int phase) {
+-            if (phase == SystemService.PHASE_ACTIVITY_MANAGER_READY) {
+-                mService.systemReady();
+-            }
+-        }
+-    }
+-
+     ///////////////////////////////////////////////////////////////////////////
+     // Construction
+     ///////////////////////////////////////////////////////////////////////////
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index d3f04f1..510f565 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -563,6 +563,7 @@ private void startOtherServices() {
+         InputManagerService inputManager = null;
+         TelephonyRegistry telephonyRegistry = null;
+         ConsumerIrService consumerIr = null;
++        AudioService audioService = null;
+         MmsServiceBroker mmsService = null;
+         HardwarePropertiesManagerService hardwarePropertiesService = null;
+         Object wigigP2pService = null;
+@@ -1010,7 +1011,12 @@ private void startOtherServices() {
+             }
+ 
+             traceBeginAndSlog("StartAudioService");
+-            mSystemServiceManager.startService(AudioService.Lifecycle.class);
++            try {
++                audioService = new AudioService(context);
++                ServiceManager.addService(Context.AUDIO_SERVICE, audioService);
++            } catch (Throwable e) {
++                reportWtf("starting Audio Service", e);
++            }
+             Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
+ 
+             if (!disableNonCoreServices) {
+@@ -1410,6 +1416,7 @@ private void startOtherServices() {
+         final InputManagerService inputManagerF = inputManager;
+         final TelephonyRegistry telephonyRegistryF = telephonyRegistry;
+         final MediaRouterService mediaRouterF = mediaRouter;
++        final AudioService audioServiceF = audioService;
+         final MmsServiceBroker mmsServiceF = mmsService;
+ 
+         // We now tell the activity manager it is okay to run third party
+@@ -1482,7 +1489,13 @@ public void run() {
+                     reportWtf("making Connectivity Service ready", e);
+                 }
+                 Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
+-
++                Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, "MakeAudioServiceReady");
++                try {
++                    if (audioServiceF != null) audioServiceF.systemReady();
++                } catch (Throwable e) {
++                    reportWtf("Notifying AudioService running", e);
++                }
++                Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
+                 Watchdog.getInstance().start();
+ 
+                 // It is now okay to let the various system services start their

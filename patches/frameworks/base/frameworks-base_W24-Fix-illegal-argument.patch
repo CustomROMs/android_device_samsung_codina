@@ -1,0 +1,37 @@
+Subject: [PATCH] Fix illegal argument exception when take picture.
+
+When press picture taking button, switch to other menus quickly like recording mode.
+There is an illegal argument exception happens:
+
+I RequestThread-0: Received jpeg.
+E Legacy-CameraDevice-JNI: LegacyCameraDevice_nativeGetSurfaceId: Could not retrieve native Surface from surface.
+--------- beginning of crash
+E AndroidRuntime: FATAL EXCEPTION: Thread-213
+E AndroidRuntime: Process: com.android.camera2, PID: 3481
+E AndroidRuntime: java.lang.IllegalArgumentException: Surface had no valid native Surface.
+E AndroidRuntime:        at android.hardware.camera2.legacy.LegacyCameraDevice.nativeGetSurfaceId(Native Method)
+E AndroidRuntime:        at android.hardware.camera2.legacy.LegacyCameraDevice.getSurfaceId(LegacyCameraDevice.java:658)
+E AndroidRuntime:        at android.hardware.camera2.legacy.LegacyCameraDevice.containsSurfaceId(LegacyCameraDevice.java:678)
+E AndroidRuntime:        at android.hardware.camera2.legacy.RequestThreadManager$2.onPictureTaken(RequestThreadManager.java:220)
+E AndroidRuntime:        at android.hardware.Camera$EventHandler.handleMessage(Camera.java:1092)
+E AndroidRuntime:        at android.os.Handler.dispatchMessage(Handler.java:102)
+E AndroidRuntime:        at android.os.Looper.loop(Looper.java:148)
+E AndroidRuntime:        at android.hardware.camera2.legacy.CameraDeviceUserShim$CameraLooper.run(CameraDeviceUserShim.java:136)
+E AndroidRuntime:        at java.lang.Thread.run(Thread.java:818)
+W ActivityManager:   Force finishing activity com.android.camera2/com.android.camera.CameraLauncher
+
+RequestThreadManager.onPictureTaken() should catch this excption to avoid this issue.
+
+diff --git a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+index da62f54..f9b5deb 100644
+--- a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
++++ b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+@@ -242,6 +242,8 @@
+                     }
+                 } catch (LegacyExceptionUtils.BufferQueueAbandonedException e) {
+                     Log.w(TAG, "Surface abandoned, dropping frame. ", e);
++                } catch (IllegalArgumentException e) {
++                    Log.w(TAG, "no valid native surface, dropping frame. ", e);
+                 }
+             }
+ 

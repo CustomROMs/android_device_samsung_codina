@@ -1,0 +1,49 @@
+Subject: [PATCH] libc: Fix absolute_timespec_from_timespec overflow.
+
+A legacy library has uncovered an overflow in this function.
+absolute_timespec_from_timespec blindly adds a relative timespec to
+the current one, ignoring the possibility of tv_sec overflowing.
+
+This was produced by calling pthread_cond_timedwait_relative_np with a
+filled (to maximum values) timespec to create a faux 'infinite timeout'.
+
+This is fixed by clamping the value as high as we can determine is safe.
+
+diff --git a/libc/bionic/bionic_time_conversions.cpp b/libc/bionic/bionic_time_conversions.cpp
+index f3ca46a..b0a41b2 100644
+--- a/libc/bionic/bionic_time_conversions.cpp
++++ b/libc/bionic/bionic_time_conversions.cpp
+@@ -26,6 +26,9 @@
+  * SUCH DAMAGE.
+  */
+ 
++#include <stdint.h>
++#include <sys/param.h>
++
+ #include "private/bionic_time_conversions.h"
+ 
+ #include "private/bionic_constants.h"
+@@ -54,10 +57,23 @@
+ 
+ void absolute_timespec_from_timespec(timespec& abs_ts, const timespec& ts, clockid_t clock) {
+   clock_gettime(clock, &abs_ts);
++  time_t clock_tv_sec = abs_ts.tv_sec;
+   abs_ts.tv_sec += ts.tv_sec;
+   abs_ts.tv_nsec += ts.tv_nsec;
+   if (abs_ts.tv_nsec >= NS_PER_S) {
+     abs_ts.tv_nsec -= NS_PER_S;
+     abs_ts.tv_sec++;
+   }
++  // With a large relative timespec we might overflow.
++  // Because time_t is arbitrary, we should be fancy handling this.
++  if (abs_ts.tv_sec < clock_tv_sec) {
++    if (sizeof(time_t) == sizeof(int32_t)) {
++      abs_ts.tv_sec = INT32_MAX;
++    } else if (sizeof(time_t) == sizeof(int64_t)) {
++      abs_ts.tv_sec = INT64_MAX;
++    } else {
++      // Just take the largest of the two initial values and hope for the best.
++      abs_ts.tv_sec = MAX(clock_tv_sec, ts.tv_sec);
++    }
++  }
+ }

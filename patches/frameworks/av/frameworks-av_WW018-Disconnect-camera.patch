@@ -1,0 +1,91 @@
+ Camera: Disconnect camera after checking flash unit
+Disconnect camera device after opening it just to check if
+it has a flash unit. Leave it open if torch is being turned on.
+
+diff --git a/services/camera/libcameraservice/CameraFlashlight.cpp b/services/camera/libcameraservice/CameraFlashlight.cpp
+index 9022324..ecfa13d 100644
+--- a/services/camera/libcameraservice/CameraFlashlight.cpp
++++ b/services/camera/libcameraservice/CameraFlashlight.cpp
+@@ -679,8 +679,7 @@ status_t CameraHardwareInterfaceFlashControl::setTorchMode(
+     status_t res;
+     if (enabled) {
+         bool hasFlash = false;
+-        // Check if it has a flash unit and leave camera device open.
+-        res = hasFlashUnitLocked(cameraId, &hasFlash, /*keepDeviceOpen*/true);
++        res = hasFlashUnitLocked(cameraId, &hasFlash);
+         // invalid camera?
+         if (res) {
+             // hasFlashUnitLocked() returns BAD_INDEX if mDevice is connected to
+@@ -689,8 +688,6 @@ status_t CameraHardwareInterfaceFlashControl::setTorchMode(
+         }
+         // no flash unit?
+         if (!hasFlash) {
+-            // Disconnect camera device if it has no flash.
+-            disconnectCameraDevice();
+             return -ENOSYS;
+         }
+     } else if (mDevice == NULL || cameraId != mCameraId) {
+@@ -719,28 +716,21 @@ status_t CameraHardwareInterfaceFlashControl::setTorchMode(
+ status_t CameraHardwareInterfaceFlashControl::hasFlashUnit(
+         const String8& cameraId, bool *hasFlash) {
+     Mutex::Autolock l(mLock);
+-    // Close device after checking if it has a flash unit.
+-    return hasFlashUnitLocked(cameraId, hasFlash, /*keepDeviceOpen*/false);
++    return hasFlashUnitLocked(cameraId, hasFlash);
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::hasFlashUnitLocked(
+-        const String8& cameraId, bool *hasFlash, bool keepDeviceOpen) {
+-    bool closeCameraDevice = false;
+-
++        const String8& cameraId, bool *hasFlash) {
+     if (!hasFlash) {
+         return BAD_VALUE;
+     }
+ 
+     status_t res;
+     if (mDevice == NULL) {
+-        // Connect to camera device to query if it has a flash unit.
+         res = connectCameraDevice(cameraId);
+         if (res) {
+             return res;
+         }
+-        // Close camera device only when it is just opened and the caller doesn't want to keep
+-        // the camera device open.
+-        closeCameraDevice = !keepDeviceOpen;
+     }
+ 
+     if (cameraId != mCameraId) {
+@@ -755,15 +745,6 @@ status_t CameraHardwareInterfaceFlashControl::hasFlashUnitLocked(
+         *hasFlash = false;
+     }
+ 
+-    if (closeCameraDevice) {
+-        res = disconnectCameraDevice();
+-        if (res != OK) {
+-            ALOGE("%s: Failed to disconnect camera device. %s (%d)", __FUNCTION__,
+-                    strerror(-res), res);
+-            return res;
+-        }
+-    }
+-
+     return OK;
+ }
+ 
+diff --git a/services/camera/libcameraservice/CameraFlashlight.h b/services/camera/libcameraservice/CameraFlashlight.h
+index 9022324..ecfa13d 100644
+--- a/services/camera/libcameraservice/CameraFlashlight.h
++++ b/services/camera/libcameraservice/CameraFlashlight.h
+@@ -203,11 +203,7 @@ class CameraHardwareInterfaceFlashControl : public FlashControlBase {
+         status_t getSmallestSurfaceSize(int32_t *width, int32_t *height);
+ 
+         // protected by mLock
+-        // If this function opens camera device in order to check if it has a flash unit, the
+-        // camera device will remain open if keepDeviceOpen is true and the camera device will be
+-        // closed if keepDeviceOpen is false. If camera device is already open when calling this
+-        // function, keepDeviceOpen is ignored.
+-        status_t hasFlashUnitLocked(const String8& cameraId, bool *hasFlash, bool keepDeviceOpen);
++        status_t hasFlashUnitLocked(const String8& cameraId, bool *hasFlash);
+ 
+         CameraModule *mCameraModule;
+         const camera_module_callbacks_t *mCallbacks;

@@ -1,0 +1,21 @@
+Fix database utils error in logs 
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 5f0f620..2189d10 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -3,12 +3,13 @@
+         android:sharedUserId="android.media"
+         android:sharedUserLabel="@string/uid_label"
+         android:versionCode="800">
+-        
++
+     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+     <uses-permission android:name="android.permission.WAKE_LOCK" />
+     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE" />
++    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.ACCESS_MTP" />
+     <uses-permission android:name="android.permission.MANAGE_USERS" />
+     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />

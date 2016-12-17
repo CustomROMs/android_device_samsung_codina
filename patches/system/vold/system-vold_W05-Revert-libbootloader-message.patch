@@ -1,0 +1,27 @@
+diff --git a/Android.mk b/Android.mk
+index 00550c0..6a68701 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -72,7 +72,7 @@ common_shared_libraries := \
+ 	libext2_blkid
+ 
+ common_static_libraries := \
+-	libbootloader_message \
++	libbootloader_message_writer \
+ 	libfs_mgr \
+ 	libfec \
+ 	libfec_rs \
+diff --git a/cryptfs.c b/cryptfs.c
+index 00550c1..6a68711 100644
+--- a/cryptfs.c
++++ b/cryptfs.c
+@@ -62,7 +62,7 @@
+ #include "CheckBattery.h"
+ #include "Process.h"
+ 
+-#include <bootloader_message/bootloader_message.h>
++#include <bootloader_message_writer.h>
+ #include <hardware/keymaster0.h>
+ #include <hardware/keymaster1.h>
+ 
+

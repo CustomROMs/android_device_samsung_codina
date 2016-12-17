@@ -1,0 +1,36 @@
+Subject: [PATCH] To enable scroll function at DatePickerDialog
+
+Symptom:
+Some date is truncated so can't be selected when setting
+display size as large.
+
+Root cause:
+For DatePickerDialog can not scroll, not be displayed depending
+on the display size.
+
+diff --git a/core/res/res/layout/date_picker_material.xml b/core/res/res/layout/date_picker_material.xml
+index 763f2a4..dd8a45d 100644
+--- a/core/res/res/layout/date_picker_material.xml
++++ b/core/res/res/layout/date_picker_material.xml
+@@ -25,10 +25,16 @@
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content" />
+ 
+-    <include
+-        layout="@layout/date_picker_view_animator_material"
+-        android:layout_width="match_parent"
+-        android:layout_height="0dp"
+-        android:layout_weight="1" />
++    <ScrollView
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:fadeScrollbars="false"
++        android:scrollIndicators="top|bottom">
++        <include
++            layout="@layout/date_picker_view_animator_material"
++            android:layout_width="match_parent"
++            android:layout_height="0dp"
++            android:layout_weight="1" />
++    </ScrollView>
+ 
+ </LinearLayout>

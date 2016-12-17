@@ -1,0 +1,15 @@
+Subject: [PATCH] SwipeHelper: Let's cut Max Excape Animation in Half too
+
+diff --git a/packages/SystemUI/src/com/android/systemui/SwipeHelper.java b/packages/SystemUI/src/com/android/systemui/SwipeHelper.java
+index 5c50b5c..1b27b79 100644
+--- a/packages/SystemUI/src/com/android/systemui/SwipeHelper.java
++++ b/packages/SystemUI/src/com/android/systemui/SwipeHelper.java
+@@ -365,7 +365,7 @@
+             duration = MAX_ESCAPE_ANIMATION_DURATION;
+             if (velocity != 0) {
+                 duration = Math.min(duration,
+-                        (int) (Math.abs(newPos - getTranslation(animView)) * 1000f / Math
++                        (int) (Math.abs(newPos - getTranslation(animView)) * 500f / Math
+                                 .abs(velocity))
+                 );
+             } else {

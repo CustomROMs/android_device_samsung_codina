@@ -1,0 +1,26 @@
+Subject: [PATCH] Fix suspend crash issue on no GPU platform.
+
+eglChooseConfig should return false only if an error occured.
+If eglChooseConfig is called with a valid attribute list,
+no internal EGL errors occur. And if no available config matches
+the requested attribute list, no configs are returned.
+Not only the return value of eglChooseConfig should be checked,
+the 'num_config' out-param must be inspected too.
+If no configs were returned, and no error occurred, then 'num_config' will be 0.
+
+diff --git a/services/core/java/com/android/server/display/ColorFade.java b/services/core/java/com/android/server/display/ColorFade.java
+index a16fcd2..2541050 100644
+--- a/services/core/java/com/android/server/display/ColorFade.java
++++ b/services/core/java/com/android/server/display/ColorFade.java
+@@ -556,6 +556,11 @@
+                 logEglError("eglChooseConfig");
+                 return false;
+             }
++            if (numEglConfigs[0] <= 0) {
++                Slog.e(TAG, "no valid config found");
++                return false;
++            }
++
+             mEglConfig = eglConfigs[0];
+         }
+ 

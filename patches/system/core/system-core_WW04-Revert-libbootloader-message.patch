@@ -1,0 +1,28 @@
+Subject: [PATCH] init: use libbootloader_message.
+
+diff --git a/init/Android.mk b/init/Android.mk
+index 4827fa3..67541b8 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -113,7 +113,7 @@
+ 
+ LOCAL_STATIC_LIBRARIES := \
+     libinit \
+-    libbootloader_message \
++    libbootloader_message_writer \
+     libfs_mgr \
+     libfec \
+     libfec_rs \
+diff --git a/init/builtins.cpp b/init/builtins.cpp
+index f3f04c2..5d512ae 100644
+--- a/init/builtins.cpp
++++ b/init/builtins.cpp
+@@ -48,7 +48,7 @@
+ #include <android-base/file.h>
+ #include <android-base/parseint.h>
+ #include <android-base/stringprintf.h>
+-#include <bootloader_message/bootloader_message.h>
++#include <bootloader_message_writer.h>
+ #include <cutils/partition_utils.h>
+ #include <cutils/android_reboot.h>
+ #include <logwrap/logwrap.h>
