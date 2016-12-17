@@ -14,8 +14,6 @@ if [ "$PATCHES" == "" ] ; then
 		vendor/cm \
 		frameworks/opt/net/wifi \
 		frameworks/opt/telephony \
-		frameworks/native \
-		frameworks/av \
 		frameworks/base \
 		bootable/recovery \
 		art \
