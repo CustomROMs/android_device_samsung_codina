@@ -8,7 +8,7 @@ diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java 
 index 9708a5a..004f6bb 100644
 --- a/services/core/java/com/android/server/wm/WindowManagerService.java
 +++ b/services/core/java/com/android/server/wm/WindowManagerService.java
-@@ -715,9 +715,9 @@ public void onChange(boolean selfChange, Uri uri) {
+@@ -725,9 +725,9 @@ public void onChange(boolean selfChange, Uri uri) {
      PowerManager mPowerManager;
      PowerManagerInternal mPowerManagerInternal;
  

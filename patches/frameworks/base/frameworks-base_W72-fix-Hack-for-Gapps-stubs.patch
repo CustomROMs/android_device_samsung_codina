@@ -1,0 +1,87 @@
+ pm: do not verify system apps signatures
+Hack for Gapps stubs
+
+diff --git a/core/java/android/content/pm/PackageParser.java b/core/java/android/content/pm/PackageParser.java
+index f106f01..7b23271 100644
+--- a/core/java/android/content/pm/PackageParser.java
++++ b/core/java/android/content/pm/PackageParser.java
+@@ -1250,6 +1250,34 @@ private static void collectCertificates(Package pkg, File apkFile, int parseFlag
+         }
+ 
+         StrictJarFile jarFile = null;
++
++        final String systemDir = android.os.Environment.getRootDirectory().getPath();
++        final boolean isSystemApk = apkPath.startsWith(systemDir);
++
++        if (isSystemApk) {
++            try {
++                final Certificate[][] entryCerts = StrictJarFile.loadSignature(apkPath);
++                if (!ArrayUtils.isEmpty(entryCerts)) {
++                    final Signature[] entrySignatures = convertToSignatures(entryCerts);
++
++                    pkg.mCertificates = entryCerts;
++                    pkg.mSignatures = entrySignatures;
++                    pkg.mSigningKeys = new ArraySet<PublicKey>();
++                    for (int i=0; i < entryCerts.length; i++) {
++                        pkg.mSigningKeys.add(entryCerts[i][0].getPublicKey());
++                    }
++                    Slog.w(TAG, "extract public cert hack performed successful for " + apkPath );
++                    return;
++                } else {
++                    Slog.w(TAG, "No certification in " + apkPath);
++                }
++            } catch (GeneralSecurityException e) {
++                Slog.w(TAG, "extract public cert hack is failed", e);
++            } catch (RuntimeException e) {
++                Slog.w(TAG, "extract public cert hack is failed", e);
++            }
++        }
++
+         try {
+             Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "strictJarFileCtor");
+             // Ignore signature stripping protections when verifying APKs from system partition.
+diff --git a/core/java/android/util/jar/StrictJarFile.java b/core/java/android/util/jar/StrictJarFile.java
+index f206f01..7b23271 100644
+--- a/core/java/android/util/jar/StrictJarFile.java
++++ b/core/java/android/util/jar/StrictJarFile.java
+@@ -449,4 +449,40 @@ public RAFStream(RandomAccessFile raf, long initialOffset) throws IOException {
+     private static native ZipEntry nativeNextEntry(long iterationHandle);
+     private static native ZipEntry nativeFindEntry(long nativeHandle, String entryName);
+     private static native void nativeClose(long nativeHandle);
++
++    /**
++     * @hide
++     */
++    public static Certificate[][] loadSignature(String fileName) {
++        boolean signatureSchemeRollbackProtectionsEnforced = false;
++        StrictJarFile jf = null;
++        Object obj = null;
++        try {
++            jf = new StrictJarFile(fileName, false,
++                    signatureSchemeRollbackProtectionsEnforced);
++            HashMap<String, byte[]> metaEntries = jf.getMetaEntries();
++            final String certFile = "META-INF/CERT.RSA";
++            byte[] sBlockBytes = metaEntries.get(certFile);
++            if (sBlockBytes == null) return null;
++
++            obj = sun.security.jca.Providers.startJarVerification();
++            sun.security.pkcs.PKCS7 block = new sun.security.pkcs.PKCS7(sBlockBytes);
++
++            Certificate[][] entryCerts = {
++                    block.getCertificates(),
++            };
++            return entryCerts;
++        } catch (IOException ex) {
++        } finally {
++            if (obj != null) {
++                sun.security.jca.Providers.stopJarVerification(obj);
++            }
++            if (jf != null) {
++                try {
++                    jf.close();
++                } catch (Exception ignored) {}
++            }
++        }
++        return null;
++    }
+ }

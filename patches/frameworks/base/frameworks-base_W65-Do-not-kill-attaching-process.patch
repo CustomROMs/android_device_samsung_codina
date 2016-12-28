@@ -1,0 +1,24 @@
+Subject: [PATCH] Do not kill attaching process when removing task.
+
+When a process of service is starting for someone binds it,
+before attach application to ActivityManagerService, there
+is an activity in the same package is removed from recent app.
+The service process will be reported as start timeout because
+it has not linkToDeath yet. And also the caller to the service
+will not receive onServiceDisconnected.
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index da2b91e..e9fddc1 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -9736,6 +9736,10 @@ private void cleanUpRemovedTaskLocked(TaskRecord tr, boolean killProcess,
+             SparseArray<ProcessRecord> uids = pmap.valueAt(i);
+             for (int j = 0; j < uids.size(); j++) {
+                 ProcessRecord proc = uids.valueAt(j);
++                if (proc.thread == null) {
++                    // Don't kill process if it is not attached.
++                    continue;
++                }
+                 if (proc.userId != tr.userId) {
+                     // Don't kill process for a different user.
+                     continue;

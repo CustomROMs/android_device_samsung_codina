@@ -1,0 +1,17 @@
+ Settings: fix NPE in setup wizard
+E AndroidRuntime: Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 
+'android.content.pm.ResolveInfo android.accessibilityservice.AccessibilityServiceInfo.getResolveInfo()' 
+on a null object reference
+
+diff --git a/src/com/android/settings/accessibility/AccessibilitySettingsForSetupWizard.java b/src/com/android/settings/accessibility/AccessibilitySettingsForSetupWizard.java
+index 0005524..04ec124 100644
+--- a/src/com/android/settings/accessibility/AccessibilitySettingsForSetupWizard.java
++++ b/src/com/android/settings/accessibility/AccessibilitySettingsForSetupWizard.java
+@@ -118,6 +118,7 @@ private void updateScreenReaderPreference() {
+         AccessibilityServiceInfo info = findFirstServiceWithSpokenFeedback();
+         if (info == null) {
+             mScreenReaderPreference.setEnabled(false);
++            return;
+         } else {
+             mScreenReaderPreference.setEnabled(true);
+         }

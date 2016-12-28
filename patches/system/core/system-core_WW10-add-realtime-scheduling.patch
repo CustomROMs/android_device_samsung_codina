@@ -1,0 +1,69 @@
+ utils: add realtime scheduling priority
+
+Some threads in the framework or HALs do a small amount of work but have
+latency requirements which cause a poor user experience if not satisfied
+Even though these threads are prioritized higher than most other threads
+in the system, their execution can still be delayed for several
+milliseconds while a lower priority thread finishes its scheduler time
+slice. Allow these threads to use the realtime scheduler by setting
+their priority to ANDROID_PRIORITY_REALTIME
+
+diff --git a/include/system/thread_defs.h b/include/system/thread_defs.h
+index b01f6f7..ac58192 100644
+--- a/include/system/thread_defs.h
++++ b/include/system/thread_defs.h
+@@ -65,6 +65,12 @@ enum {
+      * be allowed to use this level */
+     ANDROID_PRIORITY_HIGHEST        = -20,
+ 
++    // BEGIN Motorola, IKJBXLINE-9555, rknize2, 05/10/2013
++    /* Because of the way Android munges the policy with the priority, handle
++     * RT as a special case. Actual RT priority is set using a different API */
++    ANDROID_PRIORITY_REALTIME       = -21,
++    // END Motorola, IKJBXLINE-9555
++
+     ANDROID_PRIORITY_DEFAULT        = ANDROID_PRIORITY_NORMAL,
+     ANDROID_PRIORITY_MORE_FAVORABLE = -1,
+     ANDROID_PRIORITY_LESS_FAVORABLE = +1,
+diff --git a/include/utils/ThreadDefs.h b/include/utils/ThreadDefs.h
+index b01f6f7..ac58193 100644
+--- a/include/utils/ThreadDefs.h
++++ b/include/utils/ThreadDefs.h
+@@ -60,6 +60,7 @@ enum {
+     PRIORITY_AUDIO          = ANDROID_PRIORITY_AUDIO,
+     PRIORITY_URGENT_AUDIO   = ANDROID_PRIORITY_URGENT_AUDIO,
+     PRIORITY_HIGHEST        = ANDROID_PRIORITY_HIGHEST,
++    PRIORITY_REALTIME       = ANDROID_PRIORITY_REALTIME, // Motorola, IKJBXLINE-9555, rknize2, 05/10/2013
+     PRIORITY_DEFAULT        = ANDROID_PRIORITY_DEFAULT,
+     PRIORITY_MORE_FAVORABLE = ANDROID_PRIORITY_MORE_FAVORABLE,
+     PRIORITY_LESS_FAVORABLE = ANDROID_PRIORITY_LESS_FAVORABLE,
+diff --git a/libutils/Threads.cpp b/libutils/Threads.cpp
+index b01f6f7..ac58194 100644
+--- a/libutils/Threads.cpp
++++ b/libutils/Threads.cpp
+@@ -86,6 +86,13 @@ struct thread_data_t {
+         char * name = t->threadName;
+         delete t;
+         setpriority(PRIO_PROCESS, 0, prio);
++// BEGIN Motorola, IKJBXLINE-9555, rknize2, 05/10/2013
++#if defined(__ANDROID__)
++        if (prio == ANDROID_PRIORITY_REALTIME) {
++            set_sched_policy(gettid(), SP_REALTIME);
++        } else
++#endif
++// END Motorola, IKJBXLINE-9555
+         if (prio >= ANDROID_PRIORITY_BACKGROUND) {
+             set_sched_policy(0, SP_BACKGROUND);
+         } else {
+@@ -308,6 +315,11 @@ int androidSetThreadPriority(pid_t tid, int pri)
+     int rc = 0;
+     int lasterr = 0;
+ 
++// BEGIN Motorola, IKJBXLINE-9555, w04904, 05/10/2013
++    if (pri == ANDROID_PRIORITY_REALTIME) {
++        rc = set_sched_policy(tid, SP_REALTIME);
++    } else
++// END Motorola, IKJBXLINE-9555
+     if (pri >= ANDROID_PRIORITY_BACKGROUND) {
+         rc = set_sched_policy(tid, SP_BACKGROUND);
+     } else if (getpriority(PRIO_PROCESS, tid) >= ANDROID_PRIORITY_BACKGROUND) {

@@ -1,0 +1,35 @@
+ String8: check string source against NULL
+
+On STE u8500 hardware, audiopolicy blobs are passing
+NULL pointer to String8 class constructor on track start / resume.
+Add a condition check to avoid segfault.
+
+diff --git a/libutils/String8.cpp b/libutils/String8.cpp
+index b01f6f7..ac58190 100644
+--- a/libutils/String8.cpp
++++ b/libutils/String8.cpp
+@@ -25,6 +25,7 @@
+ #include <utils/String16.h>
+ #include <utils/threads.h>
+ 
++#include <cutils/compiler.h>
+ #include <ctype.h>
+ 
+ #include "SharedBuffer.h"
+@@ -171,9 +172,14 @@ String8::String8(const String8& o)
+ }
+ 
+ String8::String8(const char* o)
+-    : mString(allocFromUTF8(o, strlen(o)))
++    : mString(0)
+ {
+-    if (mString == NULL) {
++    if (CC_LIKELY(o != NULL)) {
++        mString = allocFromUTF8(o, strlen(o));
++        if (mString == NULL) {
++            mString = getEmptyString();
++        }
++    } else {
+         mString = getEmptyString();
+     }
+ }

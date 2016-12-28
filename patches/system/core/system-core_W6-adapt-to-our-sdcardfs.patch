@@ -4,7 +4,7 @@ diff --git a/sdcard/sdcard.c b/sdcard/sdcard.c
 index 04a25f0..a0397a0 100644
 --- a/sdcard/sdcard.c
 +++ b/sdcard/sdcard.c
-@@ -1963,8 +1963,7 @@ static int sdcardfs_setup(const char *source_path, const char *dest_path, uid_t fsuid,
+@@ -1964,8 +1964,7 @@ static int sdcardfs_setup(const char *source_path, const char *dest_path, uid_t fsuid,
      char opts[256];
  
      snprintf(opts, sizeof(opts),

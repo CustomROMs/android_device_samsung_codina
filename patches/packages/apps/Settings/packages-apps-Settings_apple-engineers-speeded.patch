@@ -8,7 +8,7 @@ diff --git a/src/com/android/settings/DevelopmentSettings.java b/src/com/android
 index 390f270..2189001 100644
 --- a/src/com/android/settings/DevelopmentSettings.java
 +++ b/src/com/android/settings/DevelopmentSettings.java
-@@ -1921,7 +1921,7 @@ private void updateAnimationScaleOptions() {
+@@ -1902,7 +1902,7 @@ private void updateAnimationScaleOptions() {
  
      private void writeAnimationScaleOption(int which, ListPreference pref, Object newValue) {
          try {

@@ -11,7 +11,7 @@ diff --git a/core/java/android/widget/AbsListView.java b/core/java/android/widge
 index bdbbe8e..357f6bc 100644
 --- a/core/java/android/widget/AbsListView.java
 +++ b/core/java/android/widget/AbsListView.java
-@@ -623,6 +623,7 @@
+@@ -633,6 +633,7 @@
      Runnable mPositionScrollAfterLayout;
      private int mMinimumVelocity;
      private int mMaximumVelocity;
@@ -19,7 +19,7 @@ index bdbbe8e..357f6bc 100644
      private float mVelocityScale = 1.0f;
  
      final boolean[] mIsScrap = new boolean[1];
-@@ -871,6 +872,7 @@
+@@ -895,6 +896,7 @@
          mTouchSlop = configuration.getScaledTouchSlop();
          mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
          mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
@@ -27,7 +27,7 @@ index bdbbe8e..357f6bc 100644
          mOverscrollDistance = configuration.getScaledOverscrollDistance();
          mOverflingDistance = configuration.getScaledOverflingDistance();
  
-@@ -4574,7 +4576,7 @@
+@@ -4598,7 +4600,7 @@
                      // Keep the fling alive a little longer
                      postDelayed(this, FLYWHEEL_TIMEOUT);
                  } else {
@@ -36,7 +36,7 @@ index bdbbe8e..357f6bc 100644
                      mTouchMode = TOUCH_MODE_SCROLL;
                      reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                  }
-@@ -4588,6 +4590,11 @@
+@@ -4612,6 +4614,11 @@
          }
  
          void start(int initialVelocity) {
@@ -48,7 +48,7 @@ index bdbbe8e..357f6bc 100644
              int initialY = initialVelocity < 0 ? Integer.MAX_VALUE : 0;
              mLastFlingY = initialY;
              mScroller.setInterpolator(null);
-@@ -4660,13 +4667,18 @@
+@@ -4684,13 +4691,18 @@
          }
  
          void endFling() {

@@ -1,0 +1,72 @@
+ base: use real-time scheduling for the UI Thread
+
+This change creates a new Thread priority
+which is synced and picked up by our extension
+in system/core.
+
+Then the created realtime priority gets used
+in the UI thread to maximize the execution speed
+and avoid junk which is caused by competition in scheduling.
+
+Threads with THREAD_PRIORITY_REALTIME get lined up into
+the SCHED_RR queue.
+
+diff --git a/core/java/android/os/Process.java b/core/java/android/os/Process.java
+index f106f01..7b23271 100644
+--- a/core/java/android/os/Process.java
++++ b/core/java/android/os/Process.java
+@@ -285,6 +285,17 @@
+     public static final int THREAD_PRIORITY_URGENT_AUDIO = -19;
+ 
+     /**
++     * Real-time priority used for critical UI tasks
++     * This gets converted to be lined into the SCHED_RR queue.
++     * Applications can not normally change to this priority.
++     * Use with {@link #setThreadPriority(int)} and
++     * {@link #setThreadPriority(int, int)}, <b>not</b> with the normal
++     * {@link java.lang.Thread} class.
++     * @hide
++     */
++    public static final int THREAD_PRIORITY_REALTIME = -21;
++
++    /**
+      * Minimum increment to make a priority more favorable.
+      */
+     public static final int THREAD_PRIORITY_MORE_FAVORABLE = -1;
+diff --git a/services/core/java/com/android/server/UiThread.java b/services/core/java/com/android/server/UiThread.java
+index f206f01..7b23271 100644
+--- a/services/core/java/com/android/server/UiThread.java
++++ b/services/core/java/com/android/server/UiThread.java
+@@ -21,16 +21,16 @@
+ import android.os.Trace;
+ 
+ /**
+- * Shared singleton thread for showing UI.  This is a foreground thread, and in
++ * Shared singleton thread for showing UI.  This is a realtime thread, and in
+  * additional should not have operations that can take more than a few ms scheduled
+- * on it to avoid UI jank.
++ * on it to avoid impacting the runtime of other non-realtime processes.
+  */
+ public final class UiThread extends ServiceThread {
+     private static UiThread sInstance;
+     private static Handler sHandler;
+ 
+     private UiThread() {
+-        super("android.ui", Process.THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
++        super("android.ui", Process.THREAD_PRIORITY_REALTIME, false /*allowIo*/);
+         // Make sure UiThread is in the fg stune boost group
+         Process.setThreadGroup(Process.myTid(), Process.THREAD_GROUP_TOP_APP);
+     }
+diff --git a/services/core/java/com/android/server/DisplayThread.java b/services/core/java/com/android/server/DisplayThread.java
+index f306f01..7b23271 100644
+--- a/services/core/java/com/android/server/DisplayThread.java
++++ b/services/core/java/com/android/server/DisplayThread.java
+@@ -30,7 +30,7 @@
+     private static Handler sHandler;
+ 
+     private DisplayThread() {
+-        super("android.display", android.os.Process.THREAD_PRIORITY_DISPLAY, false /*allowIo*/);
++        super("android.display", android.os.Process.THREAD_PRIORITY_REALTIME, false /*allowIo*/);
+     }
+ 
+     private static void ensureThreadLocked() {

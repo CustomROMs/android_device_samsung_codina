@@ -2,7 +2,7 @@ diff --git a/services/core/java/com/android/server/am/ActivityManagerService.jav
 index 1902999..015f6bb 100644
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -9318,7 +9318,7 @@ private boolean isGetTasksAllowed(String caller, int callingPid, int callingUid)
+@@ -9325,7 +9325,7 @@ private boolean isGetTasksAllowed(String caller, int callingPid, int callingUid)
          }
          if (!allowed) {
              if (DEBUG_TASKS) Slog.w(TAG, caller + ": caller " + callingUid
@@ -11,7 +11,7 @@ index 1902999..015f6bb 100644
          }
          return allowed;
      }
-@@ -14130,23 +14130,16 @@ private void fillInProcMemInfo(ProcessRecord app,
+@@ -14137,23 +14137,16 @@ private void fillInProcMemInfo(ProcessRecord app,
      @Override
      public List<ActivityManager.RunningAppProcessInfo> getRunningAppProcesses() {
          enforceNotIsolatedCaller("getRunningAppProcesses");
@@ -39,7 +39,7 @@ index 1902999..015f6bb 100644
                      continue;
                  }
                  if ((app.thread != null) && (!app.crashing && !app.notResponding)) {
-@@ -14170,7 +14163,7 @@ private void fillInProcMemInfo(ProcessRecord app,
+@@ -14177,7 +14170,7 @@ private void fillInProcMemInfo(ProcessRecord app,
                      //Slog.v(TAG, "Proc " + app.processName + ": imp=" + currApp.importance
                      //        + " lru=" + currApp.lru);
                      if (runList == null) {

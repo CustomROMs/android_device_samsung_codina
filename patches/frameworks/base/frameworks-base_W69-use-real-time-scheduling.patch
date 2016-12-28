@@ -1,0 +1,19 @@
+ libhwui: use real-time scheduling
+
+* The HWUI RenderThread is constantly used
+  while rendering.
+  -> Realtime scheduling here makes UI smoother.
+
+diff --git a/libs/hwui/renderthread/RenderThread.cpp b/libs/hwui/renderthread/RenderThread.cpp
+index f006f01..7b23271 100644
+--- a/libs/hwui/renderthread/RenderThread.cpp
++++ b/libs/hwui/renderthread/RenderThread.cpp
+@@ -273,7 +273,7 @@ void RenderThread::requestVsync() {
+ }
+ 
+ bool RenderThread::threadLoop() {
+-    setpriority(PRIO_PROCESS, 0, PRIORITY_DISPLAY);
++    setpriority(PRIO_PROCESS, 0, PRIORITY_REALTIME);
+     initThreadLocals();
+ 
+     int timeoutMillis = -1;

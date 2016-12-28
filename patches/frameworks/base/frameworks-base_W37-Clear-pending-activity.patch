@@ -7,7 +7,7 @@ diff --git a/services/core/java/com/android/server/am/ActivityManagerService.jav
 index 74af37f..eb5bf22 100644
 --- a/services/core/java/com/android/server/am/ActivityManagerService.java
 +++ b/services/core/java/com/android/server/am/ActivityManagerService.java
-@@ -6340,6 +6340,8 @@
+@@ -6347,6 +6347,8 @@
                  ProcessList.INVALID_ADJ, callerWillRestart, true, doit, evenPersistent,
                  packageName == null ? ("stop user " + userId) : ("stop " + packageName));
  
@@ -20,7 +20,7 @@ diff --git a/services/core/java/com/android/server/am/ActivityStarter.java b/ser
 index 7b3f65a..85fa139 100644
 --- a/services/core/java/com/android/server/am/ActivityStarter.java
 +++ b/services/core/java/com/android/server/am/ActivityStarter.java
-@@ -2093,4 +2093,18 @@
+@@ -2126,4 +2126,18 @@
              }
          }
      }

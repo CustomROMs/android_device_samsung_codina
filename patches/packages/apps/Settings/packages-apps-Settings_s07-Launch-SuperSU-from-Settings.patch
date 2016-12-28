@@ -1,0 +1,147 @@
+ Launch SuperSU from Settings
+
+If SuperSU is installed, show an entry in Settings below
+"Developer options", which launches SuperSU when tapped.
+At boot time SuperSU will detect if com.android.settings
+contains the resources from this patch, and if so it
+will hide itself from the launcher. This was implemented
+in v1.85, so we only show the entry if the installed
+SuperSU version is at least that.
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 1210070..2889013 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -1016,6 +1016,24 @@
+                 android:value="true" />
+         </activity>
+ 
++        <activity android:name="Settings$SuperSUActivity"
++                android:label="@string/supersu_title"
++                android:icon="@drawable/ic_settings_supersu"
++                android:taskAffinity="" >
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++                <category android:name="android.intent.category.DEFAULT" />
++                <category android:name="com.android.settings.SHORTCUT" />
++            </intent-filter>
++            <intent-filter android:priority="0">
++                <action android:name="com.android.settings.action.SETTINGS" />
++            </intent-filter>
++            <meta-data android:name="com.android.settings.category"
++                android:value="com.android.settings.category.system" />
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.SuperSU" />
++        </activity>
++
+         <activity android:name="Settings$DeviceInfoSettingsActivity"
+                 android:theme="@style/Theme.SubSettingsDialogWhenLarge"
+                 android:label="@string/device_info_settings"
+diff --git a/src/com/android/settings/Settings.java b/src/com/android/settings/Settings.java
+index 1310070..2889013 100644
+--- a/src/com/android/settings/Settings.java
++++ b/src/com/android/settings/Settings.java
+@@ -71,6 +71,7 @@ public boolean isValidFragment(String className) {
+     public static class BackgroundCheckSummaryActivity extends SettingsActivity { /* empty */ }
+     public static class StorageUseActivity extends SettingsActivity { /* empty */ }
+     public static class DevelopmentSettingsActivity extends SettingsActivity { /* empty */ }
++    public static class SuperSUActivity extends SettingsActivity { /* empty */ }
+     public static class AccessibilitySettingsActivity extends SettingsActivity { /* empty */ }
+     public static class CaptioningSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class AccessibilityInversionSettingsActivity extends SettingsActivity { /* empty */ }
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 1110070..2889013 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -51,4 +51,7 @@
+     <string name="media_scanner_on_boot_ask">Ask to scan (notification)</string>
+     <string name="media_scanner_on_boot_disabled">Do not scan media</string>
+ 
++    <!-- SuperSU -->
++    <string name="supersu_title">SuperSU</string>
++
+ </resources>
+diff --git a/src/com/android/settings/SettingsActivity.java b/src/com/android/settings/SettingsActivity.java
+index 1110070..2889015 100644
+--- a/src/com/android/settings/SettingsActivity.java
++++ b/src/com/android/settings/SettingsActivity.java
+@@ -235,6 +235,8 @@
+ 
+     private static final String ACTION_TIMER_SWITCH = "qualcomm.intent.action.TIMER_SWITCH";
+ 
++    private static final String SUPERSU_FRAGMENT = "com.android.settings.SuperSU";
++
+     private String mFragmentClass;
+     private String mActivityAction;
+ 
+@@ -1044,7 +1046,14 @@ public void startPreferenceFragment(Fragment fragment, boolean push) {
+      */
+     private Fragment switchToFragment(String fragmentName, Bundle args, boolean validate,
+             boolean addToBackStack, int titleResId, CharSequence title, boolean withTransition) {
+-
++
++        if (SUPERSU_FRAGMENT.equals(fragmentName)) {
++            Intent superSUIntent = new Intent();
++            superSUIntent.setClassName("eu.chainfire.supersu", "eu.chainfire.supersu.MainActivity");
++            startActivity(superSUIntent);
++            finish();
++            return null;
++        }
+         if (validate && !isValidFragment(fragmentName)) {
+             throw new IllegalArgumentException("Invalid fragment for this activity: "
+                     + fragmentName);
+@@ -1139,6 +1148,16 @@ private void doUpdateTilesList() {
+                         Settings.DevelopmentSettingsActivity.class.getName()),
+                 showDev, isAdmin, pm);
+ 
++        // Embedding into Settings is supported from SuperSU v1.85 and up
++        boolean suSupported = false;
++        try {
++            suSupported = (getPackageManager().getPackageInfo("eu.chainfire.supersu", 0).versionCode >= 185);
++        } catch (PackageManager.NameNotFoundException e) {
++        }
++        setTileEnabled(new ComponentName(packageName,
++                        Settings.SuperSUActivity.class.getName()),
++                suSupported, isAdmin, pm);
++
+         // Reveal development-only quick settings tiles
+         DevelopmentTiles.setTilesEnabled(this, showDev);
+ 
+diff --git a/res/drawable/ic_settings_supersu.xml b/res/drawable/ic_settings_supersu.xml
+new file mode 100644
+index 111f231..bb89000
+--- /dev/null
++++ b/res/drawable/ic_settings_supersu.xml
+@@ -0,0 +1,32 @@
++<!--
++    Copyright (C) 2016 Dirty Unicorns
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24.0dp"
++    android:height="24.0dp"
++    android:viewportWidth="24.0"
++    android:viewportHeight="24.0"
++    android:tint="?android:attr/colorAccent">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M 4.604552,2.726887 0,7.331435 l 7.647226,9.209104 0.44808,-2.193457 -1.749645,0
++0,-1.544808 2.061167,0 0.763869,-3.759602 -2.825036,0 0,-1.544808 3.136558,0
++0.900427,-4.442389 1.553343,0 -0.900427,4.442389 3.26458,0 0.900427,-4.442389
++1.561878,0 -0.900427,4.442389 1.792319,0 0,1.544808 -2.103841,0
++-0.776672,3.759602 2.880513,0 0,1.544808 -3.187767,0 -0.904694,4.412518
++-1.553343,0 0.891892,-4.412518 -3.251778,0 -0.755335,3.69559 2.684211,3.230441 L
++24,7.331435 19.613087,2.752487 4.604552,2.726887 z m 6.119488,6.315785
++-0.763869,3.759602 3.251778,0 0.776671,-3.759602 -3.26458,0 z" />
++</vector>

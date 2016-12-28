@@ -1,0 +1,15 @@
+Subject: [PATCH] [1/2] init.rc: set DOWNLOAD_CACHE based on prop
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index ec9ba99..daede42 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -238,7 +238,7 @@
+     # expecting it to point to /proc/self/fd
+     symlink /proc/self/fd /dev/fd
+ 
+-    export DOWNLOAD_CACHE ${ro.device.cache_dir}
++    export DOWNLOAD_CACHE /cache
+ 
+     # set RLIMIT_NICE to allow priorities from 19 to -20
+     setrlimit 13 40 40

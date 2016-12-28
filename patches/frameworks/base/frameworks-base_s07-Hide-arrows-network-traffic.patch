@@ -1,0 +1,71 @@
+Subject: [PATCH] Hide arrows in network traffic indicators [1/2] 
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkTraffic.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkTraffic.java
+index a0d1a61..43c1ead 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkTraffic.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkTraffic.java
+@@ -63,6 +63,7 @@
+     private int MB = KB * KB;
+     private int GB = MB * KB;
+     private boolean mAutoHide;
++    private boolean mHideArrow;
+     private int mAutoHideThreshold;
+     private int mDarkModeBackgroundColor;
+     private int mDarkModeFillColor;
+@@ -190,6 +191,9 @@ void observe() {
+             resolver.registerContentObserver(CMSettings.Secure
+                     .getUriFor(CMSettings.Secure.NETWORK_TRAFFIC_AUTOHIDE), false,
+                     this, UserHandle.USER_ALL);
++            resolver.registerContentObserver(CMSettings.Secure
++                    .getUriFor(CMSettings.Secure.NETWORK_TRAFFIC_HIDEARROW), false,
++                    this, UserHandle.USER_ALL);
+             resolver.registerContentObserver(CMSettings.Secure
+                     .getUriFor(CMSettings.Secure.NETWORK_TRAFFIC_AUTOHIDE_THRESHOLD), false,
+                     this, UserHandle.USER_ALL);
+@@ -283,6 +287,10 @@ private void updateSettings() {
+                 CMSettings.Secure.NETWORK_TRAFFIC_AUTOHIDE, 0,
+                 UserHandle.USER_CURRENT) == 1;
+ 
++        mHideArrow = CMSettings.Secure.getIntForUser(resolver,
++                CMSettings.Secure.NETWORK_TRAFFIC_HIDEARROW, 0,
++                UserHandle.USER_CURRENT) == 1;
++
+         mAutoHideThreshold = CMSettings.Secure.getIntForUser(resolver,
+                 CMSettings.Secure.NETWORK_TRAFFIC_AUTOHIDE_THRESHOLD, 10,
+                 UserHandle.USER_CURRENT);
+@@ -336,19 +344,23 @@ private void clearHandlerCallbacks() {
+     private void updateTrafficDrawable(int trafcolor) {
+         int intTrafficDrawable;
+         Drawable drawTrafficIcon = null;
+-        if (isSet(mState, MASK_UP + MASK_DOWN)) {
+-            intTrafficDrawable = R.drawable.stat_sys_network_traffic_updown;
+-        } else if (isSet(mState, MASK_UP)) {
+-            intTrafficDrawable = R.drawable.stat_sys_network_traffic_up;
+-        } else if (isSet(mState, MASK_DOWN)) {
+-            intTrafficDrawable = R.drawable.stat_sys_network_traffic_down;
++        if (!mHideArrow) {
++            if (isSet(mState, MASK_UP + MASK_DOWN)) {
++                intTrafficDrawable = R.drawable.stat_sys_network_traffic_updown;
++            } else if (isSet(mState, MASK_UP)) {
++                intTrafficDrawable = R.drawable.stat_sys_network_traffic_up;
++            } else if (isSet(mState, MASK_DOWN)) {
++                intTrafficDrawable = R.drawable.stat_sys_network_traffic_down;
++            } else {
++                intTrafficDrawable = 0;
++            }
++            if (intTrafficDrawable != 0) {
++                drawTrafficIcon = getResources().getDrawable(intTrafficDrawable);
++                drawTrafficIcon.setColorFilter(null);
++                drawTrafficIcon.setColorFilter(trafcolor, PorterDuff.Mode.SRC_ATOP);
++            }
+         } else {
+-            intTrafficDrawable = 0;
+-        }
+-        if (intTrafficDrawable != 0) {
+-            drawTrafficIcon = getResources().getDrawable(intTrafficDrawable);
+-            drawTrafficIcon.setColorFilter(null);
+-            drawTrafficIcon.setColorFilter(trafcolor, PorterDuff.Mode.SRC_ATOP);
++            drawTrafficIcon = null;
+         }
+         setCompoundDrawablesWithIntrinsicBounds(null, null, drawTrafficIcon, null);
+     }

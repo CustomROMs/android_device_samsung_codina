@@ -1,0 +1,123 @@
+ Allow unlocked USB data access (1/2)
+
+This bypasses the marshmallow "regression" of blocking and resetting USB data access
+after disconnecting. It also allows saving the default configuration and it survives a reboot.
+Originally, this "feature" was added by Google for security reasons
+so it should be advised to use the below setting under caution.
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 0132140..006f681 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -3700,6 +3700,12 @@ public boolean validate(String value) {
+         public static final String SHOW_SU_INDICATOR = "show_su_indicator";
+ 
+         /**
++         * USB Data automatic unlock
++         * @hide
++         */
++        public static final String USB_DATA_AUTO_UNLOCK = "usb_data_auto_unlock";
++
++        /**
+          * Settings to backup. This is here so that it's in the same place as the settings
+          * keys and easy to update.
+          *
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index 0142140..006f683 100644
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -73,7 +73,7 @@
+     private static final boolean DEBUG = false;
+ 
+     /**
+-     * The persistent property which stores whether adb is enabled or not.
++     * The persistent property which stores whether adb is enabled or not, and the user default usb state.
+      * May also contain vendor-specific default functions for testing purposes.
+      */
+     private static final String USB_PERSISTENT_CONFIG_PROPERTY = "persist.sys.usb.config";
+@@ -164,6 +164,19 @@ public void onChange(boolean selfChange) {
+         }
+     }
+ 
++    private class UsbDataSettingsObserver extends ContentObserver {
++        public UsbDataSettingsObserver() {
++            super(null);
++        }
++        @Override
++        public void onChange(boolean selfChange) {
++            boolean unlocked = (Settings.System.getInt(mContentResolver,
++                    Settings.System.USB_DATA_AUTO_UNLOCK, 0) > 0);
++            mHandler.sendMessage(MSG_SET_USB_DATA_UNLOCKED, unlocked);
++            Slog.d(TAG, "AUTO_UNLOCK IS CHANGED.");
++        }
++    }
++
+     /*
+      * Listens for uevent messages from the kernel to monitor the USB state
+      */
+@@ -323,7 +336,7 @@ private static void initRndisAddress() {
+         private boolean mSourcePower;
+         private boolean mSinkPower;
+         private boolean mConfigured;
+-        private boolean mUsbDataUnlocked;
++        private boolean mUsbDataUnlocked = isUsbDataSetToUnlocked();
+         private String mCurrentFunctions;
+         private boolean mCurrentFunctionsApplied;
+         private UsbAccessory mCurrentAccessory;
+@@ -349,11 +362,16 @@ public UsbHandler(Looper looper) {
+                 String state = FileUtils.readTextFile(new File(STATE_PATH), 0, null).trim();
+                 updateState(state);
+ 
+-                // register observer to listen for settings changes
++                // register observer to listen for adb settings changes
+                 mContentResolver.registerContentObserver(
+                         Settings.Global.getUriFor(Settings.Global.ADB_ENABLED),
+                                 false, new AdbSettingsObserver());
+ 
++                // register observer to listen for usb data settings changes
++                mContentResolver.registerContentObserver(
++                        Settings.System.getUriFor(Settings.System.USB_DATA_AUTO_UNLOCK),
++                                false, new UsbDataSettingsObserver());
++
+                 ContentObserver adbNotificationObserver = new ContentObserver(null) {
+                     @Override
+                     public void onChange(boolean selfChange) {
+@@ -437,6 +455,8 @@ private boolean setUsbConfig(String config) {
+             // we always set it due to b/23631400, where adbd was getting killed
+             // and not restarted due to property timeouts on some devices
+             SystemProperties.set(USB_CONFIG_PROPERTY, config);
++            // set the persistent value too (to survive reboots)
++            SystemProperties.set(USB_PERSISTENT_CONFIG_PROPERTY, config);
+             return waitForState(config);
+         }
+ 
+@@ -712,7 +732,7 @@ public void handleMessage(Message msg) {
+                 case MSG_UPDATE_STATE:
+                     mConnected = (msg.arg1 == 1);
+                     mConfigured = (msg.arg2 == 1);
+-                    if (!mConnected) {
++                    if (!mConnected && !isUsbDataSetToUnlocked()) {
+                         // When a disconnect occurs, relock access to sensitive user data
+                         mUsbDataUnlocked = false;
+                     }
+@@ -721,7 +741,7 @@ public void handleMessage(Message msg) {
+                     if (UsbManager.containsFunction(mCurrentFunctions,
+                             UsbManager.USB_FUNCTION_ACCESSORY)) {
+                         updateCurrentAccessory();
+-                    } else if (!mConnected) {
++                    } else if (!mConnected && !isUsbDataSetToUnlocked()) {
+                         // restore defaults when USB is disconnected
+                         setEnabledFunctions(null, false);
+                     }
+@@ -965,6 +985,11 @@ public boolean isFunctionEnabled(String function) {
+         return UsbManager.containsFunction(SystemProperties.get(USB_CONFIG_PROPERTY), function);
+     }
+ 
++    public boolean isUsbDataSetToUnlocked() {
++        return (Settings.System.getInt(mContentResolver,
++                    Settings.System.USB_DATA_AUTO_UNLOCK, 0) > 0);
++    }
++
+     public void setCurrentFunctions(String functions) {
+         if (DEBUG) Slog.d(TAG, "setCurrentFunctions(" + functions + ")");
+         mHandler.sendMessage(MSG_SET_CURRENT_FUNCTIONS, functions);

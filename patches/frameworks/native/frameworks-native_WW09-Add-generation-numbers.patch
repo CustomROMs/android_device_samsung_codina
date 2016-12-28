@@ -1,0 +1,97 @@
+ libgui: Add generation numbers to BufferQueue
+
+This change allows producers to set a generation number on a
+BufferQueue. This number will be embedded in any new GraphicBuffers
+created in that BufferQueue, and attempts to attach buffers which have
+a different generation number will fail.
+
+It also plumbs the setGenerationNumber method through Surface, with the
+additional effect that any buffers attached to the Surface after
+setting a new generation number will automatically be updated with the
+new number (as opposed to failing, as would happen on through IGBP).
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 4e122da..064e105 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -510,7 +510,6 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
+             Mutex::Autolock lock(mCore->mMutex);
+ 
+             if (graphicBuffer != NULL && !mCore->mIsAbandoned) {
+-                graphicBuffer->setGenerationNumber(mCore->mGenerationNumber);
+                 mSlots[*outSlot].mGraphicBuffer = graphicBuffer;
+             }
+ 
+@@ -699,13 +698,6 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
+         return BAD_VALUE;
+     }
+ 
+-    if (buffer->getGenerationNumber() != mCore->mGenerationNumber) {
+-        BQ_LOGE("attachBuffer: generation number mismatch [buffer %u] "
+-                "[queue %u]", buffer->getGenerationNumber(),
+-                mCore->mGenerationNumber);
+-        return BAD_VALUE;
+-    }
+-
+     mCore->waitWhileAllocatingLocked();
+ 
+     status_t returnFlags = NO_ERROR;
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 4e122da..064e115 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -700,6 +700,13 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
+ 
+     mCore->waitWhileAllocatingLocked();
+ 
++    if (buffer->getGenerationNumber() != mCore->mGenerationNumber) {
++        BQ_LOGE("attachBuffer: generation number mismatch [buffer %u] "
++                "[queue %u]", buffer->getGenerationNumber(),
++                mCore->mGenerationNumber);
++        return BAD_VALUE;
++    }
++
+     status_t returnFlags = NO_ERROR;
+     int found;
+     status_t status = waitForFreeSlotThenRelock(FreeSlotCaller::Attach, &found);
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 4e122da..064e135 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -43,7 +43,7 @@ static uint64_t getUniqueId() {
+ 
+ GraphicBuffer::GraphicBuffer()
+     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  =
+     height =
+@@ -56,7 +56,7 @@ GraphicBuffer::GraphicBuffer()
+ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+         PixelFormat inFormat, uint32_t inUsage)
+     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  =
+     height =
+@@ -72,7 +72,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+         native_handle_t* inHandle, bool keepOwnership)
+     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
+       mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  = static_cast<int>(inWidth);
+     height = static_cast<int>(inHeight);
+@@ -85,8 +85,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+ GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
+     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
+       mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId()),
+-      mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId())
+ {
+     width  = buffer->width;
+     height = buffer->height;

@@ -1,0 +1,33 @@
+Subject: [PATCH] Fixes the system server crash issue caused by uncatched exception.
+
+The restat method of the StatFs may throw an IllegalArgumentException,
+so we must to catch it and throw an IOException for the caller
+of the trimToFit(),this fix can improve system stability.
+
+diff --git a/services/core/java/com/android/server/DropBoxManagerService.java b/services/core/java/com/android/server/DropBoxManagerService.java
+index 3cf00bb..5948477 100644
+--- a/services/core/java/com/android/server/DropBoxManagerService.java
++++ b/services/core/java/com/android/server/DropBoxManagerService.java
+@@ -736,7 +736,7 @@
+      * Trims the files on disk to make sure they aren't using too much space.
+      * @return the overall quota for storage (in bytes)
+      */
+-    private synchronized long trimToFit() {
++    private synchronized long trimToFit() throws IOException {
+         // Expunge aged items (including tombstones marking deleted data).
+ 
+         int ageSeconds = Settings.Global.getInt(mContentResolver,
+@@ -768,7 +768,12 @@
+             int quotaKb = Settings.Global.getInt(mContentResolver,
+                     Settings.Global.DROPBOX_QUOTA_KB, DEFAULT_QUOTA_KB);
+ 
+-            mStatFs.restat(mDropBoxDir.getPath());
++            String dirPath = mDropBoxDir.getPath();
++            try {
++                mStatFs.restat(dirPath);
++            } catch (IllegalArgumentException e) {  // restat throws this on error
++                throw new IOException("Can't restat: " + mDropBoxDir);
++            }
+             int available = mStatFs.getAvailableBlocks();
+             int nonreserved = available - mStatFs.getBlockCount() * reservePercent / 100;
+             int maximum = quotaKb * 1024 / mBlockSize;

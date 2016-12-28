@@ -1,0 +1,32 @@
+create findCodec methods in MediaCodecList
+
+diff --git a/include/media/stagefright/ACodec.h b/include/media/stagefright/ACodec.h
+index 64b4c2a..0c87129 100644
+--- a/include/media/stagefright/ACodec.h
++++ b/include/media/stagefright/ACodec.h
+@@ -110,6 +110,9 @@
+     enum Quirks {
+         kRequiresAllocateBufferOnInputPorts   = 1,
+         kRequiresAllocateBufferOnOutputPorts  = 2,
++#ifdef STE_HARDWARE
++        kRequiresStoreMetaDataBeforeIdle      = 16384,
++#endif
+     };
+ 
+     static status_t getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE map[]);
+diff --git a/media/libstagefright/MediaCodecList.cpp b/media/libstagefright/MediaCodecList.cpp
+index 5d255e4..0fefce0 100644
+--- a/media/libstagefright/MediaCodecList.cpp
++++ b/media/libstagefright/MediaCodecList.cpp
+@@ -1203,6 +1203,11 @@
+     if (info->hasQuirk("requires-allocate-on-output-ports")) {
+         quirks |= ACodec::kRequiresAllocateBufferOnOutputPorts;
+     }
++#ifdef STE_HARDWARE
++    if (info->hasQuirk("requires-store-metadata-before-idle")) {
++        quirks |= ACodec::kRequiresStoreMetaDataBeforeIdle;
++    }
++#endif
+ 
+     return quirks;
+ }

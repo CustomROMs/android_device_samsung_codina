@@ -1,0 +1,27 @@
+Subject: [PATCH] installd: add command 'rmidmap'
+
+Add an installd command to remove an idmap file. This is the inverse of
+the 'idmap' command and is intended for clean-up once an idmap file is
+no longer needed because an APK was removed, etc.
+
+This commit depends on a corresponding commit in frameworks/native (with
+the same Change-Id).
+
+diff --git a/services/core/java/com/android/server/pm/Installer.java b/services/core/java/com/android/server/pm/Installer.java
+index 2e18b1c..7f618b8 100644
+--- a/services/core/java/com/android/server/pm/Installer.java
++++ b/services/core/java/com/android/server/pm/Installer.java
+@@ -170,6 +170,13 @@
+         mInstaller.execute("idmap", targetApkPath, overlayApkPath, uid);
+     }
+ 
++    public void removeIdmap(String overlayApkPath) throws InstallerException {
++        StringBuilder builder = new StringBuilder("rmidmap");
++        builder.append(' ');
++        builder.append(overlayApkPath);
++        mInstaller.execute(builder.toString());
++    }
++
+     public void rmdex(String codePath, String instructionSet) throws InstallerException {
+         assertValidInstructionSet(instructionSet);
+         mInstaller.execute("rmdex", codePath, instructionSet);

@@ -1,0 +1,17 @@
+Subject: [PATCH] Incorrect key object in EphemeralIntentResolver.filterResults
+
+ArrayMap.get and remove use the same argument, key not value.
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index fb06f01..7b2327b 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -11599,7 +11599,7 @@
+                 }
+                 if (savedInfo.second == info) {
+                     // circled back to the highest ordered item; remove from order list
+-                    mOrderResult.remove(savedInfo);
++                    mOrderResult.remove(packageName);
+                     if (mOrderResult.size() == 0) {
+                         // no more ordered items
+                         break;

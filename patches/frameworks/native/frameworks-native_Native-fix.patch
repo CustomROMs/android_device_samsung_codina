@@ -199,7 +199,7 @@ index e03de45..2bf5aa6 100644
      // updateTexImage acquires the most recently queued buffer, and sets the
      // image contents of the target texture to it.
      //
-@@ -206,6 +216,8 @@ public:
+@@ -204,6 +214,8 @@ public:
      status_t setTransformHint(uint32_t hint);
      status_t setMaxAcquiredBufferCount(int maxAcquiredBuffers);
  
@@ -208,7 +208,7 @@ index e03de45..2bf5aa6 100644
      // detachFromContext detaches the GLConsumer from the calling thread's
      // current OpenGL ES context.  This context must be the same as the context
      // that was current for previous calls to updateTexImage.
-@@ -254,6 +266,11 @@ protected:
+@@ -252,6 +264,11 @@ protected:
              const sp<GraphicBuffer> graphicBuffer,
              EGLDisplay display, EGLSyncKHR eglFence);
  
@@ -220,7 +220,7 @@ index e03de45..2bf5aa6 100644
      status_t releaseBufferLocked(int slot,
              const sp<GraphicBuffer> graphicBuffer, EGLSyncKHR eglFence) {
          return releaseBufferLocked(slot, graphicBuffer, mEglDisplay, eglFence);
-@@ -314,6 +331,11 @@ private:
+@@ -327,6 +344,11 @@ private:
          EGLImageKHR createImage(EGLDisplay dpy,
                  const sp<GraphicBuffer>& graphicBuffer, const Rect& crop);
  
@@ -232,7 +232,7 @@ index e03de45..2bf5aa6 100644
          // Disallow copying
          EglImage(const EglImage& rhs);
          void operator = (const EglImage& rhs);
-@@ -475,6 +497,22 @@ private:
+@@ -482,6 +504,22 @@ private:
      // reset mCurrentTexture to INVALID_BUFFER_SLOT.
      int mCurrentTexture;
  
@@ -440,7 +440,7 @@ diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
 index 1dbb06f..3338a65 100644
 --- a/libs/binder/Parcel.cpp
 +++ b/libs/binder/Parcel.cpp
-@@ -875,6 +875,13 @@ status_t Parcel::writeBlob(size_t len, WritableBlob* outBlob)
+@@ -1267,6 +1267,13 @@ status_t Parcel::writeBlob(size_t len, WritableBlob* outBlob)
      return writeDupFileDescriptor(fd);
  }
  
@@ -454,7 +454,7 @@ index 1dbb06f..3338a65 100644
  status_t Parcel::write(const FlattenableHelperInterface& val)
  {
      status_t err;
-@@ -1287,6 +1294,13 @@ status_t Parcel::readBlob(size_t len, ReadableBlob* outBlob) const
+@@ -2056,6 +2063,13 @@ status_t Parcel::readBlob(size_t len, ReadableBlob* outBlob) const
      return NO_ERROR;
  }
  
@@ -485,7 +485,7 @@ diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
 index f152b65..1caf7e4 100644
 --- a/libs/gui/BufferQueueProducer.cpp
 +++ b/libs/gui/BufferQueueProducer.cpp
-@@ -379,7 +379,9 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
+@@ -380,7 +380,9 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
          if (format == 0) {
              format = mCore->mDefaultBufferFormat;
          }
@@ -729,7 +729,7 @@ diff --git a/opengl/include/EGL/eglext.h b/opengl/include/EGL/eglext.h
 index 3b2984a..9736c5a 100644
 --- a/opengl/include/EGL/eglext.h
 +++ b/opengl/include/EGL/eglext.h
-@@ -313,6 +313,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSURFACEPOINTERANGLEPROC) (EGLDisplay
+@@ -322,6 +322,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSURFACEPOINTERANGLEPROC) (EGLDisplay
  #endif
  
  #if KHRONOS_SUPPORT_INT64   /* EGLuint64NV requires 64-bit uint support */
@@ -737,7 +737,7 @@ index 3b2984a..9736c5a 100644
  #ifndef EGL_NV_system_time
  #define EGL_NV_system_time 1
  typedef khronos_utime_nanoseconds_t EGLuint64NV;
-@@ -324,6 +325,7 @@ typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMEFREQUENCYNVPROC) (void);
+@@ -333,6 +334,7 @@ typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMEFREQUENCYNVPROC) (void);
  typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMENVPROC) (void);
  #endif
  #endif
@@ -749,7 +749,7 @@ diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
 index 937665b..9303165 100644
 --- a/opengl/libs/EGL/eglApi.cpp
 +++ b/opengl/libs/EGL/eglApi.cpp
-@@ -139,11 +139,13 @@ static const extention_map_t sExtensionMap[] = {
+@@ -168,11 +168,13 @@ static const extention_map_t sExtensionMap[] = {
      { "eglGetSyncAttribKHR",
              (__eglMustCastToProperFunctionPointerType)&eglGetSyncAttribKHR },
  
@@ -763,7 +763,7 @@ index 937665b..9303165 100644
  
      // EGL_KHR_wait_sync
      { "eglWaitSyncKHR",
-@@ -1610,6 +1612,7 @@ EGLBoolean eglGpuPerfHintQCOM(EGLDisplay dpy, EGLContext ctx, EGLint *attrib_lis
+@@ -1976,6 +1978,7 @@ EGLBoolean eglGpuPerfHintQCOM(EGLDisplay dpy, EGLContext ctx, EGLint *attrib_lis
  // ----------------------------------------------------------------------------
  // NVIDIA extensions
  // ----------------------------------------------------------------------------
@@ -771,7 +771,7 @@ index 937665b..9303165 100644
  EGLuint64NV eglGetSystemTimeFrequencyNV()
  {
      clearError();
-@@ -1645,6 +1648,7 @@ EGLuint64NV eglGetSystemTimeNV()
+@@ -2011,6 +2014,7 @@ EGLuint64NV eglGetSystemTimeNV()
  
      return setErrorQuiet(EGL_BAD_DISPLAY, 0);
  }
@@ -800,7 +800,7 @@ new mode 100755
 index aaffec4..017b016
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
-@@ -26,6 +26,9 @@
+@@ -30,6 +30,9 @@
  
  #include <ui/DisplayInfo.h>
  #include <ui/PixelFormat.h>
@@ -810,7 +810,7 @@ index aaffec4..017b016
  
  #include <gui/Surface.h>
  
-@@ -81,12 +84,16 @@ DisplayDevice::DisplayDevice(
+@@ -102,12 +105,16 @@ DisplayDevice::DisplayDevice(
        mOrientation(),
        mPowerMode(HWC_POWER_MODE_OFF),
        mActiveConfig(0)
@@ -829,7 +829,7 @@ index aaffec4..017b016
      /*
       * Create our display's surface
       */
-@@ -458,7 +464,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
+@@ -512,7 +519,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
  
      mDisplaySurface->resizeBuffers(newWidth, newHeight);
  
@@ -842,7 +842,7 @@ index aaffec4..017b016
      mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
      eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
      eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
-@@ -550,12 +561,19 @@ void DisplayDevice::dump(String8& result) const {
+@@ -626,12 +638,19 @@ void DisplayDevice::dump(String8& result) const {
      const Transform& tr(mGlobalTransform);
      result.appendFormat(
          "+ DisplayDevice: %s\n"
@@ -882,7 +882,7 @@ diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinge
 index 48743af..d895428 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -3231,6 +3231,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3455,6 +3455,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
      uint32_t code;
      Parcel const* data;
      Parcel* reply;
@@ -890,7 +890,7 @@ index 48743af..d895428 100644
  
      enum {
          MSG_API_CALL,
-@@ -3244,6 +3245,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3468,6 +3469,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
       */
      virtual status_t transact(uint32_t code,
              const Parcel& data, Parcel* reply, uint32_t /* flags */) {
@@ -898,7 +898,7 @@ index 48743af..d895428 100644
          this->code = code;
          this->data = &data;
          this->reply = reply;
-@@ -3261,6 +3263,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3485,6 +3487,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
              looper->sendMessage(this, Message(MSG_API_CALL));
              barrier.wait();
          }
@@ -910,7 +910,7 @@ diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfacef
 index 48743af..d895408 100644
 --- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
-@@ -3231,6 +3231,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3411,6 +3411,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
      uint32_t code;
      Parcel const* data;
      Parcel* reply;
@@ -918,7 +918,7 @@ index 48743af..d895408 100644
  
      enum {
          MSG_API_CALL,
-@@ -3244,6 +3245,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3424,6 +3425,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
       */
      virtual status_t transact(uint32_t code,
              const Parcel& data, Parcel* reply, uint32_t /* flags */) {
@@ -926,7 +926,7 @@ index 48743af..d895408 100644
          this->code = code;
          this->data = &data;
          this->reply = reply;
-@@ -3261,6 +3263,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+@@ -3441,6 +3443,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
              looper->sendMessage(this, Message(MSG_API_CALL));
              barrier.wait();
          }

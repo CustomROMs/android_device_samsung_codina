@@ -13,7 +13,7 @@ index 76d4a27..ee1d742 100644
  
      // Timestamp of last interactive power hint.
      private long mLastInteractivePowerHintTime;
-@@ -1290,6 +1291,11 @@ public final class PowerManagerService extends SystemService
+@@ -1291,6 +1292,11 @@ public final class PowerManagerService extends SystemService
                      return true;
                  }
              } else {
@@ -25,7 +25,7 @@ index 76d4a27..ee1d742 100644
                  if (eventTime > mLastUserActivityTime) {
                      mLastUserActivityTime = eventTime;
                      mDirty |= DIRTY_USER_ACTIVITY;
-@@ -1850,7 +1856,7 @@ public final class PowerManagerService extends SystemService
+@@ -1851,7 +1857,7 @@ public final class PowerManagerService extends SystemService
                              mKeyboardLight.setBrightness(mKeyboardVisible ?
                                      keyboardBrightness : 0);
                              if (mButtonTimeout != 0

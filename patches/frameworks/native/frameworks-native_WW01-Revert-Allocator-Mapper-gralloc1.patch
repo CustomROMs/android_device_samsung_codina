@@ -106,7 +106,7 @@ diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
 index 04787bf..b6025f2 100644
 --- a/libs/gui/BufferQueueProducer.cpp
 +++ b/libs/gui/BufferQueueProducer.cpp
-@@ -498,8 +498,7 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
+@@ -499,8 +499,7 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
          status_t error;
          BQ_LOGV("dequeueBuffer: allocating a new buffer for slot %d", *outSlot);
          sp<GraphicBuffer> graphicBuffer(mCore->mAllocator->createGraphicBuffer(
@@ -116,7 +116,7 @@ index 04787bf..b6025f2 100644
          { // Autolock scope
              Mutex::Autolock lock(mCore->mMutex);
  
-@@ -1265,8 +1264,7 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
+@@ -1275,8 +1274,7 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
          for (size_t i = 0; i <  newBufferCount; ++i) {
              status_t result = NO_ERROR;
              sp<GraphicBuffer> graphicBuffer(mCore->mAllocator->createGraphicBuffer(
@@ -286,21 +286,6 @@ index 09787bf..b6025f2 100644
          list.add(*handle, rec);
      }
  
-diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
-index 10787bf..b6025f2 100644
---- a/opengl/libs/EGL/eglApi.cpp
-+++ b/opengl/libs/EGL/eglApi.cpp
-@@ -1883,9 +1883,7 @@ EGLClientBuffer eglCreateNativeClientBufferANDROID(const EGLint *attrib_list)
-         return setError(EGL_BAD_PARAMETER, (EGLClientBuffer)0);
-     }
- 
--    GraphicBuffer* gBuffer = new GraphicBuffer(width, height, format, usage,
--            std::string("[eglCreateNativeClientBufferANDROID pid ") +
--            std::to_string(getpid()) + ']');
-+    GraphicBuffer* gBuffer = new GraphicBuffer(width, height, format, usage);
-     const status_t err = gBuffer->initCheck();
-     if (err != NO_ERROR) {
-         ALOGE("Unable to create native buffer { w=%d, h=%d, f=%d, u=%#x }: %#x",
 diff --git a/include/ui/GraphicBufferAllocator.h b/include/ui/GraphicBufferAllocator.h
 index 11787bf..b6025f2 100644
 --- a/include/ui/GraphicBufferAllocator.h

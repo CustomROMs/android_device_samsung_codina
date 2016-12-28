@@ -24,7 +24,7 @@ diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/servi
 index 4ead64b..e27f2f3 100644
 --- a/services/core/java/com/android/server/am/ActivityStack.java
 +++ b/services/core/java/com/android/server/am/ActivityStack.java
-@@ -1807,7 +1807,7 @@
+@@ -1816,7 +1816,7 @@
                      // them. However, when they don't have the wallpaper behind them, we want to
                      // show activities in the next application stack behind them vs. another
                      // task in the home stack like recents.

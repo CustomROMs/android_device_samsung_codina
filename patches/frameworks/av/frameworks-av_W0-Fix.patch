@@ -2,8 +2,8 @@ diff --git a/media/libstagefright/Android.mk b/media/libstagefright/Android.mk
 index fb87de0..fbc4048 100644
 --- a/media/libstagefright/Android.mk
 +++ b/media/libstagefright/Android.mk
-@@ -152,7 +152,7 @@ LOCAL_SHARED_LIBRARIES += \
- endif
+@@ -147,7 +147,7 @@ LOCAL_SHARED_LIBRARIES += \
+ LOCAL_CFLAGS += -DUSE_SAMSUNG_CAMERAFORMAT_NV21
  endif
  
 -LOCAL_CFLAGS += -Wno-multichar -Werror -Wno-error=deprecated-declarations -Wall
@@ -15,15 +15,15 @@ diff --git a/media/libmediaplayerservice/Android.mk b/media/libmediaplayerservic
 index fb87de0..fbc4049 100644
 --- a/media/libmediaplayerservice/Android.mk
 +++ b/media/libmediaplayerservice/Android.mk
-@@ -60,7 +60,7 @@
+@@ -59,7 +59,7 @@
      $(TOP)/frameworks/av/media/libavextensions                      \
      $(TOP)/frameworks/av/media/libstagefright/mpeg2ts               \
  
 -LOCAL_CFLAGS += -Werror -Wno-error=deprecated-declarations -Wall
 +LOCAL_CFLAGS += -Wno-error=deprecated-declarations -Wall
- LOCAL_CLANG := true
  
- LOCAL_MODULE:= libmediaplayerservice
+ ifneq ($(TARGET_HAS_LEGACY_CAMERA_HAL1), true)
+ LOCAL_C_INCLUDES += \
 diff --git a/media/libstagefright/id3/Android.mk b/media/libstagefright/id3/Android.mk
 index fb87de0..0bc4049 100644
 --- a/media/libstagefright/id3/Android.mk

@@ -1,0 +1,37 @@
+ Allow unlocked USB data access (2/2)
+
+This bypasses the marshmallow "regression" of blocking and resetting USB data access
+after disconnecting. It also allows saving the default configuration and it survives a reboot.
+Originally, this "feature" was added by Google for security reasons
+so it should be advised to use the below setting under caution.
+
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 022f220..7289093 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -28,4 +28,8 @@
+     <string name="cpu_info">CPU</string>
+     <string name="mem_info">RAM</string>
+ 
++    <!-- USB data automatic unlock -->
++    <string name="usb_data_auto_unlock_title">Unlock USB data</string>
++    <string name="usb_data_auto_unlock_summary">Allow unlocked data access to your phone\'s storage through USB (MTP, PTP)</string>
++
+ </resources>
+diff --git a/res/xml/development_prefs.xml b/res/xml/development_prefs.xml
+index 1110070..2889016 100644
+--- a/res/xml/development_prefs.xml
++++ b/res/xml/development_prefs.xml
+@@ -236,6 +236,12 @@
+             android:title="@string/mobile_data_always_on"
+             android:summary="@string/mobile_data_always_on_summary"/>
+ 
++        <com.android.settings.cyanogenmod.SystemSettingSwitchPreference
++            android:key="usb_data_auto_unlock"
++            android:title="@string/usb_data_auto_unlock_title"
++            android:summary="@string/usb_data_auto_unlock_summary"
++            android:defaultValue="false" />
++
+         <ListPreference
+             android:key="select_usb_configuration"
+             android:title="@string/select_usb_configuration_title"

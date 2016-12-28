@@ -11,9 +11,9 @@ index 48bb5dd..64dd301 100644
 +else
 +HWUI_NEW_OPS := false
 +endif
+ BUGREPORT_FONT_CACHE_USAGE := false
  
  # Enables fine-grained GLES error checking
- # If set to true, every GLES call is wrapped & error checked
 diff --git a/core/jni/Android.mk b/core/jni/Android.mk
 index 48bb5dd..64dd351 100644
 --- a/core/jni/Android.mk

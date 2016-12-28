@@ -10,7 +10,7 @@ diff --git a/services/core/java/com/android/server/wm/WindowState.java b/service
 index 4726ae7..58c18be 100644
 --- a/services/core/java/com/android/server/wm/WindowState.java
 +++ b/services/core/java/com/android/server/wm/WindowState.java
-@@ -2373,6 +2373,11 @@ public void run() {
+@@ -2386,6 +2386,11 @@ public void run() {
              mResizedWhileNotDragResizingReported = true;
              mWinAnimator.mSurfaceResized = false;
          } catch (RemoteException e) {

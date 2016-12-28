@@ -1,0 +1,646 @@
+Revert "cmds/stagefright: use MediaCodec* instead of OMXCodec" 
+
+diff --git a/cmds/stagefright/Android.mk b/cmds/stagefright/Android.mk
+index 726da21..f975c48 100644
+--- a/cmds/stagefright/Android.mk
++++ b/cmds/stagefright/Android.mk
+@@ -9,7 +9,7 @@ LOCAL_SRC_FILES:=       \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright libmedia libutils libbinder libstagefright_foundation \
+-	libjpeg libgui libcutils liblog
++        libjpeg libgui libcutils liblog libui
+ 
+ LOCAL_C_INCLUDES:= \
+ 	frameworks/av/media/libstagefright \
+@@ -31,8 +31,8 @@ include $(BUILD_EXECUTABLE)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:=         \
+-	SineSource.cpp    \
+-	record.cpp
++        SineSource.cpp    \
++        record.cpp
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright libmedia liblog libutils libbinder libstagefright_foundation
+@@ -56,8 +56,8 @@ include $(BUILD_EXECUTABLE)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:=         \
+-	SineSource.cpp    \
+-	recordvideo.cpp
++        SineSource.cpp    \
++        recordvideo.cpp
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright libmedia liblog libutils libbinder libstagefright_foundation
+@@ -82,8 +82,8 @@ include $(BUILD_EXECUTABLE)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:=         \
+-	SineSource.cpp    \
+-	audioloop.cpp
++        SineSource.cpp    \
++        audioloop.cpp
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright libmedia liblog libutils libbinder libstagefright_foundation
+@@ -110,7 +110,7 @@ LOCAL_SRC_FILES:=         \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright liblog libutils libbinder libgui \
+-	libstagefright_foundation libmedia libcutils
++        libstagefright_foundation libmedia libcutils
+ 
+ LOCAL_C_INCLUDES:= \
+ 	frameworks/av/media/libstagefright \
+@@ -130,11 +130,11 @@ include $(BUILD_EXECUTABLE)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:=         \
+-	sf2.cpp    \
++        sf2.cpp    \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright liblog libutils libbinder libstagefright_foundation \
+-	libmedia libgui libcutils libui
++        libmedia libgui libcutils libui
+ 
+ LOCAL_C_INCLUDES:= \
+ 	frameworks/av/media/libstagefright \
+@@ -154,12 +154,12 @@ include $(BUILD_EXECUTABLE)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:=               \
+-	codec.cpp               \
+-	SimplePlayer.cpp        \
++        codec.cpp               \
++        SimplePlayer.cpp        \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright liblog libutils libbinder libstagefright_foundation \
+-	libmedia libgui libcutils libui
++        libmedia libgui libcutils libui
+ 
+ LOCAL_C_INCLUDES:= \
+ 	frameworks/av/media/libstagefright \
+@@ -222,11 +222,11 @@ include $(BUILD_EXECUTABLE)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:=               \
+-	muxer.cpp            \
++        muxer.cpp            \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright liblog libutils libbinder libstagefright_foundation \
+-	libmedia libgui libcutils libui libc
++        libmedia libgui libcutils libui libc
+ 
+ LOCAL_C_INCLUDES:= \
+ 	frameworks/av/media/libstagefright \
+diff --git a/cmds/stagefright/audioloop.cpp b/cmds/stagefright/audioloop.cpp
+index 726da21..f975c48 100644
+--- a/cmds/stagefright/audioloop.cpp
++++ b/cmds/stagefright/audioloop.cpp
+@@ -23,14 +23,13 @@
+ #include <binder/ProcessState.h>
+ #include <media/mediarecorder.h>
+ #include <media/stagefright/foundation/ADebug.h>
+-#include <media/stagefright/foundation/AMessage.h>
+ #include <media/stagefright/AMRWriter.h>
+ #include <media/stagefright/AudioPlayer.h>
+ #include <media/stagefright/AudioSource.h>
+-#include <media/stagefright/MediaCodecSource.h>
+ #include <media/stagefright/MediaDefs.h>
+ #include <media/stagefright/MetaData.h>
+-#include <media/stagefright/SimpleDecodingSource.h>
++#include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include "SineSource.h"
+ 
+ using namespace android;
+@@ -80,6 +79,8 @@ int main(int argc, char* argv[])
+     const int32_t kBitRate = outputWBAMR ? 16000 : 8000;
+ 
+     android::ProcessState::self()->startThreadPool();
++    OMXClient client;
++    CHECK_EQ(client.connect(), (status_t)OK);
+     sp<MediaSource> source;
+ 
+     if (useMic) {
+@@ -94,25 +95,24 @@ int main(int argc, char* argv[])
+         source = new SineSource(kSampleRate, channels);
+     }
+ 
+-    sp<AMessage> meta = new AMessage;
+-    meta->setString(
+-            "mime",
++    sp<MetaData> meta = new MetaData;
++    meta->setCString(
++            kKeyMIMEType,
+             outputWBAMR ? MEDIA_MIMETYPE_AUDIO_AMR_WB
+                     : MEDIA_MIMETYPE_AUDIO_AMR_NB);
+ 
+-    meta->setInt32("channel-count", channels);
+-    meta->setInt32("sample-rate", kSampleRate);
+-    meta->setInt32("bitrate", kBitRate);
++    meta->setInt32(kKeyChannelCount, channels);
++    meta->setInt32(kKeySampleRate, kSampleRate);
++    meta->setInt32(kKeyBitRate, kBitRate);
+     int32_t maxInputSize;
+     if (source->getFormat()->findInt32(kKeyMaxInputSize, &maxInputSize)) {
+-        meta->setInt32("max-input-size", maxInputSize);
++        meta->setInt32(kKeyMaxInputSize, maxInputSize);
+     }
+ 
+-    sp<ALooper> looper = new ALooper;
+-    looper->setName("audioloop");
+-    looper->start();
+-
+-    sp<IMediaSource> encoder = MediaCodecSource::Create(looper, meta, source);
++    sp<IMediaSource> encoder = OMXCodec::Create(
++            client.interface(),
++            meta, true /* createEncoder */,
++            source);
+ 
+     if (fileOut != NULL) {
+         // target file specified, write encoded AMR output
+@@ -128,15 +128,17 @@ int main(int argc, char* argv[])
+         writer->stop();
+     } else {
+         // otherwise decode to speaker
+-        sp<IMediaSource> decoder = SimpleDecodingSource::Create(encoder);
++        sp<IMediaSource> decoder = OMXCodec::Create(
++                client.interface(),
++                meta, false /* createEncoder */,
++                encoder);
+ 
+         if (playToSpeaker) {
+             AudioPlayer *player = new AudioPlayer(NULL);
+             player->setSource(decoder);
+             player->start();
+             sleep(duration);
+-
+-            decoder.clear(); // must clear |decoder| otherwise delete player will hang.
++            source->stop(); // must stop source otherwise delete player will hang
+             delete player; // there is no player->stop()...
+         } else {
+             CHECK_EQ(decoder->start(), (status_t)OK);
+diff --git a/cmds/stagefright/record.cpp b/cmds/stagefright/record.cpp
+index 726da21..f975c48 100644
+--- a/cmds/stagefright/record.cpp
++++ b/cmds/stagefright/record.cpp
+@@ -18,18 +18,16 @@
+ 
+ #include <binder/ProcessState.h>
+ #include <media/stagefright/foundation/ADebug.h>
+-#include <media/stagefright/foundation/ALooper.h>
+-#include <media/stagefright/foundation/AMessage.h>
+ #include <media/stagefright/AudioPlayer.h>
+ #include <media/stagefright/CameraSource.h>
+ #include <media/stagefright/FileSource.h>
+ #include <media/stagefright/MediaBufferGroup.h>
+ #include <media/stagefright/MediaDefs.h>
+-#include <media/stagefright/MediaCodecSource.h>
+ #include <media/stagefright/MetaData.h>
+ #include <media/stagefright/MediaExtractor.h>
+ #include <media/stagefright/MPEG4Writer.h>
+-#include <media/stagefright/SimpleDecodingSource.h>
++#include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <media/MediaPlayerInterface.h>
+ 
+ using namespace android;
+@@ -184,6 +182,9 @@ int main(int argc, char **argv) {
+         fprintf(stderr, "input color format must be 0 (YUV420SP) or 1 (YUV420P)\n");
+         return 1;
+     }
++    OMXClient client;
++    CHECK_EQ(client.connect(), (status_t)OK);
++
+     status_t err = OK;
+ 
+ #if 0
+@@ -196,7 +197,8 @@ int main(int argc, char **argv) {
+ 
+     sp<MetaData> meta = source->getFormat();
+ 
+-    sp<MediaSource> decoder = SimpleDecodingSource::Create(source);
++    sp<MediaSource> decoder = OMXCodec::Create(
++            client.interface(), meta, false /* createEncoder */, source);
+ 
+     int width, height;
+     bool success = meta->findInt32(kKeyWidth, &width);
+@@ -208,21 +210,22 @@ int main(int argc, char **argv) {
+     sp<MediaSource> decoder = new DummySource(width, height, colorFormat);
+ #endif
+ 
+-    sp<AMessage> enc_meta = new AMessage;
+-    // enc_meta->setString("mime", MEDIA_MIMETYPE_VIDEO_H263);
+-    // enc_meta->setString("mime", MEDIA_MIMETYPE_VIDEO_MPEG4);
+-    enc_meta->setString("mime", MEDIA_MIMETYPE_VIDEO_AVC);
+-    enc_meta->setInt32("width", width);
+-    enc_meta->setInt32("height", height);
+-    enc_meta->setInt32("sample-rate", kFramerate);
+-    enc_meta->setInt32("bitrate", kVideoBitRate);
+-    // enc_meta->setInt32("stride", width);
+-    // enc_meta->setInt32("slice-height", height);
+-    enc_meta->setInt32("i-frame-interval", kIFramesIntervalSec);
+-    enc_meta->setInt32("color-format", colorFormat);
++    sp<MetaData> enc_meta = new MetaData;
++    // enc_meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_H263);
++    // enc_meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_MPEG4);
++    enc_meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_AVC);
++    enc_meta->setInt32(kKeyWidth, width);
++    enc_meta->setInt32(kKeyHeight, height);
++    enc_meta->setInt32(kKeySampleRate, kFramerate);
++    enc_meta->setInt32(kKeyBitRate, kVideoBitRate);
++    enc_meta->setInt32(kKeyStride, width);
++    enc_meta->setInt32(kKeySliceHeight, height);
++    enc_meta->setInt32(kKeyIFramesInterval, kIFramesIntervalSec);
++    enc_meta->setInt32(kKeyColorFormat, colorFormat);
+ 
+     sp<MediaSource> encoder =
+-        MediaCodecSource::Create(looper, format, decoder);
++        OMXCodec::Create(
++                client.interface(), enc_meta, true /* createEncoder */, decoder);
+ 
+ #if 1
+     sp<MPEG4Writer> writer = new MPEG4Writer("/sdcard/output.mp4");
+@@ -257,6 +260,7 @@ int main(int argc, char **argv) {
+ #endif
+ 
+     printf("$\n");
++    client.disconnect();
+ #endif
+ 
+ #if 0
+@@ -295,6 +299,9 @@ int main(int argc, char **argv) {
+ int main(int /* argc */, char ** /* argv */) {
+     android::ProcessState::self()->startThreadPool();
+ 
++    OMXClient client;
++    CHECK_EQ(client.connect(), (status_t)OK);
++
+     const int32_t kSampleRate = 22050;
+     const int32_t kNumChannels = 2;
+     sp<MediaSource> audioSource = new SineSource(kSampleRate, kNumChannels);
+@@ -310,20 +317,16 @@ int main(int /* argc */, char ** /* argv */) {
+     player->stop();
+ #endif
+ 
+-    sp<AMessage> encMeta = new AMessage;
+-    encMeta->setString("mime",
++    sp<MetaData> encMeta = new MetaData;
++    encMeta->setCString(kKeyMIMEType,
+             0 ? MEDIA_MIMETYPE_AUDIO_AMR_WB : MEDIA_MIMETYPE_AUDIO_AAC);
+-    encMeta->setInt32("sample-rate", kSampleRate);
+-    encMeta->setInt32("channel-count", kNumChannels);
+-    encMeta->setInt32("max-input-size", 8192);
+-    encMeta->setInt32("bitrate", kAudioBitRate);
+-
+-    sp<ALooper> looper = new ALooper;
+-    looper->setName("record");
+-    looper->start();
++    encMeta->setInt32(kKeySampleRate, kSampleRate);
++    encMeta->setInt32(kKeyChannelCount, kNumChannels);
++    encMeta->setInt32(kKeyMaxInputSize, 8192);
++    encMeta->setInt32(kKeyBitRate, kAudioBitRate);
+ 
+     sp<IMediaSource> encoder =
+-        MediaCodecSource::Create(looper, encMeta, audioSource);
++        OMXCodec::Create(client.interface(), encMeta, true, audioSource);
+ 
+     encoder->start();
+ 
+@@ -345,6 +348,8 @@ int main(int /* argc */, char ** /* argv */) {
+ 
+     encoder->stop();
+ 
++    client.disconnect();
++
+     return 0;
+ }
+ #endif
+diff --git a/cmds/stagefright/recordvideo.cpp b/cmds/stagefright/recordvideo.cpp
+index 726da21..f975c48 100644
+--- a/cmds/stagefright/recordvideo.cpp
++++ b/cmds/stagefright/recordvideo.cpp
+@@ -23,18 +23,15 @@
+ 
+ #include <binder/ProcessState.h>
+ #include <media/stagefright/foundation/ADebug.h>
+-#include <media/stagefright/foundation/ALooper.h>
+-#include <media/stagefright/foundation/AMessage.h>
+ #include <media/stagefright/AudioPlayer.h>
+ #include <media/stagefright/MediaBufferGroup.h>
+-#include <media/stagefright/MediaCodecSource.h>
+ #include <media/stagefright/MediaDefs.h>
+ #include <media/stagefright/MetaData.h>
+ #include <media/stagefright/MPEG4Writer.h>
++#include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <media/MediaPlayerInterface.h>
+ 
+-#include <OMX_Video.h>
+-
+ using namespace android;
+ 
+ // Print usage showing how to use this utility to record videos
+@@ -268,45 +265,44 @@ int main(int argc, char **argv) {
+         }
+     }
+ 
++    OMXClient client;
++    CHECK_EQ(client.connect(), (status_t)OK);
++
+     status_t err = OK;
+     sp<MediaSource> source =
+         new DummySource(width, height, nFrames, frameRateFps, colorFormat);
+ 
+-    sp<AMessage> enc_meta = new AMessage;
++    sp<MetaData> enc_meta = new MetaData;
+     switch (codec) {
+         case 1:
+-            enc_meta->setString("mime", MEDIA_MIMETYPE_VIDEO_MPEG4);
++            enc_meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_MPEG4);
+             break;
+         case 2:
+-            enc_meta->setString("mime", MEDIA_MIMETYPE_VIDEO_H263);
++            enc_meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_H263);
+             break;
+         default:
+-            enc_meta->setString("mime", MEDIA_MIMETYPE_VIDEO_AVC);
++            enc_meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_AVC);
+             break;
+     }
+-    enc_meta->setInt32("width", width);
+-    enc_meta->setInt32("height", height);
+-    enc_meta->setInt32("frame-rate", frameRateFps);
+-    enc_meta->setInt32("bitrate", bitRateBps);
+-    enc_meta->setInt32("stride", width);
+-    enc_meta->setInt32("slice-height", height);
+-    enc_meta->setInt32("i-frame-interval", iFramesIntervalSeconds);
+-    enc_meta->setInt32("color-format", colorFormat);
++    enc_meta->setInt32(kKeyWidth, width);
++    enc_meta->setInt32(kKeyHeight, height);
++    enc_meta->setInt32(kKeyFrameRate, frameRateFps);
++    enc_meta->setInt32(kKeyBitRate, bitRateBps);
++    enc_meta->setInt32(kKeyStride, width);
++    enc_meta->setInt32(kKeySliceHeight, height);
++    enc_meta->setInt32(kKeyIFramesInterval, iFramesIntervalSeconds);
++    enc_meta->setInt32(kKeyColorFormat, colorFormat);
+     if (level != -1) {
+-        enc_meta->setInt32("level", level);
++        enc_meta->setInt32(kKeyVideoLevel, level);
+     }
+     if (profile != -1) {
+-        enc_meta->setInt32("profile", profile);
++        enc_meta->setInt32(kKeyVideoProfile, profile);
+     }
+ 
+-    sp<ALooper> looper = new ALooper;
+-    looper->setName("recordvideo");
+-    looper->start();
+-
+     sp<IMediaSource> encoder =
+-        MediaCodecSource::Create(
+-                looper, enc_meta, source, NULL /* consumer */,
+-                preferSoftwareCodec ? MediaCodecSource::FLAG_PREFER_SOFTWARE_CODEC : 0);
++        OMXCodec::Create(
++                client.interface(), enc_meta, true /* createEncoder */, source,
++                0, preferSoftwareCodec ? OMXCodec::kPreferSoftwareCodecs : 0);
+ 
+     int fd = open(fileName, O_CREAT | O_LARGEFILE | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
+     if (fd < 0) {
+@@ -325,6 +321,7 @@ int main(int argc, char **argv) {
+     int64_t end = systemTime();
+ 
+     fprintf(stderr, "$\n");
++    client.disconnect();
+ 
+     if (err != OK && err != ERROR_END_OF_STREAM) {
+         fprintf(stderr, "record failed: %d\n", err);
+diff --git a/cmds/stagefright/stagefright.cpp b/cmds/stagefright/stagefright.cpp
+index 726da21..f975c48 100644
+--- a/cmds/stagefright/stagefright.cpp
++++ b/cmds/stagefright/stagefright.cpp
+@@ -31,27 +31,21 @@
+ 
+ #include <binder/IServiceManager.h>
+ #include <binder/ProcessState.h>
+-#include <media/ICrypto.h>
+ #include <media/IMediaHTTPService.h>
+ #include <media/IMediaCodecService.h>
+ #include <media/IMediaPlayerService.h>
+-#include <media/stagefright/foundation/ABuffer.h>
+ #include <media/stagefright/foundation/ALooper.h>
+-#include <media/stagefright/foundation/AMessage.h>
+-#include <media/stagefright/foundation/AUtils.h>
+ #include "include/NuCachedSource2.h"
+ #include <media/stagefright/AudioPlayer.h>
+ #include <media/stagefright/DataSource.h>
+ #include <media/stagefright/JPEGSource.h>
+-#include <media/stagefright/MediaCodec.h>
+-#include <media/stagefright/MediaCodecList.h>
+ #include <media/stagefright/MediaDefs.h>
+ #include <media/stagefright/MediaErrors.h>
+ #include <media/stagefright/MediaExtractor.h>
+ #include <media/stagefright/MediaSource.h>
+ #include <media/stagefright/MetaData.h>
+-#include <media/stagefright/SimpleDecodingSource.h>
+-#include <media/stagefright/Utils.h>
++#include <media/stagefright/OMXClient.h>
++#include <media/stagefright/OMXCodec.h>
+ #include <media/mediametadataretriever.h>
+ 
+ #include <media/stagefright/foundation/hexdump.h>
+@@ -171,7 +165,7 @@ static void dumpSource(const sp<IMediaSource> &source, const String8 &filename)
+     out = NULL;
+ }
+ 
+-static void playSource(sp<IMediaSource> &source) {
++static void playSource(OMXClient *client, sp<IMediaSource> &source) {
+     sp<MetaData> meta = source->getFormat();
+ 
+     const char *mime;
+@@ -183,14 +177,20 @@ static void playSource(sp<IMediaSource> &source) {
+     } else {
+         int flags = 0;
+         if (gPreferSoftwareCodec) {
+-            flags |= MediaCodecList::kPreferSoftwareCodecs;
++            flags |= OMXCodec::kPreferSoftwareCodecs;
+         }
+         if (gForceToUseHardwareCodec) {
+             CHECK(!gPreferSoftwareCodec);
+-            flags |= MediaCodecList::kHardwareCodecsOnly;
++            flags |= OMXCodec::kHardwareCodecsOnly;
+         }
+-        rawSource = SimpleDecodingSource::Create(source, flags, gSurface);
++        rawSource = OMXCodec::Create(
++            client->interface(), meta, false /* createEncoder */, source,
++            NULL /* matchComponentName */,
++            flags,
++            gSurface);
++
+         if (rawSource == NULL) {
++            fprintf(stderr, "Failed to instantiate decoder for '%s'.\n", mime);
+             return;
+         }
+         displayAVCProfileLevelIfPossible(meta);
+@@ -344,6 +344,12 @@ static void playSource(sp<IMediaSource> &source) {
+                     printf(".");
+                     fflush(stdout);
+                 }
++
++                // render buffers from OMXCodec
++                if (buffer->graphicBuffer() != NULL && gSurface != NULL) {
++                    gSurface->queueBuffer(gSurface.get(), buffer->graphicBuffer()->getNativeBuffer(), -1);
++                    buffer->meta_data()->setInt32(kKeyRendered, 1);
++                }
+             }
+ 
+             sumDecodeUs += delayDecodeUs;
+@@ -623,7 +629,7 @@ static void usage(const char *me) {
+     fprintf(stderr, "       -D(ump) output_filename (decoded PCM data to a file)\n");
+ }
+ 
+-static void dumpCodecProfiles(bool queryDecoders) {
++static void dumpCodecProfiles(const sp<IOMX>& omx, bool queryDecoders) {
+     const char *kMimeTypes[] = {
+         MEDIA_MIMETYPE_VIDEO_AVC, MEDIA_MIMETYPE_VIDEO_MPEG4,
+         MEDIA_MIMETYPE_VIDEO_H263, MEDIA_MIMETYPE_AUDIO_AAC,
+@@ -637,36 +643,30 @@ static void dumpCodecProfiles(bool queryDecoders) {
+     const char *codecType = queryDecoders? "decoder" : "encoder";
+     printf("%s profiles:\n", codecType);
+ 
+-    sp<IMediaCodecList> list = MediaCodecList::getInstance();
+-    size_t numCodecs = list->countCodecs();
+-
+     for (size_t k = 0; k < sizeof(kMimeTypes) / sizeof(kMimeTypes[0]); ++k) {
+         printf("type '%s':\n", kMimeTypes[k]);
+ 
+-        for (size_t index = 0; index < numCodecs; ++index) {
+-            sp<MediaCodecInfo> info = list->getCodecInfo(index);
+-            if (info == NULL || info->isEncoder() != !queryDecoders) {
+-                continue;
+-            }
+-            sp<MediaCodecInfo::Capabilities> caps = info->getCapabilitiesFor(kMimeTypes[k]);
+-            if (caps == NULL) {
+-                continue;
+-            }
++        Vector<CodecCapabilities> results;
++        // will retrieve hardware and software codecs
++        CHECK_EQ(QueryCodecs(omx, kMimeTypes[k],
++                             queryDecoders,
++                             &results), (status_t)OK);
++
++        for (size_t i = 0; i < results.size(); ++i) {
+             printf("  %s '%s' supports ",
+-                       codecType, info->getCodecName());
++                       codecType, results[i].mComponentName.string());
+ 
+-            Vector<MediaCodecInfo::ProfileLevel> profileLevels;
+-            caps->getSupportedProfileLevels(&profileLevels);
+-            if (profileLevels.size() == 0) {
+-                printf("NOTHING.\n");
+-                continue;
++            if (results[i].mProfileLevels.size() == 0) {
++                    printf("NOTHING.\n");
++                    continue;
+             }
+ 
+-            for (size_t j = 0; j < profileLevels.size(); ++j) {
+-                const MediaCodecInfo::ProfileLevel &profileLevel = profileLevels[j];
++            for (size_t j = 0; j < results[i].mProfileLevels.size(); ++j) {
++                const CodecProfileLevel &profileLevel =
++                     results[i].mProfileLevels[j];
+ 
+-                printf("%s%u/%u", j > 0 ? ", " : "",
+-                        profileLevel.mProfile, profileLevel.mLevel);
++                printf("%s%" PRIu32 "/%" PRIu32, j > 0 ? ", " : "",
++                    profileLevel.mProfile, profileLevel.mLevel);
+             }
+ 
+             printf("\n");
+@@ -899,8 +899,17 @@ int main(int argc, char **argv) {
+     }
+ 
+     if (dumpProfiles) {
+-        dumpCodecProfiles(true /* queryDecoders */);
+-        dumpCodecProfiles(false /* queryDecoders */);
++        sp<IServiceManager> sm = defaultServiceManager();
++        sp<IBinder> binder = sm->getService(String16("media.player"));
++        sp<IMediaPlayerService> service =
++            interface_cast<IMediaPlayerService>(binder);
++
++        CHECK(service.get() != NULL);
++
++        sp<IOMX> omx = service->getOMX();
++        CHECK(omx.get() != NULL);
++        dumpCodecProfiles(omx, true /* queryDecoders */);
++        dumpCodecProfiles(omx, false /* queryDecoders */);
+     }
+ 
+     if (listComponents) {
+@@ -963,11 +972,16 @@ int main(int argc, char **argv) {
+                     false /* isControlledByApp */);
+             gSurface = new Surface(producer);
+         }
++
++        CHECK_EQ((status_t)OK,
++                 native_window_api_connect(
++                     gSurface.get(), NATIVE_WINDOW_API_MEDIA));
+     }
+ 
+     DataSource::RegisterDefaultSniffers();
+ 
+-    status_t err = OK;
++    OMXClient client;
++    status_t err = client.connect();
+ 
+     for (int k = 0; k < argc && err == OK; ++k) {
+         bool syncInfoPresent = true;
+@@ -1107,22 +1121,39 @@ int main(int argc, char **argv) {
+         } else if (dumpStream) {
+             dumpSource(mediaSource, dumpStreamFilename);
+         } else if (dumpPCMStream) {
+-            sp<IMediaSource> decSource = SimpleDecodingSource::Create(mediaSource);
++            OMXClient client;
++            CHECK_EQ(client.connect(), (status_t)OK);
++
++            sp<IMediaSource> decSource =
++                OMXCodec::Create(
++                        client.interface(),
++                        mediaSource->getFormat(),
++                        false,
++                        mediaSource,
++                        0,
++                        0);
++
+             dumpSource(decSource, dumpStreamFilename);
+         } else if (seekTest) {
+             performSeekTest(mediaSource);
+         } else {
+-            playSource(mediaSource);
++            playSource(&client, mediaSource);
+         }
+     }
+ 
+     if ((useSurfaceAlloc || useSurfaceTexAlloc) && !audioOnly) {
++        CHECK_EQ((status_t)OK,
++                 native_window_api_disconnect(
++                     gSurface.get(), NATIVE_WINDOW_API_MEDIA));
++
+         gSurface.clear();
+ 
+         if (useSurfaceAlloc) {
+             composerClient->dispose();
+         }
+     }
+ 
++    client.disconnect();
++
+     return 0;
+ }

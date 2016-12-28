@@ -13,7 +13,7 @@ diff --git a/services/core/java/com/android/server/wm/WindowStateAnimator.java b
 index afd451d..ec7c554 100644
 --- a/services/core/java/com/android/server/wm/WindowStateAnimator.java
 +++ b/services/core/java/com/android/server/wm/WindowStateAnimator.java
-@@ -549,6 +549,10 @@
+@@ -547,6 +547,10 @@
              return;
          }
  

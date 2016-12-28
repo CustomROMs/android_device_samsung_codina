@@ -1,0 +1,32 @@
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 090f270..2189001 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -19,4 +19,9 @@
+     <string name="changelog_crdroid_title">Changelog</string>
+     <string name="changelog_crdroid_error">Unable to load changelog</string>
+ 
++    <!-- Superuser indicator on status bar -->
++    <string name="su_indicator">Superuser indicator</string>
++    <string name="su_indicator_summary_on">Superuser indicator is visible when a session is active</string>
++    <string name="su_indicator_summary_off">Toggle to show superuser indicator when a session is active</string>
++
+ </resources>
+diff --git a/res/xml/display_settings.xml b/res/xml/display_settings.xml
+index 090f270..2289001 100644
+--- a/res/xml/display_settings.xml
++++ b/res/xml/display_settings.xml
+@@ -123,6 +123,13 @@
+                 android:summary="@string/high_touch_sensitivity_summary"
+                 android:defaultValue="false"
+                 cm:requiresFeature="cmhardware:FEATURE_HIGH_TOUCH_SENSITIVITY" />
++
++        <com.android.settings.cyanogenmod.SystemSettingSwitchPreference
++                android:key="show_su_indicator"
++                android:title="@string/su_indicator"
++                android:summaryOn="@string/su_indicator_summary_on"
++                android:summaryOff="@string/su_indicator_summary_off"
++                android:defaultValue="true" />
+ 
+         <!-- Expanded desktop -->
+         <org.cyanogenmod.internal.cmparts.CMPartsPreference

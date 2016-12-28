@@ -1,0 +1,32 @@
+ Fix issues with metadata handling when format change happens
+
+When a video format changes, the discontinuity will clear the ATSParser
+queue and format. This means that AnotherPacketSource::getFormat() will
+return NULL until a new format is found. The discontinuity casues the
+decoder to be shutdown and NuPlayer will start scanning sources.
+But since ESQueue has not yet found any format, the call to the
+StreamingSource::getFormat() will return an error (BAD_VALUE) since the
+convertMetaDataToMessage() fails upon NULL input.
+This error code causes the scanning of sources to stop which means that
+the video will be stoped.
+
+Instead returning -EWOULDBLOCK while waiting for a new format will keep
+the scanning of source.
+
+Test: Manual - Install SVT Play app, start live streaming
+
+diff --git a/media/libmediaplayerservice/nuplayer/StreamingSource.cpp b/media/libmediaplayerservice/nuplayer/StreamingSource.cpp
+index 85faac6..86c4804 100644
+--- a/media/libmediaplayerservice/nuplayer/StreamingSource.cpp
++++ b/media/libmediaplayerservice/nuplayer/StreamingSource.cpp
+@@ -230,6 +230,10 @@ sp<AMessage> NuPlayer::StreamingSource::getFormat(bool audio) {
+     }
+ 
+     sp<MetaData> meta = source->getFormat();
++    if (meta == NULL) {
++        format->setInt32("err", -EWOULDBLOCK);
++        return format;
++    }
+     status_t err = convertMetaDataToMessage(meta, &format);
+     if (err != OK) { // format may have been cleared on error
+         format = new AMessage;

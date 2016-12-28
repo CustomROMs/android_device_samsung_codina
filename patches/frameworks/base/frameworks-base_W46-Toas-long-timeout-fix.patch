@@ -10,7 +10,7 @@ diff --git a/core/java/android/widget/Toast.java b/core/java/android/widget/Toas
 index 7762675..f353e2e 100644
 --- a/core/java/android/widget/Toast.java
 +++ b/core/java/android/widget/Toast.java
-@@ -358,7 +358,7 @@
+@@ -359,7 +359,7 @@
          WindowManager mWM;
  
          static final long SHORT_DURATION_TIMEOUT = 5000;

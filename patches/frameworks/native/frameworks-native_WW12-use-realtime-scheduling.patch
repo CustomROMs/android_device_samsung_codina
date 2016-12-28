@@ -1,0 +1,73 @@
+ native: use realtime scheduling for UX-critical items
+
+* Surfaceflinger and Inputflinger have a large impact
+  on overall smoothness, so schedule them using the
+  Realtime scheduling scheme for optimal user experience.
+
+diff --git a/services/inputflinger/InputManager.cpp b/services/inputflinger/InputManager.cpp
+index 40122d0..064e119 100644
+--- a/services/inputflinger/InputManager.cpp
++++ b/services/inputflinger/InputManager.cpp
+@@ -52,15 +52,13 @@ void InputManager::initialize() {
+ }
+ 
+ status_t InputManager::start() {
+-    status_t result = mDispatcherThread->run("InputDispatcher",
+-            PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
++    status_t result = mDispatcherThread->run("InputDispatcher", PRIORITY_REALTIME);
+     if (result) {
+         ALOGE("Could not start InputDispatcher thread due to error %d.", result);
+         return result;
+     }
+ 
+-    result = mReaderThread->run("InputReader",
+-            PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
++    result = mReaderThread->run("InputReader", PRIORITY_REALTIME);
+     if (result) {
+         ALOGE("Could not start InputReader thread due to error %d.", result);
+ 
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 41122d0..064e119 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -522,8 +522,8 @@ void SurfaceFlinger::init() {
+     getDefaultDisplayDevice()->makeCurrent(mEGLDisplay, mEGLContext);
+ 
+     mEventControlThread = new EventControlThread(this);
+-    mEventControlThread->run("EventControl", PRIORITY_URGENT_DISPLAY);
+-    android_set_rt_ioprio(mEventControlThread->getTid(), 1);
++    mEventControlThread->run("EventControl", PRIORITY_REALTIME);
++    android_set_rt_ioprio(mEventControlThread->getTid(), 1);
+ 
+     // initialize our drawing state
+     mDrawingState = mCurrentState;
+diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+index 42122d0..064e119 100644
+--- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -565,8 +565,8 @@ void SurfaceFlinger::init() {
+     getDefaultDisplayDevice()->makeCurrent(mEGLDisplay, mEGLContext);
+ 
+     mEventControlThread = new EventControlThread(this);
+-    mEventControlThread->run("EventControl", PRIORITY_URGENT_DISPLAY);
+-    android_set_rt_ioprio(mEventControlThread->getTid(), 1);
++    mEventControlThread->run("EventControl", PRIORITY_REALTIME);
++    android_set_rt_ioprio(mEventControlThread->getTid(), 1);
+ 
+     // set a fake vsync period if there is no HWComposer
+     if (mHwc->initCheck() != NO_ERROR) {
+diff --git a/services/surfaceflinger/main_surfaceflinger.cpp b/services/surfaceflinger/main_surfaceflinger.cpp
+index 43122d0..064e119 100644
+--- a/services/surfaceflinger/main_surfaceflinger.cpp
++++ b/services/surfaceflinger/main_surfaceflinger.cpp
+@@ -42,9 +42,7 @@ int main(int, char**) {
+     // instantiate surfaceflinger
+     sp<SurfaceFlinger> flinger = DisplayUtils::getInstance()->getSFInstance();
+ 
+-    setpriority(PRIO_PROCESS, 0, PRIORITY_URGENT_DISPLAY);
+-
+-    set_sched_policy(0, SP_FOREGROUND);
++    setpriority(PRIO_PROCESS, 0, PRIORITY_REALTIME);
+ 
+ #ifdef ENABLE_CPUSETS
+     // Put most SurfaceFlinger threads in the system-background cpuset

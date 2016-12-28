@@ -2,7 +2,7 @@ diff --git a/rootdir/init.rc b/rootdir/init.rc
 index b4a25fe..a0397a0 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -664,12 +664,12 @@
+@@ -678,12 +678,12 @@
      chmod 0773 /data/misc/trace
      start console
  

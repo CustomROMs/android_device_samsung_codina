@@ -2,7 +2,7 @@ diff --git a/core/Makefile b/core/Makefile
 index 43c98e3..b22731f 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -2223,7 +2223,7 @@
+@@ -2237,7 +2237,7 @@
  	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
  	   $(BUILT_TARGET_FILES_PACKAGE) $@
  

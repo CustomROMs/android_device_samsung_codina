@@ -1,0 +1,41 @@
+Subject: [PATCH] Include non-const CameraMetadata unlock.
+
+Needed for some legacy camera hals.
+
+diff --git a/camera/CameraMetadata.cpp b/camera/CameraMetadata.cpp
+index c78fc5d..00271c2 100644
+--- a/camera/CameraMetadata.cpp
++++ b/camera/CameraMetadata.cpp
+@@ -80,6 +80,20 @@
+     return mBuffer;
+ }
+ 
++status_t CameraMetadata::unlock(const camera_metadata_t *buffer) {
++    if (!mLocked) {
++        ALOGE("%s: Can't unlock a non-locked CameraMetadata!", __FUNCTION__);
++        return INVALID_OPERATION;
++    }
++    if (buffer != mBuffer) {
++        ALOGE("%s: Can't unlock CameraMetadata with wrong pointer!",
++                __FUNCTION__);
++        return BAD_VALUE;
++    }
++    mLocked = false;
++    return OK;
++}
++
+ status_t CameraMetadata::unlock(const camera_metadata_t *buffer) const {
+     if (!mLocked) {
+         ALOGE("%s: Can't unlock a non-locked CameraMetadata!", __FUNCTION__);
+diff --git a/include/camera/CameraMetadata.h b/include/camera/CameraMetadata.h
+index 5837471..16e20e6 100644
+--- a/include/camera/CameraMetadata.h
++++ b/include/camera/CameraMetadata.h
+@@ -68,6 +68,7 @@
+      * being unlocked.
+      */
+     status_t unlock(const camera_metadata_t *buffer) const;
++    status_t unlock(const camera_metadata_t *buffer);
+ 
+     /**
+      * Release a raw metadata buffer to the caller. After this call,
