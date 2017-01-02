@@ -22,14 +22,19 @@
 #define CODINA_H
 
 #define QOS_DDR_OPP_PATH "/sys/module/prcmu_qos_power/parameters/qos_ddr_opp"
+#define QOS_DDR_OPP_BOOST_DUR_PATH "/sys/module/prcmu_qos_power/parameters/qos_ddr_opp_boost_dur_ms"
 #define QOS_DDR_OPP_NORMAL "25"
 #define QOS_DDR_OPP_BOOST "100"
+#define QOS_DDR_OPP_BOOST_DUR_DEF 8000
 
 #define QOS_APE_OPP_PATH "/sys/module/prcmu_qos_power/parameters/qos_ape_opp"
+#define QOS_APE_OPP_BOOST_DUR_PATH "/sys/module/prcmu_qos_power/parameters/qos_ape_opp_boost_dur_ms"
 #define QOS_APE_OPP_NORMAL "25"
 #define QOS_APE_OPP_BOOST "100"
+#define QOS_APE_OPP_BOOST_DUR_DEF 8000
 
 #define QOS_ARM_KHZ_PATH "/sys/module/prcmu_qos_power/parameters/qos_arm_khz"
+#define QOS_ARM_KHZ_BOOST_DUR_PATH "/sys/module/prcmu_qos_power/parameters/qos_arm_khz_boost_dur_ms"
 #define QOS_ARM_KHZ_NORMAL "200000"
 #define QOS_ARM_KHZ_MAX "1200000"
 
@@ -46,5 +51,8 @@
 #define CPU0_FREQ_MIN_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
 #define CPU0_FREQ_MAX	 	"1200000\n"
 #define CPU0_FREQ_LOW	 	"200000\n"
+
+#define DUR_INFINITE "-1"
+#define DUR_ZERO "0"
 
 #endif /* CODINA_H */

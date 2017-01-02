@@ -68,30 +68,50 @@ static void power_set_interactive(struct power_module *module, int on) {
 #endif
 
 	if (on) {
+            write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
+	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
 	} else {
+            write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
+	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_NORMAL);
 	}
 }
 
 static void power_hint_cpu_boost(int dur) {
     char sdur[255];
+    if (!dur)
+        dur = CPU0_BOOST_P_DUR_DEF;
 
-    if (dur) {
-        sprintf(sdur, "%d", dur);
-	write_string(CPU0_BOOST_P_DUR_PATH, sdur);
-    }
+    sprintf(sdur, "%d", dur);
+    write_string(CPU0_BOOST_P_DUR_PATH, sdur);
     write_string(CPU0_BOOST_PULSE_PATH, CPU0_BOOST_PULSE_FREQ);
 }
 
 static void power_hint_interactive(int on) {
-	power_hint_cpu_boost(on);
-//TODO
-#if 0
-	write_string(GPU_ANIM_BOOST_PATH,"1\n");
-#endif
+   char sdur[255];
+   int dur = on;
+
+   if (!on)
+       dur = CPU0_BOOST_P_DUR_DEF;
+
+   power_hint_cpu_boost(dur);
+
+   if (!on)
+       dur = QOS_DDR_OPP_BOOST_DUR_DEF;
+
+   sprintf(sdur, "%d", dur);
+   write_string(QOS_DDR_OPP_BOOST_DUR_PATH, sdur);
+   write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
+
+   if (!on)
+       dur = QOS_APE_OPP_BOOST_DUR_DEF;
+
+   sprintf(sdur, "%d", dur);
+   write_string(QOS_APE_OPP_BOOST_DUR_PATH, sdur);
+   write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
 }
 
 static void power_hint_vsync(int on) {
