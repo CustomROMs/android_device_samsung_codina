@@ -27,7 +27,7 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
-#include "hi6250.h"
+#include "codina.h"
 
 #define DEBUG
 
@@ -57,44 +57,49 @@ static void power_init(struct power_module *module)
 		ALOGE("init");
 #endif
 
-    //write_string(CPU0_GOV_PATH,"interactive\n");
-
+    //write_string(CPU0_GOV_PATH, "dynamic\n");
 }
 
 static void power_set_interactive(struct power_module *module, int on) {
 #ifdef DEBUG
 		ALOGE("set_interactive %d", on);
 #endif
-	if(on) {
-	    write_string(GPU_FREQ_MIN_PATH,GPU_FREQ_NORMAL);
-	    write_string(DDR_FREQ_MIN_PATH,DDR_FREQ_NORMAL);
+
+	if (on) {
+	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
+	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
 	} else {
-	    write_string(GPU_FREQ_MIN_PATH,GPU_FREQ_LOW);
-	    write_string(DDR_FREQ_MIN_PATH,DDR_FREQ_LOW);	
+	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
+	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_NORMAL);
 	}
 }
 
 static void power_hint_cpu_boost(int dur) {
+//TODO
+#if 0
     char sdur[255];
 
     if(!dur)
 	dur = CPU0_BOOST_P_DUR_DEF;
-	
+
     sprintf(sdur, "%d\n", dur);
-    write_string(CPU0_BOOST_P_DUR_PATH,sdur); 
-    write_string(CPU0_BOOST_PULSE_PATH,"1\n"); 
+    write_string(CPU0_BOOST_P_DUR_PATH,sdur);
+    write_string(CPU0_BOOST_PULSE_PATH,"1\n");
+#endif
 }
 
 static void power_hint_interactive(int on) {
 	power_hint_cpu_boost(on);
+//TODO
+#if 0
 	write_string(GPU_ANIM_BOOST_PATH,"1\n");
-
+#endif
 }
 
 static void power_hint(struct power_module *module, power_hint_t hint,
                        void *data) {
 
-    int var = 0;  
+    int var = 0;
     if(data != NULL)
         var = *(int *) data;
 
