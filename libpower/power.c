@@ -1,7 +1,9 @@
 /*
  * Copyright (C) 2012 The Android Open Source Project
  * Copyright (C) 2016 Jonathan Jason Dennis [Meticulus]
- *						theonejohnnyd@gmail.com
+ *					theonejohnnyd@gmail.com
+ * Copyright (C) 2017 Shilin Victor Sergeevich [ChronoMonochrome]
+ *					chrono.monochrome@gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +23,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define LOG_TAG "Met-Dev Hisi PowerHAL"
+#define LOG_TAG "PowerHAL"
 #include <utils/Log.h>
 
 #include <hardware/hardware.h>
@@ -161,8 +163,8 @@ struct power_module HAL_MODULE_INFO_SYM = {
         .module_api_version = POWER_MODULE_API_VERSION_0_3,
         .hal_api_version = HARDWARE_HAL_API_VERSION,
         .id = POWER_HARDWARE_MODULE_ID,
-        .name = "Met-Dev Hisi Power HAL",
-        .author = "Meticulus Development",
+        .name = "Power HAL",
+        .author = "AOSP",
         .methods = &power_module_methods,
     },
 

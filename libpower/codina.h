@@ -1,7 +1,9 @@
 /*
  * Copyright (C) 2012 The Android Open Source Project
  * Copyright (C) 2016 Jonathan Jason Dennis [Meticulus]
- *								theonejohnnyd@gmail.com
+ *					theonejohnnyd@gmail.com
+ * Copyright (C) 2017 Shilin Victor Sergeevich [ChronoMonochrome]
+ *					chrono.monochrome@gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +17,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef CODINA_H
+#define CODINA_H
 
 #define QOS_DDR_OPP_PATH "/sys/module/prcmu_qos_power/parameters/qos_ddr_opp"
 #define QOS_DDR_OPP_NORMAL "25"
@@ -41,3 +46,5 @@
 #define CPU0_FREQ_MIN_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
 #define CPU0_FREQ_MAX	 	"1200000\n"
 #define CPU0_FREQ_LOW	 	"200000\n"
+
+#endif /* CODINA_H */
