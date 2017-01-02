@@ -33,8 +33,9 @@
 #define GPU_FREQ_NORMAL	 	"idx=5" // 400000 kHz
 #define GPU_FREQ_LOW	 	"idx=5"
 
-#define CPU0_BOOST_PULSE_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/interactive/boostpulse"
-#define CPU0_BOOST_P_DUR_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/interactive/boostpulse_duration"
+#define CPU0_BOOST_PULSE_PATH 	"/sys/module/prcmu_qos_power/parameters/qos_arm_khz"
+#define CPU0_BOOST_PULSE_FREQ 	"800000"
+#define CPU0_BOOST_P_DUR_PATH 	"/sys/module/prcmu_qos_power/parameters/qos_arm_khz_boost_dur_ms"
 #define CPU0_BOOST_P_DUR_DEF	8000
 #define CPU0_GOV_PATH	 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 #define CPU0_FREQ_MIN_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"

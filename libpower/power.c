@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012 The Android Open Source Project
  * Copyright (C) 2016 Jonathan Jason Dennis [Meticulus]
- *								theonejohnnyd@gmail.com
+ *						theonejohnnyd@gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ static void power_init(struct power_module *module)
 		ALOGE("init");
 #endif
 
-    //write_string(CPU0_GOV_PATH, "dynamic\n");
+    //write_string(CPU0_GOV_PATH, "dynamic");
 }
 
 static void power_set_interactive(struct power_module *module, int on) {
@@ -75,17 +75,13 @@ static void power_set_interactive(struct power_module *module, int on) {
 }
 
 static void power_hint_cpu_boost(int dur) {
-//TODO
-#if 0
     char sdur[255];
 
-    if(!dur)
-	dur = CPU0_BOOST_P_DUR_DEF;
-
-    sprintf(sdur, "%d\n", dur);
-    write_string(CPU0_BOOST_P_DUR_PATH,sdur);
-    write_string(CPU0_BOOST_PULSE_PATH,"1\n");
-#endif
+    if (dur) {
+        sprintf(sdur, "%d", dur);
+	write_string(CPU0_BOOST_P_DUR_PATH, sdur);
+    }
+    write_string(CPU0_BOOST_PULSE_PATH, CPU0_BOOST_PULSE_FREQ);
 }
 
 static void power_hint_interactive(int on) {
@@ -106,7 +102,7 @@ static void power_hint_vsync(int on) {
 	}
 }
 
- static void power_hint(struct power_module *module, power_hint_t hint,
+static void power_hint(struct power_module *module, power_hint_t hint,
                         void *data) {
      int var = 0;
      char * packageName;
