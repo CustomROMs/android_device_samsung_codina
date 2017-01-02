@@ -95,6 +95,8 @@ static void power_hint_interactive(int on) {
 }
 
 static void power_hint_vsync(int on) {
+//FIXME: setting APE_OPP to 100 here makes no change
+#if 0
 	if (on) {
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
 	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
@@ -102,6 +104,7 @@ static void power_hint_vsync(int on) {
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
 	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_NORMAL);
 	}
+#endif
 }
 
 static void power_hint(struct power_module *module, power_hint_t hint,
