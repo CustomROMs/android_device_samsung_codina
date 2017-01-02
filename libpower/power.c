@@ -155,6 +155,8 @@ static void power_hint_vsync(int on) {
 
 static void power_hint_low_power(int on) {
     low_power = on;
+//TODO: set power save profile
+#if 0
     if(on) {
 	write_string(CPU0_FREQ_MAX_PATH,CPU0_FREQ_LOW);
 	write_string(CPU0_FREQ_MIN_PATH,CPU0_FREQ_LOW);
@@ -170,6 +172,7 @@ static void power_hint_low_power(int on) {
 	write_string(DDR_FREQ_MAX_PATH,DDR_FREQ_MAX);
 	write_string(DDR_FREQ_MIN_PATH,DDR_FREQ_NORMAL);
     }
+#endif
 }
 
 static void power_hint(struct power_module *module, power_hint_t hint,
