@@ -39,7 +39,7 @@
 #define DEBUG_LOG(x...) do {} while(0)
 #endif
 
-static void write_string(char * path, char * value) {
+static ssize_t write_string(char * path, char * value) {
     int fd = open(path, O_WRONLY);
 	if(!fd) { ALOGE("Unable to open to %s", path); return;}
 
@@ -50,7 +50,22 @@ static void write_string(char * path, char * value) {
 	}
 
     close(fd);
+    return bytes_written;
 
+}
+
+static ssize_t read_string(char *path, char **buf, size_t nbytes)
+{
+    ssize_t bytes_read;
+    int fd = open(path, O_RDONLY);
+    if(!fd) { ALOGE("Unable to open to %s", path); return;}
+
+    bytes_read = read(fd, *buf, nbytes);
+    if (bytes_read < 1)
+		ALOGE("Unable to read %s : %d", path, bytes_read);
+
+    close(fd);
+    return bytes_read;
 }
 
 static void power_init(struct power_module *module)
@@ -66,13 +81,16 @@ static void power_set_interactive(struct power_module *module, int on) {
 #ifdef DEBUG
 		ALOGE("set_interactive %d", on);
 #endif
-
+	char buf[15];
 	if (on) {
+            read_string(CPU0_FREQ_MAX_PATH, &buf, 15);
+            write_string(QOS_ARM_KHZ_PATH, buf);
             write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
 	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
 	} else {
+            write_string(QOS_ARM_KHZ_PATH, QOS_ARM_KHZ_NORMAL);
             write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
 	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);

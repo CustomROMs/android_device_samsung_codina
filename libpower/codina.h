@@ -49,6 +49,7 @@
 #define CPU0_BOOST_P_DUR_DEF	8000
 #define CPU0_GOV_PATH	 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 #define CPU0_FREQ_MIN_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
+#define CPU0_FREQ_MAX_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define CPU0_FREQ_MAX	 	"1200000\n"
 #define CPU0_FREQ_LOW	 	"200000\n"
 
