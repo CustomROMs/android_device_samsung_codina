@@ -41,6 +41,7 @@
 #endif
 
 static int low_power = 0;
+static int dt2w = 0;
 
 static void write_string(char *path, char *value) {
     int fd = open(path, O_WRONLY);
@@ -224,9 +225,49 @@ static void power_hint(struct power_module *module, power_hint_t hint,
 		DEBUG_LOG("POWER_HINT_PROFILE %d", var);
 		ALOGI("Meticulus: POWER_SET_PROFILE is used! Implement!");
 		break;
-    default:
+        default:
 		ALOGE("Unknown power hint %d", hint);
-        break;
+        	break;
+    }
+}
+
+#if 0
+static void set_dt2w(int on) {
+    dt2w = on;
+    if(on)
+	write_string(WAKE_CONF_PATH,"1\n");
+    else
+	write_string(WAKE_CONF_PATH,"0\n");
+}
+#endif
+
+static int get_feature(struct power_module *module, feature_t feature) {
+
+    int retval = 0;
+    switch(feature) {
+	case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
+#if 0
+	    retval = 1;
+#endif
+	    break;
+        default:
+	    ALOGE("Unknown feature %d", feature);
+            break;
+    }
+    return retval;
+}
+
+static void set_feature(struct power_module *module, feature_t feature, int state) {
+    
+    switch(feature) {
+	case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
+#if 0
+	    set_dt2w(state);
+#endif
+	    break;
+        default:
+	    ALOGE("Unknown feature %d", feature);
+            break;
     }
 }
 
@@ -248,4 +289,6 @@ struct power_module HAL_MODULE_INFO_SYM = {
     .init = power_init,
     .setInteractive = power_set_interactive,
     .powerHint = power_hint,
+    .setFeature = set_feature,
+    .getFeature = get_feature,
 };
