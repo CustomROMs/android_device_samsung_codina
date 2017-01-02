@@ -24,6 +24,7 @@
 #include <fcntl.h>
 
 #define LOG_TAG "PowerHAL"
+#include <cutils/compiler.h>
 #include <cutils/properties.h>
 #include <utils/Log.h>
 
@@ -42,6 +43,11 @@
 
 static int low_power = 0;
 static int dt2w = 0;
+static struct power_profile *profile = &performance;
+static struct power_module *global_module;
+static int current_profile = 2;
+static int prev_profile = 2;
+static int is_first_init = 1;
 
 static void write_string(char *path, char *value) {
     int fd = open(path, O_WRONLY);
@@ -59,86 +65,140 @@ static void write_string(char *path, char *value) {
 
 static void write_string_from_prop(char *path, char *prop, char *def_val) {
         char value[PROPERTY_VALUE_MAX];
+	DEBUG_LOG("%s: %s, %s", __func__, prop, def_val);
         property_get(prop, value, def_val);
         write_string(path, value);
 }
 
-static void power_init(struct power_module *module)
-{
-#ifdef DEBUG
-		ALOGE("init");
+#if 0
+static int property_set_(char *key, char *val) {
+	ALOGE("%s: %s, %s", __func__, key, val);
+	return property_set(key, val);
+}
 #endif
 
-    //write_string(CPU0_GOV_PATH, "dynamic");
+static void power_init(struct power_module *module)
+{
+    DEBUG_LOG("init");
+
+    global_module = module;
+#if 0
+    if (CC_UNLIKELY(is_first_init)) {
+        if (property_set_((*profile).prop_cpu0_gov, (*profile).cpu0_gov))
+		goto err;
+        if (property_set_((*profile).prop_cpu0_freq_max, (*profile).cpu0_freq_max))
+		goto err;
+        if (property_set_((*profile).prop_cpu0_freq_min, (*profile).cpu0_freq_min))
+		goto err;
+        if (property_set_((*profile).prop_gpu_freq_max, (*profile).gpu_freq_max))
+		goto err;
+        if (property_set_((*profile).prop_gpu_freq_min, (*profile).gpu_freq_min))
+		goto err;
+
+        is_first_init = 0;
+    }
+#endif
+    /*
+     * Chrono: properies can't be accessed at boot?
+     * Accessing them too early will result in crash,
+     * so skip first power_init call.
+     */
+
+    if (CC_UNLIKELY(is_first_init)) {
+        is_first_init = 0;
+        return;
+    }
+    write_string_from_prop(CPU0_GOV_PATH, (*profile).prop_cpu0_gov,(*profile).cpu0_gov);
+    write_string_from_prop(CPU0_FREQ_MAX_PATH, (*profile).prop_cpu0_freq_max, (*profile).cpu0_freq_max);
+    write_string_from_prop(CPU0_FREQ_MIN_PATH, (*profile).prop_cpu0_freq_min, (*profile).cpu0_freq_min);
+    write_string_from_prop(GPU_FREQ_MIN_PATH, (*profile).prop_gpu_freq_max, (*profile).gpu_freq_max);
+    write_string_from_prop(GPU_FREQ_MAX_PATH, (*profile).prop_gpu_freq_min, (*profile).gpu_freq_min);
+
+    return;
+
+err:
+    ALOGE("some of properties can't be set to its defaults, abort!");
 }
 
 static void power_set_interactive(struct power_module *module, int on) {
-#ifdef DEBUG
-		ALOGE("set_interactive %d", on);
-#endif
+        DEBUG_LOG("set_interactive %d", on);
 
 	if (on & !low_power) {
-            write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-            write_string_from_prop(QOS_DDR_OPP_PATH, PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
-								      QOS_DDR_OPP_BOOST);
+    	    write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
+            write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
 
-	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-            write_string_from_prop(QOS_APE_OPP_PATH, PROP_SET_INTERACTIVE_APE_OPP_BOOST,
-								      QOS_APE_OPP_BOOST);
+    	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
+            write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
+
 	} else {
-            write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-	    write_string_from_prop(QOS_DDR_OPP_PATH, PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
-								     QOS_DDR_OPP_NORMAL);
+    	    write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
+            write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
 
-	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-	    write_string_from_prop(QOS_APE_OPP_PATH, PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
-							 	    QOS_APE_OPP_NORMAL);
+    	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
+            write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_NORMAL);
 	}
 }
 
 static void power_hint_cpu_boost(int dur) {
     char sdur[255];
     if (!dur)
-        dur = CPU0_BOOST_P_DUR_DEF;
+        dur = (*profile).cpu0_boost_pulse_freq;
 
     sprintf(sdur, "%d", dur);
-    write_string_from_prop(CPU0_BOOST_P_DUR_PATH, PROP_CPUBOOST_DUR, sdur);
-    write_string_from_prop(CPU0_BOOST_PULSE_PATH, PROP_CPUBOOST_ARM_KHZ_BOOST,
-							CPU0_BOOST_PULSE_FREQ);
+    write_string_from_prop(CPU0_BOOST_P_DUR_PATH, (*profile).prop_cpu0_boost_p_dur_def, sdur);
+    write_string_from_prop(CPU0_BOOST_PULSE_PATH, (*profile).prop_cpu0_boost_pulse_freq,
+							(*profile).cpu0_boost_pulse_freq);
 }
 
 static void power_hint_interactive(int on) {
    char sdur[255];
    int dur = on;
+   int cpu_should_boost = property_get_bool((*profile).prop_cpu0_should_boost,
+                                        (*profile).cpu0_should_boost);
 
-   if (!on)
-       dur = CPU0_BOOST_P_DUR_DEF;
+   int gpu_should_boost = property_get_bool((*profile).prop_gpu_should_boost,
+					(*profile).gpu_should_boost);
 
-   power_hint_cpu_boost(dur);
+   int ddr_should_boost = property_get_bool((*profile).prop_ddr_should_boost,
+					(*profile).ddr_should_boost);
 
-   if (!on)
-       dur = QOS_DDR_OPP_BOOST_DUR_DEF;
 
-   sprintf(sdur, "%d", dur);
-   write_string_from_prop(QOS_DDR_OPP_BOOST_DUR_PATH,
-			  PROP_SET_INTERACTIVE_DDR_OPP_BOOST_DUR,
-							   sdur);
+   if (cpu_should_boost) {
+           DEBUG_LOG("%s: boosting CPU", __func__);
+	   if (!on)
+	       dur = (*profile).cpu0_boost_p_dur_def;
 
-   write_string_from_prop(QOS_DDR_OPP_PATH,
-			  PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
-					   QOS_DDR_OPP_BOOST);
+	   power_hint_cpu_boost(dur);
+   }
 
-   if (!on)
-       dur = QOS_APE_OPP_BOOST_DUR_DEF;
+   if (ddr_should_boost) {
+           DEBUG_LOG("%s: boosting DDR", __func__);
+	   if (!on)
+	       dur = (*profile).ddr_boost_dur_def;
 
-   sprintf(sdur, "%d", dur);
-   write_string_from_prop(QOS_APE_OPP_BOOST_DUR_PATH,
-			  PROP_SET_INTERACTIVE_DDR_OPP_BOOST_DUR,
-							    sdur);
+	   sprintf(sdur, "%d", dur);
 
-   write_string_from_prop(QOS_APE_OPP_PATH,
-			  PROP_SET_INTERACTIVE_APE_OPP_BOOST,
-					   QOS_APE_OPP_BOOST);
+	   write_string_from_prop(QOS_DDR_OPP_BOOST_DUR_PATH,
+			  (*profile).prop_ddr_boost_dur_def, sdur);
+
+	   write_string/*_from_prop*/(QOS_DDR_OPP_PATH,
+				  /*PROP_SET_INTERACTIVE_DDR_OPP_BOOST, */
+						   QOS_DDR_OPP_BOOST);
+   }
+
+   if (gpu_should_boost) {
+           DEBUG_LOG("%s: boosting GPU", __func__);
+	   if (!on)
+	       dur = (*profile).gpu_boost_dur_def;
+
+	   sprintf(sdur, "%d", dur);
+	   write_string_from_prop(QOS_APE_OPP_BOOST_DUR_PATH,
+				  (*profile).prop_gpu_boost_dur_def, sdur);
+
+	   write_string/*_from_prop*/(QOS_APE_OPP_PATH,
+				  /*PROP_SET_INTERACTIVE_APE_OPP_BOOST,*/
+						   QOS_APE_OPP_BOOST);
+   }
 }
 
 static void power_hint_vsync(int on) {
@@ -154,26 +214,42 @@ static void power_hint_vsync(int on) {
 #endif
 }
 
-static void power_hint_low_power(int on) {
-    low_power = on;
-//TODO: set power save profile
-#if 0
-    if(on) {
-	write_string(CPU0_FREQ_MAX_PATH,CPU0_FREQ_LOW);
-	write_string(CPU0_FREQ_MIN_PATH,CPU0_FREQ_LOW);
-	write_string(GPU_FREQ_MAX_PATH,GPU_FREQ_LOW);
-	write_string(GPU_FREQ_MIN_PATH,GPU_FREQ_LOW);
-	write_string(DDR_FREQ_MAX_PATH,DDR_FREQ_LOW);
-	write_string(DDR_FREQ_MIN_PATH,DDR_FREQ_LOW);
-    } else {
-	write_string(CPU0_FREQ_MAX_PATH,CPU0_FREQ_MAX);
-	write_string(CPU0_FREQ_MIN_PATH,CPU0_FREQ_LOW);
-	write_string(GPU_FREQ_MAX_PATH,GPU_FREQ_MAX);
-	write_string(GPU_FREQ_MIN_PATH,GPU_FREQ_NORMAL);
-	write_string(DDR_FREQ_MAX_PATH,DDR_FREQ_MAX);
-	write_string(DDR_FREQ_MIN_PATH,DDR_FREQ_NORMAL);
+static void power_hint_set_profile(struct power_module *module, int p) {
+
+    switch(p) {
+	case 0:
+	    profile = &power_save;
+	    power_init(module);
+	    ALOGI("Set power save profile.");
+	    break;
+	case 1:
+	    profile = &balanced;
+	    power_init(module);
+	    ALOGI("Set balanced profile.");
+	    break;
+	case 2:
+	    profile = &performance;
+	    power_init(module);
+	    ALOGI("Set performance profile.");
+	    break;
+        default:
+	    ALOGE("Unknown power profile %d", p);
+	    break;
     }
-#endif
+
+    prev_profile = current_profile;
+    current_profile = p;
+}
+
+static void power_hint_low_power(int on) {
+    if (on && (!low_power))
+       power_hint_set_profile(global_module, 0);
+    else if ((!on) && low_power)
+       power_hint_set_profile(global_module, prev_profile);
+    else
+       ALOGE("%s: setting the same state %d will not change profile", __func__, on);
+
+    low_power = on;
 }
 
 static void power_hint(struct power_module *module, power_hint_t hint,
@@ -185,7 +261,7 @@ static void power_hint(struct power_module *module, power_hint_t hint,
         case POWER_HINT_VSYNC:
                 if(data != NULL)
                     var = *(int *) data;
-                DEBUG_LOG("POWER_HINT_VSYNC %d", var);
+                //DEBUG_LOG("POWER_HINT_VSYNC %d", var);
 		if (!low_power)
 	                power_hint_vsync(var);
                 break;
@@ -222,8 +298,11 @@ static void power_hint(struct power_module *module, power_hint_t hint,
 		ALOGI("Meticulus: POWER_HINT_AUDIO is used! Implement!");
 		break;
 	case POWER_HINT_SET_PROFILE:
+		if(data != NULL)
+		    var = *(int *) data;
 		DEBUG_LOG("POWER_HINT_PROFILE %d", var);
-		ALOGI("Meticulus: POWER_SET_PROFILE is used! Implement!");
+		ALOGI("Meticulus: POWER_SET_PROFILE %d", var);
+		power_hint_set_profile(module, var);
 		break;
         default:
 		ALOGE("Unknown power hint %d", hint);
@@ -242,9 +321,11 @@ static void set_dt2w(int on) {
 #endif
 
 static int get_feature(struct power_module *module, feature_t feature) {
-
     int retval = 0;
     switch(feature) {
+	case POWER_FEATURE_SUPPORTED_PROFILES:
+	    retval = 3;
+	    break;
 	case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
 #if 0
 	    retval = 1;
@@ -258,8 +339,11 @@ static int get_feature(struct power_module *module, feature_t feature) {
 }
 
 static void set_feature(struct power_module *module, feature_t feature, int state) {
-    
     switch(feature) {
+	case POWER_FEATURE_SUPPORTED_PROFILES:
+	    ALOGI("POWER_FEATURE_SUPPORTED_PROFILES: %d",state);
+	    break;
+
 	case POWER_FEATURE_DOUBLE_TAP_TO_WAKE:
 #if 0
 	    set_dt2w(state);
