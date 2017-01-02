@@ -38,10 +38,11 @@
 #define QOS_ARM_KHZ_NORMAL "200000"
 #define QOS_ARM_KHZ_MAX "1200000"
 
-#define GPU_FREQ_MIN_PATH 	"/sys/class/devfreq/gpufreq/min_freq"
-#define GPU_FREQ_BOOST	 	"idx=21" // 700800 kHz
-#define GPU_FREQ_NORMAL	 	"idx=5" // 400000 kHz
-#define GPU_FREQ_LOW	 	"idx=5"
+#define GPU_FREQ_MIN_PATH 	"/sys/kernel/mali/mali_boost_low"
+#define GPU_FREQ_MAX_PATH 	"/sys/kernel/mali/mali_boost_high"
+#define GPU_FREQ_BOOST	 	"499200"
+#define GPU_FREQ_NORMAL	 	"399360"
+#define GPU_FREQ_LOW	 	"256000"
 
 #define CPU0_BOOST_PULSE_PATH 	"/sys/module/prcmu_qos_power/parameters/qos_arm_khz"
 #define CPU0_BOOST_PULSE_FREQ 	"800000"
@@ -54,6 +55,10 @@
 
 #define DUR_INFINITE "-1"
 #define DUR_ZERO "0"
+
+#define PROP_CPU0_GOV "powerhal.cpu0_gov"
+#define PROP_CPU0_FREQ_MIN "powerhal.cpu0_freq_min"
+#define PROP_CPU0_FREQ_MAX "powerhal.cpu0_freq_max"
 
 #define PROP_SET_INTERACTIVE_ARM_KHZ_BOOST "powerhal.set_interactive.arm_khz_boost"
 #define PROP_SET_INTERACTIVE_ARM_KHZ_BOOST_DUR "powerhal.set_interactive.arm_khz_boost_duration_ms"
@@ -68,5 +73,8 @@
 
 #define PROP_CPUBOOST_ARM_KHZ_BOOST "powerhal.cpuboost.arm_khz_boost"
 #define PROP_CPUBOOST_DUR "powerhal.cpuboost.duration_ms"
+
+#define PROP_GPU_FREQ_MIN "powerhal.gpu.min"
+#define PROP_GPU_FREQ_MAX "powerhal.gpu.max"
 
 #endif /* CODINA_H */
