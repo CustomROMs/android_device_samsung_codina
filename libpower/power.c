@@ -24,6 +24,7 @@
 #include <fcntl.h>
 
 #define LOG_TAG "PowerHAL"
+#include <cutils/properties.h>
 #include <utils/Log.h>
 
 #include <hardware/hardware.h>
@@ -39,7 +40,7 @@
 #define DEBUG_LOG(x...) do {} while(0)
 #endif
 
-static ssize_t write_string(char * path, char * value) {
+static void write_string(char *path, char *value) {
     int fd = open(path, O_WRONLY);
 	if(!fd) { ALOGE("Unable to open to %s", path); return;}
 
@@ -50,22 +51,13 @@ static ssize_t write_string(char * path, char * value) {
 	}
 
     close(fd);
-    return bytes_written;
 
 }
 
-static ssize_t read_string(char *path, char **buf, size_t nbytes)
-{
-    ssize_t bytes_read;
-    int fd = open(path, O_RDONLY);
-    if(!fd) { ALOGE("Unable to open to %s", path); return;}
-
-    bytes_read = read(fd, *buf, nbytes);
-    if (bytes_read < 1)
-		ALOGE("Unable to read %s : %d", path, bytes_read);
-
-    close(fd);
-    return bytes_read;
+static void write_string_from_prop(char *path, char *prop, char *def_val) {
+        char value[PROPERTY_VALUE_MAX];
+        property_get(prop, value, def_val);
+        write_string(path, value);
 }
 
 static void power_init(struct power_module *module)
@@ -81,20 +73,23 @@ static void power_set_interactive(struct power_module *module, int on) {
 #ifdef DEBUG
 		ALOGE("set_interactive %d", on);
 #endif
-	char buf[15];
+
 	if (on) {
-            read_string(CPU0_FREQ_MAX_PATH, &buf, 15);
-            write_string(QOS_ARM_KHZ_PATH, buf);
             write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
+            write_string_from_prop(QOS_DDR_OPP_PATH, PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
+								      QOS_DDR_OPP_BOOST);
+
 	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
+            write_string_from_prop(QOS_APE_OPP_PATH, PROP_SET_INTERACTIVE_APE_OPP_BOOST,
+								      QOS_APE_OPP_BOOST);
 	} else {
-            write_string(QOS_ARM_KHZ_PATH, QOS_ARM_KHZ_NORMAL);
             write_string(QOS_DDR_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_NORMAL);
+	    write_string_from_prop(QOS_DDR_OPP_PATH, PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
+								     QOS_DDR_OPP_NORMAL);
+
 	    write_string(QOS_APE_OPP_BOOST_DUR_PATH, DUR_INFINITE);
-	    write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_NORMAL);
+	    write_string_from_prop(QOS_APE_OPP_PATH, PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
+							 	    QOS_APE_OPP_NORMAL);
 	}
 }
 
@@ -104,8 +99,9 @@ static void power_hint_cpu_boost(int dur) {
         dur = CPU0_BOOST_P_DUR_DEF;
 
     sprintf(sdur, "%d", dur);
-    write_string(CPU0_BOOST_P_DUR_PATH, sdur);
-    write_string(CPU0_BOOST_PULSE_PATH, CPU0_BOOST_PULSE_FREQ);
+    write_string_from_prop(CPU0_BOOST_P_DUR_PATH, PROP_CPUBOOST_DUR, sdur);
+    write_string_from_prop(CPU0_BOOST_PULSE_PATH, PROP_CPUBOOST_ARM_KHZ_BOOST,
+							CPU0_BOOST_PULSE_FREQ);
 }
 
 static void power_hint_interactive(int on) {
@@ -121,19 +117,29 @@ static void power_hint_interactive(int on) {
        dur = QOS_DDR_OPP_BOOST_DUR_DEF;
 
    sprintf(sdur, "%d", dur);
-   write_string(QOS_DDR_OPP_BOOST_DUR_PATH, sdur);
-   write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);
+   write_string_from_prop(QOS_DDR_OPP_BOOST_DUR_PATH,
+			  PROP_SET_INTERACTIVE_DDR_OPP_BOOST_DUR,
+							   sdur);
+
+   write_string_from_prop(QOS_DDR_OPP_PATH,
+			  PROP_SET_INTERACTIVE_DDR_OPP_BOOST,
+					   QOS_DDR_OPP_BOOST);
 
    if (!on)
        dur = QOS_APE_OPP_BOOST_DUR_DEF;
 
    sprintf(sdur, "%d", dur);
-   write_string(QOS_APE_OPP_BOOST_DUR_PATH, sdur);
-   write_string(QOS_APE_OPP_PATH, QOS_APE_OPP_BOOST);
+   write_string_from_prop(QOS_APE_OPP_BOOST_DUR_PATH,
+			  PROP_SET_INTERACTIVE_DDR_OPP_BOOST_DUR,
+							    sdur);
+
+   write_string_from_prop(QOS_APE_OPP_PATH,
+			  PROP_SET_INTERACTIVE_APE_OPP_BOOST,
+					   QOS_APE_OPP_BOOST);
 }
 
 static void power_hint_vsync(int on) {
-//FIXME: setting APE_OPP to 100 here makes no change
+//FIXME: setting APE/DDR_OPP to 100 here makes no visual changes
 #if 0
 	if (on) {
 	    write_string(QOS_DDR_OPP_PATH, QOS_DDR_OPP_BOOST);

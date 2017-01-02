@@ -49,11 +49,24 @@
 #define CPU0_BOOST_P_DUR_DEF	8000
 #define CPU0_GOV_PATH	 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 #define CPU0_FREQ_MIN_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
-#define CPU0_FREQ_MAX_PATH 	"/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define CPU0_FREQ_MAX	 	"1200000\n"
 #define CPU0_FREQ_LOW	 	"200000\n"
 
 #define DUR_INFINITE "-1"
 #define DUR_ZERO "0"
+
+#define PROP_SET_INTERACTIVE_ARM_KHZ_BOOST "powerhal.set_interactive.arm_khz_boost"
+#define PROP_SET_INTERACTIVE_ARM_KHZ_BOOST_DUR "powerhal.set_interactive.arm_khz_boost_duration_ms"
+#define PROP_SET_INTERACTIVE_DDR_OPP_BOOST "powerhal.set_interactive.ddr_opp_boost"
+#define PROP_SET_INTERACTIVE_DDR_OPP_BOOST_DUR "powerhal.set_interactive.ddr_opp_boost_duration_ms"
+#define PROP_SET_INTERACTIVE_APE_OPP_BOOST "powerhal.set_interactive.ape_opp_boost"
+#define PROP_SET_INTERACTIVE_APE_OPP_BOOST_DUR "powerhal.set_interactive.ape_opp_boost_duration_ms"
+
+#define PROP_VSYNC_ARM_KHZ_BOOST "powerhal.vsync.arm_khz_boost"
+#define PROP_VSYNC_DDR_OPP_BOOST "powerhal.vsync.ddr_opp_boost"
+#define PROP_VSYNC_APE_OPP_BOOST "powerhal.vsync.ape_opp_boost"
+
+#define PROP_CPUBOOST_ARM_KHZ_BOOST "powerhal.cpuboost.arm_khz_boost"
+#define PROP_CPUBOOST_DUR "powerhal.cpuboost.duration_ms"
 
 #endif /* CODINA_H */
