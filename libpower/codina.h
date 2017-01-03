@@ -65,8 +65,8 @@
 
 /* Start profile power_save  */
 #define CPU0_GOV_0 "dynamic"
-#define CPU0_FREQ_MIN_0 200000
-#define CPU0_FREQ_MAX_0 800000
+#define CPU0_FREQ_MIN_0 "200000"
+#define CPU0_FREQ_MAX_0 "800000"
 #define CPU0_BOOST_PULSE_FREQ_0 "200000"
 #define GPU_FREQ_MIN_0 GPU_FREQ_LOW
 #define GPU_FREQ_MAX_0 GPU_FREQ_NORMAL
@@ -102,8 +102,8 @@
 
 /* Start profile balanced */
 #define CPU0_GOV_1 "dynamic"
-#define CPU0_FREQ_MIN_1 200000
-#define CPU0_FREQ_MAX_1 800000
+#define CPU0_FREQ_MIN_1 "200000"
+#define CPU0_FREQ_MAX_1 "800000"
 #define CPU0_BOOST_PULSE_FREQ_1 "400000"
 #define GPU_FREQ_MIN_1 GPU_FREQ_NORMAL
 #define GPU_FREQ_MAX_1 GPU_FREQ_NORMAL
@@ -137,8 +137,8 @@
 
 /* Start profile performance  */
 #define CPU0_GOV_2 "dynamic"
-#define CPU0_FREQ_MIN_2 200000
-#define CPU0_FREQ_MAX_2 1000000
+#define CPU0_FREQ_MIN_2 "200000"
+#define CPU0_FREQ_MAX_2 "1000000"
 #define CPU0_BOOST_PULSE_FREQ_2 "800000"
 #define GPU_FREQ_MIN_2 GPU_FREQ_NORMAL
 #define GPU_FREQ_MAX_2 GPU_FREQ_BOOST

@@ -47,7 +47,6 @@ static struct power_profile *profile = &performance;
 static struct power_module *global_module;
 static int current_profile = 2;
 static int prev_profile = 2;
-static int is_first_init = 1;
 
 static void write_string(char *path, char *value) {
     int fd = open(path, O_WRONLY);
@@ -70,54 +69,17 @@ static void write_string_from_prop(char *path, char *prop, char *def_val) {
         write_string(path, value);
 }
 
-#if 0
-static int property_set_(char *key, char *val) {
-	ALOGE("%s: %s, %s", __func__, key, val);
-	return property_set(key, val);
-}
-#endif
-
 static void power_init(struct power_module *module)
 {
     DEBUG_LOG("init");
 
     global_module = module;
-#if 0
-    if (CC_UNLIKELY(is_first_init)) {
-        if (property_set_((*profile).prop_cpu0_gov, (*profile).cpu0_gov))
-		goto err;
-        if (property_set_((*profile).prop_cpu0_freq_max, (*profile).cpu0_freq_max))
-		goto err;
-        if (property_set_((*profile).prop_cpu0_freq_min, (*profile).cpu0_freq_min))
-		goto err;
-        if (property_set_((*profile).prop_gpu_freq_max, (*profile).gpu_freq_max))
-		goto err;
-        if (property_set_((*profile).prop_gpu_freq_min, (*profile).gpu_freq_min))
-		goto err;
 
-        is_first_init = 0;
-    }
-#endif
-    /*
-     * Chrono: properies can't be accessed at boot?
-     * Accessing them too early will result in crash,
-     * so skip first power_init call.
-     */
-
-    if (CC_UNLIKELY(is_first_init)) {
-        is_first_init = 0;
-        return;
-    }
     write_string_from_prop(CPU0_GOV_PATH, (*profile).prop_cpu0_gov,(*profile).cpu0_gov);
     write_string_from_prop(CPU0_FREQ_MAX_PATH, (*profile).prop_cpu0_freq_max, (*profile).cpu0_freq_max);
     write_string_from_prop(CPU0_FREQ_MIN_PATH, (*profile).prop_cpu0_freq_min, (*profile).cpu0_freq_min);
-    write_string_from_prop(GPU_FREQ_MIN_PATH, (*profile).prop_gpu_freq_max, (*profile).gpu_freq_max);
-    write_string_from_prop(GPU_FREQ_MAX_PATH, (*profile).prop_gpu_freq_min, (*profile).gpu_freq_min);
-
-    return;
-
-err:
-    ALOGE("some of properties can't be set to its defaults, abort!");
+    write_string_from_prop(GPU_FREQ_MAX_PATH, (*profile).prop_gpu_freq_max, (*profile).gpu_freq_max);
+    write_string_from_prop(GPU_FREQ_MIN_PATH, (*profile).prop_gpu_freq_min, (*profile).gpu_freq_min);
 }
 
 static void power_set_interactive(struct power_module *module, int on) {
