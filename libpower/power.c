@@ -115,17 +115,17 @@ static void power_hint_cpu_boost(int dur) {
 static void power_hint_interactive(int on) {
    char sdur[255];
    int dur = on;
-   int cpu_should_boost = property_get_bool((*profile).prop_cpu0_should_boost,
-                                        (*profile).cpu0_should_boost);
+   int cpu_boost = property_get_bool((*profile).prop_cpu0_boost,
+                                        (*profile).cpu0_boost);
 
-   int gpu_should_boost = property_get_bool((*profile).prop_gpu_should_boost,
-					(*profile).gpu_should_boost);
+   int gpu_boost = property_get_bool((*profile).prop_gpu_boost,
+					(*profile).gpu_boost);
 
-   int ddr_should_boost = property_get_bool((*profile).prop_ddr_should_boost,
-					(*profile).ddr_should_boost);
+   int ddr_boost = property_get_bool((*profile).prop_ddr_boost,
+					(*profile).ddr_boost);
 
 
-   if (cpu_should_boost) {
+   if (cpu_boost) {
            DEBUG_LOG("%s: boosting CPU", __func__);
 	   if (!on)
 	       dur = (*profile).cpu0_boost_p_dur_def;
@@ -133,7 +133,7 @@ static void power_hint_interactive(int on) {
 	   power_hint_cpu_boost(dur);
    }
 
-   if (ddr_should_boost) {
+   if (ddr_boost) {
            DEBUG_LOG("%s: boosting DDR", __func__);
 	   if (!on)
 	       dur = (*profile).ddr_boost_dur_def;
@@ -148,7 +148,7 @@ static void power_hint_interactive(int on) {
 						   QOS_DDR_OPP_BOOST);
    }
 
-   if (gpu_should_boost) {
+   if (gpu_boost) {
            DEBUG_LOG("%s: boosting GPU", __func__);
 	   if (!on)
 	       dur = (*profile).gpu_boost_dur_def;
