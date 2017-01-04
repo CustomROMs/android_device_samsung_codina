@@ -160,30 +160,30 @@
 /* End profile performance  */
 
 struct power_profile {
-    const char * cpu0_gov;
-    const char * prop_cpu0_gov;
-    const char * cpu0_freq_max;
-    const char * prop_cpu0_freq_max;
-    const char * cpu0_freq_min;
-    const char * prop_cpu0_freq_min;
-    const int    cpu0_boost_pulse_freq;
-    const char * prop_cpu0_boost_pulse_freq;
+    char * cpu0_gov;
+    char * prop_cpu0_gov;
+    char * cpu0_freq_max;
+    char * prop_cpu0_freq_max;
+    char * cpu0_freq_min;
+    char * prop_cpu0_freq_min;
+    const char *cpu0_boost_pulse_freq;
+    char * prop_cpu0_boost_pulse_freq;
     const int    cpu0_boost_p_dur_def;
-    const char * prop_cpu0_boost_p_dur_def;
+    char * prop_cpu0_boost_p_dur_def;
     const int    cpu0_boost;
-    const char * prop_cpu0_boost;
-    const char * gpu_freq_max;
-    const char * prop_gpu_freq_max;
-    const char * gpu_freq_min;
-    const char * prop_gpu_freq_min;
+    char * prop_cpu0_boost;
+    char * gpu_freq_max;
+    char * prop_gpu_freq_max;
+    char * gpu_freq_min;
+    char * prop_gpu_freq_min;
     const int    gpu_boost;
-    const char * prop_gpu_boost;
+    char * prop_gpu_boost;
     const int    gpu_boost_dur_def;
-    const char * prop_gpu_boost_dur_def;
+    char * prop_gpu_boost_dur_def;
     const int	 ddr_boost;
-    const char * prop_ddr_boost;
+    char * prop_ddr_boost;
     const int	 ddr_boost_dur_def;
-    const char * prop_ddr_boost_dur_def;
+    char * prop_ddr_boost_dur_def;
 };
 
 struct power_profile power_save = {

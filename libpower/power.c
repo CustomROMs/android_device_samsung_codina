@@ -33,7 +33,7 @@
 
 #include "codina.h"
 
-#define DEBUG
+//#define DEBUG 0
 
 #ifdef DEBUG
 #define DEBUG_LOG(x...) ALOGD(x)
@@ -62,6 +62,13 @@ static void write_string(char *path, char *value) {
 
 }
 
+static void write_string_from_prop_dbg(char *path, char *prop, char *def_val) {
+        char value[PROPERTY_VALUE_MAX];
+	ALOGE("%s: %s, %s", __func__, prop, def_val);
+        property_get(prop, value, def_val);
+        write_string(path, value);
+}
+
 static void write_string_from_prop(char *path, char *prop, char *def_val) {
         char value[PROPERTY_VALUE_MAX];
 	DEBUG_LOG("%s: %s, %s", __func__, prop, def_val);
@@ -75,11 +82,11 @@ static void power_init(struct power_module *module)
 
     global_module = module;
 
-    write_string_from_prop(CPU0_GOV_PATH, (*profile).prop_cpu0_gov,(*profile).cpu0_gov);
-    write_string_from_prop(CPU0_FREQ_MAX_PATH, (*profile).prop_cpu0_freq_max, (*profile).cpu0_freq_max);
-    write_string_from_prop(CPU0_FREQ_MIN_PATH, (*profile).prop_cpu0_freq_min, (*profile).cpu0_freq_min);
-    write_string_from_prop(GPU_FREQ_MAX_PATH, (*profile).prop_gpu_freq_max, (*profile).gpu_freq_max);
-    write_string_from_prop(GPU_FREQ_MIN_PATH, (*profile).prop_gpu_freq_min, (*profile).gpu_freq_min);
+    write_string_from_prop_dbg(CPU0_GOV_PATH, (*profile).prop_cpu0_gov,(*profile).cpu0_gov);
+    write_string_from_prop_dbg(CPU0_FREQ_MAX_PATH, (*profile).prop_cpu0_freq_max, (*profile).cpu0_freq_max);
+    write_string_from_prop_dbg(CPU0_FREQ_MIN_PATH, (*profile).prop_cpu0_freq_min, (*profile).cpu0_freq_min);
+    write_string_from_prop_dbg(GPU_FREQ_MAX_PATH, (*profile).prop_gpu_freq_max, (*profile).gpu_freq_max);
+    write_string_from_prop_dbg(GPU_FREQ_MIN_PATH, (*profile).prop_gpu_freq_min, (*profile).gpu_freq_min);
 }
 
 static void power_set_interactive(struct power_module *module, int on) {
@@ -104,7 +111,7 @@ static void power_set_interactive(struct power_module *module, int on) {
 static void power_hint_cpu_boost(int dur) {
     char sdur[255];
     if (!dur)
-        dur = (*profile).cpu0_boost_pulse_freq;
+        dur = (*profile).cpu0_boost_p_dur_def;
 
     sprintf(sdur, "%d", dur);
     write_string_from_prop(CPU0_BOOST_P_DUR_PATH, (*profile).prop_cpu0_boost_p_dur_def, sdur);
