@@ -1,0 +1,26 @@
+From 84d1734a96482a540640d02e407384817e910598 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:22 +0700
+Subject: [PATCH 27/81] frameworks-base_W24-Fix-illegal-argument.patch
+
+Change-Id: Id94d4b908809953af05492456dfa30b682c2426b
+---
+ core/java/android/hardware/camera2/legacy/RequestThreadManager.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+index da62f54..f9b5deb 100644
+--- a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
++++ b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+@@ -242,6 +242,8 @@ public class RequestThreadManager {
+                     }
+                 } catch (LegacyExceptionUtils.BufferQueueAbandonedException e) {
+                     Log.w(TAG, "Surface abandoned, dropping frame. ", e);
++                } catch (IllegalArgumentException e) {
++                    Log.w(TAG, "no valid native surface, dropping frame. ", e);
+                 }
+             }
+ 
+-- 
+2.9.3
+

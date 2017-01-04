@@ -1,0 +1,31 @@
+From 3821fe87233afeeb5d242314b5ad8d1f817e21aa Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:40 +0700
+Subject: [PATCH 71/81] frameworks-base_W75-add-command-rmidmap.patch
+
+Change-Id: Ib4c3542e419e52321a2a6ab6e98c10a4a88196e4
+---
+ services/core/java/com/android/server/pm/Installer.java | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/Installer.java b/services/core/java/com/android/server/pm/Installer.java
+index 2e18b1c..7f618b8 100644
+--- a/services/core/java/com/android/server/pm/Installer.java
++++ b/services/core/java/com/android/server/pm/Installer.java
+@@ -170,6 +170,13 @@ public final class Installer extends SystemService {
+         mInstaller.execute("idmap", targetApkPath, overlayApkPath, uid);
+     }
+ 
++    public void removeIdmap(String overlayApkPath) throws InstallerException {
++        StringBuilder builder = new StringBuilder("rmidmap");
++        builder.append(' ');
++        builder.append(overlayApkPath);
++        mInstaller.execute(builder.toString());
++    }
++
+     public void rmdex(String codePath, String instructionSet) throws InstallerException {
+         assertValidInstructionSet(instructionSet);
+         mInstaller.execute("rmdex", codePath, instructionSet);
+-- 
+2.9.3
+

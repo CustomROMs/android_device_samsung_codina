@@ -1,0 +1,17 @@
+diff --git a/multinetwork/Android.mk b/multinetwork/Android.mk
+index 28e56d4..e9e286a 100644
+--- a/multinetwork/Android.mk
++++ b/multinetwork/Android.mk
+@@ -13,10 +13,12 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+ LOCAL_MODULE_TAGS := debug
+ LOCAL_SHARED_LIBRARIES := libandroid libbase libc++
+ LOCAL_SRC_FILES := dnschk.cpp common.cpp
++LOCAL_CLANG := true
+ include $(BUILD_EXECUTABLE)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := httpurl
++LOCAL_CLANG := true
+ 
+ LOCAL_C_INCLUDES += frameworks/native/include external/libcxx/include
+ LOCAL_CPPFLAGS += -std=c++11

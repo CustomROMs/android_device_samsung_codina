@@ -1,0 +1,34 @@
+From 7b7d313728c73ddeba3f3d4a285f938ca0fdb4ef Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 5 Jan 2017 03:52:55 +0700
+Subject: [PATCH 81/81] Don't disable HW keys
+
+Change-Id: I4234035d30bf8f1f88909f41bc236637c380165c
+---
+ services/core/java/com/android/server/policy/PhoneWindowManager.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 546728c..95cebb2 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -6732,6 +6732,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                                                 isKeyguardShowingAndNotOccluded() :
+                                                 mKeyguardDelegate.isShowing()));
+          // Disable all hw keys actions but let home key wake on if it's enabled
++/*
+              if (scanCode != 0 && keyCode == KeyEvent.KEYCODE_HOME && !mHomeWakeScreen) {
+                  Log.i(TAG, "Ignoring Home Key: we have hw keys and also home key wake disabled");
+                  return 0;
+@@ -6752,7 +6753,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                  Log.i(TAG, "Ignoring Assist Key: we have hw keys disabled");
+                  return 0;
+              }
+-
++*/
+         if (DEBUG_INPUT) {
+             Log.d(TAG, "interceptKeyTq keycode=" + keyCode
+                     + " interactive=" + interactive + " keyguardActive=" + keyguardActive
+-- 
+2.9.3
+

@@ -1,0 +1,29 @@
+From 916957e652ff043ca057329b3bc0fe37e8eae5c8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:13 +0700
+Subject: [PATCH 08/81] frameworks-base_s01-hide-superuser-status.patch
+
+Change-Id: Idf2bbd8ab3bd7f83c15ee64023a7f5f2a229bb84
+---
+ core/java/android/provider/Settings.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 9be198c..af1fb52 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -5460,6 +5460,11 @@ public static final String PHONE_BLACKLIST_REGEX_ENABLED = "phone_blacklist_rege
+         public static final String FORMAL_TEXT_INPUT = "formal_text_input";
+ 
+         /**
++         * @hide
++         */
++        public static final String SHOW_SU_INDICATOR = "show_su_indicator";
++
++        /**
+          * Settings to backup. This is here so that it's in the same place as the settings
+          * keys and easy to update.
+          *
+-- 
+2.9.3
+

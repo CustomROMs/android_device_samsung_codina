@@ -1,0 +1,27 @@
+From f8955c693dbe2693cd78e4aa3eb18eb4f9e09e98 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:39 +0700
+Subject: [PATCH 67/81] frameworks-base_W71-fix-execute-getScanResults.patch
+
+Change-Id: I74f4facf740c1bc5ff379f4816539163176afffe
+---
+ packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java b/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java
+index 7d279eb..c0ae3e0 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java
++++ b/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java
+@@ -275,6 +275,9 @@ public class WifiTracker {
+     private Collection<ScanResult> fetchScanResults() {
+         mScanId++;
+         final List<ScanResult> newResults = mWifiManager.getScanResults();
++        if (newResults == null) {
++            return null;
++        }
+         for (ScanResult newResult : newResults) {
+             if (newResult.SSID == null || newResult.SSID.isEmpty()) {
+                 continue;
+-- 
+2.9.3
+

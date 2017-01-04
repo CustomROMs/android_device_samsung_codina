@@ -1,0 +1,27 @@
+From 2697fe31a4c58eeb28ce36698a51e6089b8434b7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:25 +0700
+Subject: [PATCH 32/81] frameworks-base_W29-Fix-NPE-when-putting.patch
+
+Change-Id: Iba588e33f891387f24ee8ab29d94f1fc74b7970d
+---
+ core/java/android/content/Intent.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/java/android/content/Intent.java b/core/java/android/content/Intent.java
+index 6cf2c1e..9c4b739 100644
+--- a/core/java/android/content/Intent.java
++++ b/core/java/android/content/Intent.java
+@@ -7813,6 +7813,9 @@ public class Intent implements Parcelable, Cloneable {
+      * @see #removeExtra
+      */
+     public Intent putExtras(Bundle extras) {
++        if (extras == null) {
++            return this;
++        }
+         if (mExtras == null) {
+             mExtras = new Bundle();
+         }
+-- 
+2.9.3
+

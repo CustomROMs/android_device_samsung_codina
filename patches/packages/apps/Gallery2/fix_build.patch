@@ -1,0 +1,88 @@
+diff --git a/jni/Android.mk b/jni/Android.mk
+index 857fca2..a4f8a75 100644
+--- a/jni/Android.mk
++++ b/jni/Android.mk
+@@ -2,7 +2,9 @@ LOCAL_PATH:= $(call my-dir)
+ 
+ include $(CLEAR_VARS)
+ 
+-LOCAL_CFLAGS += -DEGL_EGLEXT_PROTOTYPES -Wno-unused-parameter
++LOCAL_CLANG := true
++
++LOCAL_CFLAGS += -DEGL_EGLEXT_PROTOTYPES -Wno-unused-parameter 
+ 
+ LOCAL_SRC_FILES := jni_egl_fence.cpp
+ 
+@@ -21,6 +23,8 @@ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+ 
++LOCAL_CLANG := true
++
+ LOCAL_CPP_EXTENSION := .cc
+ LOCAL_SDK_VERSION := 9
+ LOCAL_MODULE    := libjni_filtershow_filters
+diff --git a/jni/filters/geometry.c b/jni/filters/geometry.c
+index b01e5e0..8d1fd7a 100644
+--- a/jni/filters/geometry.c
++++ b/jni/filters/geometry.c
+@@ -74,11 +74,13 @@ static __inline__ void flip_fun(int flip, char * source, int srcWidth, int srcHe
+ //90 CCW (opposite of what's used in UI?)
+ static __inline__ void rotate90(char * source, int srcWidth, int srcHeight, char * destination, int dstWidth, int dstHeight){
+     size_t cpy_bytes = sizeof(char) * 4;
++    size_t j = 0;
++    int i;
+     int width = cpy_bytes * srcWidth;
+     int length = srcHeight;
+     int total = length * width;
+-    for (size_t j = 0; j < length * cpy_bytes; j+= cpy_bytes){
+-        for (int i = 0; i < width; i+=cpy_bytes){
++    for (j = 0; j < length * cpy_bytes; j+= cpy_bytes){
++        for (i = 0; i < width; i+=cpy_bytes){
+             int column_disp = (width - cpy_bytes - i) * length;
+             int row_disp = j;
+             memcpy(destination + column_disp + row_disp , source + j * srcWidth + i, cpy_bytes);
+diff --git a/jni/Android.mk b/jni/Android.mk
+index 857fca2..a4f8a75 100644
+--- a/jni/Android.mk
++++ b/jni/Android.mk
+@@ -2,7 +2,9 @@ LOCAL_PATH:= $(call my-dir)
+ 
+ include $(CLEAR_VARS)
+ 
+-LOCAL_CFLAGS += -DEGL_EGLEXT_PROTOTYPES -Wno-unused-parameter
++LOCAL_CLANG := true
++
++LOCAL_CFLAGS += -DEGL_EGLEXT_PROTOTYPES -Wno-unused-parameter 
+ 
+ LOCAL_SRC_FILES := jni_egl_fence.cpp
+ 
+@@ -21,6 +23,8 @@ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+ 
++LOCAL_CLANG := true
++
+ LOCAL_CPP_EXTENSION := .cc
+ LOCAL_SDK_VERSION := 9
+ LOCAL_MODULE    := libjni_filtershow_filters
+diff --git a/jni/filters/geometry.c b/jni/filters/geometry.c
+index b01e5e0..8d1fd7a 100644
+--- a/jni/filters/geometry.c
++++ b/jni/filters/geometry.c
+@@ -74,11 +74,13 @@ static __inline__ void flip_fun(int flip, char * source, int srcWidth, int srcHe
+ //90 CCW (opposite of what's used in UI?)
+ static __inline__ void rotate90(char * source, int srcWidth, int srcHeight, char * destination, int dstWidth, int dstHeight){
+     size_t cpy_bytes = sizeof(char) * 4;
++    size_t j = 0;
++    int i;
+     int width = cpy_bytes * srcWidth;
+     int length = srcHeight;
+     int total = length * width;
+-    for (size_t j = 0; j < length * cpy_bytes; j+= cpy_bytes){
+-        for (int i = 0; i < width; i+=cpy_bytes){
++    for (j = 0; j < length * cpy_bytes; j+= cpy_bytes){
++        for (i = 0; i < width; i+=cpy_bytes){
+             int column_disp = (width - cpy_bytes - i) * length;
+             int row_disp = j;
+             memcpy(destination + column_disp + row_disp , source + j * srcWidth + i, cpy_bytes);

@@ -1,0 +1,26 @@
+From 8f9918a9198a82725de36f037fd7a4d9085f8af0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:12 +0700
+Subject: [PATCH 05/81] frameworks-base_if-battery-is-low.patch
+
+Change-Id: Ic0e2de10de99f186ea73bf45e5cdb3b63bba0200
+---
+ packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index 8eed6f8..b360b3f 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -101,7 +101,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener {
+     private static final String TAG = "KeyguardUpdateMonitor";
+     private static final boolean DEBUG = KeyguardConstants.DEBUG;
+     private static final boolean DEBUG_SIM_STATES = KeyguardConstants.DEBUG_SIM_STATES;
+-    private static final int LOW_BATTERY_THRESHOLD = 20;
++    private static final int LOW_BATTERY_THRESHOLD = 10;
+ 
+     private static final String ACTION_FACE_UNLOCK_STARTED
+             = "com.android.facelock.FACE_UNLOCK_STARTED";
+-- 
+2.9.3
+

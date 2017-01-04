@@ -1,0 +1,31 @@
+From a5a36766fb7d5ab18caab20667d65d2cf70cceab Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:11 +0700
+Subject: [PATCH 04/81] frameworks-base_GPS-init-fix.patch
+
+Change-Id: I0edf32f41f0444dce33b2c4ab9754252278c8989
+---
+ .../core/java/com/android/server/location/GnssLocationProvider.java   | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/location/GnssLocationProvider.java b/services/core/java/com/android/server/location/GnssLocationProvider.java
+index 1b08008..13ab0d5 100644
+--- a/services/core/java/com/android/server/location/GnssLocationProvider.java
++++ b/services/core/java/com/android/server/location/GnssLocationProvider.java
+@@ -1085,11 +1085,11 @@ public class GnssLocationProvider implements LocationProviderInterface {
+                 Log.e(TAG, "unable to parse SUPL_PORT: " + portString);
+             }
+         }
+-        if (mSuplServerHost != null
++       /* if (mSuplServerHost != null
+                 && mSuplServerPort > TCP_MIN_PORT
+                 && mSuplServerPort <= TCP_MAX_PORT) {
+             native_set_agps_server(AGPS_TYPE_SUPL, mSuplServerHost, mSuplServerPort);
+-        }
++        }*/
+     }
+ 
+     /**
+-- 
+2.9.3
+

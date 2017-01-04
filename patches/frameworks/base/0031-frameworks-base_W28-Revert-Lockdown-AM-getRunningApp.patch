@@ -1,0 +1,63 @@
+From 3a4cec5291e00ea38efab0fe90f41af5e56c2444 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:24 +0700
+Subject: [PATCH 31/81] 
+ frameworks-base_W28-Revert-Lockdown-AM-getRunningAppProcesses2.patch
+
+Change-Id: Ia9ca35b6eee84e5fdd2c93e718d42b8079992203
+---
+ .../com/android/server/am/ActivityManagerService.java   | 17 +++++------------
+ 1 file changed, 5 insertions(+), 12 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index f14f53e..881f1fa 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -9330,7 +9330,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+         }
+         if (!allowed) {
+             if (DEBUG_TASKS) Slog.w(TAG, caller + ": caller " + callingUid
+-                    + " does not hold REAL_GET_TASKS; limiting output");
++                    + " does not hold GET_TASKS; limiting output");
+         }
+         return allowed;
+     }
+@@ -14143,23 +14143,16 @@ public final class ActivityManagerService extends ActivityManagerNative
+     @Override
+     public List<ActivityManager.RunningAppProcessInfo> getRunningAppProcesses() {
+         enforceNotIsolatedCaller("getRunningAppProcesses");
+-
+-        final int callingUid = Binder.getCallingUid();
+-
+         // Lazy instantiation of list
+         List<ActivityManager.RunningAppProcessInfo> runList = null;
+         final boolean allUsers = ActivityManager.checkUidPermission(INTERACT_ACROSS_USERS_FULL,
+-                callingUid) == PackageManager.PERMISSION_GRANTED;
+-        final int userId = UserHandle.getUserId(callingUid);
+-        final boolean allUids = isGetTasksAllowed(
+-                "getRunningAppProcesses", Binder.getCallingPid(), callingUid);
+-
++                Binder.getCallingUid()) == PackageManager.PERMISSION_GRANTED;
++        int userId = UserHandle.getUserId(Binder.getCallingUid());
+         synchronized (this) {
+             // Iterate across all processes
+             for (int i = mLruProcesses.size() - 1; i >= 0; i--) {
+                 ProcessRecord app = mLruProcesses.get(i);
+-                if ((!allUsers && app.userId != userId)
+-                        || (!allUids && app.uid != callingUid)) {
++                if (!allUsers && app.userId != userId) {
+                     continue;
+                 }
+                 if ((app.thread != null) && (!app.crashing && !app.notResponding)) {
+@@ -14183,7 +14176,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+                     //Slog.v(TAG, "Proc " + app.processName + ": imp=" + currApp.importance
+                     //        + " lru=" + currApp.lru);
+                     if (runList == null) {
+-                        runList = new ArrayList<>();
++                        runList = new ArrayList<ActivityManager.RunningAppProcessInfo>();
+                     }
+                     runList.add(currApp);
+                 }
+-- 
+2.9.3
+

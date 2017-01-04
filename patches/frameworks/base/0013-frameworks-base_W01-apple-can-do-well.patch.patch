@@ -1,0 +1,30 @@
+From 994d02f64594f2964f92edf6a434ce34210d10d6 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:16 +0700
+Subject: [PATCH 13/81] frameworks-base_W01-apple-can-do-well.patch
+
+Change-Id: Iff722d0bb935022db019b32ffc62a2f37b223242
+---
+ services/core/java/com/android/server/wm/WindowManagerService.java | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index ba3e3cb..0ebf0fc 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -732,9 +732,9 @@ public class WindowManagerService extends IWindowManager.Stub
+     PowerManager mPowerManager;
+     PowerManagerInternal mPowerManagerInternal;
+ 
+-    float mWindowAnimationScaleSetting = 1.0f;
+-    float mTransitionAnimationScaleSetting = 1.0f;
+-    float mAnimatorDurationScaleSetting = 1.0f;
++    float mWindowAnimationScaleSetting = 0.5f;
++    float mTransitionAnimationScaleSetting = 0.5f;
++    float mAnimatorDurationScaleSetting = 0.5f;
+     boolean mAnimationsDisabled = false;
+ 
+     final InputManagerService mInputManager;
+-- 
+2.9.3
+

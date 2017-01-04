@@ -1,0 +1,25 @@
+From ad12b50bec3916ce7ad4d0d9ebd2504b08ea6729 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:33 +0700
+Subject: [PATCH 51/81] frameworks-base_W55-Add-android-permission.patch
+
+Change-Id: I6b145ef09ecc2e71d79dbc4767986d9ba7f51955
+---
+ packages/SystemUI/AndroidManifest.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages/SystemUI/AndroidManifest.xml b/packages/SystemUI/AndroidManifest.xml
+index a59701d..acd0647 100644
+--- a/packages/SystemUI/AndroidManifest.xml
++++ b/packages/SystemUI/AndroidManifest.xml
+@@ -56,6 +56,7 @@
+     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
++    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+     <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
+     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+-- 
+2.9.3
+

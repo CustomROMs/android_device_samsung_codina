@@ -1,0 +1,89 @@
+From f8f677478a6baa64eb63ed110df275b5d02cabec Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:16 +0700
+Subject: [PATCH 12/81] frameworks-base_s08-Signature-spoofing.patch
+
+Change-Id: Ib3706f9ceaf1c42ce5fe9d73b584e0502066f16b
+---
+ core/java/android/provider/Settings.java           |  9 ++++++++
+ core/res/AndroidManifest.xml                       |  7 ++++++
+ .../android/server/pm/PackageManagerService.java   | 25 ++++++++++++++++++++--
+ 3 files changed, 39 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 865599a..9413bf4 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -6720,6 +6720,15 @@ public static final String PHONE_BLACKLIST_REGEX_ENABLED = "phone_blacklist_rege
+         public static final String INSTALL_NON_MARKET_APPS = "install_non_market_apps";
+ 
+         /**
++         * Whether applications can fake a signature.
++         *
++         * <p>1 = permit apps to fake signature
++         * <p>0 = disable this feature
++         * @hide
++         */
++        public static final String ALLOW_SIGNATURE_FAKE = "allow_signature_fake";
++
++        /**
+          * Comma-separated list of location providers that activities may access. Do not rely on
+          * this value being present in settings.db or on ContentObserver notifications on the
+          * corresponding Uri.
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 13d1391..486999b 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -1934,6 +1934,13 @@
+         android:description="@string/permdesc_getPackageSize"
+         android:protectionLevel="normal" />
+ 
++    <!-- @hide Allows an application to change the package signature as
++         seen by applications -->
++    <permission android:name="android.permission.FAKE_PACKAGE_SIGNATURE"
++        android:protectionLevel="dangerous"
++        android:label="@string/permlab_fakePackageSignature"
++        android:description="@string/permdesc_fakePackageSignature" />
++
+     <!-- @deprecated No longer useful, see
+          {@link android.content.pm.PackageManager#addPackageToPreferred}
+          for details. -->
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 583cb23..0cc9a75 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -3190,8 +3190,29 @@ public class PackageManagerService extends IPackageManager.Stub {
+                 ? Collections.<String>emptySet() : permissionsState.getPermissions(userId);
+         final PackageUserState state = ps.readUserState(userId);
+ 
+-        return PackageParser.generatePackageInfo(p, gids, flags,
+-                ps.firstInstallTime, ps.lastUpdateTime, permissions, state, userId);
++        return mayFakeSignature(p, PackageParser.generatePackageInfo(p, gids, flags,
++                ps.firstInstallTime, ps.lastUpdateTime, permissions, state, userId),
++                permissions);
++    }
++
++    private PackageInfo mayFakeSignature(PackageParser.Package p, PackageInfo pi,
++            Set<String> permissions) {
++        try {
++            if (permissions.contains("android.permission.FAKE_PACKAGE_SIGNATURE")
++                    && p.applicationInfo.targetSdkVersion > Build.VERSION_CODES.LOLLIPOP_MR1
++                    && p.mAppMetaData != null
++                    && android.provider.Settings.Secure.getInt(mContext.getContentResolver(),
++                       android.provider.Settings.Secure.ALLOW_SIGNATURE_FAKE, 0) == 1) {
++                String sig = p.mAppMetaData.getString("fake-signature");
++                if (sig != null) {
++                    pi.signatures = new Signature[] {new Signature(sig)};
++                }
++            }
++        } catch (Throwable t) {
++            // We should never die because of any failures, this is system code!
++            Log.w("PackageManagerService.FAKE_PACKAGE_SIGNATURE", t);
++        }
++        return pi;
+     }
+ 
+     @Override
+-- 
+2.9.3
+

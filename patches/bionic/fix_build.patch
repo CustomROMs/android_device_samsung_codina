@@ -1,0 +1,218 @@
+diff --git a/benchmarks/Android.mk b/benchmarks/Android.mk
+index 6f2651e..ec1f367 100644
+--- a/benchmarks/Android.mk
++++ b/benchmarks/Android.mk
+@@ -21,7 +21,7 @@ benchmark_cflags := \
+     -fno-builtin \
+     -Wall \
+     -Wextra \
+-    -Werror \
++     \
+     -Wunused \
+ 
+ benchmark_cppflags := \
+diff --git a/libc/Android.mk b/libc/Android.mk
+index 94f7ce6..3785552 100644
+--- a/libc/Android.mk
++++ b/libc/Android.mk
+@@ -634,7 +634,7 @@ libc_common_cflags += \
+     -Werror=pointer-to-int-cast \
+     -Werror=int-to-pointer-cast \
+     -Werror=type-limits \
+-    -Werror \
++     \
+ 
+ ifeq ($(strip $(DEBUG_BIONIC_LIBC)),true)
+   libc_common_cflags += -DDEBUG
+diff --git a/libc/malloc_debug/Android.mk b/libc/malloc_debug/Android.mk
+index 3576611..8be3685 100644
+--- a/libc/malloc_debug/Android.mk
++++ b/libc/malloc_debug/Android.mk
+@@ -36,7 +36,7 @@ LOCAL_NATIVE_COVERAGE := false
+ # -Wno-error=format-zero-length needed for gcc to compile.
+ LOCAL_CFLAGS := \
+     -Wall \
+-    -Werror \
++     \
+     -Wno-error=format-zero-length \
+ 
+ include $(BUILD_STATIC_LIBRARY)
+@@ -72,7 +72,7 @@ LOCAL_NATIVE_COVERAGE := false
+ # -Wno-error=format-zero-length needed for gcc to compile.
+ LOCAL_CFLAGS := \
+     -Wall \
+-    -Werror \
++     \
+     -fno-stack-protector \
+     -Wno-error=format-zero-length \
+ 
+@@ -103,7 +103,7 @@ LOCAL_SHARED_LIBRARIES := libbase
+ 
+ LOCAL_CFLAGS := \
+     -Wall \
+-    -Werror \
++     \
+     -Wno-error=format-zero-length \
+ 
+ include $(BUILD_NATIVE_TEST)
+diff --git a/libm/Android.mk b/libm/Android.mk
+index 6575e1e..6f8e554 100644
+--- a/libm/Android.mk
++++ b/libm/Android.mk
+@@ -497,7 +497,7 @@ LOCAL_CFLAGS := \
+     -D__BIONIC_NO_MATH_INLINES \
+     -DFLT_EVAL_METHOD=0 \
+     -include $(LOCAL_PATH)/freebsd-compat.h \
+-    -Werror \
++     \
+     -Wno-missing-braces \
+     -Wno-parentheses \
+     -Wno-sign-compare \
+diff --git a/linker/Android.mk b/linker/Android.mk
+index 5da9a69..2b2b6bb 100644
+--- a/linker/Android.mk
++++ b/linker/Android.mk
+@@ -39,7 +39,7 @@ LOCAL_CFLAGS += \
+     -fno-stack-protector \
+     -Wstrict-overflow=5 \
+     -fvisibility=hidden \
+-    -Wall -Wextra -Wunused -Werror \
++    -Wall -Wextra -Wunused  \
+ 
+ LOCAL_CFLAGS_arm += -D__work_around_b_24465209__
+ LOCAL_CFLAGS_x86 += -D__work_around_b_24465209__
+diff --git a/tests/Android.mk b/tests/Android.mk
+index 641592b..e90e1d3 100644
+--- a/tests/Android.mk
++++ b/tests/Android.mk
+@@ -35,7 +35,7 @@ test_cflags = \
+     -fstack-protector-all \
+     -g \
+     -Wall -Wextra -Wunused \
+-    -Werror \
++     \
+     -fno-builtin \
+ 
+ test_cflags += -D__STDC_LIMIT_MACROS  # For glibc.
+diff --git a/tools/relocation_packer/Android.mk b/tools/relocation_packer/Android.mk
+index 2bf77b9..b4bdc74 100644
+--- a/tools/relocation_packer/Android.mk
++++ b/tools/relocation_packer/Android.mk
+@@ -15,7 +15,7 @@
+ #
+ 
+ ifeq ($(HOST_OS),linux)
+-common_cppflags := -Wall -Wextra -Wunused -Werror -Wold-style-cast
++common_cppflags := -Wall -Wextra -Wunused  -Wold-style-cast
+ 
+ LOCAL_PATH := $(call my-dir)
+ 
+diff --git a/benchmarks/Android.mk b/benchmarks/Android.mk
+index 6f2651e..ec1f367 100644
+--- a/benchmarks/Android.mk
++++ b/benchmarks/Android.mk
+@@ -21,7 +21,7 @@ benchmark_cflags := \
+     -fno-builtin \
+     -Wall \
+     -Wextra \
+-    -Werror \
++     \
+     -Wunused \
+ 
+ benchmark_cppflags := \
+diff --git a/libc/Android.mk b/libc/Android.mk
+index 94f7ce6..3785552 100644
+--- a/libc/Android.mk
++++ b/libc/Android.mk
+@@ -634,7 +634,7 @@ libc_common_cflags += \
+     -Werror=pointer-to-int-cast \
+     -Werror=int-to-pointer-cast \
+     -Werror=type-limits \
+-    -Werror \
++     \
+ 
+ ifeq ($(strip $(DEBUG_BIONIC_LIBC)),true)
+   libc_common_cflags += -DDEBUG
+diff --git a/libc/malloc_debug/Android.mk b/libc/malloc_debug/Android.mk
+index 3576611..8be3685 100644
+--- a/libc/malloc_debug/Android.mk
++++ b/libc/malloc_debug/Android.mk
+@@ -36,7 +36,7 @@ LOCAL_NATIVE_COVERAGE := false
+ # -Wno-error=format-zero-length needed for gcc to compile.
+ LOCAL_CFLAGS := \
+     -Wall \
+-    -Werror \
++     \
+     -Wno-error=format-zero-length \
+ 
+ include $(BUILD_STATIC_LIBRARY)
+@@ -72,7 +72,7 @@ LOCAL_NATIVE_COVERAGE := false
+ # -Wno-error=format-zero-length needed for gcc to compile.
+ LOCAL_CFLAGS := \
+     -Wall \
+-    -Werror \
++     \
+     -fno-stack-protector \
+     -Wno-error=format-zero-length \
+ 
+@@ -103,7 +103,7 @@ LOCAL_SHARED_LIBRARIES := libbase
+ 
+ LOCAL_CFLAGS := \
+     -Wall \
+-    -Werror \
++     \
+     -Wno-error=format-zero-length \
+ 
+ include $(BUILD_NATIVE_TEST)
+diff --git a/libm/Android.mk b/libm/Android.mk
+index 6575e1e..6f8e554 100644
+--- a/libm/Android.mk
++++ b/libm/Android.mk
+@@ -497,7 +497,7 @@ LOCAL_CFLAGS := \
+     -D__BIONIC_NO_MATH_INLINES \
+     -DFLT_EVAL_METHOD=0 \
+     -include $(LOCAL_PATH)/freebsd-compat.h \
+-    -Werror \
++     \
+     -Wno-missing-braces \
+     -Wno-parentheses \
+     -Wno-sign-compare \
+diff --git a/linker/Android.mk b/linker/Android.mk
+index 5da9a69..2b2b6bb 100644
+--- a/linker/Android.mk
++++ b/linker/Android.mk
+@@ -39,7 +39,7 @@ LOCAL_CFLAGS += \
+     -fno-stack-protector \
+     -Wstrict-overflow=5 \
+     -fvisibility=hidden \
+-    -Wall -Wextra -Wunused -Werror \
++    -Wall -Wextra -Wunused  \
+ 
+ LOCAL_CFLAGS_arm += -D__work_around_b_24465209__
+ LOCAL_CFLAGS_x86 += -D__work_around_b_24465209__
+diff --git a/tests/Android.mk b/tests/Android.mk
+index 641592b..e90e1d3 100644
+--- a/tests/Android.mk
++++ b/tests/Android.mk
+@@ -35,7 +35,7 @@ test_cflags = \
+     -fstack-protector-all \
+     -g \
+     -Wall -Wextra -Wunused \
+-    -Werror \
++     \
+     -fno-builtin \
+ 
+ test_cflags += -D__STDC_LIMIT_MACROS  # For glibc.
+diff --git a/tools/relocation_packer/Android.mk b/tools/relocation_packer/Android.mk
+index 2bf77b9..b4bdc74 100644
+--- a/tools/relocation_packer/Android.mk
++++ b/tools/relocation_packer/Android.mk
+@@ -15,7 +15,7 @@
+ #
+ 
+ ifeq ($(HOST_OS),linux)
+-common_cppflags := -Wall -Wextra -Wunused -Werror -Wold-style-cast
++common_cppflags := -Wall -Wextra -Wunused  -Wold-style-cast
+ 
+ LOCAL_PATH := $(call my-dir)
+ 

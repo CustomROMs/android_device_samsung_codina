@@ -1,0 +1,56 @@
+From 1cde25c0e74ff7e8d15ed5dbdf64478068915c60 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:19 +0700
+Subject: [PATCH 22/81] frameworks-base_W13-MtpHos-crashing.patch
+
+Change-Id: I5e9d24e7b369f9ff33d3f6d945850a65c28c0f5e
+---
+ core/java/android/os/storage/IMountService.java                | 1 +
+ core/java/android/os/storage/StorageManager.java               | 3 +++
+ packages/MtpDocumentsProvider/src/com/android/mtp/AppFuse.java | 3 +--
+ 3 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/os/storage/IMountService.java b/core/java/android/os/storage/IMountService.java
+index 9f4b05c..4131d6c 100644
+--- a/core/java/android/os/storage/IMountService.java
++++ b/core/java/android/os/storage/IMountService.java
+@@ -2179,6 +2179,7 @@ public interface IMountService extends IInterface {
+                     data.enforceInterface(DESCRIPTOR);
+                     String name = data.readString();
+                     ParcelFileDescriptor fd = mountAppFuse(name);
++                    if(fd == null) return true;
+                     reply.writeNoException();
+                     reply.writeParcelable(fd, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+                     return true;
+diff --git a/core/java/android/os/storage/StorageManager.java b/core/java/android/os/storage/StorageManager.java
+index c5507b9..28aa1d5 100644
+--- a/core/java/android/os/storage/StorageManager.java
++++ b/core/java/android/os/storage/StorageManager.java
+@@ -1286,7 +1286,10 @@ public class StorageManager {
+             return mMountService.mountAppFuse(name);
+         } catch (RemoteException e) {
+             throw e.rethrowFromSystemServer();
++        } catch (Exception e) {
++            Log.e(TAG, "TTT mountAppFuse error: "+e.getMessage());
+         }
++        return null;
+     }
+ 
+     /// Consts to match the password types in cryptfs.h
+diff --git a/packages/MtpDocumentsProvider/src/com/android/mtp/AppFuse.java b/packages/MtpDocumentsProvider/src/com/android/mtp/AppFuse.java
+index cd78e61..b03acbb 100644
+--- a/packages/MtpDocumentsProvider/src/com/android/mtp/AppFuse.java
++++ b/packages/MtpDocumentsProvider/src/com/android/mtp/AppFuse.java
+@@ -67,8 +67,7 @@ public class AppFuse {
+     void mount(StorageManager storageManager) throws IOException {
+         Preconditions.checkState(mDeviceFd == null);
+         mDeviceFd = storageManager.mountAppFuse(mName);
+-        mMessageThread = new AppFuseMessageThread(mDeviceFd.dup().detachFd());
+-        mMessageThread.start();
++        if(mDeviceFd != null) { mMessageThread = new AppFuseMessageThread(mDeviceFd.dup().detachFd()); mMessageThread.start();}
+     }
+ 
+     @VisibleForTesting
+-- 
+2.9.3
+

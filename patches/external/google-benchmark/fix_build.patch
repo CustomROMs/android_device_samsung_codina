@@ -1,0 +1,24 @@
+diff --git a/Android.mk b/Android.mk
+index 8d4ebf0..033d77e 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -38,6 +38,7 @@ google_benchmark_src_files := \
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := libgoogle-benchmark
++LOCAL_CLANG := true
+ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+ LOCAL_CFLAGS := $(google_benchmark_c_flags)
+ LOCAL_CPP_EXTENSION := .cc
+diff --git a/Android.mk b/Android.mk
+index 8d4ebf0..033d77e 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -38,6 +38,7 @@ google_benchmark_src_files := \
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := libgoogle-benchmark
++LOCAL_CLANG := true
+ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+ LOCAL_CFLAGS := $(google_benchmark_c_flags)
+ LOCAL_CPP_EXTENSION := .cc

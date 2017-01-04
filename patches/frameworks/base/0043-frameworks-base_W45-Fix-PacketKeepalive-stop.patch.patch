@@ -1,0 +1,27 @@
+From 3536dada3a43e021d735eaaef9dbee2c65c365ff Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:31 +0700
+Subject: [PATCH 43/81] frameworks-base_W45-Fix-PacketKeepalive-stop.patch
+
+Change-Id: Ice5bebb6ade61276437c850d4a510c6bff50205c
+---
+ core/java/android/net/ConnectivityManager.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/java/android/net/ConnectivityManager.java b/core/java/android/net/ConnectivityManager.java
+index 1b165b1..87c5350 100644
+--- a/core/java/android/net/ConnectivityManager.java
++++ b/core/java/android/net/ConnectivityManager.java
+@@ -1529,6 +1529,9 @@ public class ConnectivityManager {
+         }
+ 
+         public void stop() {
++            if (mSlot == null) {
++                return;
++            }
+             try {
+                 mService.stopKeepalive(mNetwork, mSlot);
+             } catch (RemoteException e) {
+-- 
+2.9.3
+

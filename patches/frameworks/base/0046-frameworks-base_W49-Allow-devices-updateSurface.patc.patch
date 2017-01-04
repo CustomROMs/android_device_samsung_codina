@@ -1,0 +1,41 @@
+From 16173d2b2a3aa9afbdabf204572610099686d4d0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:32 +0700
+Subject: [PATCH 46/81] frameworks-base_W49-Allow-devices-updateSurface.patch
+
+Change-Id: I0f4277cb62955645e248ac64b7538b6c3df9e9f0
+---
+ libs/hwui/renderthread/RenderProxy.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index 880fdcc..6aa28e0 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -162,7 +162,11 @@ void RenderProxy::updateSurface(const sp<Surface>& surface) {
+     SETUP_TASK(updateSurface);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(pauseSurface, CanvasContext* context, Surface* surface) {
+@@ -356,7 +360,11 @@ void RenderProxy::destroyHardwareResources(TreeObserver* observer) {
+     SETUP_TASK(destroyHardwareResources);
+     args->context = mContext;
+     args->observer = observer;
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    post(task);
++#else
+     postAndWait(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(trimMemory, RenderThread* thread, int level) {
+-- 
+2.9.3
+

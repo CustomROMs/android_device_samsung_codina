@@ -1,0 +1,29 @@
+From bbafe72b95e9cbe0586825dbcbcbe6aaa70946d9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:19 +0700
+Subject: [PATCH 20/81] frameworks-base_W11-Remove-freezing-window.patch
+
+Change-Id: Ief653f963cfdb377b1304e7d34ea1fcdc28c676a
+---
+ services/core/java/com/android/server/wm/WindowState.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/WindowState.java b/services/core/java/com/android/server/wm/WindowState.java
+index fbef2c6..37e7efd 100644
+--- a/services/core/java/com/android/server/wm/WindowState.java
++++ b/services/core/java/com/android/server/wm/WindowState.java
+@@ -2386,6 +2386,11 @@ final class WindowState implements WindowManagerPolicy.WindowState {
+             mResizedWhileNotDragResizingReported = true;
+             mWinAnimator.mSurfaceResized = false;
+         } catch (RemoteException e) {
++            mOverscanInsetsChanged = false;
++            mContentInsetsChanged = false;
++            mVisibleInsetsChanged = false;
++            mStableInsetsChanged = false;
++            mWinAnimator.mSurfaceResized = false;
+             mOrientationChanging = false;
+             mLastFreezeDuration = (int)(SystemClock.elapsedRealtime()
+                     - mService.mDisplayFreezeTime);
+-- 
+2.9.3
+

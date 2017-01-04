@@ -1,0 +1,105 @@
+From 9e0cd4ca5166547ffddd34d100c6ea89a19bd12b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:14 +0700
+Subject: [PATCH 10/81] frameworks-base_s03-UMS-support-new.patch
+
+Change-Id: Id8254d7400d2b490e703c20f3150e3370d31dd7e
+---
+ core/java/android/hardware/usb/UsbManager.java                 | 8 ++++++++
+ packages/SettingsLib/res/values-ru/arrays.xml                  | 1 +
+ packages/SettingsLib/res/values/arrays.xml                     | 3 +++
+ services/usb/java/com/android/server/usb/UsbDeviceManager.java | 7 ++++++-
+ services/usb/java/com/android/server/usb/UsbService.java       | 1 +
+ 5 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/hardware/usb/UsbManager.java b/core/java/android/hardware/usb/UsbManager.java
+index cb2720a..b68d97c 100644
+--- a/core/java/android/hardware/usb/UsbManager.java
++++ b/core/java/android/hardware/usb/UsbManager.java
+@@ -214,6 +214,14 @@ public class UsbManager {
+     public static final String USB_FUNCTION_MTP = "mtp";
+ 
+     /**
++     * Name of the UMS USB function.
++     * Used in extras for the {@link #ACTION_USB_STATE} broadcast
++     *
++     * {@hide}
++     */
++    public static final String USB_FUNCTION_UMS = "mass_storage";
++
++    /**
+      * Name of the PTP USB function.
+      * Used in extras for the {@link #ACTION_USB_STATE} broadcast
+      *
+diff --git a/packages/SettingsLib/res/values-ru/arrays.xml b/packages/SettingsLib/res/values-ru/arrays.xml
+index 2fff9dd..8b5ae67 100644
+--- a/packages/SettingsLib/res/values-ru/arrays.xml
++++ b/packages/SettingsLib/res/values-ru/arrays.xml
+@@ -169,5 +169,6 @@
+     <item msgid="7398830860950841822">"RNDIS (USB Ethernet)"</item>
+     <item msgid="1718924214939774352">"Источник аудио"</item>
+     <item msgid="8126315616613006284">"MIDI"</item>
++    <item>UMS (USB Mass Storage)</item>
+   </string-array>
+ </resources>
+diff --git a/packages/SettingsLib/res/values/arrays.xml b/packages/SettingsLib/res/values/arrays.xml
+index 920e061..13867f6 100644
+--- a/packages/SettingsLib/res/values/arrays.xml
++++ b/packages/SettingsLib/res/values/arrays.xml
+@@ -347,6 +347,7 @@
+         <item>RNDIS (USB Ethernet)</item>
+         <item>Audio Source</item>
+         <item>MIDI</item>
++        <item>UMS (USB Mass Storage)</item>
+     </string-array>
+ 
+     <!-- USB configuration values for Developer Settings.
+@@ -366,6 +367,8 @@
+         <item>audio_source</item>
+         <!-- Do not translate. -->
+         <item>midi</item>
++        <!-- Do not translate. -->
++        <item>mass_storage</item>
+     </string-array>
+ 
+     <!-- Display color space adjustment modes for developers -->
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index c705602..645f80e 100644
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -826,7 +826,9 @@ public class UsbDeviceManager {
+                         final boolean active = UsbManager.containsFunction(mCurrentFunctions,
+                                         UsbManager.USB_FUNCTION_MTP)
+                                 || UsbManager.containsFunction(mCurrentFunctions,
+-                                        UsbManager.USB_FUNCTION_PTP);
++                                        UsbManager.USB_FUNCTION_PTP)
++                                || UsbManager.containsFunction(mCurrentFunctions,
++                                        UsbManager.USB_FUNCTION_UMS);
+                         if (mUsbDataUnlocked && active && mCurrentUser != UserHandle.USER_NULL) {
+                             Slog.v(TAG, "Current user switched to " + mCurrentUser
+                                     + "; resetting USB host stack for MTP or PTP");
+@@ -867,6 +869,9 @@ public class UsbDeviceManager {
+                         UsbManager.USB_FUNCTION_MIDI)) {
+                     id = com.android.internal.R.string.usb_midi_notification_title;
+                 } else if (UsbManager.containsFunction(mCurrentFunctions,
++                        UsbManager.USB_FUNCTION_UMS)) {
++                    id = com.android.internal.R.string.usb_mtp_notification_title;
++                } else if (UsbManager.containsFunction(mCurrentFunctions,
+                         UsbManager.USB_FUNCTION_ACCESSORY)) {
+                     id = com.android.internal.R.string.usb_accessory_notification_title;
+                 } else if (mSourcePower) {
+diff --git a/services/usb/java/com/android/server/usb/UsbService.java b/services/usb/java/com/android/server/usb/UsbService.java
+index d6dbe90..840689e 100644
+--- a/services/usb/java/com/android/server/usb/UsbService.java
++++ b/services/usb/java/com/android/server/usb/UsbService.java
+@@ -313,6 +313,7 @@ public class UsbService extends IUsbManager.Stub {
+             case UsbManager.USB_FUNCTION_MTP:
+             case UsbManager.USB_FUNCTION_PTP:
+             case UsbManager.USB_FUNCTION_RNDIS:
++            case UsbManager.USB_FUNCTION_UMS:
+                 return true;
+         }
+ 
+-- 
+2.9.3
+

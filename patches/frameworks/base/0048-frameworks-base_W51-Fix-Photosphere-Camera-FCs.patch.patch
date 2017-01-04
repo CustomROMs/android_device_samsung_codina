@@ -1,0 +1,33 @@
+From c09f30244aaa0b36b39dcb8383cf30191d092aec Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:33 +0700
+Subject: [PATCH 48/81] frameworks-base_W51-Fix-Photosphere-Camera-FCs.patch
+
+Change-Id: I059435851d5bee3f4b01b3af7520f905e5366ffb
+---
+ core/java/android/hardware/Camera.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware/Camera.java
+index 4434d29..ccf1844 100644
+--- a/core/java/android/hardware/Camera.java
++++ b/core/java/android/hardware/Camera.java
+@@ -3686,6 +3686,7 @@ public class Camera {
+          * @see #getSceneMode()
+          */
+         public void setSceneMode(String value) {
++            if(getSupportedSceneModes() == null) return;
+             set(KEY_SCENE_MODE, value);
+         }
+ 
+@@ -3723,6 +3724,7 @@ public class Camera {
+          * @see #getFlashMode()
+          */
+         public void setFlashMode(String value) {
++	    if(getSupportedFlashModes() == null) return;
+             set(KEY_FLASH_MODE, value);
+         }
+ 
+-- 
+2.9.3
+

@@ -1,0 +1,26 @@
+From aae4f4bd8a8a98b5ad8c3ecf911fbc29d2a4441b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:38 +0700
+Subject: [PATCH 65/81] frameworks-base_W69-use-real-time-scheduling.patch
+
+Change-Id: I6e2ab23db12cc4f68fb6694759f75188a4c50161
+---
+ libs/hwui/renderthread/RenderThread.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libs/hwui/renderthread/RenderThread.cpp b/libs/hwui/renderthread/RenderThread.cpp
+index 9dfd754..489275a 100644
+--- a/libs/hwui/renderthread/RenderThread.cpp
++++ b/libs/hwui/renderthread/RenderThread.cpp
+@@ -273,7 +273,7 @@ void RenderThread::requestVsync() {
+ }
+ 
+ bool RenderThread::threadLoop() {
+-    setpriority(PRIO_PROCESS, 0, PRIORITY_DISPLAY);
++    setpriority(PRIO_PROCESS, 0, PRIORITY_REALTIME);
+     initThreadLocals();
+ 
+     int timeoutMillis = -1;
+-- 
+2.9.3
+

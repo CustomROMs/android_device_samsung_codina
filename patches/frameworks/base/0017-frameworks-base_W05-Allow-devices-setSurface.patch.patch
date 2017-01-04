@@ -1,0 +1,45 @@
+From e45e01479cdc39c7bd02b0f68a2740818f2c2699 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:18 +0700
+Subject: [PATCH 17/81] frameworks-base_W05-Allow-devices-setSurface.patch
+
+Change-Id: I00f8b94534a415f576e0477813c11877a3dfbaba
+---
+ libs/hwui/Android.mk                   | 4 ++++
+ libs/hwui/renderthread/RenderProxy.cpp | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/libs/hwui/Android.mk b/libs/hwui/Android.mk
+index cacfce1..c26acbb 100644
+--- a/libs/hwui/Android.mk
++++ b/libs/hwui/Android.mk
+@@ -2,6 +2,10 @@ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+ 
++ifeq ($(TARGET_REQUIRES_SYNCHRONOUS_SETSURFACE),true)
++   LOCAL_CFLAGS += -DREQUIRES_SYNCHRONOUS_SETSURFACE
++endif
++
+ HWUI_NEW_OPS := true
+ BUGREPORT_FONT_CACHE_USAGE := false
+ 
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index a734401..880fdcc 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -146,7 +146,11 @@ void RenderProxy::initialize(const sp<Surface>& surface) {
+     SETUP_TASK(initialize);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(updateSurface, CanvasContext* context, Surface* surface) {
+-- 
+2.9.3
+

@@ -1,0 +1,108 @@
+diff --git a/src/Android.mk b/src/Android.mk
+index 8763244..60b96d5 100644
+--- a/src/Android.mk
++++ b/src/Android.mk
+@@ -57,6 +57,7 @@ LOCAL_C_INCLUDES := $(libgtest_target_includes)
+ LOCAL_CPPFLAGS := -std=gnu++98
+ LOCAL_CFLAGS += $(libgtest_cflags)
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
++LOCAL_CLANG := true
+ LOCAL_MODULE := libgtest_ndk
+ 
+ include $(BUILD_STATIC_LIBRARY)
+@@ -77,7 +78,7 @@ LOCAL_CPPFLAGS := -std=gnu++98
+ LOCAL_CFLAGS += $(libgtest_cflags)
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
+ LOCAL_MODULE := libgtest_main_ndk
+-
++LOCAL_CLANG := true
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -95,7 +96,7 @@ LOCAL_MODULE_HOST_OS := darwin linux windows
+ LOCAL_MULTILIB := both
+ LOCAL_SANITIZE := never
+ LOCAL_RTTI_FLAG := -frtti
+-
++LOCAL_CLANG := true
+ include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -112,7 +113,7 @@ LOCAL_MODULE := libgtest_main_host
+ LOCAL_MODULE_HOST_OS := darwin linux windows
+ LOCAL_MULTILIB := both
+ LOCAL_SANITIZE := never
+-
++LOCAL_CLANG := true
+ include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -131,7 +132,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
+ LOCAL_MODULE := libgtest
+ LOCAL_SANITIZE := never
+ LOCAL_RTTI_FLAG := -frtti
+-
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -147,6 +147,5 @@ LOCAL_CFLAGS += $(libgtest_cflags)
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
+ LOCAL_MODULE := libgtest_main
+ LOCAL_SANITIZE := never
+-
+ include $(BUILD_STATIC_LIBRARY)
+ endif
+diff --git a/src/Android.mk b/src/Android.mk
+index 8763244..60b96d5 100644
+--- a/src/Android.mk
++++ b/src/Android.mk
+@@ -57,6 +57,7 @@ LOCAL_C_INCLUDES := $(libgtest_target_includes)
+ LOCAL_CPPFLAGS := -std=gnu++98
+ LOCAL_CFLAGS += $(libgtest_cflags)
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
++LOCAL_CLANG := true
+ LOCAL_MODULE := libgtest_ndk
+ 
+ include $(BUILD_STATIC_LIBRARY)
+@@ -77,7 +78,7 @@ LOCAL_CPPFLAGS := -std=gnu++98
+ LOCAL_CFLAGS += $(libgtest_cflags)
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
+ LOCAL_MODULE := libgtest_main_ndk
+-
++LOCAL_CLANG := true
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -95,7 +96,7 @@ LOCAL_MODULE_HOST_OS := darwin linux windows
+ LOCAL_MULTILIB := both
+ LOCAL_SANITIZE := never
+ LOCAL_RTTI_FLAG := -frtti
+-
++LOCAL_CLANG := true
+ include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -112,7 +113,7 @@ LOCAL_MODULE := libgtest_main_host
+ LOCAL_MODULE_HOST_OS := darwin linux windows
+ LOCAL_MULTILIB := both
+ LOCAL_SANITIZE := never
+-
++LOCAL_CLANG := true
+ include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -131,7 +132,6 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
+ LOCAL_MODULE := libgtest
+ LOCAL_SANITIZE := never
+ LOCAL_RTTI_FLAG := -frtti
+-
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ #######################################################################
+@@ -147,6 +147,5 @@ LOCAL_CFLAGS += $(libgtest_cflags)
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(libgtest_export_include_dirs)
+ LOCAL_MODULE := libgtest_main
+ LOCAL_SANITIZE := never
+-
+ include $(BUILD_STATIC_LIBRARY)
+ endif

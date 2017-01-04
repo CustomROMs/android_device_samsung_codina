@@ -1,0 +1,27 @@
+From 88f3836654fc8aeb730a72409a00fc8fd3fb0f65 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:30 +0700
+Subject: [PATCH 41/81] frameworks-base_W43-Fix-memory-corruption.patch
+
+Change-Id: I3f9efeae13b361af9aa1e4cb04609c23f5d18218
+---
+ libs/hwui/PatchCache.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libs/hwui/PatchCache.cpp b/libs/hwui/PatchCache.cpp
+index bd6feb9..67b0086 100644
+--- a/libs/hwui/PatchCache.cpp
++++ b/libs/hwui/PatchCache.cpp
+@@ -85,6 +85,9 @@ void PatchCache::clear() {
+         mMeshBuffer = 0;
+         mSize = 0;
+     }
++
++    // MeshBuffer is deleted, so change generation id to create a new one.
++    mGenerationId++;
+ }
+ 
+ void PatchCache::clearCache() {
+-- 
+2.9.3
+

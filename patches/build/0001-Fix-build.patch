@@ -1,0 +1,137 @@
+From bb962f7bbbcbbcaa276fcf1b2e6336e7c31e2086 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 5 Jan 2017 03:51:59 +0700
+Subject: [PATCH] Fix build
+
+Change-Id: I6244ce89d716a8f0d081efd9f5166fe4508ec065
+---
+ core/combo/TARGET_linux-arm.mk    | 6 +++---
+ core/combo/TARGET_linux-arm64.mk  | 2 +-
+ core/combo/TARGET_linux-mips.mk   | 2 +-
+ core/combo/TARGET_linux-mips64.mk | 2 +-
+ core/combo/select.mk              | 2 +-
+ libs/host/Android.mk              | 2 +-
+ tools/fs_config/Android.mk        | 2 +-
+ tools/releasetools/common.py      | 4 ++++
+ 8 files changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/core/combo/TARGET_linux-arm.mk b/core/combo/TARGET_linux-arm.mk
+index 46a3d69..91d31f2 100644
+--- a/core/combo/TARGET_linux-arm.mk
++++ b/core/combo/TARGET_linux-arm.mk
+@@ -76,8 +76,8 @@ $(combo_2nd_arch_prefix)TARGET_NO_UNDEFINED_LDFLAGS := -Wl,--no-undefined
+ 
+ $(combo_2nd_arch_prefix)TARGET_arm_CFLAGS :=    -O2 \
+                         -fomit-frame-pointer \
+-                        -fstrict-aliasing    \
+-                        -funswitch-loops
++                        -fno-strict-aliasing
++
+ 
+ # Modules can choose to compile some source as thumb.
+ $(combo_2nd_arch_prefix)TARGET_thumb_CFLAGS :=  -mthumb \
+@@ -151,7 +151,7 @@ $(combo_2nd_arch_prefix)TARGET_GLOBAL_CPPFLAGS += -fvisibility-inlines-hidden
+ # More flags/options can be added here
+ $(combo_2nd_arch_prefix)TARGET_RELEASE_CFLAGS := \
+ 			-DNDEBUG \
+-			-g \
++			 \
+ 			-Wstrict-aliasing=2 \
+ 			-fgcse-after-reload \
+ 			-frerun-cse-after-loop \
+diff --git a/core/combo/TARGET_linux-arm64.mk b/core/combo/TARGET_linux-arm64.mk
+index 6a1d861..5c0ebaf 100644
+--- a/core/combo/TARGET_linux-arm64.mk
++++ b/core/combo/TARGET_linux-arm64.mk
+@@ -128,7 +128,7 @@ TARGET_GLOBAL_CPPFLAGS += -fvisibility-inlines-hidden
+ # More flags/options can be added here
+ TARGET_RELEASE_CFLAGS := \
+ 			-DNDEBUG \
+-			-O2 -g \
++			-O2  \
+ 			-Wstrict-aliasing=2 \
+ 			-fgcse-after-reload \
+ 			-frerun-cse-after-loop \
+diff --git a/core/combo/TARGET_linux-mips.mk b/core/combo/TARGET_linux-mips.mk
+index 186d88f..74b3b16 100644
+--- a/core/combo/TARGET_linux-mips.mk
++++ b/core/combo/TARGET_linux-mips.mk
+@@ -119,7 +119,7 @@ $(combo_2nd_arch_prefix)TARGET_GLOBAL_CPPFLAGS += -fvisibility-inlines-hidden
+ # More flags/options can be added here
+ $(combo_2nd_arch_prefix)TARGET_RELEASE_CFLAGS := \
+ 			-DNDEBUG \
+-			-g \
++			 \
+ 			-Wstrict-aliasing=2 \
+ 			-fgcse-after-reload \
+ 			-frerun-cse-after-loop \
+diff --git a/core/combo/TARGET_linux-mips64.mk b/core/combo/TARGET_linux-mips64.mk
+index 3e1f61a..b8e970d 100644
+--- a/core/combo/TARGET_linux-mips64.mk
++++ b/core/combo/TARGET_linux-mips64.mk
+@@ -125,7 +125,7 @@ TARGET_GLOBAL_CPPFLAGS += -fvisibility-inlines-hidden
+ # More flags/options can be added here
+ TARGET_RELEASE_CFLAGS := \
+ 			-DNDEBUG \
+-			-g \
++			 \
+ 			-Wstrict-aliasing=2 \
+ 			-fgcse-after-reload \
+ 			-frerun-cse-after-loop \
+diff --git a/core/combo/select.mk b/core/combo/select.mk
+index 97d62c6..093c4d8 100644
+--- a/core/combo/select.mk
++++ b/core/combo/select.mk
+@@ -34,7 +34,7 @@ $(combo_var_prefix)AR := $(AR)
+ $(combo_var_prefix)STRIP := $(STRIP)
+ 
+ $(combo_var_prefix)GLOBAL_CFLAGS := -fno-exceptions -Wno-multichar $(BOARD_GLOBAL_CFLAGS)
+-$(combo_var_prefix)RELEASE_CFLAGS := -O2 -g -fno-strict-aliasing $(BOARD_RELEASE_CFLAGS)
++$(combo_var_prefix)RELEASE_CFLAGS := -O2  -fno-strict-aliasing $(BOARD_RELEASE_CFLAGS)
+ $(combo_var_prefix)GLOBAL_CPPFLAGS := $(BOARD_GLOBAL_CPPFLAGS)
+ $(combo_var_prefix)GLOBAL_LDFLAGS :=
+ $(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
+diff --git a/libs/host/Android.mk b/libs/host/Android.mk
+index bc25e4b..eafde81 100644
+--- a/libs/host/Android.mk
++++ b/libs/host/Android.mk
+@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES:= \
+     CopyFile.c
+ 
+-LOCAL_CFLAGS := -Werror -Wall
++LOCAL_CFLAGS :=  -Wall
+ 
+ LOCAL_MODULE:= libhost
+ LOCAL_MODULE_HOST_OS := darwin linux windows
+diff --git a/tools/fs_config/Android.mk b/tools/fs_config/Android.mk
+index 34a3522..1fde93a 100644
+--- a/tools/fs_config/Android.mk
++++ b/tools/fs_config/Android.mk
+@@ -53,7 +53,7 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := fs_config_generate.c
+ LOCAL_MODULE := fs_config_generate_$(TARGET_DEVICE)
+ LOCAL_SHARED_LIBRARIES := libcutils
+-LOCAL_CFLAGS := -Werror -Wno-error=\#warnings
++LOCAL_CFLAGS :=  -Wno-error=\#warnings
+ LOCAL_C_INCLUDES := $(dir $(my_fs_config_h))
+ include $(BUILD_HOST_EXECUTABLE)
+ fs_config_generate_bin := $(LOCAL_INSTALLED_MODULE)
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 51a9e6a..f390a89 100755
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1747,6 +1747,10 @@ def ParseCertificate(data):
+ 
+ def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
+                       info_dict=None):
++  pass
++
++def MakeRecoveryPatch2(input_dir, output_sink, recovery_img, boot_img,
++                      info_dict=None):
+   """Generate a binary patch that creates the recovery image starting
+   with the boot image.  (Most of the space in these images is just the
+   kernel, which is identical for the two, so the resulting patch
+-- 
+2.9.3
+

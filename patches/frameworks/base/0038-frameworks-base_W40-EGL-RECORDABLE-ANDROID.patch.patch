@@ -1,0 +1,38 @@
+From 4d4e0112b3802b28c5b847d767cb5b7f860585d5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:29 +0700
+Subject: [PATCH 38/81] frameworks-base_W40-EGL-RECORDABLE-ANDROID.patch
+
+Change-Id: I5275d8911900d5164424dbb3cc44a9affee3cb48
+---
+ .../hardware/camera2/legacy/SurfaceTextureRenderer.java    | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java b/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java
+index e0d3905..46d03ef 100644
+--- a/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java
++++ b/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java
+@@ -440,6 +440,20 @@ public class SurfaceTextureRenderer {
+         EGL14.eglChooseConfig(mEGLDisplay, attribList, /*offset*/ 0, configs, /*offset*/ 0,
+                 configs.length, numConfigs, /*offset*/ 0);
+         checkEglError("eglCreateContext RGB888+recordable ES2");
++        if (numConfigs[0] == 0) {
++            Log.w(TAG, "eglChooseConfig returned no configs, retrying without EGL_RECORDABLE_ANDROID");
++            int[] attribList2 = {
++                    EGL14.EGL_RED_SIZE, EGL_COLOR_BITLENGTH,
++                    EGL14.EGL_GREEN_SIZE, EGL_COLOR_BITLENGTH,
++                    EGL14.EGL_BLUE_SIZE, EGL_COLOR_BITLENGTH,
++                    EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
++                    EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT | EGL14.EGL_WINDOW_BIT,
++                    EGL14.EGL_NONE
++            };
++            EGL14.eglChooseConfig(mEGLDisplay, attribList2, /*offset*/ 0, configs, /*offset*/ 0,
++                    configs.length, numConfigs, /*offset*/ 0);
++            checkEglError("eglCreateContext RGB888 ES2");
++        }
+         mConfigs = configs[0];
+         int[] attrib_list = {
+                 EGL14.EGL_CONTEXT_CLIENT_VERSION, GLES_VERSION,
+-- 
+2.9.3
+

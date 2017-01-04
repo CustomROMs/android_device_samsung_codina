@@ -1,0 +1,27 @@
+From e852978ecb897ea38a6f83e2b32ea4c71ff3a928 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:29 +0700
+Subject: [PATCH 39/81] frameworks-base_W41-StrictMode-and-files.patch
+
+Change-Id: Ia1f94a59d07f132385db5b7d78e45caa1c90314a
+---
+ core/java/android/net/Uri.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/net/Uri.java b/core/java/android/net/Uri.java
+index 67378bd..121ea3f 100644
+--- a/core/java/android/net/Uri.java
++++ b/core/java/android/net/Uri.java
+@@ -2342,7 +2342,8 @@ public abstract class Uri implements Parcelable, Comparable<Uri> {
+      * @hide
+      */
+     public void checkFileUriExposed(String location) {
+-        if ("file".equals(getScheme()) && !getPath().startsWith("/system/")) {
++        if ("file".equals(getScheme()) && !(getPath().startsWith("/system/")
++                || getPath().startsWith("/storage/") || getPath().startsWith("/data/"))) {
+             StrictMode.onFileUriExposed(this, location);
+         }
+     }
+-- 
+2.9.3
+

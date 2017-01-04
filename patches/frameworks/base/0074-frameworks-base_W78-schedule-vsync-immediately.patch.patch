@@ -1,0 +1,37 @@
+From 1177aebf55284e75e741ab366049546b66781f76 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:41 +0700
+Subject: [PATCH 74/81] frameworks-base_W78-schedule-vsync-immediately.patch
+
+Change-Id: I14ba1077f0826e9ab546e78086a53f351b3c9ed4
+---
+ core/java/android/view/Choreographer.java | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/core/java/android/view/Choreographer.java b/core/java/android/view/Choreographer.java
+index 3316f3a..88c6795 100644
+--- a/core/java/android/view/Choreographer.java
++++ b/core/java/android/view/Choreographer.java
+@@ -557,6 +557,19 @@ public final class Choreographer {
+                 msg.setAsynchronous(true);
+                 mHandler.sendMessageAtTime(msg, nextFrameTime);
+             }
++        } else {
++            if (USE_VSYNC) {
++                if (mHandler.hasMessages(MSG_DO_SCHEDULE_VSYNC)) {
++                    // If running on the Looper thread, then schedule the vsync immediately.
++                    if (isRunningOnLooperThreadLocked()) {
++                        if (DEBUG_FRAMES) {
++                            Log.d(TAG, "Scheduling next frame on vsync.");
++                        }
++                        scheduleVsyncLocked();
++                        mHandler.removeMessages(MSG_DO_SCHEDULE_VSYNC);
++                    }
++                }
++            }
+         }
+     }
+ 
+-- 
+2.9.3
+

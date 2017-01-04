@@ -1,0 +1,67 @@
+From e972fed1bd57ec47a61b400644274756596ec7d9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:41 +0700
+Subject: [PATCH 73/81] frameworks-base_W77-Fix-broadcast-receiver-leak.patch
+
+Change-Id: I462eb970669f864f1ee9f1c3029f716ea25a0b3d
+---
+ .../bluetooth/BluetoothEventManager.java           | 24 +++++++++++++++++++++-
+ 1 file changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/bluetooth/BluetoothEventManager.java b/packages/SettingsLib/src/com/android/settingslib/bluetooth/BluetoothEventManager.java
+index 2b9794f..d6d292d 100755
+--- a/packages/SettingsLib/src/com/android/settingslib/bluetooth/BluetoothEventManager.java
++++ b/packages/SettingsLib/src/com/android/settingslib/bluetooth/BluetoothEventManager.java
+@@ -107,14 +107,16 @@ public final class BluetoothEventManager {
+         addHandler(Intent.ACTION_DOCK_EVENT, new DockEventHandler());
+ 
+         mContext.registerReceiver(mBroadcastReceiver, mAdapterIntentFilter, null, mReceiverHandler);
++        mContext.registerReceiver(mProfileBroadcastReceiver, mProfileIntentFilter, null, mReceiverHandler);
+     }
+ 
+     void registerProfileIntentReceiver() {
+-        mContext.registerReceiver(mBroadcastReceiver, mProfileIntentFilter, null, mReceiverHandler);
++        mContext.registerReceiver(mProfileBroadcastReceiver, mProfileIntentFilter, null, mReceiverHandler);
+     }
+ 
+     public void setReceiverHandler(android.os.Handler handler) {
+         mContext.unregisterReceiver(mBroadcastReceiver);
++        mContext.unregisterReceiver(mProfileBroadcastReceiver);
+         mReceiverHandler = handler;
+         mContext.registerReceiver(mBroadcastReceiver, mAdapterIntentFilter, null, mReceiverHandler);
+         registerProfileIntentReceiver();
+@@ -154,11 +156,31 @@ public final class BluetoothEventManager {
+         }
+     };
+ 
++    private final BroadcastReceiver mProfileBroadcastReceiver = new BroadcastReceiver() {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            String action = intent.getAction();
++            BluetoothDevice device = intent
++                    .getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
++
++            Handler handler = mHandlerMap.get(action);
++            if (handler != null) {
++                handler.onReceive(context, intent, device);
++            }
++        }
++    };
++
+     private class AdapterStateChangedHandler implements Handler {
+         public void onReceive(Context context, Intent intent,
+                 BluetoothDevice device) {
+             int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                                     BluetoothAdapter.ERROR);
++            // Reregister Profile Broadcast Receiver as part of TURN OFF
++            if (state == BluetoothAdapter.STATE_OFF)
++            {
++                context.unregisterReceiver(mProfileBroadcastReceiver);
++                registerProfileIntentReceiver();
++            }
+             // update local profiles and get paired devices
+             mLocalAdapter.setBluetoothStateInt(state);
+             // send callback to update UI and possibly start scanning
+-- 
+2.9.3
+

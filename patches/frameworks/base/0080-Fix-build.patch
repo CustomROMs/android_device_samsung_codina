@@ -1,0 +1,27 @@
+From 58182df81fb097a65bacdc96020cd988d1c15171 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 29 Dec 2016 04:02:19 +0700
+Subject: [PATCH 80/81] Fix build
+
+Change-Id: I0a199ea36d6c335eda18096701ef6071ef60265a
+---
+ services/core/java/com/android/server/policy/PhoneWindowManager.java | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 7554d35..546728c 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -2356,9 +2356,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+     private void updateKeyAssignments() {
+         int activeHardwareKeys = mDeviceHardwareKeys;
+ 
+-        if (!mDevForceNavbar) {
+-            activeHardwareKeys = 0;
+-        }
+         final boolean hasMenu = (activeHardwareKeys & KEY_MASK_MENU) != 0;
+         final boolean hasHome = (activeHardwareKeys & KEY_MASK_HOME) != 0;
+         final boolean hasAssist = (activeHardwareKeys & KEY_MASK_ASSIST) != 0;
+-- 
+2.9.3
+

@@ -9,6 +9,8 @@ if [ "$PATCHES" == "" ] ; then
 		build \
 		external/jemalloc \
 		external/jhead \
+		external/gtest \
+		external/google-benchmark \
 		external/busybox \
 		external/boringssl \
 		vendor/cm \
@@ -17,15 +19,20 @@ if [ "$PATCHES" == "" ] ; then
 		frameworks/av \
 		frameworks/native \
 		frameworks/base \
+		frameworks/wilhelm \
 		bootable/recovery \
 		art \
 		hardware/libhardware \
 		hardware/ril \
 		system/core \
+		system/bt \
+		system/netd \
 		system/vold \
+		system/extras \
 		system/media \
 		bionic \
 		packages/apps/Settings \
+		packages/apps/Gallery2 \
 		packages/apps/Dialer \
 		packages/inputmethods/LatinIME \
 		packages/providers/MediaProvider \

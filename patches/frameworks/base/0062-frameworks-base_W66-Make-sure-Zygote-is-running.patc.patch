@@ -1,0 +1,64 @@
+From d8da5bffcdf21322e6a3298e513b7a9915ddacf8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 18:48:37 +0700
+Subject: [PATCH 62/81] frameworks-base_W66-Make-sure-Zygote-is-running.patch
+
+Change-Id: I2b29d720a68fd46e65fd2c0a64ffa0338f17b4d0
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index d1fe07b..e48065c 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -36,6 +36,7 @@
+ #include <sys/prctl.h>
+ #include <sys/resource.h>
+ #include <sys/stat.h>
++#include <sys/time.h>
+ #include <sys/types.h>
+ #include <sys/utsname.h>
+ #include <sys/wait.h>
+@@ -152,6 +153,24 @@ static void SetSigChldHandler() {
+   }
+ }
+ 
++// Resets nice priority for zygote process. Zygote priority can be set
++// to high value during boot phase to speed it up. We want to ensure
++// zygote is running at normal priority before childs are forked from it.
++//
++// This ends up being called repeatedly before each fork(), but there's
++// no real harm in that.
++static void ResetNicePriority(JNIEnv* env) {
++  errno = 0;
++  int prio = getpriority(PRIO_PROCESS, 0);
++  if (prio == -1 && errno != 0) {
++    ALOGW("getpriority failed: %s\n", strerror(errno));
++  }
++  if (prio != 0 && setpriority(PRIO_PROCESS, 0, 0) != 0) {
++    ALOGE("setpriority(%d, 0, 0) failed: %s", PRIO_PROCESS, strerror(errno));
++    RuntimeAbort(env, __LINE__, "setpriority failed");
++  }
++}
++
+ // Sets the SIGCHLD handler back to default behavior in zygote children.
+ static void UnsetSigChldHandler() {
+   struct sigaction sa;
+@@ -470,6 +489,8 @@ static pid_t ForkAndSpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArra
+     RuntimeAbort(env, __LINE__, "Unable to restat file descriptor table.");
+   }
+ 
++  ResetNicePriority(env);
++
+   pid_t pid = fork();
+ 
+   if (pid == 0) {
+@@ -720,4 +741,3 @@ int register_com_android_internal_os_Zygote(JNIEnv* env) {
+   return RegisterMethodsOrDie(env, "com/android/internal/os/Zygote", gMethods, NELEM(gMethods));
+ }
+ }  // namespace android
+-
+-- 
+2.9.3
+
