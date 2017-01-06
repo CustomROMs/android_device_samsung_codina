@@ -1,15 +1,17 @@
- utils: add realtime scheduling priority
+From 02291a95533ae3775c85ad56310b0acf95270ec0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 20/28] system-core_WW10-add-realtime-scheduling.patch
 
-Some threads in the framework or HALs do a small amount of work but have
-latency requirements which cause a poor user experience if not satisfied
-Even though these threads are prioritized higher than most other threads
-in the system, their execution can still be delayed for several
-milliseconds while a lower priority thread finishes its scheduler time
-slice. Allow these threads to use the realtime scheduler by setting
-their priority to ANDROID_PRIORITY_REALTIME
+Change-Id: I48deb082b944596699b03c227778f9e754fad713
+---
+ include/system/thread_defs.h |  6 ++++++
+ include/utils/ThreadDefs.h   |  1 +
+ libutils/Threads.cpp         | 12 ++++++++++++
+ 3 files changed, 19 insertions(+)
 
 diff --git a/include/system/thread_defs.h b/include/system/thread_defs.h
-index b01f6f7..ac58192 100644
+index 377a48c..65f6dd2 100644
 --- a/include/system/thread_defs.h
 +++ b/include/system/thread_defs.h
 @@ -65,6 +65,12 @@ enum {
@@ -26,7 +28,7 @@ index b01f6f7..ac58192 100644
      ANDROID_PRIORITY_MORE_FAVORABLE = -1,
      ANDROID_PRIORITY_LESS_FAVORABLE = +1,
 diff --git a/include/utils/ThreadDefs.h b/include/utils/ThreadDefs.h
-index b01f6f7..ac58193 100644
+index ae091e4..ea875d7 100644
 --- a/include/utils/ThreadDefs.h
 +++ b/include/utils/ThreadDefs.h
 @@ -60,6 +60,7 @@ enum {
@@ -38,7 +40,7 @@ index b01f6f7..ac58193 100644
      PRIORITY_MORE_FAVORABLE = ANDROID_PRIORITY_MORE_FAVORABLE,
      PRIORITY_LESS_FAVORABLE = ANDROID_PRIORITY_LESS_FAVORABLE,
 diff --git a/libutils/Threads.cpp b/libutils/Threads.cpp
-index b01f6f7..ac58194 100644
+index 7a56fc5..84996d2 100644
 --- a/libutils/Threads.cpp
 +++ b/libutils/Threads.cpp
 @@ -86,6 +86,13 @@ struct thread_data_t {
@@ -67,3 +69,6 @@ index b01f6f7..ac58194 100644
      if (pri >= ANDROID_PRIORITY_BACKGROUND) {
          rc = set_sched_policy(tid, SP_BACKGROUND);
      } else if (getpriority(PRIO_PROCESS, tid) >= ANDROID_PRIORITY_BACKGROUND) {
+-- 
+2.9.3
+

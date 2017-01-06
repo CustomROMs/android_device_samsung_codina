@@ -1,0 +1,26 @@
+From 7aded70c50cacd85d1d5c5e9d971406bd9d76cc0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:12 +0700
+Subject: [PATCH 01/28] system-core_001-Add-init-kernel-rc.patch
+
+Change-Id: I36bee4f53771978ecfd3aa53850b42159aaed117
+---
+ rootdir/init.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index cd97776..5af5ae5 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -9,7 +9,7 @@ import /init.usb.rc
+ import /init.${ro.hardware}.rc
+ import /init.usb.configfs.rc
+ import /init.${ro.zygote}.rc
+-
++import /init.kernel.rc
+ # Include CM's extra init file
+ import /init.cm.rc
+ 
+-- 
+2.9.3
+

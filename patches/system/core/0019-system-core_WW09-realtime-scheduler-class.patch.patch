@@ -1,13 +1,16 @@
- cutils: realtime scheduler class support
+From 19edaa432f16185cc77c987482b079ff91bcfec8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 19/28] system-core_WW09-realtime-scheduler-class.patch
 
-In order for Android processes to really take advantage of Linux's
-real-time scheduler, set_sched_policy() needs to expose this
-capability.  Real-time priorities are set via the sched_setscheduler()
-API rather than setpriority().  We currently schedule them as benignly
-as possible (using priority 1 and round-robin scheduling).
+Change-Id: I499150b5a0602e7256769f2235405e7f419bebbe
+---
+ include/cutils/sched_policy.h |  1 +
+ libcutils/sched_policy.c      | 35 +++++++++++++++++++++++++++++------
+ 2 files changed, 30 insertions(+), 6 deletions(-)
 
 diff --git a/include/cutils/sched_policy.h b/include/cutils/sched_policy.h
-index b01f6f7..ac58190 100644
+index 591bd44..b1c6799 100644
 --- a/include/cutils/sched_policy.h
 +++ b/include/cutils/sched_policy.h
 @@ -30,6 +30,7 @@ typedef enum {
@@ -19,7 +22,7 @@ index b01f6f7..ac58190 100644
      SP_MAX        = SP_CNT - 1,
      SP_SYSTEM_DEFAULT = SP_FOREGROUND,
 diff --git a/libcutils/sched_policy.c b/libcutils/sched_policy.c
-index b01f6f7..ac58191 100644
+index 05a2048..eb0a3f6 100644
 --- a/libcutils/sched_policy.c
 +++ b/libcutils/sched_policy.c
 @@ -268,6 +268,10 @@ int get_sched_policy(int tid, SchedPolicy *policy)
@@ -92,3 +95,6 @@ index b01f6f7..ac58191 100644
      };
      if ((policy < SP_CNT) && (strings[policy] != NULL))
          return strings[policy];
+-- 
+2.9.3
+

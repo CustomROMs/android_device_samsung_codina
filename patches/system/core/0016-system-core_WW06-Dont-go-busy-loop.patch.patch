@@ -1,14 +1,18 @@
-Subject: [PATCH] Don't go busy loop when waiting child process.
+From df9cc2ab01573903757e418053d5b75d69703f7d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 16/28] system-core_WW06-Dont-go-busy-loop.patch
 
-Before this change, code works like this: after gets POLLHUP from poll, it just
-go a busy loop to do poll -> waitpid -> poll -> waitpid ... until child process
-really exit. This doesn't make sense and is waste of CPU.
+Change-Id: I211f45400c5e0a488c6484b039fbf8a32ebb15de
+---
+ logwrapper/logwrap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/logwrapper/logwrap.c b/logwrapper/logwrap.c
 index 28d6de7..ccbe0bf 100644
 --- a/logwrapper/logwrap.c
 +++ b/logwrapper/logwrap.c
-@@ -408,7 +408,7 @@
+@@ -408,7 +408,7 @@ static int parent(const char *tag, int parent_read, pid_t pid,
          if (poll_fds[0].revents & POLLHUP) {
              int ret;
  
@@ -17,3 +21,6 @@ index 28d6de7..ccbe0bf 100644
              if (ret < 0) {
                  rc = errno;
                  ALOG(LOG_ERROR, "logwrap", "waitpid failed with %s\n", strerror(errno));
+-- 
+2.9.3
+

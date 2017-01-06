@@ -1,8 +1,18 @@
+From 045a7ae00dfd91383d98e5e2f50d76d13d5b5724 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 04/28] system-core_remove-flash-recovery-service3.patch
+
+Change-Id: I179bc53524a36db294156184901cabdf64dd1983
+---
+ rootdir/init.rc | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index b4a25fe..a0397a0 100644
+index 5af5ae5..b8213b7 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -678,12 +678,12 @@
+@@ -678,12 +678,12 @@ on property:ro.debuggable=1
      chmod 0773 /data/misc/trace
      start console
  
@@ -21,3 +31,6 @@ index b4a25fe..a0397a0 100644
 +#on property:persist.sys.recovery_update=true
 +#    start flash_recovery
  
+-- 
+2.9.3
+

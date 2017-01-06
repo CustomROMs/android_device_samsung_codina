@@ -1,10 +1,18 @@
-Subject: [PATCH] sad selinux 2002
+From 3c11f797f1e9a35f5aec66f56073625f0286aaff Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 08/28] system-core_W4-sad-selinux-2002.patch
+
+Change-Id: I16ad8d2bdc018b06a8e412a3f3e1e9c3de2e127d
+---
+ init/service.cpp | 6 ------
+ 1 file changed, 6 deletions(-)
 
 diff --git a/init/service.cpp b/init/service.cpp
-index ef59d7e..af8791d 100644
+index 76e0bc8..43220d0 100644
 --- a/init/service.cpp
 +++ b/init/service.cpp
-@@ -371,12 +371,6 @@
+@@ -371,12 +371,6 @@ bool Service::Start() {
              scon = ret_scon;
              free(ret_scon);
          }
@@ -17,3 +25,6 @@ index ef59d7e..af8791d 100644
          free(mycon);
          free(fcon);
          if (rc < 0) {
+-- 
+2.9.3
+

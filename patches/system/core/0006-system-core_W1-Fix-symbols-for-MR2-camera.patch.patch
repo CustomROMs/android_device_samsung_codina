@@ -1,16 +1,19 @@
-Subject: [PATCH] Revert "Revert "put back the unused virtuals in Vector<>""
+From 30edfc486912b77dcbb033f53e21e48e0553a5f6 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 06/28] system-core_W1-Fix-symbols-for-MR2-camera.patch
 
-Conditionally Revert "put back the unused virtuals in Vector<>"
-
-These symbols are needed for MR2 camera.tegra and other blobs,
-but they conflict with KK blobs so define it for devices that
-need it by setting COMMON_GLOBAL_CFLAGS += -DNEEDS_VECTORIMPL_SYMBOLS
+Change-Id: I3f92666c63f190c1505b074c76388906158d0e31
+---
+ include/utils/VectorImpl.h | 26 +++++++++++++++++++++++++-
+ libutils/VectorImpl.cpp    | 22 ++++++++++++++++++++++
+ 2 files changed, 47 insertions(+), 1 deletion(-)
 
 diff --git a/include/utils/VectorImpl.h b/include/utils/VectorImpl.h
-index 21ad71c..cab95be 100644
+index 21ad71c..88c3a05 100644
 --- a/include/utils/VectorImpl.h
 +++ b/include/utils/VectorImpl.h
-@@ -105,7 +105,19 @@
+@@ -105,7 +105,19 @@ protected:
      virtual void            do_splat(void* dest, const void* item, size_t num) const = 0;
      virtual void            do_move_forward(void* dest, const void* from, size_t num) const = 0;
      virtual void            do_move_backward(void* dest, const void* from, size_t num) const = 0;
@@ -31,7 +34,7 @@ index 21ad71c..cab95be 100644
  private:
          void* _grow(size_t where, size_t amount);
          void  _shrink(size_t where, size_t amount);
-@@ -156,6 +168,18 @@
+@@ -156,6 +168,18 @@ public:
  protected:
      virtual int             do_compare(const void* lhs, const void* rhs) const = 0;
  
@@ -51,10 +54,10 @@ index 21ad71c..cab95be 100644
              ssize_t         _indexOrderOf(const void* item, size_t* order = 0) const;
  
 diff --git a/libutils/VectorImpl.cpp b/libutils/VectorImpl.cpp
-index 30ca663..0bfc1f0 100644
+index e8d40ed..c149212 100644
 --- a/libutils/VectorImpl.cpp
 +++ b/libutils/VectorImpl.cpp
-@@ -556,6 +556,17 @@
+@@ -556,6 +556,17 @@ void VectorImpl::_do_move_backward(void* dest, const void* from, size_t num) con
      do_move_backward(dest, from, num);
  }
  
@@ -72,7 +75,7 @@ index 30ca663..0bfc1f0 100644
  /*****************************************************************************/
  
  SortedVectorImpl::SortedVectorImpl(size_t itemSize, uint32_t flags)
-@@ -675,6 +686,17 @@
+@@ -675,6 +686,17 @@ ssize_t SortedVectorImpl::remove(const void* item)
      return i;
  }
  
@@ -90,3 +93,6 @@ index 30ca663..0bfc1f0 100644
  /*****************************************************************************/
  
  }; // namespace android
+-- 
+2.9.3
+

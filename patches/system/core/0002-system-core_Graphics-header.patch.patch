@@ -1,8 +1,18 @@
+From de0bce382b52a14594b9407b098e497e754152bb Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 02/28] system-core_Graphics-header.patch
+
+Change-Id: I776da4946f7978d87ed27a7d02cd668e25c0dadf
+---
+ include/system/graphics.h | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
 diff --git a/include/system/graphics.h b/include/system/graphics.h
-index b207ee8..8a70153 100644
+index 529a562..7526624 100644
 --- a/include/system/graphics.h
 +++ b/include/system/graphics.h
-@@ -58,7 +58,9 @@ enum {
+@@ -58,6 +58,8 @@ typedef enum android_pixel_format {
      HAL_PIXEL_FORMAT_RGB_888            = 3,
      HAL_PIXEL_FORMAT_RGB_565            = 4,
      HAL_PIXEL_FORMAT_BGRA_8888          = 5,
@@ -11,8 +21,7 @@ index b207ee8..8a70153 100644
  
      /*
       * 0x100 - 0x1FF
-      *
-@@ -441,6 +443,21 @@ enum {
+@@ -441,6 +443,21 @@ typedef enum android_pixel_format {
      HAL_PIXEL_FORMAT_YCbCr_422_SP       = 0x10, // NV16
      HAL_PIXEL_FORMAT_YCrCb_420_SP       = 0x11, // NV21
      HAL_PIXEL_FORMAT_YCbCr_422_I        = 0x14, // YUY2
@@ -34,3 +43,6 @@ index b207ee8..8a70153 100644
  } android_pixel_format_t;
  
  /*
+-- 
+2.9.3
+

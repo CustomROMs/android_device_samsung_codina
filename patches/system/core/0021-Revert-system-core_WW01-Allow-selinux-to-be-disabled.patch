@@ -1,0 +1,76 @@
+From 7e1384ee4a4b1109fac2143286570be207f6518e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 14:01:08 +0700
+Subject: [PATCH 21/28] Revert
+ "system-core_WW01-Allow-selinux-to-be-disabled.patch"
+
+This reverts commit 4c422cbed7ae761f19134aa2369e89e46a91326e.
+
+Change-Id: Ifc72d1b2724816eb502c36c0a1bc2098e552be0c
+---
+ init/Android.mk |  5 +++++
+ init/init.cpp   | 24 ++++++++++++++++++++++--
+ 2 files changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/init/Android.mk b/init/Android.mk
+index 4942468..b05b686 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -4,7 +4,12 @@ LOCAL_PATH:= $(call my-dir)
+ 
+ # --
+ 
++ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+ init_options += -DALLOW_LOCAL_PROP_OVERRIDE=1 -DALLOW_PERMISSIVE_SELINUX=1
++else
++init_options += -DALLOW_LOCAL_PROP_OVERRIDE=0 -DALLOW_PERMISSIVE_SELINUX=0
++endif
++
+ init_options += -DLOG_UEVENTS=0
+ 
+ ifneq ($(TARGET_INIT_COLDBOOT_TIMEOUT),)
+diff --git a/init/init.cpp b/init/init.cpp
+index b16e0d1..079c314 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -449,6 +449,26 @@ static void selinux_init_all_handles(void)
+ 
+ enum selinux_enforcing_status { SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+ 
++static selinux_enforcing_status selinux_status_from_cmdline() {
++    selinux_enforcing_status status = SELINUX_ENFORCING;
++
++    import_kernel_cmdline(false, [&](const std::string& key, const std::string& value, bool in_qemu) {
++        if (key == "androidboot.selinux" && value == "permissive") {
++            status = SELINUX_PERMISSIVE;
++        }
++    });
++
++    return status;
++}
++
++static bool selinux_is_enforcing(void)
++{
++    if (ALLOW_PERMISSIVE_SELINUX) {
++        return selinux_status_from_cmdline() == SELINUX_ENFORCING;
++    }
++    return true;
++}
++
+ int selinux_reload_policy(void)
+ {
+     INFO("SELinux: Attempting to reload policy files\n");
+@@ -503,8 +523,8 @@ static void selinux_initialize(bool in_kernel_domain) {
+             security_failure();
+         }
+ 
+-        bool kernel_enforcing = false;
+-        bool is_enforcing = false;
++        bool kernel_enforcing = (security_getenforce() == 1);
++        bool is_enforcing = selinux_is_enforcing();
+         if (kernel_enforcing != is_enforcing) {
+             if (security_setenforce(is_enforcing)) {
+                 ERROR("security_setenforce(%s) failed: %s\n",
+-- 
+2.9.3
+

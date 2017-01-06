@@ -1,0 +1,27 @@
+From a15dc9c37978a2ffda9bf1c9ceba902b6119c345 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 14:04:30 +0700
+Subject: [PATCH 23/28] hipepid
+
+Change-Id: I19a99b45fabee100b4a6a18bfa295081cbb67830
+---
+ init/init.cpp | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 68308ed..a738584 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -587,8 +587,7 @@ int main(int argc, char** argv) {
+         mkdir("/dev/pts", 0755);
+         mkdir("/dev/socket", 0755);
+         mount("devpts", "/dev/pts", "devpts", 0, NULL);
+-        #define MAKE_STR(x) __STRING(x)
+-        mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC));
++        mount("proc", "/proc", "proc", 0, NULL);
+         mount("sysfs", "/sys", "sysfs", 0, NULL);
+     }
+ 
+-- 
+2.9.3
+

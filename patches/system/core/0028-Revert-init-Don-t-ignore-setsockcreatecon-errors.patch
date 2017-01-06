@@ -1,0 +1,87 @@
+From e87170347fc26f3086be6c023eb4a42722bec3b0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 15:32:02 +0700
+Subject: [PATCH 28/28] Revert "init: Don't ignore setsockcreatecon errors"
+
+This reverts commit 83ccb1c76b2b88f62bfba2c58e2edd419b089756.
+
+Change-Id: I7db28b0639bff74f689e6fa69ea06e4a231a3850
+---
+ init/init.cpp    | 9 ++++++---
+ init/service.cpp | 2 +-
+ init/util.cpp    | 8 ++------
+ 3 files changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index e64a20c..d5b0df6 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -449,6 +449,7 @@ static void selinux_init_all_handles(void)
+ 
+ enum selinux_enforcing_status { SELINUX_DISABLED, SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+ 
++#if 0
+ static selinux_enforcing_status selinux_status_from_cmdline() {
+     selinux_enforcing_status status = SELINUX_ENFORCING;
+ 
+@@ -467,19 +468,21 @@ static selinux_enforcing_status selinux_status_from_cmdline() {
+ 
+     return status;
+ }
+-
++#endif
+ 
+ static bool selinux_is_disabled(void)
+ {
++    return true;
++#if 0
+     if (ALLOW_DISABLE_SELINUX) {
+         if (access("/sys/fs/selinux", F_OK) != 0) {
+             // SELinux is not compiled into the kernel, or has been disabled
+             // via the kernel command line "selinux=0".
+             return true;
+         }
+-        return selinux_status_from_cmdline() == SELINUX_DISABLED;
++        return true /*selinux_status_from_cmdline() == SELINUX_DISABLED */;
+     }
+-
++#endif
+     return false;
+ }
+ 
+diff --git a/init/service.cpp b/init/service.cpp
+index 18ac14b..5739d83 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -357,8 +357,8 @@ bool Service::Start() {
+         return false;
+     }
+ 
++    std::string scon;
+     if (is_selinux_enabled() > 0) {
+-	    std::string scon;
+ 	    if (!seclabel_.empty()) {
+ 	        scon = seclabel_;
+ 	    } else {
+diff --git a/init/util.cpp b/init/util.cpp
+index 193b783..1c05434 100755
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -105,12 +105,8 @@ int create_socket(const char *name, int type, mode_t perm, uid_t uid,
+     int fd, ret, savederrno;
+     char *filecon;
+ 
+-    if (socketcon) {
+-        if (setsockcreatecon(socketcon) == -1) {
+-            ERROR("setsockcreatecon(\"%s\") failed: %s\n", socketcon, strerror(errno));
+-            return -1;
+-        }
+-    }
++    if (socketcon)
++        setsockcreatecon(socketcon);
+ 
+     fd = socket(PF_UNIX, type, 0);
+     if (fd < 0) {
+-- 
+2.9.3
+

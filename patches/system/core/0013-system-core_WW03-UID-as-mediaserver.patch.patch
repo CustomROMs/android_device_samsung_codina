@@ -1,7 +1,15 @@
-Subject: [PATCH] allow cameraserver to have the same UID as mediaserver
+From 8bdc37482b6187cee65bd5ca5e6022049ffa3173 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 6 Jan 2017 13:53:13 +0700
+Subject: [PATCH 13/28] system-core_WW03-UID-as-mediaserver.patch
+
+Change-Id: Ifad09582873f2d091abf779fd6c292f42f9fa26b
+---
+ include/private/android_filesystem_config.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/include/private/android_filesystem_config.h b/include/private/android_filesystem_config.h
-index 63ada4e..34e7cdc 100644
+index f03346e..3da1476 100644
 --- a/include/private/android_filesystem_config.h
 +++ b/include/private/android_filesystem_config.h
 @@ -88,7 +88,11 @@
@@ -16,3 +24,6 @@ index 63ada4e..34e7cdc 100644
  #define AID_FIREWALL      1048  /* firewalld process */
  #define AID_TRUNKS        1049  /* trunksd process (TPM daemon) */
  #define AID_NVRAM         1050  /* Access-controlled NVRAM */
+-- 
+2.9.3
+
