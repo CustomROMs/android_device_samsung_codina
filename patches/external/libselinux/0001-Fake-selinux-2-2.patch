@@ -1,0 +1,146 @@
+From 4d2d5da789d7f8dfc8dbd28c567e7c36a684264f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 7 Jan 2017 23:43:37 +0700
+Subject: [PATCH] Fake selinux [2/2]
+
+Some apps requires SELinux to e set in permissive / enforced mode.
+Provide a fake SELinux implementation to make such apps happy.
+
+See also https://github.com/UltimateROM/android_frameworks_base/commit/b2ee36494ba8f6ffebc93207b0b4fec0f28ad3ae .
+
+Change-Id: Idba6ebffbbf27f64c0c73bc9429b9acd1e5d2cfa
+---
+ Android.mk        | 2 +-
+ src/android.c     | 9 ++++++---
+ src/checkAccess.c | 2 +-
+ src/enabled.c     | 4 ++++
+ src/getenforce.c  | 4 ++++
+ 5 files changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index e25a499..0f138d2 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -75,7 +75,7 @@ LOCAL_SRC_FILES := $(common_SRC_FILES) $(common_HOST_FILES) src/android.c
+ LOCAL_MODULE:= libselinux
+ LOCAL_MODULE_TAGS := eng
+ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+-LOCAL_SHARED_LIBRARIES := libcrypto liblog libpcre libpackagelistparser
++LOCAL_SHARED_LIBRARIES := libcrypto liblog libcutils libpcre libpackagelistparser
+ # 1003 corresponds to auditd, from system/core/logd/event.logtags
+ LOCAL_CFLAGS := -DAUDITD_LOG_TAG=1003
+ # mapping.c has redundant check of array p_in->perms.
+diff --git a/src/android.c b/src/android.c
+index 5206a9f..ca55cc2 100644
+--- a/src/android.c
++++ b/src/android.c
+@@ -841,7 +841,7 @@ int selinux_android_setfilecon(const char *pkgdir,
+ 	context_t ctx = NULL;
+ 	int rc = -1;
+ 
+-	if (is_selinux_enabled() <= 0)
++	if (0 <= 0)
+ 		return 0;
+ 
+ 	rc = getfilecon(pkgdir, &ctx_str);
+@@ -907,11 +907,13 @@ int selinux_android_setcontext(uid_t uid,
+ 			       const char *seinfo,
+ 			       const char *pkgname)
+ {
++	return 0;
++#if 0
+ 	char *orig_ctx_str = NULL, *ctx_str;
+ 	context_t ctx = NULL;
+ 	int rc = -1;
+ 
+-	if (is_selinux_enabled() <= 0)
++	if (0 <= 0)
+ 		return 0;
+ 
+ 	rc = getcon(&ctx_str);
+@@ -965,6 +967,7 @@ oom:
+ 	selinux_log(SELINUX_ERROR, "%s:  Out of memory\n", __FUNCTION__);
+ 	rc = -1;
+ 	goto out;
++#endif
+ }
+ 
+ static struct selabel_handle *fc_sehandle = NULL;
+@@ -1300,7 +1303,7 @@ static int selinux_android_restorecon_common(const char* pathname_orig,
+     char xattr_value[FC_DIGEST_SIZE];
+     ssize_t size;
+ 
+-    if (is_selinux_enabled() <= 0)
++    if (0 <= 0)
+         return 0;
+ 
+     __selinux_once(fc_once, file_context_init);
+diff --git a/src/checkAccess.c b/src/checkAccess.c
+index dc11cf7..04b2613 100644
+--- a/src/checkAccess.c
++++ b/src/checkAccess.c
+@@ -12,7 +12,7 @@ static int selinux_enabled;
+ 
+ static void avc_init_once(void)
+ {
+-	selinux_enabled = is_selinux_enabled();
++	selinux_enabled = 0;//is_selinux_enabled();
+ 	if (selinux_enabled == 1)
+ 		avc_open(NULL, 0);
+ }
+diff --git a/src/enabled.c b/src/enabled.c
+index c60eb19..d9e7ef1 100644
+--- a/src/enabled.c
++++ b/src/enabled.c
+@@ -1,4 +1,5 @@
+ #include <unistd.h>
++#include <cutils/properties.h>
+ #include <fcntl.h>
+ #include <string.h>
+ #include "selinux_internal.h"
+@@ -10,10 +11,13 @@
+ 
+ int is_selinux_enabled(void)
+ {
++#if 0
+ 	/* init_selinuxmnt() gets called before this function. We
+  	 * will assume that if a selinux file system is mounted, then
+  	 * selinux is enabled. */
+ 	return (selinux_mnt ? 1 : 0);
++#endif
++	return property_get_bool("selinux.enabled", 0);
+ }
+ 
+ hidden_def(is_selinux_enabled)
+diff --git a/src/getenforce.c b/src/getenforce.c
+index 4fb516a..3a8178e 100644
+--- a/src/getenforce.c
++++ b/src/getenforce.c
+@@ -4,6 +4,7 @@
+ #include <stdlib.h>
+ #include <errno.h>
+ #include <string.h>
++#include <cutils/properties.h>
+ #include "selinux_internal.h"
+ #include "policy.h"
+ #include <stdio.h>
+@@ -11,6 +12,7 @@
+ 
+ int security_getenforce(void)
+ {
++#if 0
+ 	int fd, ret, enforce = 0;
+ 	char path[PATH_MAX];
+ 	char buf[20];
+@@ -35,6 +37,8 @@ int security_getenforce(void)
+ 		return -1;
+ 
+ 	return enforce;
++#endif
++	return property_get_bool("selinux.enforced", 0);
+ }
+ 
+ hidden_def(security_getenforce)
+-- 
+2.9.3
+

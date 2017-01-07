@@ -13,6 +13,7 @@ if [ "$PATCHES" == "" ] ; then
 		external/google-benchmark \
 		external/busybox \
 		external/boringssl \
+		external/libselinux \
 		vendor/cm \
 		frameworks/opt/net/wifi \
 		frameworks/opt/telephony \
