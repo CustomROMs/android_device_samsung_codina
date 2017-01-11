@@ -1,7 +1,7 @@
 From 4d2d5da789d7f8dfc8dbd28c567e7c36a684264f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 7 Jan 2017 23:43:37 +0700
-Subject: [PATCH] Fake selinux [2/2]
+Subject: [PATCH 1/2] Fake selinux [2/2]
 
 Some apps requires SELinux to e set in permissive / enforced mode.
 Provide a fake SELinux implementation to make such apps happy.

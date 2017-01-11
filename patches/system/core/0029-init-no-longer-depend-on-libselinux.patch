@@ -1,0 +1,851 @@
+From 7e6efa9f5e2f610abaaae573312280373d81344f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 11 Jan 2017 11:50:35 +0700
+Subject: [PATCH 29/29] init: no longer depend on libselinux
+
+Change-Id: Ia3ad811a9b1c6cf03a81de8e0d5a96e2f171d29b
+---
+ adb/Android.mk            | 115 +++++++++++++++++++++++-----------------------
+ adb/daemon/main.cpp       |   6 ---
+ adb/file_sync_service.cpp |   6 +--
+ init/Android.mk           |   8 +---
+ init/builtins.cpp         |  14 ++++--
+ init/devices.cpp          |  26 ++++++-----
+ init/init.cpp             |  22 +++++----
+ init/init.h               |   3 +-
+ init/log.cpp              |   4 +-
+ init/property_service.cpp |  33 ++-----------
+ init/property_service.h   |   1 +
+ init/service.cpp          |  11 +++--
+ init/ueventd.cpp          |   6 +--
+ init/util.cpp             |  51 ++++++++------------
+ init/util.h               |   5 ++
+ 15 files changed, 145 insertions(+), 166 deletions(-)
+
+diff --git a/adb/Android.mk b/adb/Android.mk
+index de93e69..eabb2e2 100644
+--- a/adb/Android.mk
++++ b/adb/Android.mk
+@@ -138,7 +138,64 @@ LOCAL_STATIC_LIBRARIES := libcrypto_utils_static libcrypto_static libbase
+ LOCAL_C_INCLUDES_windows := development/host/windows/usb/api/
+ LOCAL_MULTILIB := first
+ 
+-include $(BUILD_HOST_STATIC_LIBRARY)
++#include $(BUILD_HOST_STATIC_LIBRARY)
++
++# adbd device daemon
++# =========================================================
++
++include $(CLEAR_VARS)
++
++LOCAL_CLANG := true
++
++LOCAL_SRC_FILES := \
++    daemon/main.cpp \
++    services.cpp \
++    file_sync_service.cpp \
++    framebuffer_service.cpp \
++    remount_service.cpp \
++    set_verity_enable_state_service.cpp \
++    shell_service.cpp \
++    shell_service_protocol.cpp \
++
++LOCAL_CFLAGS := \
++    $(ADB_COMMON_CFLAGS) \
++    $(ADB_COMMON_linux_CFLAGS) \
++    -DADB_HOST=0 \
++    -D_GNU_SOURCE \
++    -Wno-deprecated-declarations \
++
++LOCAL_CFLAGS += -DALLOW_ADBD_NO_AUTH=$(if $(filter userdebug eng,$(TARGET_BUILD_VARIANT)),1,0)
++
++ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
++LOCAL_CFLAGS += -DALLOW_ADBD_DISABLE_VERITY=1
++LOCAL_CFLAGS += -DALLOW_ADBD_ROOT=1
++endif
++
++LOCAL_MODULE := adbd
++
++LOCAL_FORCE_STATIC_EXECUTABLE := true
++LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT_SBIN)
++LOCAL_UNSTRIPPED_PATH := $(TARGET_ROOT_OUT_SBIN_UNSTRIPPED)
++LOCAL_C_INCLUDES += system/extras/ext4_utils
++
++LOCAL_SANITIZE := $(adb_target_sanitize)
++LOCAL_STATIC_LIBRARIES := \
++    libadbd \
++    libbase \
++    libfs_mgr \
++    libfec \
++    libfec_rs \
++    liblog \
++    libext4_utils_static \
++    libsquashfs_utils \
++    libcutils \
++    libbase \
++    libcrypto_utils_static \
++    libcrypto_static \
++    libminijail
++
++include $(BUILD_EXECUTABLE)
++
+ 
+ include $(CLEAR_VARS)
+ LOCAL_CLANG := true
+@@ -305,59 +362,3 @@ $(call dist-for-goals,win_sdk,$(ALL_MODULES.host_cross_adb.BUILT))
+ endif
+ 
+ 
+-# adbd device daemon
+-# =========================================================
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_CLANG := true
+-
+-LOCAL_SRC_FILES := \
+-    daemon/main.cpp \
+-    services.cpp \
+-    file_sync_service.cpp \
+-    framebuffer_service.cpp \
+-    remount_service.cpp \
+-    set_verity_enable_state_service.cpp \
+-    shell_service.cpp \
+-    shell_service_protocol.cpp \
+-
+-LOCAL_CFLAGS := \
+-    $(ADB_COMMON_CFLAGS) \
+-    $(ADB_COMMON_linux_CFLAGS) \
+-    -DADB_HOST=0 \
+-    -D_GNU_SOURCE \
+-    -Wno-deprecated-declarations \
+-
+-LOCAL_CFLAGS += -DALLOW_ADBD_NO_AUTH=$(if $(filter userdebug eng,$(TARGET_BUILD_VARIANT)),1,0)
+-
+-ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+-LOCAL_CFLAGS += -DALLOW_ADBD_DISABLE_VERITY=1
+-LOCAL_CFLAGS += -DALLOW_ADBD_ROOT=1
+-endif
+-
+-LOCAL_MODULE := adbd
+-
+-LOCAL_FORCE_STATIC_EXECUTABLE := true
+-LOCAL_MODULE_PATH := $(TARGET_ROOT_OUT_SBIN)
+-LOCAL_UNSTRIPPED_PATH := $(TARGET_ROOT_OUT_SBIN_UNSTRIPPED)
+-LOCAL_C_INCLUDES += system/extras/ext4_utils
+-
+-LOCAL_SANITIZE := $(adb_target_sanitize)
+-LOCAL_STATIC_LIBRARIES := \
+-    libadbd \
+-    libbase \
+-    libfs_mgr \
+-    libfec \
+-    libfec_rs \
+-    libselinux \
+-    liblog \
+-    libext4_utils_static \
+-    libsquashfs_utils \
+-    libcutils \
+-    libbase \
+-    libcrypto_utils_static \
+-    libcrypto_static \
+-    libminijail
+-
+-include $(BUILD_EXECUTABLE)
+diff --git a/adb/daemon/main.cpp b/adb/daemon/main.cpp
+index 8d00527..fef86b4 100644
+--- a/adb/daemon/main.cpp
++++ b/adb/daemon/main.cpp
+@@ -33,7 +33,6 @@
+ 
+ #include "cutils/properties.h"
+ #include "private/android_filesystem_config.h"
+-#include "selinux/android.h"
+ 
+ #include "adb.h"
+ #include "adb_auth.h"
+@@ -142,11 +141,6 @@ static void drop_privileges(int server_port) {
+     } else {
+         // minijail_enter() will abort if any priv-dropping step fails.
+         minijail_enter(jail.get());
+-        if ((root_seclabel != nullptr) && (is_selinux_enabled() > 0)) {
+-            if (setcon(root_seclabel) < 0) {
+-                LOG(FATAL) << "Could not set selinux context";
+-            }
+-        }
+         std::string error;
+         std::string local_name =
+             android::base::StringPrintf("tcp:%d", server_port);
+diff --git a/adb/file_sync_service.cpp b/adb/file_sync_service.cpp
+index 926dbcf..f9d736b 100644
+--- a/adb/file_sync_service.cpp
++++ b/adb/file_sync_service.cpp
+@@ -22,7 +22,7 @@
+ #include <dirent.h>
+ #include <errno.h>
+ #include <log/log.h>
+-#include <selinux/android.h>
++////#include <selinux/android.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -73,7 +73,7 @@ static bool secure_mkdirs(const std::string& path) {
+                 return false;
+             }
+             // Not all filesystems support setting SELinux labels. http://b/23530370.
+-            selinux_android_restorecon(partial_path.c_str(), 0);
++            //selinux_android_restorecon(partial_path.c_str(), 0);
+         }
+     }
+     return true;
+@@ -174,7 +174,7 @@ static bool handle_send_file(int s, const char* path, uid_t uid,
+         }
+ 
+         // Not all filesystems support setting SELinux labels. http://b/23530370.
+-        selinux_android_restorecon(path, 0);
++        //selinux_android_restorecon(path, 0);
+ 
+         // fchown clears the setuid bit - restore it if present.
+         // Ignore the result of calling fchmod. It's not supported
+diff --git a/init/Android.mk b/init/Android.mk
+index 4daaac5..d5ad3de 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -17,9 +17,7 @@ endif
+ 
+ init_cflags += \
+     $(init_options) \
+-    -Wall -Wextra \
+-    -Wno-unused-parameter \
+-    -Werror \
++    -Wall -Wextra
+ 
+ # --
+ 
+@@ -55,7 +53,7 @@ LOCAL_SRC_FILES:= \
+     service.cpp \
+     util.cpp \
+ 
+-LOCAL_STATIC_LIBRARIES := libbase libselinux
++LOCAL_STATIC_LIBRARIES := libbase
+ LOCAL_MODULE := libinit
+ LOCAL_SANITIZE := integer
+ LOCAL_CLANG := true
+@@ -116,7 +114,6 @@ LOCAL_UNSTRIPPED_PATH := $(TARGET_ROOT_OUT_UNSTRIPPED)
+ 
+ LOCAL_STATIC_LIBRARIES := \
+     libinit \
+-    libbootloader_message \
+     libfs_mgr \
+     libfec \
+     libfec_rs \
+@@ -127,7 +124,6 @@ LOCAL_STATIC_LIBRARIES := \
+     libbase \
+     libutils \
+     libc \
+-    libselinux \
+     liblog \
+     libcrypto_utils_static \
+     libcrypto_static \
+diff --git a/init/builtins.cpp b/init/builtins.cpp
+index 46e79e7..e767892 100755
+--- a/init/builtins.cpp
++++ b/init/builtins.cpp
+@@ -41,14 +41,14 @@
+ #include <ext4_crypt.h>
+ #include <ext4_crypt_init_extensions.h>
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
++//#include <selinux/selinux.h>
++//#include <selinux/label.h>
+ 
+ #include <fs_mgr.h>
+ #include <android-base/file.h>
+ #include <android-base/parseint.h>
+ #include <android-base/stringprintf.h>
+-#include <bootloader_message/bootloader_message.h>
++//#include <bootloader_message/bootloader_message.h>
+ #include <cutils/partition_utils.h>
+ #include <cutils/android_reboot.h>
+ #include <logwrap/logwrap.h>
+@@ -159,10 +159,12 @@ static void turnOffBacklight() {
+ static int wipe_data_via_recovery(const std::string& reason) {
+     const std::vector<std::string> options = {"--wipe_data", std::string() + "--reason=" + reason};
+     std::string err;
++#if 0
+     if (!write_bootloader_message(options, &err)) {
+         ERROR("failed to set bootloader message: %s", err.c_str());
+         return -1;
+     }
++#endif
+     android_reboot(ANDROID_RB_RESTART2, 0, "recovery");
+     while (1) { pause(); }  // never reached
+ }
+@@ -1086,17 +1088,18 @@ static int do_chmod(const std::vector<std::string>& args) {
+ 
+ static int do_restorecon(const std::vector<std::string>& args) {
+     int ret = 0;
+-
++#if 0
+     for (auto it = std::next(args.begin()); it != args.end(); ++it) {
+         if (restorecon(it->c_str()) < 0)
+             ret = -errno;
+     }
++#endif
+     return ret;
+ }
+ 
+ static int do_restorecon_recursive(const std::vector<std::string>& args) {
+     int ret = 0;
+-
++#if 0
+     for (auto it = std::next(args.begin()); it != args.end(); ++it) {
+         /* The contents of CE paths are encrypted on FBE devices until user
+          * credentials are presented (filenames inside are mangled), so we need
+@@ -1105,6 +1108,7 @@ static int do_restorecon_recursive(const std::vector<std::string>& args) {
+             ret = -errno;
+         }
+     }
++#endif
+     return ret;
+ }
+ 
+diff --git a/init/devices.cpp b/init/devices.cpp
+index 10019b4..f4bd972 100644
+--- a/init/devices.cpp
++++ b/init/devices.cpp
+@@ -31,10 +31,11 @@
+ #include <sys/un.h>
+ #include <linux/netlink.h>
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
+-#include <selinux/android.h>
+-#include <selinux/avc.h>
++#include "dummy.h"
++//#include <selinux/selinux.h>
++//#include <selinux/label.h>
++//#include <selinux/android.h>
++//#include <selinux/avc.h>
+ 
+ #include <private/android_filesystem_config.h>
+ #include <sys/time.h>
+@@ -241,15 +242,16 @@ static void make_device(const char *path,
+     unsigned gid;
+     mode_t mode;
+     dev_t dev;
+-    char *secontext = NULL;
++//    char *secontext = NULL;
+ 
+     mode = get_device_perm(path, links, &uid, &gid) | (block ? S_IFBLK : S_IFCHR);
+ 
++#if 0
+     if (sehandle) {
+         selabel_lookup_best_match(sehandle, &secontext, path, links, mode);
+         setfscreatecon(secontext);
+     }
+-
++#endif
+     dev = makedev(major, minor);
+     /* Temporarily change egid to avoid race condition setting the gid of the
+      * device node. Unforunately changing the euid would prevent creation of
+@@ -260,11 +262,12 @@ static void make_device(const char *path,
+     mknod(path, mode, dev);
+     chown(path, uid, -1);
+     setegid(AID_ROOT);
+-
++#if 0
+     if (secontext) {
+         freecon(secontext);
+         setfscreatecon(NULL);
+     }
++#endif
+ }
+ 
+ static void add_platform_device(const char *path)
+@@ -1020,7 +1023,7 @@ void handle_device_fd()
+ 
+         struct uevent uevent;
+         parse_event(msg, &uevent);
+-
++#if 0
+         if (sehandle && selinux_status_updated() > 0) {
+             struct selabel_handle *sehandle2;
+             sehandle2 = selinux_android_file_context_handle();
+@@ -1029,7 +1032,7 @@ void handle_device_fd()
+                 sehandle = sehandle2;
+             }
+         }
+-
++#endif
+         handle_device_event(&uevent);
+         handle_firmware_event(&uevent);
+     }
+@@ -1089,11 +1092,12 @@ static void coldboot(const char *path)
+ 
+ void device_init() {
+     sehandle = NULL;
+-    if (is_selinux_enabled() > 0) {
++#if 0
++    if (is_selinux_enabled_() > 0) {
+         sehandle = selinux_android_file_context_handle();
+         selinux_status_open(true);
+     }
+-
++#endif
+     /* is 256K enough? udev uses 16MB! */
+     device_fd = uevent_open_socket(256*1024, true);
+     if (device_fd == -1) {
+diff --git a/init/init.cpp b/init/init.cpp
+index d5b0df6..0bdb7c8 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -36,9 +36,9 @@
+ 
+ #include <mtd/mtd-user.h>
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
+-#include <selinux/android.h>
++//#include <selinux/selinux.h>
++//#include <selinux/label.h>
++//#include <selinux/android.h>
+ 
+ #include <android-base/file.h>
+ #include <android-base/stringprintf.h>
+@@ -55,6 +55,7 @@
+ #include "action.h"
+ #include "bootchart.h"
+ #include "devices.h"
++#include "dummy.h"
+ #include "import_parser.h"
+ #include "init.h"
+ #include "init_parser.h"
+@@ -440,6 +441,7 @@ static int queue_property_triggers_action(const std::vector<std::string>& args)
+     return 0;
+ }
+ 
++#if 0
+ static void selinux_init_all_handles(void)
+ {
+     sehandle = selinux_android_file_context_handle();
+@@ -448,7 +450,7 @@ static void selinux_init_all_handles(void)
+ }
+ 
+ enum selinux_enforcing_status { SELINUX_DISABLED, SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+-
++#endif
+ #if 0
+ static selinux_enforcing_status selinux_status_from_cmdline() {
+     selinux_enforcing_status status = SELINUX_ENFORCING;
+@@ -485,7 +487,7 @@ static bool selinux_is_disabled(void)
+ #endif
+     return false;
+ }
+-
++#if 0
+ int selinux_reload_policy(void)
+ {
+     if (selinux_is_disabled()) {
+@@ -504,10 +506,9 @@ int selinux_reload_policy(void)
+     if (sehandle_prop)
+         selabel_close(sehandle_prop);
+ 
+-    selinux_init_all_handles();
++    //selinux_init_all_handles();
+     return 0;
+ }
+-
+ static int audit_callback(void *data, security_class_t /*cls*/, char *buf, size_t len) {
+ 
+     property_audit_data *d = reinterpret_cast<property_audit_data*>(data);
+@@ -521,6 +522,7 @@ static int audit_callback(void *data, security_class_t /*cls*/, char *buf, size_
+             d->cr->pid, d->cr->uid, d->cr->gid);
+     return 0;
+ }
++#endif
+ 
+ static void security_failure() {
+     ERROR("Security failure; rebooting into recovery mode...\n");
+@@ -528,6 +530,7 @@ static void security_failure() {
+     while (true) { pause(); }  // never reached
+ }
+ 
++#if 0
+ static void selinux_initialize(bool in_kernel_domain) {
+     Timer t;
+ 
+@@ -561,6 +564,7 @@ static void selinux_initialize(bool in_kernel_domain) {
+         selinux_init_all_handles();
+     }
+ }
++#endif
+ 
+ static int charging_mode_booting(void) {
+ #ifndef BOARD_CHARGING_MODE_BOOTING_LPM
+@@ -636,15 +640,17 @@ int main(int argc, char** argv) {
+     }
+ 
+     // Set up SELinux, including loading the SELinux policy if we're in the kernel domain.
+-    selinux_initialize(is_first_stage);
++    //selinux_initialize(is_first_stage);
+ 
+     // If we're in the kernel domain, re-exec init to transition to the init domain now
+     // that the SELinux policy has been loaded.
+     if (is_first_stage) {
++#if 0
+         if (restorecon("/init") == -1) {
+             ERROR("restorecon failed: %s\n", strerror(errno));
+             security_failure();
+         }
++#endif
+         char* path = argv[0];
+         char* args[] = { path, const_cast<char*>("--second-stage"), nullptr };
+         if (execv(path, args) == -1) {
+diff --git a/init/init.h b/init/init.h
+index 345d442..0972ce8 100644
+--- a/init/init.h
++++ b/init/init.h
+@@ -18,6 +18,7 @@
+ #define _INIT_INIT_H
+ 
+ #include <string>
++#include "dummy.h"
+ 
+ class Action;
+ class Service;
+@@ -35,7 +36,7 @@ void handle_control_message(const std::string& msg, const std::string& arg);
+ 
+ void property_changed(const char *name, const char *value);
+ 
+-int selinux_reload_policy(void);
++//int selinux_reload_policy(void);
+ 
+ void register_epoll_handler(int fd, void (*fn)());
+ 
+diff --git a/init/log.cpp b/init/log.cpp
+index ace9fd7..3140122 100644
+--- a/init/log.cpp
++++ b/init/log.cpp
+@@ -20,7 +20,7 @@
+ #include <string.h>
+ #include <sys/uio.h>
+ 
+-#include <selinux/selinux.h>
++//#include <selinux/selinux.h>
+ 
+ #include <android-base/stringprintf.h>
+ 
+@@ -55,6 +55,7 @@ void init_klog_write(int level, const char* fmt, ...) {
+ }
+ 
+ int selinux_klog_callback(int type, const char *fmt, ...) {
++#if 0
+     int level = KLOG_ERROR_LEVEL;
+     if (type == SELINUX_WARNING) {
+         level = KLOG_WARNING_LEVEL;
+@@ -65,5 +66,6 @@ int selinux_klog_callback(int type, const char *fmt, ...) {
+     va_start(ap, fmt);
+     init_klog_vwrite(level, fmt, ap);
+     va_end(ap);
++#endif
+     return 0;
+ }
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 89260f6..aa0cf24 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -43,14 +43,15 @@
+ #include <sys/mman.h>
+ #include <private/android_filesystem_config.h>
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
++//#include <selinux/selinux.h>
++//#include <selinux/label.h>
+ 
+ #include <fs_mgr.h>
+ #include <android-base/file.h>
+ #include "bootimg.h"
+ 
+ #include "property_service.h"
++#include "dummy.h"
+ #include "init.h"
+ #include "util.h"
+ #include "log.h"
+@@ -73,31 +74,7 @@ void property_init() {
+ 
+ static int check_mac_perms(const char *name, char *sctx, struct ucred *cr)
+ {
+-    if (is_selinux_enabled() <= 0)
+         return 1;
+-
+-    char *tctx = NULL;
+-    int result = 0;
+-    property_audit_data audit_data;
+-
+-    if (!sctx)
+-        goto err;
+-
+-    if (!sehandle_prop)
+-        goto err;
+-
+-    if (selabel_lookup(sehandle_prop, &tctx, name, 1) != 0)
+-        goto err;
+-
+-    audit_data.name = name;
+-    audit_data.cr = cr;
+-
+-    if (selinux_check_access(sctx, tctx, "property_service", "set", reinterpret_cast<void*>(&audit_data)) == 0)
+-        result = 1;
+-
+-    freecon(tctx);
+- err:
+-    return result;
+ }
+ 
+ static int check_control_mac_perms(const char *name, char *sctx, struct ucred *cr)
+@@ -316,7 +293,7 @@ static void handle_property_set_fd()
+             return;
+         }
+ 
+-        getpeercon(s, &source_ctx);
++        //getpeercon(s, &source_ctx);
+ 
+         if(memcmp(msg.name,"ctl.",4) == 0) {
+             // Keep the old close-socket-early behavior when handling
+@@ -341,7 +318,7 @@ static void handle_property_set_fd()
+             // the property is written to memory.
+             close(s);
+         }
+-        freecon(source_ctx);
++        //freecon(source_ctx);
+         break;
+ 
+     default:
+diff --git a/init/property_service.h b/init/property_service.h
+index aa92fa5..18468eb 100644
+--- a/init/property_service.h
++++ b/init/property_service.h
+@@ -22,6 +22,7 @@
+ #include <sys/system_properties.h>
+ #include <string>
+ 
++#include "dummy.h"
+ struct property_audit_data {
+     ucred *cr;
+     const char* name;
+diff --git a/init/service.cpp b/init/service.cpp
+index 5739d83..d437997 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -23,7 +23,7 @@
+ #include <termios.h>
+ #include <unistd.h>
+ 
+-#include <selinux/selinux.h>
++//#include <selinux/selinux.h>
+ 
+ #include <android-base/file.h>
+ #include <android-base/stringprintf.h>
+@@ -358,7 +358,8 @@ bool Service::Start() {
+     }
+ 
+     std::string scon;
+-    if (is_selinux_enabled() > 0) {
++#if 0
++    if (is_selinux_enabled_() > 0) {
+ 	    if (!seclabel_.empty()) {
+ 	        scon = seclabel_;
+ 	    } else {
+@@ -394,7 +395,7 @@ bool Service::Start() {
+         	}
+     	}
+     }
+-
++#endif
+     NOTICE("Starting service '%s'...\n", name_.c_str());
+ 
+     pid_t pid = fork();
+@@ -462,13 +463,15 @@ bool Service::Start() {
+                 _exit(127);
+             }
+         }
++#if 0
+         if (!seclabel_.empty()) {
+-            if (is_selinux_enabled() > 0 && setexeccon(seclabel_.c_str()) < 0) {
++            if (is_selinux_enabled_() > 0 && setexeccon(seclabel_.c_str()) < 0) {
+                 ERROR("cannot setexeccon('%s'): %s\n",
+                       seclabel_.c_str(), strerror(errno));
+                 _exit(127);
+             }
+         }
++#endif
+ 
+         std::vector<std::string> expanded_args;
+         std::vector<char*> strs;
+diff --git a/init/ueventd.cpp b/init/ueventd.cpp
+index 131e97f..efd6fb4 100644
+--- a/init/ueventd.cpp
++++ b/init/ueventd.cpp
+@@ -24,7 +24,7 @@
+ 
+ #include <android-base/stringprintf.h>
+ #include <private/android_filesystem_config.h>
+-#include <selinux/selinux.h>
++//#include <selinux/selinux.h>
+ 
+ #include "ueventd.h"
+ #include "log.h"
+@@ -56,11 +56,11 @@ int ueventd_main(int argc, char **argv)
+     klog_set_level(KLOG_NOTICE_LEVEL);
+ 
+     NOTICE("ueventd started!\n");
+-
++#if 0
+     selinux_callback cb;
+     cb.func_log = selinux_klog_callback;
+     selinux_set_callback(SELINUX_CB_LOG, cb);
+-
++#endif
+     std::string hardware = property_get("ro.hardware");
+ 
+     ueventd_parse_config_file("/ueventd.rc");
+diff --git a/init/util.cpp b/init/util.cpp
+index 1c05434..db0b27f 100755
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -23,9 +23,14 @@
+ #include <errno.h>
+ #include <time.h>
+ #include <ftw.h>
+-
++#if 0
+ #include <selinux/label.h>
+ #include <selinux/android.h>
++#endif
++
++#include <stdarg.h>
++#include <unistd.h>
++#include <stdbool.h>
+ 
+ #include <sys/stat.h>
+ #include <sys/types.h>
+@@ -105,8 +110,8 @@ int create_socket(const char *name, int type, mode_t perm, uid_t uid,
+     int fd, ret, savederrno;
+     char *filecon;
+ 
+-    if (socketcon)
+-        setsockcreatecon(socketcon);
++    //if (socketcon)
++    //   setsockcreatecon(socketcon);
+ 
+     fd = socket(PF_UNIX, type, 0);
+     if (fd < 0) {
+@@ -114,8 +119,8 @@ int create_socket(const char *name, int type, mode_t perm, uid_t uid,
+         return -1;
+     }
+ 
+-    if (socketcon)
+-        setsockcreatecon(NULL);
++    //if (socketcon)
++    //    setsockcreatecon(NULL);
+ 
+     memset(&addr, 0 , sizeof(addr));
+     addr.sun_family = AF_UNIX;
+@@ -129,18 +134,19 @@ int create_socket(const char *name, int type, mode_t perm, uid_t uid,
+     }
+ 
+     filecon = NULL;
++#if 0
+     if (sehandle) {
+         ret = selabel_lookup(sehandle, &filecon, addr.sun_path, S_IFSOCK);
+         if (ret == 0)
+             setfscreatecon(filecon);
+     }
+-
++#endif
+     ret = bind(fd, (struct sockaddr *) &addr, sizeof (addr));
+     savederrno = errno;
+-
++#if 0
+     setfscreatecon(NULL);
+     freecon(filecon);
+-
++#endif
+     if (ret) {
+         ERROR("Failed to bind socket '%s': %s\n", name, strerror(savederrno));
+         goto out_unlink;
+@@ -453,45 +459,24 @@ int make_dir(const char *path, mode_t mode)
+ {
+     int rc;
+ 
+-    char *secontext = NULL;
+-
++#if 0
+     if (sehandle) {
+         selabel_lookup(sehandle, &secontext, path, mode);
+         setfscreatecon(secontext);
+     }
+-
++#endif
+     rc = mkdir(path, mode);
+-
++#if 0
+     if (secontext) {
+         int save_errno = errno;
+         freecon(secontext);
+         setfscreatecon(NULL);
+         errno = save_errno;
+     }
+-
++#endif
+     return rc;
+ }
+ 
+-int restorecon(const char* pathname)
+-{
+-    return selinux_android_restorecon(pathname, 0);
+-}
+-
+-#define RESTORECON_RECURSIVE_FLAGS \
+-        (SELINUX_ANDROID_RESTORECON_FORCE | \
+-        SELINUX_ANDROID_RESTORECON_RECURSE)
+-
+-int restorecon_recursive(const char* pathname)
+-{
+-    return selinux_android_restorecon(pathname, RESTORECON_RECURSIVE_FLAGS);
+-}
+-
+-int restorecon_recursive_skipce(const char* pathname)
+-{
+-    return selinux_android_restorecon(pathname,
+-            SELINUX_ANDROID_RESTORECON_RECURSE | SELINUX_ANDROID_RESTORECON_SKIPCE);
+-}
+-
+ /*
+  * Writes hex_len hex characters (1/2 byte) to hex from bytes.
+  */
+diff --git a/init/util.h b/init/util.h
+index 695b94c..3e497f5 100755
+--- a/init/util.h
++++ b/init/util.h
+@@ -62,9 +62,14 @@ void open_devnull_stdio(void);
+ void import_kernel_cmdline(bool in_qemu,
+                            const std::function<void(const std::string&, const std::string&, bool)>&);
+ int make_dir(const char *path, mode_t mode);
++#if 0
+ int restorecon(const char *pathname);
+ int restorecon_recursive(const char *pathname);
+ int restorecon_recursive_skipce(const char *pathname);
++#endif
++
++#include "dummy.h"
++
+ std::string bytes_to_hex(const uint8_t *bytes, size_t bytes_len);
+ bool is_dir(const char* pathname);
+ bool expand_props(const std::string& src, std::string* dst);
+-- 
+2.9.3
+
