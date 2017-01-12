@@ -1,7 +1,7 @@
-From 02291a95533ae3775c85ad56310b0acf95270ec0 Mon Sep 17 00:00:00 2001
+From 0458c0e939917871b11063c14529e68d13dbfccc Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 20/28] system-core_WW10-add-realtime-scheduling.patch
+Subject: [PATCH 20/29] system-core_WW10-add-realtime-scheduling.patch
 
 Change-Id: I48deb082b944596699b03c227778f9e754fad713
 ---

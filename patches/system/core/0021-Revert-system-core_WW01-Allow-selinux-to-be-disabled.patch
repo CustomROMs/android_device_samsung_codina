@@ -1,7 +1,7 @@
-From 7e1384ee4a4b1109fac2143286570be207f6518e Mon Sep 17 00:00:00 2001
+From 519ee74d2149406bedf9f99c5ee4acfb2392bce1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 14:01:08 +0700
-Subject: [PATCH 21/28] Revert
+Subject: [PATCH 21/29] Revert
  "system-core_WW01-Allow-selinux-to-be-disabled.patch"
 
 This reverts commit 4c422cbed7ae761f19134aa2369e89e46a91326e.

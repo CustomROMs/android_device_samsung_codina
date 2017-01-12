@@ -1,7 +1,7 @@
-From d62d7cad9489ea69684e2f98f61b52f64e7fabaf Mon Sep 17 00:00:00 2001
+From 786214c9c30faea6ce55c71c21fa985b4c33dc86 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 3 May 2016 23:48:54 +0700
-Subject: [PATCH 27/28] 
+Subject: [PATCH 27/29] 
  0010-system-core_W2-Fix-Reverent-selinux-is-enforcing.pat.patch
 
 Change-Id: I93c0f44a9bd279d06a35547d6fe3c2450793ad80

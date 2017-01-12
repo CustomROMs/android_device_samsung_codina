@@ -1,0 +1,53 @@
+From 4993a1a1070b87776e460b7133d717f71250a51d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:43 +0700
+Subject: [PATCH 23/26] frameworks-native_WW13-make-UI-highest-priority.patch
+
+---
+ services/surfaceflinger/DispSync.cpp                        | 2 +-
+ services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp | 2 +-
+ services/surfaceflinger/EventThread.cpp                     | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/services/surfaceflinger/DispSync.cpp b/services/surfaceflinger/DispSync.cpp
+index 99c265e..ceaf07b 100644
+--- a/services/surfaceflinger/DispSync.cpp
++++ b/services/surfaceflinger/DispSync.cpp
+@@ -383,7 +383,7 @@ DispSync::DispSync(const char* name) :
+         mRefreshSkipCount(0),
+         mThread(new DispSyncThread(name)) {
+ 
+-    mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
++    mThread->run("DispSync", PRIORITY_REALTIME);
+     // set DispSync to SCHED_FIFO to minimize jitter
+     struct sched_param param = {0};
+     param.sched_priority = 2;
+diff --git a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+index bba199f..f594af7 100644
+--- a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
++++ b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+@@ -1358,7 +1358,7 @@ void HWComposer::VSyncThread::setEnabled(bool enabled) {
+ }
+ 
+ void HWComposer::VSyncThread::onFirstRef() {
+-    run("VSyncThread", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
++    run("VSyncThread", PRIORITY_REALTIME);
+ }
+ 
+ bool HWComposer::VSyncThread::threadLoop() {
+diff --git a/services/surfaceflinger/EventThread.cpp b/services/surfaceflinger/EventThread.cpp
+index 2dacd87..defe168 100644
+--- a/services/surfaceflinger/EventThread.cpp
++++ b/services/surfaceflinger/EventThread.cpp
+@@ -92,7 +92,7 @@ void EventThread::sendVsyncHintOnLocked() {
+ }
+ 
+ void EventThread::onFirstRef() {
+-    run("EventThread", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
++    run("EventThread", PRIORITY_REALTIME);
+     android_set_rt_ioprio(getTid(), 1);
+ }
+ 
+-- 
+2.9.3
+

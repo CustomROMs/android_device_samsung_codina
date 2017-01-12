@@ -1,7 +1,7 @@
-From 0461f25e8c638c7623d4b02352103cf83719a8f8 Mon Sep 17 00:00:00 2001
+From f7a62b4693abacbadaa69979c379c53480238844 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 12/28] system-core_WW02-add-ability-to-set-rlimit.patch
+Subject: [PATCH 12/29] system-core_WW02-add-ability-to-set-rlimit.patch
 
 Change-Id: I2e27623b6aca43274979084d7749370419f8c0f1
 ---

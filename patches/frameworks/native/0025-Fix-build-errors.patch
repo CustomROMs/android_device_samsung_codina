@@ -1,0 +1,70 @@
+From ee122a8ee39d4b0dca75e8e0f202d18521a74762 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 29 Dec 2016 20:15:46 +0700
+Subject: [PATCH 25/26] Fix build errors
+
+---
+ cmds/atrace/Android.mk            |  1 +
+ cmds/dumpsys/Android.mk           |  2 +-
+ services/sensorservice/Android.mk | 10 ++++++----
+ 3 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/cmds/atrace/Android.mk b/cmds/atrace/Android.mk
+index a787e95..09d508f 100644
+--- a/cmds/atrace/Android.mk
++++ b/cmds/atrace/Android.mk
+@@ -7,6 +7,7 @@ LOCAL_SRC_FILES:= atrace.cpp
+ 
+ LOCAL_C_INCLUDES += external/zlib
+ 
++LOCAL_CLANG := true
+ LOCAL_MODULE:= atrace
+ 
+ LOCAL_MODULE_TAGS:= optional
+diff --git a/cmds/dumpsys/Android.mk b/cmds/dumpsys/Android.mk
+index 8335c14..2de5c46 100644
+--- a/cmds/dumpsys/Android.mk
++++ b/cmds/dumpsys/Android.mk
+@@ -15,7 +15,7 @@ ifeq ($(TARGET_OS),linux)
+ 	LOCAL_CFLAGS += -DXP_UNIX
+ 	#LOCAL_SHARED_LIBRARIES += librt
+ endif
+-
++LOCAL_CLANG := true
+ LOCAL_MODULE:= dumpsys
+ 
+ include $(BUILD_EXECUTABLE)
+diff --git a/services/sensorservice/Android.mk b/services/sensorservice/Android.mk
+index 889e2cd..9dbd27a 100644
+--- a/services/sensorservice/Android.mk
++++ b/services/sensorservice/Android.mk
+@@ -22,9 +22,11 @@ LOCAL_SRC_FILES:= \
+ 
+ LOCAL_CFLAGS:= -DLOG_TAG=\"SensorService\"
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wextra
++LOCAL_CLANG := true
+ 
+-LOCAL_CFLAGS += -fvisibility=hidden -DSENSORS_DONT_SUPPORT_FIFO
++LOCAL_CFLAGS += -Wall -Wextra -DSENSORS_DONT_SUPPORT_FIFO
++
++LOCAL_CFLAGS += -fvisibility=hidden
+ 
+ LOCAL_SHARED_LIBRARIES := \
+     libcutils \
+@@ -53,10 +55,10 @@ LOCAL_SHARED_LIBRARIES := \
+     libbinder \
+     libutils
+ 
+-LOCAL_CFLAGS := -Wall -Werror -Wextra
++LOCAL_CFLAGS := -Wall -Wextra -DSENSORS_DONT_SUPPORT_FIFO
+ 
+ LOCAL_MODULE_TAGS := optional
+-
++LOCAL_CLANG := true
+ LOCAL_MODULE:= sensorservice
+ 
+ include $(BUILD_EXECUTABLE)
+-- 
+2.9.3
+

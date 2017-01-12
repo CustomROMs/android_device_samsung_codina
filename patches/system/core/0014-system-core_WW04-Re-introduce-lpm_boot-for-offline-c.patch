@@ -1,7 +1,7 @@
-From 01a582e6edee238d995c8514c4bd1b90a1902897 Mon Sep 17 00:00:00 2001
+From 75379dd565b43eb7cbf98113b6454dc24fece82d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 14/28] 
+Subject: [PATCH 14/29] 
  system-core_WW04-Re-introduce-lpm_boot-for-offline-charging.patch
 
 Change-Id: Ie424140c18dbfe5b59ecc4aa24e9a871b3b48aee

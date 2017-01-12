@@ -1,0 +1,23 @@
+From bd833cfc7b410eb56d541f9ef1df9059b638dd29 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 5 Dec 2016 01:15:10 +0700
+Subject: [PATCH 10/26] libui: add STE camera compat symbol
+
+---
+ libs/ui/GraphicBufferAllocator.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
+index edfff4d..a0cee88 100644
+--- a/libs/ui/GraphicBufferAllocator.cpp
++++ b/libs/ui/GraphicBufferAllocator.cpp
+@@ -167,3 +167,6 @@ status_t GraphicBufferAllocator::free(buffer_handle_t handle)
+ 
+ // ---------------------------------------------------------------------------
+ }; // namespace android
++
++__strong_alias(_ZN7android22GraphicBufferAllocator5allocEjjiiPPK13native_handlePi,
++        _ZN7android22GraphicBufferAllocator5allocEjjijPPK13native_handlePj);
+-- 
+2.9.3
+

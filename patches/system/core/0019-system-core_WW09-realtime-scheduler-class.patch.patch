@@ -1,7 +1,7 @@
-From 19edaa432f16185cc77c987482b079ff91bcfec8 Mon Sep 17 00:00:00 2001
+From 1faaa294344ac5d5d0b45bcfab6f6cfb98274935 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 19/28] system-core_WW09-realtime-scheduler-class.patch
+Subject: [PATCH 19/29] system-core_WW09-realtime-scheduler-class.patch
 
 Change-Id: I499150b5a0602e7256769f2235405e7f419bebbe
 ---

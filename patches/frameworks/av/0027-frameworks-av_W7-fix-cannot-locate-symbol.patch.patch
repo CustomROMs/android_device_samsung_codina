@@ -1,0 +1,23 @@
+From 6fc8bbd37b73670bba19f31efa806d7920fa066b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:48 +0700
+Subject: [PATCH 27/46] frameworks-av_W7-fix-cannot-locate-symbol.patch
+
+Change-Id: Iaf55909750bf67ead7adc4b080207cb573f73bef
+---
+ media/libstagefright/foundation/MediaBufferGroup.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/media/libstagefright/foundation/MediaBufferGroup.cpp b/media/libstagefright/foundation/MediaBufferGroup.cpp
+index 4e5a61b..300d57f 100644
+--- a/media/libstagefright/foundation/MediaBufferGroup.cpp
++++ b/media/libstagefright/foundation/MediaBufferGroup.cpp
+@@ -191,3 +191,5 @@ void MediaBufferGroup::signalBufferReturned(MediaBuffer *) {
+ }
+ 
+ }  // namespace android
++
++__strong_alias(_ZN7android16MediaBufferGroupC1Ev,_ZN7android16MediaBufferGroupC1Ej);
+-- 
+2.9.3
+

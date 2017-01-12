@@ -1,0 +1,48 @@
+From 4d1700e8c3546a218b232cff9c86e9a80c54acf9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:53 +0700
+Subject: [PATCH 39/46] frameworks-av_WW016-Clean-pipe-when-record-stop.patch
+
+Change-Id: I30878ca4050371596bdc71fb35ae125d1d7a86ea
+---
+ services/audioflinger/Threads.cpp | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.cpp
+index bc142fc..2accafb 100644
+--- a/services/audioflinger/Threads.cpp
++++ b/services/audioflinger/Threads.cpp
+@@ -6531,6 +6531,30 @@ void AudioFlinger::RecordThread::inputStandBy()
+         }
+     }
+     mInput->stream->common.standby(&mInput->stream->common);
++
++    // The fast thread is paused, now clean the data in the pipe.
++    // Or they will leak to the next record session.
++    // Maybe the more reasonalbe way is to save the rest data to the record file.
++    // But I can't found a elegant way to implement.
++    if (mPipeSource != 0) {
++        size_t framesRead = 0;
++        size_t framesToRead = mBufferSize / mFrameSize;
++        uint8_t *tmpBuf = (uint8_t *)malloc(mBufferSize);
++        if(NULL == tmpBuf)
++            goto finish;
++
++        ALOGI("Begin clean pipe data");
++        do {
++            framesRead = mPipeSource->read(tmpBuf, framesToRead);
++            ALOGI("Clean pipe, read %d frames, expected %d frames", framesRead, framesToRead);
++        } while(framesRead > 0);
++        ALOGI("End clean pipe data");
++
++        free(tmpBuf);
++    }
++
++finish:
++    return;
+ }
+ 
+ // RecordThread::createRecordTrack_l() must be called with AudioFlinger::mLock held
+-- 
+2.9.3
+

@@ -1,7 +1,7 @@
-From b4f284c7b2dbd01aa4e404b1dfaab0f04bdbdefb Mon Sep 17 00:00:00 2001
+From bb0af06256a1ec2403f0dbdd9a7ae52d54893aea Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 15/28] system-core_WW05-set-DOWNLOAD-CACHE.patch
+Subject: [PATCH 15/29] system-core_WW05-set-DOWNLOAD-CACHE.patch
 
 Change-Id: I5fd01e260f2066b76e39930e4d164fa4b7955eb7
 ---

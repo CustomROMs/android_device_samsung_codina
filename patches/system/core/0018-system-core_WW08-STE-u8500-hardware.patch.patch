@@ -1,7 +1,7 @@
-From 7ee55d50f0cd5b1ec72d3c25869c9d1790b1ccf8 Mon Sep 17 00:00:00 2001
+From 1a4cf125463dfacbd99b026c1c062dde50bd4e81 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 18/28] system-core_WW08-STE-u8500-hardware.patch
+Subject: [PATCH 18/29] system-core_WW08-STE-u8500-hardware.patch
 
 Change-Id: I4036e7bba0e584cef931c761694264bb79452874
 ---

@@ -1,0 +1,87 @@
+From b41dfe33f8eb9b1012e95a6088fe0b6204b65633 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 5 Dec 2016 01:20:09 +0700
+Subject: [PATCH 15/26] ui, gui: fix graphic buffers sharing with camera HAL
+ issue
+
+thanks to SergeyL@4pda.ru for reworking my initial patch
+enable with -DINVALID_BUFFER_SLOT_OFF
+---
+ libs/gui/BufferQueueProducer.cpp | 5 ++---
+ libs/ui/GraphicBuffer.cpp        | 9 ++++-----
+ 2 files changed, 6 insertions(+), 8 deletions(-)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 16bf3b0..7288602 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -505,7 +505,6 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
+             Mutex::Autolock lock(mCore->mMutex);
+ 
+             if (graphicBuffer != NULL && !mCore->mIsAbandoned) {
+-                graphicBuffer->setGenerationNumber(mCore->mGenerationNumber);
+                 mSlots[*outSlot].mGraphicBuffer = graphicBuffer;
+             }
+ 
+@@ -690,6 +689,8 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
+         return BAD_VALUE;
+     }
+ 
++    mCore->waitWhileAllocatingLocked();
++
+     if (buffer->getGenerationNumber() != mCore->mGenerationNumber) {
+         BQ_LOGE("attachBuffer: generation number mismatch [buffer %u] "
+                 "[queue %u]", buffer->getGenerationNumber(),
+@@ -697,8 +698,6 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
+         return BAD_VALUE;
+     }
+ 
+-    mCore->waitWhileAllocatingLocked();
+-
+     status_t returnFlags = NO_ERROR;
+     int found;
+     status_t status = waitForFreeSlotThenRelock(FreeSlotCaller::Attach, &found);
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index df31d5f..4ec4f89 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -43,7 +43,7 @@ static uint64_t getUniqueId() {
+ 
+ GraphicBuffer::GraphicBuffer()
+     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  =
+     height =
+@@ -56,7 +56,7 @@ GraphicBuffer::GraphicBuffer()
+ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+         PixelFormat inFormat, uint32_t inUsage, std::string requestorName)
+     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  =
+     height =
+@@ -73,7 +73,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+         native_handle_t* inHandle, bool keepOwnership)
+     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
+       mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  = static_cast<int>(inWidth);
+     height = static_cast<int>(inHeight);
+@@ -86,8 +86,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+ GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
+     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
+       mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId()),
+-      mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId())
+ {
+     width  = buffer->width;
+     height = buffer->height;
+-- 
+2.9.3
+

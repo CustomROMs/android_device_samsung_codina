@@ -1,0 +1,28 @@
+From ca4fe184ee7bc2a344d5d261ddecd2503bc0bc1d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:50 +0700
+Subject: [PATCH 33/46] frameworks-av_WW006-Fix-issues-with-metadata.patch
+
+Change-Id: Idc8269dc33314078cb7e31833d473763423153ac
+---
+ media/libmediaplayerservice/nuplayer/StreamingSource.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/media/libmediaplayerservice/nuplayer/StreamingSource.cpp b/media/libmediaplayerservice/nuplayer/StreamingSource.cpp
+index 55142c5..9d78156 100644
+--- a/media/libmediaplayerservice/nuplayer/StreamingSource.cpp
++++ b/media/libmediaplayerservice/nuplayer/StreamingSource.cpp
+@@ -230,6 +230,10 @@ sp<AMessage> NuPlayer::StreamingSource::getFormat(bool audio) {
+     }
+ 
+     sp<MetaData> meta = source->getFormat();
++    if (meta == NULL) {
++        format->setInt32("err", -EWOULDBLOCK);
++        return format;
++    }
+     status_t err = convertMetaDataToMessage(meta, &format);
+     if (err != OK) { // format may have been cleared on error
+         format = new AMessage;
+-- 
+2.9.3
+

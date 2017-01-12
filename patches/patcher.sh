@@ -17,15 +17,15 @@ if [ "$PATCHES" == "" ] ; then
 		vendor/cm \
 		frameworks/opt/net/wifi \
 		frameworks/opt/telephony \
-		#frameworks/av \
-		#frameworks/native \
+		frameworks/av \
+		frameworks/native \
 		frameworks/base \
 		frameworks/wilhelm \
 		bootable/recovery \
 		art \
 		hardware/libhardware \
 		hardware/ril \
-		#system/core \
+		system/core \
 		system/bt \
 		system/netd \
 		system/vold \

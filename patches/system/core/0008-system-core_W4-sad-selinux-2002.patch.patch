@@ -1,7 +1,7 @@
-From 3c11f797f1e9a35f5aec66f56073625f0286aaff Mon Sep 17 00:00:00 2001
+From d5aadc77084e70f352b773095b395ab12b5ff47c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 08/28] system-core_W4-sad-selinux-2002.patch
+Subject: [PATCH 08/29] system-core_W4-sad-selinux-2002.patch
 
 Change-Id: I16ad8d2bdc018b06a8e412a3f3e1e9c3de2e127d
 ---

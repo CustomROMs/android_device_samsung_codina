@@ -1,7 +1,7 @@
-From 66e2dc0a70152114a86a345cd2639920a7bfc6ec Mon Sep 17 00:00:00 2001
+From c875a81b73007ac2b2142a00824166b27bc72f59 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 14:31:57 +0700
-Subject: [PATCH 24/28] Revert "ueventd: relabel block devices nodes when
+Subject: [PATCH 24/29] Revert "ueventd: relabel block devices nodes when
  processing subsequent add events"
 
 This reverts commit 721c9ce4a55c13716f263dc7a9cbda92b349b4b7.

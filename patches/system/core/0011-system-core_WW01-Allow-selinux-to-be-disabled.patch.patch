@@ -1,7 +1,7 @@
-From 4c422cbed7ae761f19134aa2369e89e46a91326e Mon Sep 17 00:00:00 2001
+From 61c2a574780616a724b42d58eb0236199b1469f4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 11/28] system-core_WW01-Allow-selinux-to-be-disabled.patch
+Subject: [PATCH 11/29] system-core_WW01-Allow-selinux-to-be-disabled.patch
 
 Change-Id: I6317fc6886bfd1879d3af432454a44a2fab34d50
 ---

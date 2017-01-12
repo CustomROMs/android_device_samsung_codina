@@ -1,0 +1,46 @@
+From 57df33dc0b4745d6fd3a0ba2ad6f5663cbbbc9c6 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 29 Dec 2016 02:03:01 +0700
+Subject: [PATCH 11/46] OMXCodec: skip buffers re-allocations
+
+Change-Id: I2f4d5494dfb4c93a0a146be5137383ff60a25a1b
+---
+ media/libstagefright/OMXCodec.cpp | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index 08da221..3122f5d 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -1891,8 +1891,17 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+     //    plus an extra buffer to account for incorrect minUndequeuedBufs
+     CODEC_LOGI("OMX-buffers: min=%u actual=%u undeq=%d+1",
+             def.nBufferCountMin, def.nBufferCountActual, minUndequeuedBufs);
+-
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    // Some devices don't like to set OMX_IndexParamPortDefinition at this
++    // point (even with an unmodified def), so skip it if possible.
++    // This check was present in KitKat.
++    if (def.nBufferCountActual < def.nBufferCountMin + minUndequeuedBufs) {
++#endif
++#ifdef STE_HARDWARE
++    for (OMX_U32 extraBuffers = 1; /* condition inside loop */; extraBuffers--) {
++#else
+     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
++#endif
+         OMX_U32 newBufferCount =
+             def.nBufferCountMin + minUndequeuedBufs + extraBuffers;
+         def.nBufferCountActual = newBufferCount;
+@@ -1913,6 +1922,9 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
+     }
+     CODEC_LOGI("OMX-buffers: min=%u actual=%u undeq=%d+1",
+             def.nBufferCountMin, def.nBufferCountActual, minUndequeuedBufs);
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    }
++#endif
+ 
+     err = native_window_set_buffer_count(
+             mNativeWindow.get(), def.nBufferCountActual);
+-- 
+2.9.3
+

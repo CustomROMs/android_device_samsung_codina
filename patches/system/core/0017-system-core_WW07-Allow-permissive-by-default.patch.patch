@@ -1,7 +1,7 @@
-From ca83675dc7971864ae09083a2d025c4e52291f31 Mon Sep 17 00:00:00 2001
+From 226b80de57a0f69466caf29534eda00135b0434e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 17/28] system-core_WW07-Allow-permissive-by-default.patch
+Subject: [PATCH 17/29] system-core_WW07-Allow-permissive-by-default.patch
 
 Change-Id: Id44bd7e05e65508c39195a687cbfb108660e3e57
 ---

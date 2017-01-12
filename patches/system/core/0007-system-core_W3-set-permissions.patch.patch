@@ -1,7 +1,7 @@
-From 50ea5a5c6039ca8e63a1d2c6fedaf0324b9096bd Mon Sep 17 00:00:00 2001
+From ab4c7d1c278b5ad30e4a9d387c7081d9df3e6c8c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 07/28] system-core_W3-set-permissions.patch
+Subject: [PATCH 07/29] system-core_W3-set-permissions.patch
 
 Change-Id: I29e6ce2509cd5cca84ab074e9dd3aa8d874aed96
 ---

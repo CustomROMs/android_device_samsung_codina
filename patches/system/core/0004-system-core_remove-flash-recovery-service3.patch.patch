@@ -1,7 +1,7 @@
 From 045a7ae00dfd91383d98e5e2f50d76d13d5b5724 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 04/28] system-core_remove-flash-recovery-service3.patch
+Subject: [PATCH 04/29] system-core_remove-flash-recovery-service3.patch
 
 Change-Id: I179bc53524a36db294156184901cabdf64dd1983
 ---

@@ -1,7 +1,7 @@
-From 30edfc486912b77dcbb033f53e21e48e0553a5f6 Mon Sep 17 00:00:00 2001
+From d9f26f4039cbb5074f611ad0790ea7048f24a59f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 06/28] system-core_W1-Fix-symbols-for-MR2-camera.patch
+Subject: [PATCH 06/29] system-core_W1-Fix-symbols-for-MR2-camera.patch
 
 Change-Id: I3f92666c63f190c1505b074c76388906158d0e31
 ---

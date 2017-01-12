@@ -1,7 +1,7 @@
-From e87170347fc26f3086be6c023eb4a42722bec3b0 Mon Sep 17 00:00:00 2001
+From 96933e1e77e1e6778fc9bf2293555a943968abb3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 15:32:02 +0700
-Subject: [PATCH 28/28] Revert "init: Don't ignore setsockcreatecon errors"
+Subject: [PATCH 28/29] Revert "init: Don't ignore setsockcreatecon errors"
 
 This reverts commit 83ccb1c76b2b88f62bfba2c58e2edd419b089756.
 

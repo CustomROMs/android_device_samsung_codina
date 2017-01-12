@@ -1,7 +1,7 @@
 From 7aded70c50cacd85d1d5c5e9d971406bd9d76cc0 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:12 +0700
-Subject: [PATCH 01/28] system-core_001-Add-init-kernel-rc.patch
+Subject: [PATCH 01/29] system-core_001-Add-init-kernel-rc.patch
 
 Change-Id: I36bee4f53771978ecfd3aa53850b42159aaed117
 ---

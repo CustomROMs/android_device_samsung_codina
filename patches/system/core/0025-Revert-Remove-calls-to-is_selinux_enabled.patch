@@ -1,7 +1,7 @@
-From 7df92f6a65b14f8adf046ec57fe912e66e0c053a Mon Sep 17 00:00:00 2001
+From 6a6f523c55d5b513eee7c873a59e18479845c3f5 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 14:43:08 +0700
-Subject: [PATCH 25/28] Revert "Remove calls to is_selinux_enabled()"
+Subject: [PATCH 25/29] Revert "Remove calls to is_selinux_enabled()"
 
 This reverts commit 4d87095ebfefdb9e641492462f0a0e21d5b96ecf.
 

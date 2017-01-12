@@ -1,7 +1,7 @@
-From 13370f49f80a6db73f98909eb94b871920a5838d Mon Sep 17 00:00:00 2001
+From 002f168bcf4693cea3ef27c9c6b9ba33befad9ba Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 14:01:38 +0700
-Subject: [PATCH 22/28] Revert "restorecon /property_contexts"
+Subject: [PATCH 22/29] Revert "restorecon /property_contexts"
 
 This reverts commit e36a85cdcc93a84a6869fc8fc3fc82e3639d4398.
 

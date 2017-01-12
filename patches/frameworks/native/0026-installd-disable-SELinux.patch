@@ -1,0 +1,170 @@
+From ef63d7a187964828be301fb8f330592a6914b0aa Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 9 Jan 2017 21:13:54 +0700
+Subject: [PATCH 26/26] installd: disable SELinux
+
+---
+ cmds/installd/Android.mk   |  4 ++--
+ cmds/installd/commands.cpp | 28 ++++++++++++++++++----------
+ 2 files changed, 20 insertions(+), 12 deletions(-)
+
+diff --git a/cmds/installd/Android.mk b/cmds/installd/Android.mk
+index 86df596..e86f99c 100644
+--- a/cmds/installd/Android.mk
++++ b/cmds/installd/Android.mk
+@@ -1,7 +1,7 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+ common_src_files := commands.cpp globals.cpp utils.cpp
+-common_cflags := -Wall -Werror
++common_cflags := -Wall
+ 
+ #
+ # Static library used in testing and executable
+@@ -123,4 +123,4 @@ include $(BUILD_PREBUILT)
+ 
+ # Tests.
+ 
+-include $(LOCAL_PATH)/tests/Android.mk
+\ No newline at end of file
++include $(LOCAL_PATH)/tests/Android.mk
+diff --git a/cmds/installd/commands.cpp b/cmds/installd/commands.cpp
+index 1a0185f..a0f2699 100644
+--- a/cmds/installd/commands.cpp
++++ b/cmds/installd/commands.cpp
+@@ -105,13 +105,13 @@ static std::string create_primary_profile(const std::string& profile_dir) {
+  * significant time by avoiding no-op traversals of large filesystem trees.
+  */
+ static int restorecon_app_data_lazy(const std::string& path, const char* seinfo, uid_t uid) {
++#if 0
+     int res = 0;
+     char* before = nullptr;
+     char* after = nullptr;
+ 
+     // Note that SELINUX_ANDROID_RESTORECON_DATADATA flag is set by
+     // libselinux. Not needed here.
+-
+     if (lgetfilecon(path.c_str(), &before) < 0) {
+         PLOG(ERROR) << "Failed before getfilecon for " << path;
+         goto fail;
+@@ -144,6 +144,8 @@ done:
+     free(before);
+     free(after);
+     return res;
++#endif
++    return 0;
+ }
+ 
+ static int restorecon_app_data_lazy(const std::string& parent, const char* name, const char* seinfo,
+@@ -175,20 +177,23 @@ int create_app_data(const char *uuid, const char *pkgname, userid_t userid, int
+                 prepare_app_dir(path, "code_cache", 0771, uid)) {
+             return -1;
+         }
+-
++#if 0
+         // Consider restorecon over contents if label changed
+         if (restorecon_app_data_lazy(path, seinfo, uid) ||
+                 restorecon_app_data_lazy(path, "cache", seinfo, uid) ||
+                 restorecon_app_data_lazy(path, "code_cache", seinfo, uid)) {
+             return -1;
+         }
+-
++#endif
++#if 1
+         // Remember inode numbers of cache directories so that we can clear
+         // contents while CE storage is locked
+         if (write_path_inode(path, "cache", kXattrInodeCache) ||
+                 write_path_inode(path, "code_cache", kXattrInodeCodeCache)) {
++	    ALOGE("write_path_inode failed");
+             return -1;
+         }
++#endif
+     }
+     if (flags & FLAG_STORAGE_DE) {
+         auto path = create_data_user_de_package_path(uuid, userid, pkgname);
+@@ -196,12 +201,12 @@ int create_app_data(const char *uuid, const char *pkgname, userid_t userid, int
+             // TODO: include result once 25796509 is fixed
+             return 0;
+         }
+-
++#if 0
+         // Consider restorecon over contents if label changed
+         if (restorecon_app_data_lazy(path, seinfo, uid)) {
+             return -1;
+         }
+-
++#endif
+         if (property_get_bool("dalvik.vm.usejitprofiles")) {
+             const std::string profile_path = create_data_user_profile_package_path(userid, pkgname);
+             // read-write-execute only for the app user.
+@@ -237,7 +242,6 @@ int migrate_app_data(const char *uuid, const char *pkgname, userid_t userid, int
+ 
+     auto ce_path = create_data_user_ce_package_path(uuid, userid, pkgname);
+     auto de_path = create_data_user_de_package_path(uuid, userid, pkgname);
+-
+     // If neither directory is marked as default, assume CE is default
+     if (getxattr(ce_path.c_str(), kXattrDefault, nullptr, 0) == -1
+             && getxattr(de_path.c_str(), kXattrDefault, nullptr, 0) == -1) {
+@@ -448,11 +452,12 @@ int move_complete_app(const char *from_uuid, const char *to_uuid, const char *pa
+                     << ": status " << rc;
+             goto fail;
+         }
+-
++#if 0
+         if (selinux_android_restorecon(to.c_str(), SELINUX_ANDROID_RESTORECON_RECURSE) != 0) {
+             LOG(ERROR) << "Failed to restorecon " << to;
+             goto fail;
+         }
++#endif
+     }
+ 
+     // Copy private data for all known users
+@@ -508,12 +513,13 @@ int move_complete_app(const char *from_uuid, const char *to_uuid, const char *pa
+                 goto fail;
+             }
+         }
+-
++#if 0
+         if (restorecon_app_data(to_uuid, package_name, user, FLAG_STORAGE_CE | FLAG_STORAGE_DE,
+                 appid, seinfo) != 0) {
+             LOG(ERROR) << "Failed to restorecon";
+             goto fail;
+         }
++#endif
+     }
+ 
+     // We let the framework scan the new location and persist that before
+@@ -2062,7 +2068,7 @@ int rm_idmap(const char *overlay_apk)
+ int restorecon_app_data(const char* uuid, const char* pkgName, userid_t userid, int flags,
+         appid_t appid, const char* seinfo) {
+     int res = 0;
+-
++#if 0
+     // SELINUX_ANDROID_RESTORECON_DATADATA flag is set by libselinux. Not needed here.
+     unsigned int seflags = SELINUX_ANDROID_RESTORECON_RECURSE;
+ 
+@@ -2086,7 +2092,7 @@ int restorecon_app_data(const char* uuid, const char* pkgName, userid_t userid,
+             // TODO: include result once 25796509 is fixed
+         }
+     }
+-
++#endif
+     return res;
+ }
+ 
+@@ -2101,10 +2107,12 @@ int create_oat_dir(const char* oat_dir, const char* instruction_set)
+     if (fs_prepare_dir(oat_dir, S_IRWXU | S_IRWXG | S_IXOTH, AID_SYSTEM, AID_INSTALL)) {
+         return -1;
+     }
++#if 0
+     if (selinux_android_restorecon(oat_dir, 0)) {
+         ALOGE("cannot restorecon dir '%s': %s\n", oat_dir, strerror(errno));
+         return -1;
+     }
++#endif
+     snprintf(oat_instr_dir, PKG_PATH_MAX, "%s/%s", oat_dir, instruction_set);
+     if (fs_prepare_dir(oat_instr_dir, S_IRWXU | S_IRWXG | S_IXOTH, AID_SYSTEM, AID_INSTALL)) {
+         return -1;
+-- 
+2.9.3
+

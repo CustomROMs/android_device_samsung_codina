@@ -1,7 +1,7 @@
-From df9cc2ab01573903757e418053d5b75d69703f7d Mon Sep 17 00:00:00 2001
+From e6b18fd1e905a0b13503501a4e78223e588c7a12 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 16/28] system-core_WW06-Dont-go-busy-loop.patch
+Subject: [PATCH 16/29] system-core_WW06-Dont-go-busy-loop.patch
 
 Change-Id: I211f45400c5e0a488c6484b039fbf8a32ebb15de
 ---

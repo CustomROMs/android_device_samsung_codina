@@ -1,0 +1,31 @@
+From 725a844dead474aeb7c102ee51e14b72fc41c160 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:48 +0700
+Subject: [PATCH 23/46] frameworks-av_W3-ADD-LEGACY-ACQUIRE-BUFFER-SYMBOL.patch
+
+Change-Id: I217783e19518fcbce5eab72cfeffa979425ff1fa
+---
+ media/libstagefright/foundation/MediaBufferGroup.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/media/libstagefright/foundation/MediaBufferGroup.cpp b/media/libstagefright/foundation/MediaBufferGroup.cpp
+index 54f768a..4e5a61b 100644
+--- a/media/libstagefright/foundation/MediaBufferGroup.cpp
++++ b/media/libstagefright/foundation/MediaBufferGroup.cpp
+@@ -119,6 +119,13 @@ bool MediaBufferGroup::has_buffers() {
+     return false;
+ }
+ 
++#ifdef ADD_LEGACY_ACQUIRE_BUFFER_SYMBOL
++extern "C" status_t _ZN7android16MediaBufferGroup14acquire_bufferEPPNS_11MediaBufferE(
++    MediaBufferGroup* group, MediaBuffer **out) {
++    return group->acquire_buffer(out, false);
++}
++#endif
++
+ status_t MediaBufferGroup::acquire_buffer(
+         MediaBuffer **out, bool nonBlocking, size_t requestedSize) {
+     Mutex::Autolock autoLock(mLock);
+-- 
+2.9.3
+

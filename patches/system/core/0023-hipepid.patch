@@ -1,7 +1,7 @@
-From a15dc9c37978a2ffda9bf1c9ceba902b6119c345 Mon Sep 17 00:00:00 2001
+From 387474f71a888fd487e15c626f4a2b20b023a09a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 14:04:30 +0700
-Subject: [PATCH 23/28] hipepid
+Subject: [PATCH 23/29] hipepid
 
 Change-Id: I19a99b45fabee100b4a6a18bfa295081cbb67830
 ---

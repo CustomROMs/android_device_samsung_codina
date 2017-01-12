@@ -1,7 +1,7 @@
 From de0bce382b52a14594b9407b098e497e754152bb Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 02/28] system-core_Graphics-header.patch
+Subject: [PATCH 02/29] system-core_Graphics-header.patch
 
 Change-Id: I776da4946f7978d87ed27a7d02cd668e25c0dadf
 ---

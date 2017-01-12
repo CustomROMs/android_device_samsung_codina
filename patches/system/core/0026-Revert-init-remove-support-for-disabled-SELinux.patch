@@ -1,7 +1,7 @@
-From 2f7dcc53ecfc2de50dda79898e816491e22f2032 Mon Sep 17 00:00:00 2001
+From aca3627f9b717a009742e346a231e1425ce63289 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 14:46:48 +0700
-Subject: [PATCH 26/28] Revert "init: remove support for disabled SELinux"
+Subject: [PATCH 26/29] Revert "init: remove support for disabled SELinux"
 
 This reverts commit d34e407aeb5898f19d4f042b7558420bbb3a1817.
 

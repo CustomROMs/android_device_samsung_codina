@@ -1,7 +1,7 @@
-From fcb14f2c5ce973427da86baa83da27b0057c719a Mon Sep 17 00:00:00 2001
+From 62ed08e0e7136fe81064c87564fce4b6abbc2256 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 6 Jan 2017 13:53:13 +0700
-Subject: [PATCH 09/28] system-core_W5-Make-sLock-and-sInstance-public.patch
+Subject: [PATCH 09/29] system-core_W5-Make-sLock-and-sInstance-public.patch
 
 Change-Id: I4daa74e141e5b98ce0d2017fb735d08e86fda3d2
 ---

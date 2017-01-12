@@ -1,0 +1,28 @@
+From aa6eda825fab33515a0245991c98684555a5576c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:42 +0700
+Subject: [PATCH 20/26] frameworks-native_WW10-need-public-LayerVector.patch
+
+---
+ services/surfaceflinger/SurfaceFlinger.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
+index 97b727b..eed9b34 100644
+--- a/services/surfaceflinger/SurfaceFlinger.h
++++ b/services/surfaceflinger/SurfaceFlinger.h
+@@ -173,7 +173,11 @@ private:
+      * Internal data structures
+      */
+ 
++#ifdef LEGACY_NEEDS_PUBLIC_LAYERVECTOR
++    public: class LayerVector : public SortedVector< sp<Layer> > {
++#else
+     class LayerVector : public SortedVector< sp<Layer> > {
++#endif
+     public:
+         LayerVector();
+         LayerVector(const LayerVector& rhs);
+-- 
+2.9.3
+

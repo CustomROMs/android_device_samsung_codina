@@ -1,0 +1,25 @@
+From 45be0c4be9306c2f8d22594fdf8a884b0772a409 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:53 +0700
+Subject: [PATCH 41/46] frameworks-av_WW018-Fix-media-server-crash.patch
+
+Change-Id: If1b38bde9d42c8d9bd1cd1159f89fd6fffbcf52a
+---
+ media/libstagefright/StagefrightMetadataRetriever.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/media/libstagefright/StagefrightMetadataRetriever.cpp b/media/libstagefright/StagefrightMetadataRetriever.cpp
+index 7cc89a7..aef9ea9 100644
+--- a/media/libstagefright/StagefrightMetadataRetriever.cpp
++++ b/media/libstagefright/StagefrightMetadataRetriever.cpp
+@@ -228,6 +228,7 @@ static VideoFrame *extractVideoFrame(
+     if (err != OK) {
+         ALOGW("source failed to start: %d (%s)", err, asString(err));
+         decoder->release();
++        source->stop();
+         return NULL;
+     }
+ 
+-- 
+2.9.3
+

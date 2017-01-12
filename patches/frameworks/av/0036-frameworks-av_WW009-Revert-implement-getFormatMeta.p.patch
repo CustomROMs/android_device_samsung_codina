@@ -1,0 +1,160 @@
+From fe5cb93e39a61fd84bf6c0220661ee7ea70d1a12 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 26 Dec 2016 19:45:51 +0700
+Subject: [PATCH 36/46] 
+ frameworks-av_WW009-Revert-implement-getFormatMeta.patch
+
+Change-Id: Ieda1024ea88e0809a20cf8bdd911df6f19c91e29
+---
+ .../nuplayer/HTTPLiveSource.cpp                    | 23 +++++-----------------
+ .../nuplayer/HTTPLiveSource.h                      |  1 -
+ media/libmediaplayerservice/nuplayer/NuPlayer.cpp  |  9 ---------
+ media/libstagefright/httplive/LiveSession.cpp      | 14 ++++++-------
+ media/libstagefright/httplive/LiveSession.h        |  2 +-
+ 5 files changed, 13 insertions(+), 36 deletions(-)
+
+diff --git a/media/libmediaplayerservice/nuplayer/HTTPLiveSource.cpp b/media/libmediaplayerservice/nuplayer/HTTPLiveSource.cpp
+index 7a56cff..6be7127 100644
+--- a/media/libmediaplayerservice/nuplayer/HTTPLiveSource.cpp
++++ b/media/libmediaplayerservice/nuplayer/HTTPLiveSource.cpp
+@@ -30,7 +30,6 @@
+ #include <media/stagefright/MediaErrors.h>
+ #include <media/stagefright/MetaData.h>
+ #include <media/stagefright/MediaDefs.h>
+-#include <media/stagefright/Utils.h>
+ 
+ namespace android {
+ 
+@@ -101,38 +100,26 @@ void NuPlayer::HTTPLiveSource::prepareAsync() {
+ void NuPlayer::HTTPLiveSource::start() {
+ }
+ 
+-sp<MetaData> NuPlayer::HTTPLiveSource::getFormatMeta(bool audio) {
+-    sp<MetaData> meta;
+-    if (mLiveSession != NULL) {
+-        mLiveSession->getStreamFormatMeta(
+-                audio ? LiveSession::STREAMTYPE_AUDIO
+-                      : LiveSession::STREAMTYPE_VIDEO,
+-                &meta);
+-    }
+-
+-    return meta;
+-}
+-
+ sp<AMessage> NuPlayer::HTTPLiveSource::getFormat(bool audio) {
+-    sp<MetaData> meta;
++    sp<AMessage> format;
+     status_t err = -EWOULDBLOCK;
+     if (mLiveSession != NULL) {
+-        err = mLiveSession->getStreamFormatMeta(
++        err = mLiveSession->getStreamFormat(
+                 audio ? LiveSession::STREAMTYPE_AUDIO
+                       : LiveSession::STREAMTYPE_VIDEO,
+-                &meta);
++                &format);
+     }
+ 
+-    sp<AMessage> format;
+     if (err == -EWOULDBLOCK) {
+         format = new AMessage();
+         format->setInt32("err", err);
+         return format;
+     }
+ 
+-    if (err != OK || convertMetaDataToMessage(meta, &format) != OK) {
++    if (err != OK) {
+         return NULL;
+     }
++
+     return format;
+ }
+ 
+diff --git a/media/libmediaplayerservice/nuplayer/HTTPLiveSource.h b/media/libmediaplayerservice/nuplayer/HTTPLiveSource.h
+index 0208fdc..718b432 100644
+--- a/media/libmediaplayerservice/nuplayer/HTTPLiveSource.h
++++ b/media/libmediaplayerservice/nuplayer/HTTPLiveSource.h
+@@ -38,7 +38,6 @@ struct NuPlayer::HTTPLiveSource : public NuPlayer::Source {
+     virtual void start();
+ 
+     virtual status_t dequeueAccessUnit(bool audio, sp<ABuffer> *accessUnit);
+-    virtual sp<MetaData> getFormatMeta(bool audio);
+     virtual sp<AMessage> getFormat(bool audio);
+ 
+     virtual status_t feedMoreTSData();
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index ee7fb9a..7183ad4 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -1356,16 +1356,7 @@ void NuPlayer::onStart(int64_t startPositionUs) {
+     }
+ 
+     sp<MetaData> audioMeta = mSource->getFormatMeta(true /* audio */);
+-    sp<MetaData> videoMeta = mSource->getFormatMeta(false /* audio */);
+-    if (audioMeta == NULL && videoMeta == NULL) {
+-        ALOGE("no metadata for either audio or video source");
+-        mSource->stop();
+-        mSourceStarted = false;
+-        notifyListener(MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, ERROR_MALFORMED);
+-        return;
+-    }
+     ALOGV_IF(audioMeta == NULL, "no metadata for audio source");  // video only stream
+-
+     audio_stream_type_t streamType = AUDIO_STREAM_MUSIC;
+ 
+     if (mAudioSink != NULL) {
+diff --git a/media/libstagefright/httplive/LiveSession.cpp b/media/libstagefright/httplive/LiveSession.cpp
+index 33ad5ac..6211776 100644
+--- a/media/libstagefright/httplive/LiveSession.cpp
++++ b/media/libstagefright/httplive/LiveSession.cpp
+@@ -467,28 +467,28 @@ status_t LiveSession::dequeueAccessUnit(
+     return err;
+ }
+ 
+-status_t LiveSession::getStreamFormatMeta(StreamType stream, sp<MetaData> *meta) {
++status_t LiveSession::getStreamFormat(StreamType stream, sp<AMessage> *format) {
+     if (!(mStreamMask & stream)) {
+         return UNKNOWN_ERROR;
+     }
+ 
+     sp<AnotherPacketSource> packetSource = mPacketSources.valueFor(stream);
+ 
+-    *meta = packetSource->getFormat();
++    sp<MetaData> meta = packetSource->getFormat();
+ 
+-    if (*meta == NULL) {
++    if (meta == NULL) {
+         return -EWOULDBLOCK;
+     }
+ 
+     if (stream == STREAMTYPE_AUDIO) {
+         // set AAC input buffer size to 32K bytes (256kbps x 1sec)
+-        (*meta)->setInt32(kKeyMaxInputSize, 32 * 1024);
++        meta->setInt32(kKeyMaxInputSize, 32 * 1024);
+     } else if (stream == STREAMTYPE_VIDEO) {
+-        (*meta)->setInt32(kKeyMaxWidth, mMaxWidth);
+-        (*meta)->setInt32(kKeyMaxHeight, mMaxHeight);
++        meta->setInt32(kKeyMaxWidth, mMaxWidth);
++        meta->setInt32(kKeyMaxHeight, mMaxHeight);
+     }
+ 
+-    return OK;
++    return convertMetaDataToMessage(meta, format);
+ }
+ 
+ sp<HTTPDownloader> LiveSession::getHTTPDownloader() {
+diff --git a/media/libstagefright/httplive/LiveSession.h b/media/libstagefright/httplive/LiveSession.h
+index cfe2283..0d504e4 100644
+--- a/media/libstagefright/httplive/LiveSession.h
++++ b/media/libstagefright/httplive/LiveSession.h
+@@ -75,7 +75,7 @@ struct LiveSession : public AHandler {
+     int64_t calculateMediaTimeUs(int64_t firstTimeUs, int64_t timeUs, int32_t discontinuitySeq);
+     virtual status_t dequeueAccessUnit(StreamType stream, sp<ABuffer> *accessUnit);
+ 
+-    status_t getStreamFormatMeta(StreamType stream, sp<MetaData> *meta);
++    status_t getStreamFormat(StreamType stream, sp<AMessage> *format);
+ 
+     sp<HTTPDownloader> getHTTPDownloader();
+ 
+-- 
+2.9.3
+
