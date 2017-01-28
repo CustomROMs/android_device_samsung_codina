@@ -1,0 +1,528 @@
+diff --git a/Android.mk b/Android.mk
+index 15cb54e..3207ef4 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -153,9 +153,7 @@ ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
+         #LOCAL_STATIC_LIBRARIES += liblz4
+     endif
+ endif
+-ifneq ($(wildcard external/libselinux/Android.mk),)
+-    TWHAVE_SELINUX := true
+-endif
++TWHAVE_SELINUX := false
+ ifeq ($(TWHAVE_SELINUX), true)
+   #LOCAL_C_INCLUDES += external/libselinux/include
+   #LOCAL_STATIC_LIBRARIES += libselinux
+diff --git a/adbbu/Android.mk b/adbbu/Android.mk
+index 10faf6f..da92a02 100644
+--- a/adbbu/Android.mk
++++ b/adbbu/Android.mk
+@@ -16,6 +16,7 @@ endif
+ LOCAL_C_INCLUDES += bionic external/zlib
+ LOCAL_CFLAGS:= -c -W
+ LOCAL_MODULE:= twrpbu
++LOCAL_CFLAGS := -fvisibility-inlines-hidden
+ LOCAL_MODULE_STEM := bu
+ LOCAL_MODULE_TAGS:= eng
+ LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+diff --git a/crypto/ext4crypt/Utils.h b/crypto/ext4crypt/Utils.h
+index 8d0445d..13a0b5a 100644
+--- a/crypto/ext4crypt/Utils.h
++++ b/crypto/ext4crypt/Utils.h
+@@ -19,7 +19,7 @@
+ 
+ #include <utils/Errors.h>
+ #include <cutils/multiuser.h>
+-#include <selinux/selinux.h>
++#include 
+ 
+ #include <vector>
+ #include <string>
+diff --git a/fixContexts.cpp b/fixContexts.cpp
+index 6442944..e8f2e91 100644
+--- a/fixContexts.cpp
++++ b/fixContexts.cpp
+@@ -26,7 +26,7 @@
+ #include "twrp-functions.hpp"
+ #include "twcommon.h"
+ #ifdef HAVE_SELINUX
+-#include "selinux/selinux.h"
++
+ #include "selinux/label.h"
+ #include "selinux/android.h"
+ #include "selinux/label.h"
+diff --git a/gui/action.cpp b/gui/action.cpp
+index 5ba749c..49f9532 100644
+--- a/gui/action.cpp
++++ b/gui/action.cpp
+@@ -1259,6 +1259,7 @@ int GUIAction::fixcontexts(std::string arg __unused)
+ 			op_status = 1; // failure
+ 	}
+ 	operation_end(op_status);
++
+ 	return 0;
+ }
+ 
+@@ -1949,7 +1950,6 @@ int GUIAction::installapp(std::string arg __unused)
+ 		if (DataManager::GetIntValue("tw_mount_system_ro") > 0 || DataManager::GetIntValue("tw_app_install_system") == 0) {
+ 			if (PartitionManager.Mount_By_Path("/data", true)) {
+ 				string install_path = "/data/app";
+-				string context = "u:object_r:apk_data_file:s0";
+ 				if (!TWFunc::Path_Exists(install_path)) {
+ 					if (mkdir(install_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+ 						LOGERR("Error making %s directory: %s\n", install_path.c_str(), strerror(errno));
+@@ -1959,10 +1959,6 @@ int GUIAction::installapp(std::string arg __unused)
+ 						LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
+ 						goto exit;
+ 					}
+-					if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
+-						LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
+-						goto exit;
+-					}
+ 				}
+ 				install_path += "/me.twrp.twrpapp-1";
+ 				if (mkdir(install_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+@@ -1973,10 +1969,6 @@ int GUIAction::installapp(std::string arg __unused)
+ 					LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
+ 					goto exit;
+ 				}
+-				if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
+-					LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
+-					goto exit;
+-				}
+ 				install_path += "/base.apk";
+ 				if (TWFunc::copy_file("/sbin/me.twrp.twrpapp.apk", install_path, 0644)) {
+ 					LOGERR("Error copying apk file\n");
+@@ -1986,10 +1978,6 @@ int GUIAction::installapp(std::string arg __unused)
+ 					LOGERR("chown %s error: %s\n", install_path.c_str(), strerror(errno));
+ 					goto exit;
+ 				}
+-				if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
+-					LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
+-					goto exit;
+-				}
+ 				sync();
+ 				sync();
+ 			}
+@@ -1999,26 +1987,17 @@ int GUIAction::installapp(std::string arg __unused)
+ 				if (TWFunc::Path_Exists("/system/system"))
+ 					base_path += "/system"; // For devices with system as a root file system (e.g. Pixel)
+ 				string install_path = base_path + "/priv-app";
+-				string context = "u:object_r:system_file:s0";
+ 				if (!TWFunc::Path_Exists(install_path))
+ 					install_path = base_path + "/app";
+ 				if (TWFunc::Path_Exists(install_path)) {
+ 					install_path += "/twrpapp";
+ 					LOGINFO("Installing app to '%s'\n", install_path.c_str());
+ 					if (mkdir(install_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0) {
+-						if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
+-							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
+-							goto exit;
+-						}
+ 						install_path += "/me.twrp.twrpapp.apk";
+ 						if (TWFunc::copy_file("/sbin/me.twrp.twrpapp.apk", install_path, 0644)) {
+ 							LOGERR("Error copying apk file\n");
+ 							goto exit;
+ 						}
+-						if (setfilecon(install_path.c_str(), (security_context_t)context.c_str()) < 0) {
+-							LOGERR("setfilecon %s error: %s\n", install_path.c_str(), strerror(errno));
+-							goto exit;
+-						}
+ 						sync();
+ 						sync();
+ 						PartitionManager.UnMount_By_Path("/system", true);
+diff --git a/gui/pages.cpp b/gui/pages.cpp
+index d7cb92d..6ee232a 100644
+--- a/gui/pages.cpp
++++ b/gui/pages.cpp
+@@ -1305,7 +1305,7 @@ void PageManager::LoadLanguageList(ZipArchive* package) {
+ 	if (package) {
+ 		TWFunc::Recursive_Mkdir(TWRES "customlanguages");
+ 		struct utimbuf timestamp = { 1217592000, 1217592000 };  // 8/1/2008 default
+-		mzExtractRecursive(package, "languages", TWRES "customlanguages/", &timestamp, NULL, NULL, NULL);
++		mzExtractRecursive(package, "languages", TWRES "customlanguages/", &timestamp, NULL, NULL);
+ 		LoadLanguageListDir(TWRES "customlanguages/");
+ 	} else {
+ 		LoadLanguageListDir(TWRES "languages/");
+diff --git a/minzip/DirUtil.c b/minzip/DirUtil.c
+index 97cb2e0..598d93e 100644
+--- a/minzip/DirUtil.c
++++ b/minzip/DirUtil.c
+@@ -54,8 +54,7 @@ getPathDirStatus(const char *path)
+ 
+ int
+ dirCreateHierarchy(const char *path, int mode,
+-        const struct utimbuf *timestamp, bool stripFileName,
+-        struct selabel_handle *sehnd)
++        const struct utimbuf *timestamp, bool stripFileName)
+ {
+     DirStatus ds;
+ 
+@@ -145,20 +144,8 @@ dirCreateHierarchy(const char *path, int mode,
+         } else if (ds == DMISSING) {
+             int err;
+ 
+-            char *secontext = NULL;
+-
+-            if (sehnd) {
+-                selabel_lookup(sehnd, &secontext, cpath, mode);
+-                setfscreatecon(secontext);
+-            }
+-
+             err = mkdir(cpath, mode);
+ 
+-            if (secontext) {
+-                freecon(secontext);
+-                setfscreatecon(NULL);
+-            }
+-
+             if (err != 0) {
+                 free(cpath);
+                 return -1;
+diff --git a/minzip/DirUtil.h b/minzip/DirUtil.h
+index 85a0012..a30fa85 100644
+--- a/minzip/DirUtil.h
++++ b/minzip/DirUtil.h
+@@ -24,9 +24,6 @@
+ extern "C" {
+ #endif
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
+-
+ /* Like "mkdir -p", try to guarantee that all directories
+  * specified in path are present, creating as many directories
+  * as necessary.  The specified mode is passed to all mkdir
+@@ -41,8 +38,7 @@ extern "C" {
+  * (usually if some element of path is not a directory).
+  */
+ int dirCreateHierarchy(const char *path, int mode,
+-        const struct utimbuf *timestamp, bool stripFileName,
+-        struct selabel_handle* sehnd);
++        const struct utimbuf *timestamp, bool stripFileName);
+ 
+ /* rm -rf <path>
+  */
+diff --git a/minzip/Zip.c b/minzip/Zip.c
+index 1c3239d..299a56d 100644
+--- a/minzip/Zip.c
++++ b/minzip/Zip.c
+@@ -820,8 +820,7 @@ static const char *targetEntryPath(MzPathHelper *helper, ZipEntry *pEntry)
+ bool mzExtractRecursive(const ZipArchive *pArchive,
+                         const char *zipDir, const char *targetDir,
+                         const struct utimbuf *timestamp,
+-                        void (*callback)(const char *fn, void *), void *cookie,
+-                        struct selabel_handle *sehnd)
++                        void (*callback)(const char *fn, void *), void *cookie)
+ {
+     if (zipDir[0] == '/') {
+         LOGE("mzExtractRecursive(): zipDir must be a relative path.\n");
+@@ -940,7 +939,7 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
+              * the containing directory exists.
+              */
+             int ret = dirCreateHierarchy(
+-                    targetFile, UNZIP_DIRMODE, timestamp, true, sehnd);
++                    targetFile, UNZIP_DIRMODE, timestamp, true);
+             if (ret != 0) {
+                 LOGE("Can't create containing directory for \"%s\": %s\n",
+                         targetFile, strerror(errno));
+@@ -961,20 +960,8 @@ bool mzExtractRecursive(const ZipArchive *pArchive,
+                      pEntry->fileNameLen, pEntry->fileName);
+             }
+ 
+-            char *secontext = NULL;
+-
+-            if (sehnd) {
+-                selabel_lookup(sehnd, &secontext, targetFile, UNZIP_FILEMODE);
+-                setfscreatecon(secontext);
+-            }
+-
+             int fd = creat(targetFile, UNZIP_FILEMODE);
+ 
+-            if (secontext) {
+-                freecon(secontext);
+-                setfscreatecon(NULL);
+-            }
+-
+             if (fd < 0) {
+                 LOGE("Can't create target file \"%s\": %s\n",
+                         targetFile, strerror(errno));
+diff --git a/minzip/Zip.h b/minzip/Zip.h
+index 0a03451..191272f 100644
+--- a/minzip/Zip.h
++++ b/minzip/Zip.h
+@@ -18,9 +18,6 @@
+ extern "C" {
+ #endif
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
+-
+ /*
+  * One entry in the Zip archive.  Treat this as opaque -- use accessors below.
+  *
+@@ -162,8 +159,7 @@ bool mzExtractZipEntryToBuffer(const ZipArchive *pArchive,
+ bool mzExtractRecursive(const ZipArchive *pArchive,
+         const char *zipDir, const char *targetDir,
+         const struct utimbuf *timestamp,
+-        void (*callback)(const char *fn, void*), void *cookie,
+-        struct selabel_handle *sehnd);
++        void (*callback)(const char *fn, void*), void *cookie);
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/partition.cpp b/partition.cpp
+index 5a53d61..68f65fe 100644
+--- a/partition.cpp
++++ b/partition.cpp
+@@ -66,7 +66,7 @@ extern "C" {
+ #endif
+ }
+ #ifdef HAVE_SELINUX
+-#include "selinux/selinux.h"
++
+ #include <selinux/label.h>
+ #endif
+ #ifdef HAVE_CAPABILITIES
+diff --git a/set_metadata.cpp b/set_metadata.cpp
+index 2e1d769..6b28c30 100644
+--- a/set_metadata.cpp
++++ b/set_metadata.cpp
+@@ -28,21 +28,13 @@
+ #include <sys/stat.h>
+ #include <stdio.h>
+ #include <unistd.h>
+-#include "selinux/selinux.h"
+ 
+-static security_context_t selinux_context;
++
+ struct stat s;
+ static int has_stat = 0;
+ 
+ int tw_get_context(const char* filename) {
+-	if (lgetfilecon(filename, &selinux_context) >= 0) {
+-		printf("tw_get_context got selinux context: %s\n", selinux_context);
+-		return 0;
+-	} else {
+-		printf("tw_get_context failed to get selinux context\n");
+-		selinux_context = NULL;
+-	}
+-	return -1;
++	return 0;
+ }
+ 
+ int tw_get_stat(const char* filename) {
+@@ -55,9 +47,7 @@ int tw_get_stat(const char* filename) {
+ }
+ 
+ int tw_get_default_metadata(const char* filename) {
+-	if (tw_get_context(filename) == 0 && tw_get_stat(filename) == 0)
+ 		return 0;
+-	return -1;
+ }
+ 
+ // Most of this logging is disabled to prevent log spam if we are trying
+@@ -65,25 +55,5 @@ int tw_get_default_metadata(const char* filename) {
+ // these types of things (e.g. vfat / FAT / FAT32).
+ int tw_set_default_metadata(const char* filename) {
+ 	int ret = 0;
+-	struct stat st;
+-
+-	if (selinux_context == NULL) {
+-		//printf("selinux_context was null, '%s'\n", filename);
+-		ret = -1;
+-	} else if (lsetfilecon(filename, selinux_context) < 0) {
+-		//printf("Failed to set default contexts on '%s'.\n", filename);
+-		ret = -1;
+-	}
+-
+-	if (lstat(filename, &st) == 0 && st.st_mode & S_IFREG && chmod(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH) < 0) {
+-		//printf("Failed to chmod '%s'\n", filename);
+-		ret = -1;
+-	}
+-
+-	if (has_stat && chown(filename, s.st_uid, s.st_gid) < 0) {
+-		//printf("Failed to lchown '%s'.\n", filename);
+-		ret = -1;
+-	}
+-	//printf("Done trying to set defaults on '%s'\n");
+ 	return ret;
+ }
+diff --git a/set_metadata.h b/set_metadata.h
+index 9a46be9..4be5c0b 100644
+--- a/set_metadata.h
++++ b/set_metadata.h
+@@ -29,7 +29,7 @@
+ #define _RECOVERY_SET_CONTEXTS_H
+ 
+ #include <sys/stat.h>
+-#include "selinux/selinux.h"
++
+ 
+ int tw_get_default_metadata(const char* filename);
+ int tw_set_default_metadata(const char* filename);
+diff --git a/toolbox/ls.c b/toolbox/ls.c
+index 9a89dd4..6600e54 100644
+--- a/toolbox/ls.c
++++ b/toolbox/ls.c
+@@ -13,8 +13,6 @@
+ #include <time.h>
+ #include <unistd.h>
+ 
+-#include <selinux/selinux.h>
+-
+ // simple dynamic array of strings.
+ typedef struct {
+     int count;
+@@ -351,11 +349,6 @@ static int listfile_maclabel(const char *path, struct stat *s)
+         name++;
+     }
+ 
+-    lgetfilecon(path, &maclabel);
+-    if (!maclabel) {
+-        return -1;
+-    }
+-
+     strmode(s->st_mode, mode);
+     user2str(s->st_uid, user, sizeof(user));
+     group2str(s->st_gid, group, sizeof(group));
+diff --git a/updater/Android.mk b/updater/Android.mk
+index 8525ec6..0e03348 100644
+--- a/updater/Android.mk
++++ b/updater/Android.mk
+@@ -50,9 +50,9 @@ LOCAL_STATIC_LIBRARIES += libapplypatch libbase libotafault libedify libmtdutils
+ LOCAL_STATIC_LIBRARIES += libflashutils libmmcutils libbmlutils
+ LOCAL_STATIC_LIBRARIES += libbz
+ LOCAL_STATIC_LIBRARIES += libcutils liblog libc
+-LOCAL_STATIC_LIBRARIES += libselinux
++#LOCAL_STATIC_LIBRARIES += libselinux
+ 
+-LOCAL_STATIC_LIBRARIES += libselinux
++#LOCAL_STATIC_LIBRARIES += libselinux
+ tune2fs_static_libraries := \
+  libext2_com_err \
+  libext2_blkid \
+@@ -67,6 +67,8 @@ endif
+ 
+ LOCAL_C_INCLUDES += external/e2fsprogs/misc
+ LOCAL_C_INCLUDES += $(LOCAL_PATH)/..
++LOCAL_C_INCLUDES += system/core/libcrypto_utils/include/
++LOCAL_C_INCLUDES += external/libselinux/include/
+ 
+ # Each library in TARGET_RECOVERY_UPDATER_LIBS should have a function
+ # named "Register_<libname>()".  Here we emit a little C function that
+diff --git a/updater/install.cpp b/updater/install.cpp
+index b17c34f..cb1e304 100644
+--- a/updater/install.cpp
++++ b/updater/install.cpp
+@@ -27,7 +27,6 @@
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <time.h>
+-#include <selinux/selinux.h>
+ #include <ftw.h>
+ #include <sys/capability.h>
+ #include <sys/xattr.h>
+@@ -160,19 +159,7 @@ Value* MountFn(const char* name, State* state, int argc, Expr* argv[]) {
+     }
+ 
+     {
+-        char *secontext = NULL;
+-
+-        if (sehandle) {
+-            selabel_lookup(sehandle, &secontext, mount_point, 0755);
+-            setfscreatecon(secontext);
+-        }
+-
+         mkdir(mount_point, 0755);
+-
+-        if (secontext) {
+-            freecon(secontext);
+-            setfscreatecon(NULL);
+-        }
+     }
+ 
+     if (strcmp(partition_type, "MTD") == 0) {
+@@ -367,7 +354,7 @@ Value* FormatFn(const char* name, State* state, int argc, Expr* argv[]) {
+         result = location;
+ #ifdef USE_EXT4
+     } else if (strcmp(fs_type, "ext4") == 0) {
+-        int status = make_ext4fs(location, atoll(fs_size), mount_point, sehandle);
++        int status = make_ext4fs(location, atoll(fs_size), mount_point, NULL);
+         if (status != 0) {
+             printf("%s: make_ext4fs failed (%d) on %s",
+                     name, status, location);
+@@ -529,7 +516,7 @@ Value* PackageExtractDirFn(const char* name, State* state,
+ 
+     bool success = mzExtractRecursive(za, zip_path, dest_path,
+                                       &timestamp,
+-                                      NULL, NULL, sehandle);
++                                      NULL, NULL);
+     free(zip_path);
+     free(dest_path);
+     return StringValue(strdup(success ? "t" : ""));
+@@ -814,14 +801,6 @@ static int ApplyParsedPerms(
+ {
+     int bad = 0;
+ 
+-    if (parsed.has_selabel) {
+-        if (lsetfilecon(filename, parsed.selabel) != 0) {
+-            uiPrintf(state, "ApplyParsedPerms: lsetfilecon of %s to %s failed: %s\n",
+-                    filename, parsed.selabel, strerror(errno));
+-            bad++;
+-        }
+-    }
+-
+     /* ignore symlinks */
+     if (S_ISLNK(statptr->st_mode)) {
+         return bad;
+diff --git a/updater/updater.cpp b/updater/updater.cpp
+index 452c353..c0472f0 100644
+--- a/updater/updater.cpp
++++ b/updater/updater.cpp
+@@ -138,24 +138,6 @@ int main(int argc, char** argv) {
+         return 6;
+     }
+ 
+-    if (access(SELINUX_CONTEXTS_TMP, R_OK) == 0) {
+-        struct selinux_opt seopts[] = {
+-          { SELABEL_OPT_PATH, SELINUX_CONTEXTS_TMP }
+-        };
+-
+-        sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
+-    } else {
+-        struct selinux_opt seopts[] = {
+-          { SELABEL_OPT_PATH, "/file_contexts" }
+-        };
+-
+-        sehandle = selabel_open(SELABEL_CTX_FILE, seopts, 1);
+-    }
+-
+-    if (!sehandle) {
+-        fprintf(cmd_pipe, "ui_print Warning: No file_contexts\n");
+-    }
+-
+     // Evaluate the parsed script.
+ 
+     UpdaterInfo updater_info;
+diff --git a/updater/updater.h b/updater/updater.h
+index d1dfdd0..eeaba9f 100644
+--- a/updater/updater.h
++++ b/updater/updater.h
+@@ -20,9 +20,6 @@
+ #include <stdio.h>
+ #include "minzip/Zip.h"
+ 
+-#include <selinux/selinux.h>
+-#include <selinux/label.h>
+-
+ typedef struct {
+     FILE* cmd_pipe;
+     ZipArchive* package_zip;
+@@ -32,6 +29,4 @@ typedef struct {
+     size_t package_zip_len;
+ } UpdaterInfo;
+ 
+-extern struct selabel_handle *sehandle;
+-
+ #endif

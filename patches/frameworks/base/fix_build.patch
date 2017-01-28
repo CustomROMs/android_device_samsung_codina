@@ -1,0 +1,16 @@
+diff --git a/libs/hwui/SpotShadow.cpp b/libs/hwui/SpotShadow.cpp
+index cc96a13..d997bc3 100644
+--- a/libs/hwui/SpotShadow.cpp
++++ b/libs/hwui/SpotShadow.cpp
+@@ -311,9 +311,11 @@ void SpotShadow::makeClockwise(Vector2* polygon, int len) {
+     if (polygon == nullptr  || len == 0) {
+         return;
+     }
++#if 0
+     if (!ShadowTessellator::isClockwise(polygon, len)) {
+         reverse(polygon, len);
+     }
++#endif
+ }
+ 
+ /**

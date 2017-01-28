@@ -14,6 +14,7 @@ if [ "$PATCHES" == "" ] ; then
 		external/busybox \
 		external/boringssl \
 		external/libselinux \
+		external/unrar \
 		vendor/cm \
 		frameworks/opt/net/wifi \
 		frameworks/opt/telephony \
