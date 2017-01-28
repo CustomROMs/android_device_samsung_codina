@@ -1,5 +1,15 @@
+From b80971925d1b767073438ea837e6c578481faa51 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 13 Jan 2017 13:33:48 +0700
+Subject: [PATCH 14/14] Fix build
+
+Change-Id: Ie73a5e331407254b63dc93545612053b979962a0
+---
+ src/com/android/settings/rr/input/HWSettings.java | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
+
 diff --git a/src/com/android/settings/rr/input/HWSettings.java b/src/com/android/settings/rr/input/HWSettings.java
-index 691c5a4..e9b6776 100644
+index 7e16fa6..b202909 100644
 --- a/src/com/android/settings/rr/input/HWSettings.java
 +++ b/src/com/android/settings/rr/input/HWSettings.java
 @@ -180,9 +180,9 @@ public class HWSettings extends ActionFragment implements
@@ -14,7 +24,7 @@ index 691c5a4..e9b6776 100644
              mHwKeyDisable.setChecked(keysDisabled != 0);
              mHwKeyDisable.setOnPreferenceChangeListener(this);
          } else {
-@@ -299,15 +299,15 @@ public class HWSettings extends ActionFragment implements
+@@ -300,15 +300,15 @@ public class HWSettings extends ActionFragment implements
  
      private void updateDisableNavkeysCategories() {
          final PreferenceScreen prefScreen = getPreferenceScreen();
@@ -34,7 +44,7 @@ index 691c5a4..e9b6776 100644
   	    /* Save/restore button timeouts to disable them in softkey mode */
          if (keysDisabled == 1) {
              CMSettings.Secure.putInt(getContext().getContentResolver(),
-@@ -341,8 +341,9 @@ public class HWSettings extends ActionFragment implements
+@@ -342,8 +342,9 @@ public class HWSettings extends ActionFragment implements
      public boolean onPreferenceChange(Preference preference, Object newValue) {
           if (preference == mHwKeyDisable) {
              boolean value = (Boolean) newValue;
@@ -45,3 +55,6 @@ index 691c5a4..e9b6776 100644
              setActionPreferencesEnabled(!value);
              updateDisableNavkeysCategories();
              return true;
+-- 
+2.9.3
+

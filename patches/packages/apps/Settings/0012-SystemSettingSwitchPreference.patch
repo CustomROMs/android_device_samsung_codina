@@ -1,6 +1,13 @@
-Subject: [PATCH] Add back a helper pref that holds a system setting.
+From 8cf769fd0636e5fdb54f24ede58901dcf1ee47ce Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 13 Jan 2017 13:33:48 +0700
+Subject: [PATCH 12/14] SystemSettingSwitchPreference
 
-Settings: Create CMSystemSettingSwitchPreference.
+Change-Id: Ie73a5e331407254b63dc93545612053b979962a0
+---
+ .../cyanogenmod/SystemSettingSwitchPreference.java | 64 ++++++++++++++++++++++
+ 1 file changed, 64 insertions(+)
+ create mode 100644 src/com/android/settings/cyanogenmod/SystemSettingSwitchPreference.java
 
 diff --git a/src/com/android/settings/cyanogenmod/SystemSettingSwitchPreference.java b/src/com/android/settings/cyanogenmod/SystemSettingSwitchPreference.java
 new file mode 100644
@@ -72,3 +79,6 @@ index 0000000..6f80f41
 +        return Settings.System.getString(getContext().getContentResolver(), getKey()) != null;
 +    }
 +}
+-- 
+2.9.3
+

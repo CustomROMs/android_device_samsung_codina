@@ -1,0 +1,262 @@
+From ed1ee1eec543f152a52dc6a78d9a9709085cf62d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 13 Jan 2017 13:31:17 +0700
+Subject: [PATCH 09/14] 
+ packages-apps-Settings_s07-Launch-SuperSU-from-Settings.patch
+
+Change-Id: I18c00a5d07afa819d64744bc155081494f00335d
+---
+ AndroidManifest.xml                            | 18 +++++++
+ res/drawable/ic_settings_supersu.xml           | 32 ++++++++++++
+ res/values/cr_arrays.xml                       | 32 ++++++++++++
+ res/values/cr_strings.xml                      | 72 ++++++++++++++++++++++++++
+ src/com/android/settings/Settings.java         |  1 +
+ src/com/android/settings/SettingsActivity.java | 20 +++++++
+ 6 files changed, 175 insertions(+)
+ create mode 100644 res/drawable/ic_settings_supersu.xml
+ create mode 100644 res/values/cr_arrays.xml
+ create mode 100644 res/values/cr_strings.xml
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 90d8353..a605164 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -1032,6 +1032,24 @@
+                 android:value="true" />
+         </activity>
+ 
++        <activity android:name="Settings$SuperSUActivity"
++                android:label="@string/supersu_title"
++                android:icon="@drawable/ic_settings_supersu"
++                android:taskAffinity="" >
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++                <category android:name="android.intent.category.DEFAULT" />
++                <category android:name="com.android.settings.SHORTCUT" />
++            </intent-filter>
++            <intent-filter android:priority="0">
++                <action android:name="com.android.settings.action.SETTINGS" />
++            </intent-filter>
++            <meta-data android:name="com.android.settings.category"
++                android:value="com.android.settings.category.system" />
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.SuperSU" />
++        </activity>
++
+         <activity android:name="Settings$DeviceInfoSettingsActivity"
+                 android:theme="@style/Theme.SubSettingsDialogWhenLarge"
+                 android:label="@string/device_info_settings"
+diff --git a/res/drawable/ic_settings_supersu.xml b/res/drawable/ic_settings_supersu.xml
+new file mode 100644
+index 0000000..7716f9e
+--- /dev/null
++++ b/res/drawable/ic_settings_supersu.xml
+@@ -0,0 +1,32 @@
++<!--
++    Copyright (C) 2016 Dirty Unicorns
++
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24.0dp"
++    android:height="24.0dp"
++    android:viewportWidth="24.0"
++    android:viewportHeight="24.0"
++    android:tint="?android:attr/colorAccent">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M 4.604552,2.726887 0,7.331435 l 7.647226,9.209104 0.44808,-2.193457 -1.749645,0
++0,-1.544808 2.061167,0 0.763869,-3.759602 -2.825036,0 0,-1.544808 3.136558,0
++0.900427,-4.442389 1.553343,0 -0.900427,4.442389 3.26458,0 0.900427,-4.442389
++1.561878,0 -0.900427,4.442389 1.792319,0 0,1.544808 -2.103841,0
++-0.776672,3.759602 2.880513,0 0,1.544808 -3.187767,0 -0.904694,4.412518
++-1.553343,0 0.891892,-4.412518 -3.251778,0 -0.755335,3.69559 2.684211,3.230441 L
++24,7.331435 19.613087,2.752487 4.604552,2.726887 z m 6.119488,6.315785
++-0.763869,3.759602 3.251778,0 0.776671,-3.759602 -3.26458,0 z" />
++</vector>
+diff --git a/res/values/cr_arrays.xml b/res/values/cr_arrays.xml
+new file mode 100644
+index 0000000..992ab90
+--- /dev/null
++++ b/res/values/cr_arrays.xml
+@@ -0,0 +1,32 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
++
++    <!-- Option to enable/disable scrolling cache -->
++    <string-array name="entries_scrollingcache" translatable="false">
++        <item>@string/pref_scrollingcache_force_enable</item>
++        <item>@string/pref_scrollingcache_default_enable</item>
++        <item>@string/pref_scrollingcache_default_disable</item>
++        <item>@string/pref_scrollingcache_force_disable</item>
++    </string-array>
++
++    <string-array name="values_scrollingcache" translatable="false">
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++        <item>3</item>
++    </string-array>
++
++    <!-- MediaScanner behavior on boot -->
++    <string-array name="media_scanner_on_boot_entries">
++        <item>@string/media_scanner_on_boot_enabled</item>
++        <item>@string/media_scanner_on_boot_ask</item>
++        <item>@string/media_scanner_on_boot_disabled</item>
++    </string-array>
++
++    <string-array name="media_scanner_on_boot_values" translatable="false">
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++    </string-array>
++
++</resources>
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+new file mode 100644
+index 0000000..c83d5b1
+--- /dev/null
++++ b/res/values/cr_strings.xml
+@@ -0,0 +1,72 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2012-2015 SergeyL Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
++
++    <!-- Changelog -->
++    <string name="changelog_crdroid_title">Changelog</string>
++    <string name="changelog_crdroid_error">Unable to load changelog</string>
++
++    <!-- Superuser indicator on status bar -->
++    <string name="su_indicator">Superuser indicator</string>
++    <string name="su_indicator_summary_on">Superuser indicator is visible when a session is active</string>
++    <string name="su_indicator_summary_off">Toggle to show superuser indicator when a session is active</string>
++
++    <!-- About device screen, CPU and RAM info. -->
++    <string name="cpu_info">CPU</string>
++    <string name="mem_info">RAM</string>
++
++    <!-- USB data automatic unlock -->
++    <string name="usb_data_auto_unlock_title">Unlock USB data</string>
++    <string name="usb_data_auto_unlock_summary">Allow unlocked data access to your phone\'s storage through USB (MTP, PTP)</string>
++
++    <!-- transferring files via UMS -->
++    <string name="usb_use_UMS">File transfers via UMS</string>
++    <string name="usb_use_UMS_desc">Transfer files to the host OS via UMS</string>
++
++    <!-- Option to enable/disable scrolling cache -->
++    <string name="pref_scrollingcache_title">Scrolling cache</string>
++    <string name="pref_scrollingcache_summary">Scrolling cache may improve scrolling performance at the cost of memory</string>
++    <string name="pref_scrollingcache_force_enable">Force enable</string>
++    <string name="pref_scrollingcache_default_enable">Default enable</string>
++    <string name="pref_scrollingcache_default_disable">Default disable</string>
++    <string name="pref_scrollingcache_force_disable">Force disable</string>
++    <string name="animation_settings_title">Advanced options</string>
++
++    <!-- MediaScanner behavior on boot -->
++    <string name="media_scanner_on_boot_title">MediaScanner behavior on boot</string>
++    <string name="media_scanner_on_boot_enabled">Scan media</string>
++    <string name="media_scanner_on_boot_ask">Ask to scan (notification)</string>
++    <string name="media_scanner_on_boot_disabled">Do not scan media</string>
++
++    <!-- SuperSU -->
++    <string name="supersu_title">SuperSU</string>
++
++    <!-- Allow fake signature checkbox in developer settings -->
++    <string name="allow_signature_fake">Allow signature spoofing</string>
++    <string name="allow_signature_fake_summary">Allow apps to bypass security systems by pretending to be a different app</string>
++    <string name="allow_signature_fake_warning">Allowing apps to bypass security systems can lead to serious security and privacy problems! Check that only benign apps use the corresponding permission when this is active.</string>
++
++    <!-- About device screen, CPU and RAM info. -->
++    <string name="cpu_info">CPU</string>
++    <string name="mem_info">RAM</string>
++
++    <!-- SuperSU -->
++    <string name="supersu_title">SuperSU</string>
++
++    <!-- SuperSU -->
++    <string name="supersu_title">SuperSU</string>
++
++</resources>
+diff --git a/src/com/android/settings/Settings.java b/src/com/android/settings/Settings.java
+index f07a337..59b39df 100644
+--- a/src/com/android/settings/Settings.java
++++ b/src/com/android/settings/Settings.java
+@@ -73,6 +73,7 @@ public class Settings extends SettingsActivity {
+     public static class BackgroundCheckSummaryActivity extends SettingsActivity { /* empty */ }
+     public static class StorageUseActivity extends SettingsActivity { /* empty */ }
+     public static class DevelopmentSettingsActivity extends SettingsActivity { /* empty */ }
++    public static class SuperSUActivity extends SettingsActivity { /* empty */ }
+     public static class AccessibilitySettingsActivity extends SettingsActivity { /* empty */ }
+     public static class CaptioningSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class AccessibilityInversionSettingsActivity extends SettingsActivity { /* empty */ }
+diff --git a/src/com/android/settings/SettingsActivity.java b/src/com/android/settings/SettingsActivity.java
+index a19d472..499f63d 100644
+--- a/src/com/android/settings/SettingsActivity.java
++++ b/src/com/android/settings/SettingsActivity.java
+@@ -249,6 +249,8 @@ public class SettingsActivity extends SettingsDrawerActivity
+ 
+     private static final String ACTION_TIMER_SWITCH = "qualcomm.intent.action.TIMER_SWITCH";
+ 
++    private static final String SUPERSU_FRAGMENT = "com.android.settings.SuperSU";
++
+     private String mFragmentClass;
+     private String mActivityAction;
+ 
+@@ -1070,6 +1072,14 @@ public class SettingsActivity extends SettingsDrawerActivity
+     private Fragment switchToFragment(String fragmentName, Bundle args, boolean validate,
+             boolean addToBackStack, int titleResId, CharSequence title, boolean withTransition) {
+ 
++         if (SUPERSU_FRAGMENT.equals(fragmentName)) {
++             Intent superSUIntent = new Intent();
++             superSUIntent.setClassName("eu.chainfire.supersu", "eu.chainfire.supersu.MainActivity");
++             startActivity(superSUIntent);
++             finish();
++             return null;
++         }
++
+ 
+   		 if (KA_FRAGMENT.equals(fragmentName)) {
+             Intent kaIntent = new Intent();
+@@ -1182,6 +1192,16 @@ public class SettingsActivity extends SettingsDrawerActivity
+                         Settings.KActivity.class.getName()),
+                 kapresent, isAdmin, pm);
+ 
++        // Embedding into Settings is supported from SuperSU v1.85 and up
++        boolean suSupported = false;
++        try {
++            suSupported = (getPackageManager().getPackageInfo("eu.chainfire.supersu", 0).versionCode >= 185);
++        } catch (PackageManager.NameNotFoundException e) {
++        }
++        setTileEnabled(new ComponentName(packageName,
++                        Settings.SuperSUActivity.class.getName()),
++                suSupported, isAdmin, pm);
++
+         // Reveal development-only quick settings tiles
+         DevelopmentTiles.setTilesEnabled(this, showDev);
+ 
+-- 
+2.9.3
+

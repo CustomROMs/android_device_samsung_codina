@@ -1,0 +1,30 @@
+From 55a66a38f05fc830dc90c21e1f5eafb406273c79 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 13 Jan 2017 13:23:03 +0700
+Subject: [PATCH 04/14] packages-apps-Settings_s03-Allow-unlocked-USB-new.patch
+
+Change-Id: I997ecc2f27311464e7a8600102b5dd9d09afcadc
+---
+ res/xml/development_prefs.xml | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/res/xml/development_prefs.xml b/res/xml/development_prefs.xml
+index 1ceaff6..edd6cb9 100644
+--- a/res/xml/development_prefs.xml
++++ b/res/xml/development_prefs.xml
+@@ -235,6 +235,12 @@
+             android:title="@string/mobile_data_always_on"
+             android:summary="@string/mobile_data_always_on_summary"/>
+ 
++        <com.android.settings.cyanogenmod.SystemSettingSwitchPreference
++            android:key="usb_data_auto_unlock"
++            android:title="@string/usb_data_auto_unlock_title"
++            android:summary="@string/usb_data_auto_unlock_summary"
++            android:defaultValue="false" />
++
+         <ListPreference
+             android:key="select_usb_configuration"
+             android:title="@string/select_usb_configuration_title"
+-- 
+2.9.3
+

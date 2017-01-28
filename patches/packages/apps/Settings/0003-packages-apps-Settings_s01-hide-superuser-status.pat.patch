@@ -1,0 +1,31 @@
+From 1f97823250b25bd31b329752384182e87f972763 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 13 Jan 2017 13:23:03 +0700
+Subject: [PATCH 03/14] packages-apps-Settings_s01-hide-superuser-status.patch
+
+Change-Id: If32e9f769934f80df6bf8f1376898af6e826abeb
+---
+ res/xml/display_settings.xml | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/res/xml/display_settings.xml b/res/xml/display_settings.xml
+index d38897c..08739c7 100644
+--- a/res/xml/display_settings.xml
++++ b/res/xml/display_settings.xml
+@@ -125,6 +125,13 @@
+                 android:defaultValue="false"
+                 cm:requiresFeature="cmhardware:FEATURE_HIGH_TOUCH_SENSITIVITY" />
+ 
++        <com.android.settings.cyanogenmod.SystemSettingSwitchPreference
++                android:key="show_su_indicator"
++                android:title="@string/su_indicator"
++                android:summaryOn="@string/su_indicator_summary_on"
++                android:summaryOff="@string/su_indicator_summary_off"
++                android:defaultValue="true" />
++
+         <!-- Disable on CM
+         <DropDownPreference
+                 android:key="auto_rotate"
+-- 
+2.9.3
+

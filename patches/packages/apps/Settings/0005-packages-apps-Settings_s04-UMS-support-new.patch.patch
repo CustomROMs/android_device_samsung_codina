@@ -1,10 +1,19 @@
-Bring back UMS support [1/3]
+From 426e25f1951a8075c2bdb889955c726b6b3b0192 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 13 Jan 2017 13:23:03 +0700
+Subject: [PATCH 05/14] packages-apps-Settings_s04-UMS-support-new.patch
+
+Change-Id: I277eb45215459c5ccf2009507aa09e012acc8c1c
+---
+ src/com/android/settings/deviceinfo/UsbBackend.java             | 7 +++++++
+ src/com/android/settings/deviceinfo/UsbModeChooserActivity.java | 7 ++++++-
+ 2 files changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/src/com/android/settings/deviceinfo/UsbBackend.java b/src/com/android/settings/deviceinfo/UsbBackend.java
-index 1110072..2889014 100644
+index d30004f..e2d90b1 100644
 --- a/src/com/android/settings/deviceinfo/UsbBackend.java
 +++ b/src/com/android/settings/deviceinfo/UsbBackend.java
-@@ -40,6 +40,7 @@
+@@ -40,6 +40,7 @@ public class UsbBackend {
      public static final int MODE_DATA_PTP    = 0x02 << 1;
      public static final int MODE_DATA_MIDI   = 0x03 << 1;
      public static final int MODE_DATA_TETHERING   = 0x04 << 1;
@@ -12,7 +21,7 @@ index 1110072..2889014 100644
  
      private final boolean mRestricted;
      private final boolean mRestrictedBySystem;
-@@ -107,6 +108,8 @@ public int getUsbDataMode() {
+@@ -107,6 +108,8 @@ public class UsbBackend {
              return MODE_DATA_PTP;
          } else if (mUsbManager.isFunctionEnabled(UsbManager.USB_FUNCTION_MIDI)) {
              return MODE_DATA_MIDI;
@@ -21,7 +30,7 @@ index 1110072..2889014 100644
          }
          return MODE_DATA_NONE; // ...
      }
-@@ -125,6 +128,10 @@ private void setUsbFunction(int mode) {
+@@ -125,6 +128,10 @@ public class UsbBackend {
                  mUsbManager.setCurrentFunction(UsbManager.USB_FUNCTION_MIDI);
                  mUsbManager.setUsbDataUnlocked(true);
                  break;
@@ -33,10 +42,10 @@ index 1110072..2889014 100644
                  Intent intent = new Intent();
                  intent.setClass(mContext, TetherSettings.class);
 diff --git a/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java b/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java
-index 1110073..2889015 100644
+index 0e32d15..7955401 100644
 --- a/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java
 +++ b/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java
-@@ -56,7 +56,8 @@
+@@ -56,7 +56,8 @@ public class UsbModeChooserActivity extends Activity {
          UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_MTP,
          UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_PTP,
          UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_MIDI,
@@ -46,7 +55,7 @@ index 1110073..2889015 100644
      };
  
      private UsbBackend mBackend;
-@@ -206,6 +207,8 @@ private static int getSummary(int mode) {
+@@ -206,6 +207,8 @@ public class UsbModeChooserActivity extends Activity {
                  return R.string.usb_use_MIDI_desc;
              case UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_TETHERING:
                  return R.string.usb_tethering_desc;
@@ -55,7 +64,7 @@ index 1110073..2889015 100644
          }
          return 0;
      }
-@@ -224,6 +227,8 @@ private static int getTitle(int mode) {
+@@ -224,6 +227,8 @@ public class UsbModeChooserActivity extends Activity {
                  return R.string.usb_use_MIDI;
              case UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_TETHERING:
                  return R.string.usb_tethering_title;
@@ -64,16 +73,6 @@ index 1110073..2889015 100644
          }
          return 0;
      }
-diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
-index 022f220..7289093 100644
---- a/res/values/cr_strings.xml
-+++ b/res/values/cr_strings.xml
-@@ -32,4 +32,8 @@
-     <string name="usb_data_auto_unlock_title">Unlock USB data</string>
-     <string name="usb_data_auto_unlock_summary">Allow unlocked data access to your phone\'s storage through USB (MTP, PTP)</string>
- 
-+    <!-- transferring files via UMS -->
-+    <string name="usb_use_UMS">File transfers via UMS</string>
-+    <string name="usb_use_UMS_desc">Transfer files to the host OS via UMS</string>
-+
- </resources>
+-- 
+2.9.3
+
