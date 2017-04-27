@@ -115,8 +115,9 @@
             64 - Volume rocker
          For example, a device with Home, Back and Menu keys would set this
          config to 7. -->
+<!--
     <integer name="config_deviceHardwareWakeKeys">1</integer>
-
+-->
     <!-- Package name(s) containing location provider support.
          These packages can contain services implementing location providers,
          such as the Geocode Provider, Network Location Provider, and
@@ -195,8 +196,9 @@
     <string translatable="false" name="config_radio_access_family">GPRS|EDGE|UMTS|HSDPA|HSUPA|GSM|WCDMA</string>
 
     <!-- Boolean to enable stk functionality on Samsung phones -->
+<!--
     <bool name="config_samsung_stk">true</bool>
-
+-->
     <!-- Enable lockscreen translucent decor by default -->
     <bool name="config_enableLockScreenTranslucentDecor">true</bool>
 
@@ -213,8 +215,9 @@
 
     <!-- Timeout in MS for how long you have to long-press the back key to
          kill the foreground app. -->
+<!--
     <integer name="config_backKillTimeout">500</integer>
-
+-->
     <!-- Display low battery warning when battery level dips to this value -->
     <integer name="config_lowBatteryWarningLevel">5</integer>
 
@@ -261,8 +264,9 @@
 
     <!-- Older rotation sensors are not setting event.timestamp correctly. Setting to
          true will use SystemClock.elapsedRealtimeNanos() to set timestamp. -->
+<!--
     <bool name="config_useSystemClockforRotationSensor">true</bool>
-
+-->
     <!-- Whether device supports double tap to wake
     <bool name="config_supportDoubleTapWake">true</bool> -->
 
@@ -274,8 +278,9 @@
     <bool translatable="false" name="config_wifi_batched_scan_supported">true</bool> -->
 
     <!-- IpReachability monitor enable/Disable -->
+<!--
     <bool translatable="false" name="config_wifi_ipreachability_monitor">false</bool>
-
+-->
     <!-- Boolean indicating whether Hotspot 2.0/Passpoint and ANQP queries is enabled
     <bool translatable="false" name="config_wifi_hotspot2_enabled">true</bool> -->
 

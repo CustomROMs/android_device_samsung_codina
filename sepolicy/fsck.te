@@ -1,1 +1,0 @@
-allow fsck efs_block_device:blk_file { read write getattr open ioctl };

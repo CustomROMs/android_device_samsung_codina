@@ -4,9 +4,9 @@ CURRENT_DIR=$PWD
 
 KERNEL_PATCH="kernel/codina/chrono"
 
-if [ "$PATCHES" == "" ] ; then
+#if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
-		build \
+		#build \
 		external/jemalloc \
 		external/jhead \
 		external/gtest \
@@ -14,19 +14,17 @@ if [ "$PATCHES" == "" ] ; then
 		external/busybox \
 		external/boringssl \
 		external/libselinux \
-		external/unrar \
-		vendor/cm \
 		frameworks/opt/net/wifi \
 		frameworks/opt/telephony \
-		frameworks/av \
-		frameworks/native \
+		#frameworks/av \
+		#frameworks/native \
 		frameworks/base \
 		frameworks/wilhelm \
 		bootable/recovery \
 		art \
 		hardware/libhardware \
 		hardware/ril \
-		system/core \
+		#system/core \
 		system/bt \
 		system/netd \
 		system/vold \
@@ -40,7 +38,7 @@ if [ "$PATCHES" == "" ] ; then
 		packages/providers/MediaProvider \
 		packages/services/Telephony"
 
-fi
+#fi
 
 export CL_RED="\033[31m"
 export CL_GRN="\033[32m"

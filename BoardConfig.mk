@@ -24,7 +24,7 @@ PRODUCT_VENDOR_KERNEL_HEADERS := $(LOCAL_PATH)/kernel-headers
 DEVICE_ENABLE_TOOLCHAIN := true
 
 # test
-# USE_CLANG_PLATFORM_BUILD := false
+USE_CLANG_PLATFORM_BUILD := false
 # LEGACY_USE_JAVA7 := true
 # AUDIOSERVER_MULTILIB := 32
 
@@ -109,8 +109,8 @@ ifeq ($(DEVICE_ENABLE_TOOLCHAIN),true)
 # KERNEL_TOOLCHAIN := /home/sergeyl/eabi/prebuilt/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin
 # KERNEL_TOOLCHAIN_PREFIX := arm-linux-gnueabihf-
 # KERNEL_TOOLCHAIN_PREFIX:=$(ANDROID_BUILD_TOP)/prebuilts/gcc/$(HOST_OS)-x86/arm/arm-eabi-5.3/bin/arm-eabi-
-KERNEL_TOOLCHAIN := /home/chrono/x-tools/arm-cortexa9_neon-linux-gnueabihf/bin/
-KERNEL_TOOLCHAIN_PREFIX := arm-cortexa9_neon-linux-gnueabihf-
+KERNEL_TOOLCHAIN := /home/chrono/root/arm-linux-gnueabihf-5.0/bin
+KERNEL_TOOLCHAIN_PREFIX := armv7a-linux-gnueabihf-
 endif
 
 # Graphics
