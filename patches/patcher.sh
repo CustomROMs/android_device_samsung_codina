@@ -6,38 +6,36 @@ KERNEL_PATCH="kernel/codina/chrono"
 
 #if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
-		#build \
-		external/jemalloc \
-		external/jhead \
-		external/gtest \
-		external/google-benchmark \
-		external/busybox \
-		external/boringssl \
-		external/libselinux \
-		frameworks/opt/net/wifi \
-		frameworks/opt/telephony \
-		#frameworks/av \
-		#frameworks/native \
-		frameworks/base \
-		frameworks/wilhelm \
-		bootable/recovery \
-		art \
-		hardware/libhardware \
-		hardware/ril \
-		#system/core \
-		system/bt \
-		system/netd \
-		system/vold \
-		system/extras \
-		system/media \
-		bionic \
-		packages/apps/Settings \
-		packages/apps/Gallery2 \
-		packages/apps/Dialer \
-		packages/inputmethods/LatinIME \
-		packages/providers/MediaProvider \
-		packages/services/Telephony"
-
+	#vendor/cmsdk \
+	#vendor/cm \
+	art \
+	bionic \
+	external/jhead \
+	external/boringssl \
+	external/jemalloc \
+	libcore \
+	frameworks/av \
+	#frameworks/base \
+	frameworks/opt/net/wifi \
+	frameworks/opt/telephony \
+	frameworks/native \
+	hardware/ril \
+	hardware/libhardware \
+	system/media \
+	system/core \
+	system/netd \
+	system/vold \
+	system/extras \
+	build \
+	packages/apps/Dialer \
+	packages/apps/Settings \
+	packages/apps/LockClock \
+	packages/apps/CMParts \
+	packages/apps/AudioFX \
+	packages/services/Telephony \
+	packages/inputmethods/LatinIME \
+	packages/providers/MediaProvider \
+	#bootable/recovery"
 #fi
 
 export CL_RED="\033[31m"

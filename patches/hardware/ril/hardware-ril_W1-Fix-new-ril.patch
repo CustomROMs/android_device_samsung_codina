@@ -189,16 +189,7 @@ diff --git a/libril/ril.cpp b/libril/ril.cpp
 index 0c99520..d49d5dd 100644
 --- a/libril/ril.cpp
 +++ b/libril/ril.cpp
-@@ -286,6 +286,8 @@
- static int responseInts(Parcel &p, void *response, size_t responselen);
- static int responseFailCause(Parcel &p, void *response, size_t responselen);
- static int responseStrings(Parcel &p, void *response, size_t responselen);
-+static int responseStrings(Parcel &p, void *response, size_t responselen, bool network_search);
-+static int responseStringsNetworks(Parcel &p, void *response, size_t responselen);
- static int responseString(Parcel &p, void *response, size_t responselen);
- static int responseVoid(Parcel &p, void *response, size_t responselen);
- static int responseCallList(Parcel &p, void *response, size_t responselen);
-@@ -312,6 +314,7 @@
+@@ -312,6 +312,7 @@
  static int responseDcRtInfo(Parcel &p, void *response, size_t responselen);
  static int responseRadioCapability(Parcel &p, void *response, size_t responselen);
  static int responseSSData(Parcel &p, void *response, size_t responselen);
@@ -206,7 +197,7 @@ index 0c99520..d49d5dd 100644
  static int responseLceStatus(Parcel &p, void *response, size_t responselen);
  static int responseLceData(Parcel &p, void *response, size_t responselen);
  static int responseActivityData(Parcel &p, void *response, size_t responselen);
-@@ -2367,6 +2370,88 @@
+@@ -2367,6 +2370,41 @@
      return 0;
  }
  
@@ -245,67 +236,9 @@ index 0c99520..d49d5dd 100644
 +    return 0;
 +}
 +
-+/** response is a char **, pointing to an array of char *'s */
-+static int responseStrings(Parcel &p, void *response, size_t responselen, bool network_search) {
-+    int numStrings;
-+
-+    if (response == NULL && responselen != 0) {
-+        RLOGE("invalid response: NULL");
-+        return RIL_ERRNO_INVALID_RESPONSE;
-+    }
-+    if (responselen % sizeof(char *) != 0) {
-+        RLOGE("responseStrings: invalid response length %d expected multiple of %d\n",
-+            (int)responselen, (int)sizeof(char *));
-+        return RIL_ERRNO_INVALID_RESPONSE;
-+    }
-+
-+    if (response == NULL) {
-+        p.writeInt32 (0);
-+    } else {
-+        char **p_cur = (char **) response;
-+
-+        numStrings = responselen / sizeof(char *);
-+        if (network_search) {
-+            int32_t QANElements;
-+
-+            /*
-+             * This needs to be set to same value as mQANElements in the RIL
-+             * Telephony class.
-+             */
-+            QANElements = property_get_int32(PROPERTY_QAN_ELEMENTS, 4);
-+            p.writeInt32 ((numStrings / 5) * QANElements);
-+        } else {
-+            p.writeInt32 (numStrings);
-+        }
-+
-+        /* each string*/
-+        startResponse;
-+        for (int i = 0 ; i < numStrings ; i++) {
-+            if (network_search && ((i + 1) % 5 == 0))
-+                continue;
-+            appendPrintBuf("%s%s,", printBuf, (char*)p_cur[i]);
-+            writeStringToParcel (p, p_cur[i]);
-+        }
-+        removeLastChar;
-+        closeResponse;
-+    }
-+    return 0;
-+}
-+
  // Response is an int or RIL_LastCallFailCauseInfo.
  // Currently, only Shamu plans to use RIL_LastCallFailCauseInfo.
  // TODO(yjl): Let all implementations use RIL_LastCallFailCauseInfo.
-@@ -2408,6 +2493,10 @@
-     return responseStrings(p, response, responselen);
- }
- 
-+static int responseStringsNetworks(Parcel &p, void *response, size_t responselen) {
-+    return responseStrings(p, response, responselen, true);
-+}
-+
- /** response is a char **, pointing to an array of char *'s */
- static int responseStrings(Parcel &p, void *response, size_t responselen) {
-     int numStrings;
 @@ -5058,7 +5147,7 @@
  extern "C" void
  RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responselen) {
@@ -328,15 +261,6 @@ index 0c99521..d49d5dd 100644
      {RIL_REQUEST_SIGNAL_STRENGTH, dispatchVoid, responseRilSignalStrength},
      {RIL_REQUEST_VOICE_REGISTRATION_STATE, dispatchVoid, responseStrings},
      {RIL_REQUEST_DATA_REGISTRATION_STATE, dispatchVoid, responseStrings},
-@@ -62,7 +62,7 @@
-     {RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE, dispatchVoid, responseInts},
-     {RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC, dispatchVoid, responseVoid},
-     {RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL, dispatchString, responseVoid},
--    {RIL_REQUEST_QUERY_AVAILABLE_NETWORKS , dispatchVoid, responseStrings},
-+    {RIL_REQUEST_QUERY_AVAILABLE_NETWORKS , dispatchVoid, responseStringsNetworks},
-     {RIL_REQUEST_DTMF_START, dispatchString, responseVoid},
-     {RIL_REQUEST_DTMF_STOP, dispatchVoid, responseVoid},
-     {RIL_REQUEST_BASEBAND_VERSION, dispatchVoid, responseString},
 @@ -88,7 +88,7 @@
      {RIL_REQUEST_STK_HANDLE_CALL_SETUP_REQUESTED_FROM_SIM, dispatchInts, responseVoid},
      {RIL_REQUEST_EXPLICIT_CALL_TRANSFER, dispatchVoid, responseVoid},
@@ -398,7 +322,7 @@ diff --git a/libril/ril.cpp b/libril/ril.cpp
 index 0c99523..d49d5dd 100644
 --- a/libril/ril.cpp
 +++ b/libril/ril.cpp
-@@ -365,6 +365,10 @@
+@@ -363,6 +363,10 @@
  #include "ril_unsol_commands.h"
  };
  
@@ -413,7 +337,7 @@ diff --git a/libril/ril.cpp b/libril/ril.cpp
 index 0c99524..d49d5dd 100644
 --- a/libril/ril.cpp
 +++ b/libril/ril.cpp
-@@ -2587,21 +2587,13 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
+@@ -2534,21 +2534,13 @@ static int responseCallList(Parcel &p, void *response, size_t responselen) {
          p.writeInt32(p_cur->als);
          p.writeInt32(p_cur->isVoice);
          p.writeInt32(p_cur->isVoicePrivacy);
@@ -442,22 +366,10 @@ index 0c99524..d49d5dd 100644
              printBuf,
              p_cur->index,
 diff --git a/libril/ril.cpp b/libril/ril.cpp
-index 0c99524..d49d5d0 100644
---- a/libril/ril.cpp
-+++ b/libril/ril.cpp
-@@ -71,6 +71,7 @@ namespace android {
- #define ANDROID_WAKE_LOCK_USECS 200000
- 
- #define PROPERTY_RIL_IMPL "gsm.version.ril-impl"
-+#define PROPERTY_QAN_ELEMENTS "ro.ril.telephony.mqanelements"
- 
- // match with constant in RIL.java
- #define MAX_COMMAND_BYTES (8 * 1024)
-diff --git a/libril/ril.cpp b/libril/ril.cpp
 index 0c99524..d49d5d9 100644
 --- a/libril/ril.cpp
 +++ b/libril/ril.cpp
-@@ -5117,6 +5117,11 @@
+@@ -5063,6 +5063,11 @@
          RLOGE ("RIL_onRequestAck: invalid RIL_Token");
          return;
      }
@@ -469,7 +381,7 @@ index 0c99524..d49d5d9 100644
  
      socket_id = pRI->socket_id;
      fd = findFd(socket_id);
-@@ -5137,7 +5142,7 @@
+@@ -5083,7 +5088,7 @@
              RLOGD ("RIL onRequestComplete: Command channel closed");
          }
  

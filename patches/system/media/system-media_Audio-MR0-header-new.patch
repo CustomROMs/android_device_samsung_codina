@@ -2,7 +2,7 @@ diff --git a/audio/include/system/audio.h b/audio/include/system/audio.h
 index 1a000fc..e280cce 100644
 --- a/audio/include/system/audio.h
 +++ b/audio/include/system/audio.h
-@@ -704,7 +704,11 @@ typedef enum {
+@@ -703,7 +703,11 @@ typedef enum {
  enum {
      AUDIO_DEVICE_NONE                          = 0x0,
      /* reserved bits */
@@ -14,7 +14,7 @@ index 1a000fc..e280cce 100644
      AUDIO_DEVICE_BIT_DEFAULT                   = 0x40000000,
      /* output devices */
      AUDIO_DEVICE_OUT_EARPIECE                  = 0x1,
-@@ -782,6 +786,38 @@ enum {
+@@ -781,6 +785,38 @@ enum {
      AUDIO_DEVICE_OUT_ALL_USB  = (AUDIO_DEVICE_OUT_USB_ACCESSORY |
                                   AUDIO_DEVICE_OUT_USB_DEVICE),
      /* input devices */
@@ -53,7 +53,7 @@ index 1a000fc..e280cce 100644
      AUDIO_DEVICE_IN_COMMUNICATION         = AUDIO_DEVICE_BIT_IN | 0x1,
      AUDIO_DEVICE_IN_AMBIENT               = AUDIO_DEVICE_BIT_IN | 0x2,
      AUDIO_DEVICE_IN_BUILTIN_MIC           = AUDIO_DEVICE_BIT_IN | 0x4,
-@@ -813,7 +849,7 @@ enum {
+@@ -812,7 +848,7 @@ enum {
      AUDIO_DEVICE_IN_BUS                   = AUDIO_DEVICE_BIT_IN | 0x100000,
      AUDIO_DEVICE_IN_PROXY                 = AUDIO_DEVICE_BIT_IN | 0x1000000,
      AUDIO_DEVICE_IN_DEFAULT               = AUDIO_DEVICE_BIT_IN | AUDIO_DEVICE_BIT_DEFAULT,

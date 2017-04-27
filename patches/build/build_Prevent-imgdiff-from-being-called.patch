@@ -6,8 +6,8 @@ index 43c98e3..b22731f 100644
  	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
  	   $(BUILT_TARGET_FILES_PACKAGE) $@
  
--CM_TARGET_PACKAGE := $(PRODUCT_OUT)/cm-$(CM_VERSION).zip
-+CM_TARGET_PACKAGE := $(PRODUCT_OUT)/cm$(CM_VERSION)_SergeyL.zip
+-CM_TARGET_PACKAGE := $(PRODUCT_OUT)/lineage-$(LINEAGE_VERSION).zip
++CM_TARGET_PACKAGE := $(PRODUCT_OUT)/lineage$(LINEAGE_VERSION)_SergeyL.zip
  
  .PHONY: otapackage bacon
  otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
@@ -15,7 +15,7 @@ diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
 index d70610d..2b7fdba 100755
 --- a/tools/releasetools/common.py
 +++ b/tools/releasetools/common.py
-@@ -1742,6 +1742,10 @@ def ParseCertificate(data):
+@@ -1749,6 +1749,10 @@ def ParseCertificate(data):
  
  def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
                        info_dict=None):

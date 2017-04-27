@@ -5,7 +5,7 @@ diff --git a/dex2oat/dex2oat.cc b/dex2oat/dex2oat.cc
 index d2b8ba1..f3f542d 100644
 --- a/dex2oat/dex2oat.cc
 +++ b/dex2oat/dex2oat.cc
-@@ -477,10 +477,10 @@ class WatchDog {
+@@ -490,10 +490,10 @@ class WatchDog {
    // Debug builds are slower so they have larger timeouts.
    static constexpr int64_t kSlowdownFactor = kIsDebugBuild ? 5U : 1U;
  

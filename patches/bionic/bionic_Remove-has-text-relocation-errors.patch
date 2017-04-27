@@ -2,7 +2,7 @@ diff --git a/linker/linker.cpp b/linker/linker.cpp
 index d1f3469..04802c9 100644
 --- a/linker/linker.cpp
 +++ b/linker/linker.cpp
-@@ -4084,9 +4084,6 @@ bool soinfo::LinkImage(const android_dlextinfo* extinfo) {
+@@ -4073,9 +4073,6 @@ bool soinfo::LinkImage(const android_dlextinfo* extinfo) {
  #endif
      // Make segments writable to allow text relocations to work properly. We will later call
      // phdr_table_protect_segments() after all of them are applied.

@@ -14,7 +14,7 @@ index 47325d0..cd9e9f6 100644
  {
      gr_draw = NULL;
  
-@@ -369,6 +373,27 @@ int gr_init(void)
+@@ -371,6 +375,27 @@ int gr_init(void)
      return 0;
  }
  

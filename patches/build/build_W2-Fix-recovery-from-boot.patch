@@ -2,7 +2,7 @@ diff --git a/core/Makefile b/core/Makefile
 index 7890695..fb0e497 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -1096,12 +1096,12 @@
+@@ -1094,12 +1094,12 @@
              ln -sf /system_root/system $(TARGET_RECOVERY_ROOT_OUT)/system) # Mount the system_root_image to /system_root and symlink /system.
  endef
  

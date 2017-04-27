@@ -23,7 +23,7 @@ diff --git a/Disk.cpp b/Disk.cpp
 index 00550c3..6a68711 100644
 --- a/Disk.cpp
 +++ b/Disk.cpp
-@@ -105,8 +105,12 @@ static bool isVirtioBlkDevice(unsigned int major) {
+@@ -106,8 +106,12 @@ static bool isVirtioBlkDevice(unsigned int major) {
       * "ranchu", the device's sysfs path should end with "/block/vd[d-z]", etc.
       * But just having a) and b) is enough for now.
       */

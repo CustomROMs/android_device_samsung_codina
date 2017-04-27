@@ -4,10 +4,10 @@ diff --git a/core/Makefile b/core/Makefile
 index 1539900..b227310 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -1263,6 +1263,7 @@ FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEP
+@@ -1253,6 +1253,7 @@ FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEP
  $(INSTALLED_FILES_FILE): $(FULL_SYSTEMIMAGE_DEPS)
  	$(hide) ./vendor/samsung/tools/changelog
- 	$(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/$(CM_VERSION)-$(TARGET_PRODUCT).txt
+ 	$(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/$(LINEAGE_VERSION)-$(TARGET_PRODUCT).txt
 +	$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
  	@echo Installed file list: $@
  	@mkdir -p $(dir $@)

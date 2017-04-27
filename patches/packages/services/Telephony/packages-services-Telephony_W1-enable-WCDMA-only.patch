@@ -8,7 +8,7 @@ diff --git a/res/values/strings.xml b/res/values/strings.xml
 index 0d4ea51..eb18cf0 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -704,12 +764,14 @@
+@@ -705,12 +705,14 @@
      </string-array>
  
      <string-array name="enabled_networks_except_lte_choices" translatable="false">
@@ -30,15 +30,15 @@ diff --git a/src/com/android/phone/MobileNetworkSettings.java b/src/com/android/
 index cf18339..dfcab93 100644
 --- a/src/com/android/phone/MobileNetworkSettings.java
 +++ b/src/com/android/phone/MobileNetworkSettings.java
-@@ -908,6 +908,7 @@ public class MobileNetworkSettings extends PreferenceActivity
-                 switch (buttonNetworkMode) {
-                     case Phone.NT_MODE_WCDMA_PREF:
-                     case Phone.NT_MODE_GSM_ONLY:
-+                    case Phone.NT_MODE_WCDMA_ONLY:
-                     case Phone.NT_MODE_LTE_GSM_WCDMA:
-                     case Phone.NT_MODE_LTE_CDMA_EVDO_GSM_WCDMA:
-                     case Phone.NT_MODE_CDMA:
-@@ -1160,12 +1161,22 @@ public class MobileNetworkSettings extends PreferenceActivity
+@@ -815,6 +815,7 @@ public class MobileNetworkSettings extends PreferenceActivity
+             switch (buttonNetworkMode) {
+                 case Phone.NT_MODE_WCDMA_PREF:
+                 case Phone.NT_MODE_GSM_ONLY:
++                case Phone.NT_MODE_WCDMA_ONLY:
+                 case Phone.NT_MODE_LTE_GSM_WCDMA:
+                 case Phone.NT_MODE_LTE_CDMA_EVDO_GSM_WCDMA:
+                 case Phone.NT_MODE_CDMA:
+@@ -1072,12 +1073,22 @@ public class MobileNetworkSettings extends PreferenceActivity
                  mButtonEnabledNetworks.setSummary(R.string.network_3G);
                  break;
              case Phone.NT_MODE_WCDMA_ONLY:
@@ -62,7 +62,7 @@ index cf18339..dfcab93 100644
                  } else {
                      mButtonEnabledNetworks.setValue(
                              Integer.toString(Phone.NT_MODE_LTE_CDMA_EVDO_GSM_WCDMA));
-@@ -1176,7 +1187,7 @@ public class MobileNetworkSettings extends PreferenceActivity
+@@ -1088,7 +1099,7 @@ public class MobileNetworkSettings extends PreferenceActivity
                  if (!mIsGlobalCdma) {
                      mButtonEnabledNetworks.setValue(
                              Integer.toString(Phone.NT_MODE_GSM_ONLY));
@@ -75,17 +75,15 @@ diff --git a/src/com/android/phone/MobileNetworkSettings.java b/src/com/android/
 index dfcab93..b709402 100644
 --- a/src/com/android/phone/MobileNetworkSettings.java
 +++ b/src/com/android/phone/MobileNetworkSettings.java
-@@ -753,8 +753,7 @@ public class MobileNetworkSettings extends PreferenceActivity
+@@ -668,6 +668,7 @@ public class MobileNetworkSettings extends PreferenceActivity
+         mButtonPreferredNetworkMode.setValue(Integer.toString(settingsNetworkMode));
          UpdatePreferredNetworkModeSummary(settingsNetworkMode);
          UpdateEnabledNetworksValueAndSummary(settingsNetworkMode);
-         // Display preferred network type based on what modem returns b/18676277
--        mPhone.setPreferredNetworkType(settingsNetworkMode, mHandler
--                .obtainMessage(MyHandler.MESSAGE_SET_PREFERRED_NETWORK_TYPE));
 +        mPhone.getPreferredNetworkType(mHandler.obtainMessage(MyHandler.MESSAGE_GET_PREFERRED_NETWORK_TYPE));
  
          /**
           * Enable/disable depending upon if there are any active subscriptions.
-@@ -967,7 +966,6 @@ public class MobileNetworkSettings extends PreferenceActivity
+@@ -880,7 +881,6 @@ public class MobileNetworkSettings extends PreferenceActivity
              return true;
          }
  
@@ -93,7 +91,7 @@ index dfcab93..b709402 100644
          // always let the preference setting proceed.
          return true;
      }
-@@ -975,6 +973,7 @@ public class MobileNetworkSettings extends PreferenceActivity
+@@ -888,6 +888,7 @@ public class MobileNetworkSettings extends PreferenceActivity
      private class MyHandler extends Handler {
  
          static final int MESSAGE_SET_PREFERRED_NETWORK_TYPE = 0;
@@ -101,7 +99,7 @@ index dfcab93..b709402 100644
  
          @Override
          public void handleMessage(Message msg) {
-@@ -982,6 +981,9 @@ public class MobileNetworkSettings extends PreferenceActivity
+@@ -895,6 +896,9 @@ public class MobileNetworkSettings extends PreferenceActivity
                  case MESSAGE_SET_PREFERRED_NETWORK_TYPE:
                      handleSetPreferredNetworkTypeResponse(msg);
                      break;
@@ -111,8 +109,8 @@ index dfcab93..b709402 100644
              }
          }
  
-@@ -1014,6 +1016,28 @@ public class MobileNetworkSettings extends PreferenceActivity
-                 updatePreferredNetworkUIFromDb();
+@@ -926,6 +930,28 @@ public class MobileNetworkSettings extends PreferenceActivity
+                 }
              }
          }
 +

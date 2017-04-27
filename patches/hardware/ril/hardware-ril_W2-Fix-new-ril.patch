@@ -2,7 +2,7 @@ diff --git a/include/telephony/ril.h b/include/telephony/ril.h
 index 8aae88d..b47935f 100644
 --- a/include/telephony/ril.h
 +++ b/include/telephony/ril.h
-@@ -5797,6 +5797,95 @@ typedef struct {
+@@ -5808,6 +5808,95 @@ typedef struct {
    */
  #define RIL_UNSOL_PCO_DATA 1046
  

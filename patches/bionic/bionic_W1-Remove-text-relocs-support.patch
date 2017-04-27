@@ -4,7 +4,7 @@ diff --git a/linker/linker.cpp b/linker/linker.cpp
 index 2ce52be..eb6bf41 100644
 --- a/linker/linker.cpp
 +++ b/linker/linker.cpp
-@@ -4069,19 +4069,6 @@
+@@ -4065,19 +4065,6 @@
  
  #if !defined(__LP64__)
    if (has_text_relocations) {
