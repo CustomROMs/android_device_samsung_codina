@@ -35,7 +35,7 @@ KERNEL_PATCH="kernel/codina/chrono"
 	packages/services/Telephony \
 	packages/inputmethods/LatinIME \
 	packages/providers/MediaProvider \
-	#bootable/recovery"
+	bootable/recovery"
 #fi
 
 export CL_RED="\033[31m"
