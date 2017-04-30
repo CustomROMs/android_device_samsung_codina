@@ -1,0 +1,30 @@
+Subject: [PATCH] Fix NPE from AppOpsManager.checkPackage.
+
+Since commit 0fcef84, any application can use below code
+to insert an invalid op record:
+    appOpsManager.checkPackage(0, null);
+
+Use below command will see the invalid record breaks writeState.
+  adb shell dumpsys appops write-settings
+
+  Exception occurred while dumping:
+  java.lang.NullPointerException: Attempt to invoke virtual method
+  'boolean java.lang.String.equals(java.lang.Object)'
+  on a null object reference
+        at com.android.server.AppOpsService.writeState
+
+And system server will crash in 30 minutes when saving the xml.
+
+diff --git a/services/core/java/com/android/server/AppOpsService.java b/services/core/java/com/android/server/AppOpsService.java
+index e31b4c6..70f9c21 100644
+--- a/services/core/java/com/android/server/AppOpsService.java
++++ b/services/core/java/com/android/server/AppOpsService.java
+@@ -1073,7 +1073,7 @@ public void setAudioRestriction(int code, int usage, int uid, int mode,
+     public int checkPackage(int uid, String packageName) {
+         Preconditions.checkNotNull(packageName);
+         synchronized (this) {
+-            if (getOpsRawLocked(uid, packageName, true) != null) {
++            if (packageName != null && getOpsRawLocked(uid, packageName, true) != null) {
+                 return AppOpsManager.MODE_ALLOWED;
+             } else {
+                 return AppOpsManager.MODE_ERRORED;

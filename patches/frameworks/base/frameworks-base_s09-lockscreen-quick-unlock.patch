@@ -1,0 +1,308 @@
+ Keyguard: Forward port lockscreen quick unlock (1/2)
+
+NOTICE: For the love of Android, please don't use this commit in any
+builds shared with the community. It almost certainly mishandles
+multiple users and bypasses important security mechanisms.
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 09c2140..016f681 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -2728,6 +2728,13 @@ public boolean validate(String value) {
+             "lock_pattern_tactile_feedback_enabled";
+ 
+         /**
++         * Whether to use the custom quick unlock screen control
++         * @hide
++         */
++        public static final String LOCKSCREEN_QUICK_UNLOCK_CONTROL =
++                "lockscreen_quick_unlock_control";
++
++        /**
+          * A formatted string of the next alarm that is set, or the empty string
+          * if there is no alarm set.
+          *
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java b/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java
+index 09c2140..046f682 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java
+@@ -29,6 +29,8 @@
+ import java.util.Collections;
+ import java.util.List;
+ 
++import com.android.internal.widget.LockPatternUtils.RequestThrottledException;
++import com.android.keyguard.PasswordTextView.QuickUnlockListener;
+ import com.android.settingslib.animation.AppearAnimationUtils;
+ import com.android.settingslib.animation.DisappearAnimationUtils;
+ 
+@@ -53,6 +55,7 @@
+     private final KeyguardUpdateMonitor mKeyguardUpdateMonitor;
+ 
+     private static List<Integer> sNumbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 0);
++    private final int userId = KeyguardUpdateMonitor.getCurrentUser();
+ 
+     public KeyguardPINView(Context context) {
+         this(context, null);
+@@ -145,6 +148,19 @@ protected void onFinishInflate() {
+                 view.setDigit(sNumbers.get(i));
+             }
+         }
++
++        boolean quickUnlock = (Settings.System.getInt(getContext().getContentResolver(),
++                Settings.System.LOCKSCREEN_QUICK_UNLOCK_CONTROL, 0) == 1);
++
++        if (quickUnlock) {
++            mPasswordEntry.setQuickUnlockListener(new QuickUnlockListener() {
++                public void onValidateQuickUnlock(String password) {
++                    validateQuickUnlock(password);
++                }
++            });
++        } else {
++            mPasswordEntry.setQuickUnlockListener(null);
++        }
+     }
+ 
+     @Override
+@@ -208,4 +224,24 @@ private void enableClipping(boolean enable) {
+     public boolean hasOverlappingRendering() {
+         return false;
+     }
++
++    private void validateQuickUnlock(String password) {
++        if (password != null) {
++            if (password.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT
++                    && kpvCheckPassword(password)) {
++                mPasswordEntry.setEnabled(false);
++                mCallback.reportUnlockAttempt(true, userId);
++                mCallback.dismiss(true);
++                resetPasswordText(true);
++            }
++        }
++    }
++
++    private boolean kpvCheckPassword(String password) {
++        try {
++            return mLockPatternUtils.checkPassword(password, userId);
++        } catch (RequestThrottledException ex) {
++            return false;
++        }
++    }
+ }
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java b/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java
+index 09c2140..046f683 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java
+@@ -18,6 +18,7 @@
+ 
+ import android.content.Context;
+ import android.graphics.Rect;
++import android.provider.Settings;
+ import android.text.Editable;
+ import android.text.InputType;
+ import android.text.TextUtils;
+@@ -35,6 +36,7 @@
+ import android.widget.TextView;
+ import android.widget.TextView.OnEditorActionListener;
+ 
++import com.android.internal.widget.LockPatternUtils.RequestThrottledException;
+ import com.android.internal.widget.TextViewInputDisabler;
+ 
+ import java.util.List;
+@@ -61,6 +63,10 @@
+     private Interpolator mLinearOutSlowInInterpolator;
+     private Interpolator mFastOutLinearInInterpolator;
+ 
++    private final boolean quickUnlock = (Settings.System.getInt(getContext().getContentResolver(),
++            Settings.System.LOCKSCREEN_QUICK_UNLOCK_CONTROL, 0) == 1);
++    private final int userId = KeyguardUpdateMonitor.getCurrentUser();
++
+     public KeyguardPasswordView(Context context) {
+         this(context, null);
+     }
+@@ -342,6 +348,15 @@ public void afterTextChanged(Editable s) {
+         // is from the user.
+         if (!TextUtils.isEmpty(s)) {
+             onUserInput();
++            if (quickUnlock) {
++                String entry = getPasswordText();
++                if (entry.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT
++                        && kpvCheckPassword(entry)) {
++                    mCallback.reportUnlockAttempt(true, userId);
++                    mCallback.dismiss(true);
++                    resetPasswordText(true);
++                }
++            }
+         }
+     }
+ 
+@@ -361,4 +376,12 @@ public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+         }
+         return false;
+     }
++
++    private boolean kpvCheckPassword(String entry) {
++        try {
++            return mLockPatternUtils.checkPassword(entry, userId);
++        } catch (RequestThrottledException ex) {
++            return false;
++        }
++    }
+ }
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardSimPinView.java b/packages/Keyguard/src/com/android/keyguard/KeyguardSimPinView.java
+index 09c2140..046f683 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardSimPinView.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardSimPinView.java
+@@ -144,6 +144,7 @@ protected void onFinishInflate() {
+             ((EmergencyCarrierArea) mEcaView).setCarrierTextVisible(true);
+         }
+         mSimImageView = (ImageView) findViewById(R.id.keyguard_sim);
++        mPasswordEntry.setQuickUnlockListener(null);
+     }
+ 
+     @Override
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardSimPukView.java b/packages/Keyguard/src/com/android/keyguard/KeyguardSimPukView.java
+index 09c2140..046f683 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardSimPukView.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardSimPukView.java
+@@ -188,6 +188,7 @@ protected void onFinishInflate() {
+             ((EmergencyCarrierArea) mEcaView).setCarrierTextVisible(true);
+         }
+         mSimImageView = (ImageView) findViewById(R.id.keyguard_sim);
++        mPasswordEntry.setQuickUnlockListener(null);
+     }
+ 
+     @Override
+diff --git a/packages/Keyguard/src/com/android/keyguard/PasswordTextView.java b/packages/Keyguard/src/com/android/keyguard/PasswordTextView.java
+index 09c2140..046f683 100644
+--- a/packages/Keyguard/src/com/android/keyguard/PasswordTextView.java
++++ b/packages/Keyguard/src/com/android/keyguard/PasswordTextView.java
+@@ -95,11 +95,25 @@
+     private Interpolator mFastOutSlowInInterpolator;
+     private boolean mShowPassword;
+     private UserActivityListener mUserActivityListener;
++    protected QuickUnlockListener mQuickUnlockListener;
+ 
+     public interface UserActivityListener {
+         void onUserActivity();
+     }
+ 
++    /* Quick unlock management for PIN view. */
++    public interface QuickUnlockListener {
++        /**
++         * Validate current password and prepare callback if verified.
++         * @param password The password string to be verified.
++         */
++        void onValidateQuickUnlock(String password);
++    }
++
++    public void setQuickUnlockListener(QuickUnlockListener listener) {
++        mQuickUnlockListener = listener;
++    }
++
+     public PasswordTextView(Context context) {
+         this(context, null);
+     }
+@@ -227,6 +241,10 @@ public void append(char c) {
+         }
+         userActivity();
+         sendAccessibilityEventTypeViewTextChanged(textbefore, textbefore.length(), 0, 1);
++
++        if (mQuickUnlockListener != null) {
++            mQuickUnlockListener.onValidateQuickUnlock(mText);
++        }
+     }
+ 
+     public void setUserActivityListener(UserActivityListener userActivitiListener) {
+diff --git a/core/java/com/android/internal/widget/LockPatternUtils.java b/core/java/com/android/internal/widget/LockPatternUtils.java
+index 19c2140..046f682 100644
+--- a/core/java/com/android/internal/widget/LockPatternUtils.java
++++ b/core/java/com/android/internal/widget/LockPatternUtils.java
+@@ -320,7 +320,6 @@ public int getMaximumFailedPasswordsForWipe(int userId) {
+      */
+     public byte[] verifyPattern(List<LockPatternView.Cell> pattern, long challenge, int userId)
+             throws RequestThrottledException {
+-        throwIfCalledOnMainThread();
+         try {
+             VerifyCredentialResponse response =
+                 getLockSettings().verifyPattern(patternToString(pattern, userId), challenge, userId);
+@@ -361,7 +360,6 @@ public boolean checkPattern(List<LockPatternView.Cell> pattern, int userId)
+     public boolean checkPattern(List<LockPatternView.Cell> pattern, int userId,
+             @Nullable CheckCredentialProgressCallback progressCallback)
+             throws RequestThrottledException {
+-        throwIfCalledOnMainThread();
+         try {
+             VerifyCredentialResponse response =
+                     getLockSettings().checkPattern(patternToString(pattern, userId), userId,
+@@ -390,7 +388,6 @@ public boolean checkPattern(List<LockPatternView.Cell> pattern, int userId,
+      */
+     public byte[] verifyPassword(String password, long challenge, int userId)
+             throws RequestThrottledException {
+-        throwIfCalledOnMainThread();
+         try {
+             VerifyCredentialResponse response =
+                     getLockSettings().verifyPassword(password, challenge, userId);
+@@ -419,7 +416,6 @@ public boolean checkPattern(List<LockPatternView.Cell> pattern, int userId,
+      */
+     public byte[] verifyTiedProfileChallenge(String password, boolean isPattern, long challenge,
+             int userId) throws RequestThrottledException {
+-        throwIfCalledOnMainThread();
+         try {
+             VerifyCredentialResponse response =
+                     getLockSettings().verifyTiedProfileChallenge(password, isPattern, challenge,
+@@ -1476,12 +1472,6 @@ private boolean shouldEncryptWithCredentials(boolean defaultValue) {
+         return isCredentialRequiredToDecrypt(defaultValue) && !isDoNotAskCredentialsOnBootSet();
+     }
+ 
+-    private void throwIfCalledOnMainThread() {
+-        if (Looper.getMainLooper().isCurrentThread()) {
+-            throw new IllegalStateException("should not be called from the main thread.");
+-        }
+-    }
+-
+     public void registerStrongAuthTracker(final StrongAuthTracker strongAuthTracker) {
+         try {
+             getLockSettings().registerStrongAuthTracker(strongAuthTracker.mStub);
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java b/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java
+index 29c2140..046f682 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardPINView.java
+@@ -230,9 +230,9 @@ private void validateQuickUnlock(String password) {
+             if (password.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT
+                     && kpvCheckPassword(password)) {
+                 mPasswordEntry.setEnabled(false);
+-                mCallback.reportUnlockAttempt(true, userId);
++                mCallback.reportUnlockAttempt(userId, true, 0);
+                 mCallback.dismiss(true);
+-                resetPasswordText(true);
++                resetPasswordText(true, true);
+             }
+         }
+     }
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java b/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java
+index 39c2140..046f682 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardPasswordView.java
+@@ -352,9 +352,9 @@ public void afterTextChanged(Editable s) {
+                 String entry = getPasswordText();
+                 if (entry.length() > MINIMUM_PASSWORD_LENGTH_BEFORE_REPORT
+                         && kpvCheckPassword(entry)) {
+-                    mCallback.reportUnlockAttempt(true, userId);
++                    mCallback.reportUnlockAttempt(userId, true, 0);
+                     mCallback.dismiss(true);
+-                    resetPasswordText(true);
++                    resetPasswordText(true, true);
+                 }
+             }
+         }
+diff --git a/core/java/com/android/internal/widget/LockPatternUtils.java b/core/java/com/android/internal/widget/LockPatternUtils.java
+index 49c2140..046f682 100644
+--- a/core/java/com/android/internal/widget/LockPatternUtils.java
++++ b/core/java/com/android/internal/widget/LockPatternUtils.java
+@@ -452,7 +452,6 @@
+     public boolean checkPassword(String password, int userId,
+             @Nullable CheckCredentialProgressCallback progressCallback)
+             throws RequestThrottledException {
+-        throwIfCalledOnMainThread();
+         try {
+             VerifyCredentialResponse response =
+                     getLockSettings().checkPassword(password, userId, wrapCallback(progressCallback));

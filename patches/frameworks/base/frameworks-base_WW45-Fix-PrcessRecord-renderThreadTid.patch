@@ -1,0 +1,43 @@
+Subject: [PATCH] [AM] Fix PrcessRecord.renderThreadTid not reset in some case.
+
+Symptom:
+Condider 2 applications says App A and App B,
+
+When App A activity launch App B activity,
+then App A been killed due to lowmemkiller,
+
+Before app deathrecipient received,
+when B back to resume App A activity by startSpecificActivityLocked(),
+will catch DeadObject execption when scheduleLaunchActivity due to A died,
+then will call startProcessLocked() to restart process,
+
+in startProcessLocked(), due to previous App A's process the pid > 0,
+will call handleAppDied() with restarting = true,
+make cleanUpApplicationRecordLocked won't call removeProcessNameLocked
+& use previous process record info to start new process.
+
+then makes renderThreadTid didn't reset
+& AMS will not correctly change renderThread priority,
+due to using old thread id & not exist in new process.
+
+Test:
+as Symptom description flows.
+
+RootCause:
+ProcessRecord.renderThreadTid didn't reset.
+
+Solution:
+reset renderThreadTid as 0 in cleanUpApplicationRecordLocked().
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 1feaa72..7d7201b 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -17162,6 +17162,7 @@
+ 
+         app.crashing = false;
+         app.notResponding = false;
++        app.renderThreadTid = 0;
+ 
+         app.resetPackageList(mProcessStats);
+         app.unlinkDeathRecipient();

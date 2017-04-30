@@ -1,0 +1,29 @@
+ [ViewRootImpl] suppress the accessibility IllegalStateException
+
+Symptom: System server crashed
+
+Root Cause: mAceessibilityEabled was off suddenly(by app or services)
+even though it had checked this value before(
+in View.sendAccessibilityEventUncheckedInternal())
+
+Solution: suppress the accessibility IllegalStateException
+
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 4726ae7..68c18be 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -6724,7 +6724,13 @@ public boolean requestSendAccessibilityEvent(View child, AccessibilityEvent even
+                 handleWindowContentChangedEvent(event);
+             } break;
+         }
+-        mAccessibilityManager.sendAccessibilityEvent(event);
++
++        try {
++            mAccessibilityManager.sendAccessibilityEvent(event);
++        } catch (IllegalStateException ex) {
++            Log.e(TAG, "Failed to send Accessibility Event. ", ex);
++            return false;
++        }
+         return true;
+     }
+ 

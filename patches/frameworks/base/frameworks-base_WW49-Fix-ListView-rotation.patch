@@ -1,0 +1,51 @@
+Subject: [PATCH] Fix ListView can not be moved after rotation.
+
+Symptom:
+"Share with" popup displayed incompletely, and cannot be slid after
+rotated the screen twice.
+
+Root cause:
+Since ChooserActivity's configChanges attribute contains
+"screenSize|orientation" , when user rotates device, Android will
+not recreate ChooserActivity, its content view ResolverDrawerLayout
+is also not recreated. In ResolverDrawerLayout's onMeasure, it will
+call getHeightUsed to calculate the ListView's height. getHeightUsed
+will check against the lowest child view plus padding and margin
+instead of the actual measured height of the ListView. This lets the
+ListView hang off the edge when all of the content would fit on-screen
+. Because of ResolverDrawerLayout has not been drawn yet, we can not
+get the actual showing items' count of ListView before it's drawn, the
+result of getChildCount for ListView will return the value in landscape
+mode. The heightUsed of ListView might be smaller. mCollapsibleHeight
+will be 0. When received a move action, the mCollapseOffset and new
+position might both be 0.
+
+Solution:
+When configuration changed, we should rebuild the list and refresh
+adapter's data set. Just like onRestart does.
+
+diff --git a/core/java/com/android/internal/app/ResolverActivity.java b/core/java/com/android/internal/app/ResolverActivity.java
+index 1e26c92..dabda77 100644
+--- a/core/java/com/android/internal/app/ResolverActivity.java
++++ b/core/java/com/android/internal/app/ResolverActivity.java
+@@ -25,6 +25,7 @@
+ import android.app.VoiceInteractor.PickOptionRequest.Option;
+ import android.app.VoiceInteractor.Prompt;
+ import android.content.pm.ComponentInfo;
++import android.content.res.Configuration;
+ import android.os.AsyncTask;
+ import android.provider.MediaStore;
+ import android.provider.Settings;
+@@ -378,6 +379,12 @@
+                         + (categories != null ? Arrays.toString(categories.toArray()) : ""));
+     }
+ 
++    @Override
++    public void onConfigurationChanged(Configuration newConfig) {
++        super.onConfigurationChanged(newConfig);
++        mAdapter.handlePackagesChanged();
++    }
++
+     public final void setFilteredComponents(ComponentName[] components) {
+         mFilteredComponents = components;
+     }

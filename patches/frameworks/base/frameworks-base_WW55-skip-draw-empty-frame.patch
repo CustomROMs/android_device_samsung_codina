@@ -1,0 +1,52 @@
+Subject: [PATCH] hwui: skip draw empty frame
+
+On some hardare platform, when the buffer has been abandoned, the
+query width and height of surface is random, the frame is empty, so
+there is not need to draw the emtpy frame. We should skip it, if not
+the hwui will abort for some glerror. This may be a hardware platform
+issue, but improve the hwui stability is also needed.
+
+diff --git a/libs/hwui/renderthread/CanvasContext.cpp b/libs/hwui/renderthread/CanvasContext.cpp
+index 975ac83..7a0e1f7 100644
+--- a/libs/hwui/renderthread/CanvasContext.cpp
++++ b/libs/hwui/renderthread/CanvasContext.cpp
+@@ -353,6 +353,11 @@
+ 
+     Frame frame = mEglManager.beginFrame(mEglSurface);
+ 
++    if (frame.width() == 0 || frame.height() == 0) {
++        ALOGW("CanvasContext draw skip empty frame(%dx%d", frame.width(), frame.height());
++        return;
++    }
++
+     if (frame.width() != mLastFrameWidth || frame.height() != mLastFrameHeight) {
+         // can't rely on prior content of window if viewport size changes
+         dirty.setEmpty();
+diff --git a/libs/hwui/renderthread/EglManager.cpp b/libs/hwui/renderthread/EglManager.cpp
+index 99bc9a7..8b1e9db 100644
+--- a/libs/hwui/renderthread/EglManager.cpp
++++ b/libs/hwui/renderthread/EglManager.cpp
+@@ -67,6 +67,10 @@
+     bool setDamage = false;
+ } EglExtensions;
+ 
++Frame::Frame()
++        : mWidth(0)
++        , mHeight(0) {}
++
+ void Frame::map(const SkRect& in, EGLint* out) const {
+     /* The rectangles are specified relative to the bottom-left of the surface
+      * and the x and y components of each rectangle specify the bottom-left
+diff --git a/libs/hwui/renderthread/EglManager.h b/libs/hwui/renderthread/EglManager.h
+index 41047fe..8843697 100644
+--- a/libs/hwui/renderthread/EglManager.h
++++ b/libs/hwui/renderthread/EglManager.h
+@@ -46,6 +46,8 @@
+     EGLint mHeight;
+     EGLint mBufferAge;
+ 
++    Frame();
++
+     // Maps from 0,0 in top-left to 0,0 in bottom-left
+     // If out is not an EGLint[4] you're going to have a bad time
+     void map(const SkRect& in, EGLint* out) const;

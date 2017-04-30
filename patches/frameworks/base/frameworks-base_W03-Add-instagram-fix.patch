@@ -1,0 +1,57 @@
+ Add instagram fix opt-in
+
+thanks to Meticulus for the original patch.
+
+diff --git a/media/java/android/media/MediaCodec.java b/media/java/android/media/MediaCodec.java
+index 359a7a9..7e3439c 100644
+--- a/media/java/android/media/MediaCodec.java
++++ b/media/java/android/media/MediaCodec.java
+@@ -27,7 +27,9 @@
+ import android.os.Handler;
+ import android.os.Looper;
+ import android.os.Message;
++import android.os.SystemProperties;
+ import android.view.Surface;
++import android.util.Log;
+ 
+ import java.io.IOException;
+ import java.lang.annotation.Retention;
+@@ -1758,6 +1760,9 @@ public static MediaCodec createByCodecName(@NonNull String name)
+                 name, false /* nameIsType */, false /* unused */);
+     }
+ 
++    private static boolean mUseGoogleH264Encoder = false;
++    private static boolean mUseFFmpegH264Decoder = false;
++
+     private MediaCodec(
+             @NonNull String name, boolean nameIsType, boolean encoder) {
+         Looper looper;
+@@ -1773,6 +1778,28 @@ private MediaCodec(
+ 
+         mBufferLock = new Object();
+ 
++        /* Meticulus:
++         * STE OMX encoder and decoders don't seem to work when
++         * directly accessed via this class, so  use software
++         * decoder/encoder for video/avc. Note: had to add OMX.google.h264.encoder
++         * to media_codecs.xml. The configuration below works with Instagram (10/5/2014)
++         */
++
++        mUseGoogleH264Encoder = SystemProperties.getBoolean("ste.use_google_h264_encoder", false);
++        mUseFFmpegH264Decoder = SystemProperties.getBoolean("ste.use_ffmpeg_h264_decoder", false);
++
++        if (name.equals("video/avc") && encoder && mUseGoogleH264Encoder) {
++                nameIsType = false;
++                name = "OMX.google.h264.encoder";
++                Log.i("MediaCodec"," force use " + name + " isEncoder=" + String.valueOf(encoder));
++        }
++
++        if (name.equals("video/avc") && !encoder && mUseFFmpegH264Decoder) {
++                nameIsType = false;
++                name = "OMX.ffmpeg.h264.decoder";
++                Log.i("MediaCodec"," force use " + name + " isEncoder=" + String.valueOf(encoder));
++        }
++
+         native_setup(name, nameIsType, encoder);
+     }
+ 

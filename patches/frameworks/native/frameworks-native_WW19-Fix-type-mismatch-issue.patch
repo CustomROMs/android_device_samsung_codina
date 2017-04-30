@@ -1,0 +1,19 @@
+ Fix window type mismatch issue
+
+The window type TYPE_MAGNIFICATION_OVERLAY in WindowManager
+can't be matched with that in InputWindow,
+so we need to adjust it.
+
+diff --git a/services/inputflinger/InputWindow.h b/services/inputflinger/InputWindow.h
+index 28fa7ab..bd325b5 100644
+--- a/services/inputflinger/InputWindow.h
++++ b/services/inputflinger/InputWindow.h
+@@ -101,7 +101,7 @@ struct InputWindowInfo {
+         TYPE_NAVIGATION_BAR     = FIRST_SYSTEM_WINDOW+19,
+         TYPE_VOLUME_OVERLAY = FIRST_SYSTEM_WINDOW+20,
+         TYPE_BOOT_PROGRESS = FIRST_SYSTEM_WINDOW+21,
+-        TYPE_MAGNIFICATION_OVERLAY = FIRST_SYSTEM_WINDOW+22,
++        TYPE_MAGNIFICATION_OVERLAY = FIRST_SYSTEM_WINDOW+27,
+         TYPE_DOCK_DIVIDER = FIRST_SYSTEM_WINDOW+34,
+         LAST_SYSTEM_WINDOW      = 2999,
+     };

@@ -1,0 +1,106 @@
+From 38273cadb22f61f4ae3c3a8e244ae7a66d426b7a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Apr 2017 00:43:51 +0300
+Subject: [PATCH 10/10] Fix build
+
+Change-Id: I046d60f3edf2a62132f4a5975718b51b99336b14
+---
+ core/Makefile                                 | 12 +++++-------
+ core/config.mk                                |  2 +-
+ tools/releasetools/add_img_to_target_files.py | 16 ++++++++--------
+ 3 files changed, 14 insertions(+), 16 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 17bcbb2..1609466 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -913,7 +913,7 @@ INTERNAL_RECOVERYIMAGE_FILES := $(filter $(TARGET_RECOVERY_OUT)/%, \
+     $(ALL_DEFAULT_INSTALLED_MODULES))
+ 
+ recovery_initrc := $(call project-path-for,recovery)/etc/init.rc
+-recovery_sepolicy := $(call intermediates-dir-for,ETC,sepolicy.recovery)/sepolicy.recovery
++#recovery_sepolicy := $(call intermediates-dir-for,ETC,sepolicy.recovery)/sepolicy.recovery
+ recovery_kernel := $(INSTALLED_KERNEL_TARGET) # same as a non-recovery system
+ recovery_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.img
+ recovery_uncompressed_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.cpio
+@@ -1068,7 +1068,7 @@ define build-recoveryramdisk
+   $(hide) rm -f $(TARGET_RECOVERY_ROOT_OUT)/init*.rc
+   $(hide) cp -f $(recovery_initrc) $(TARGET_RECOVERY_ROOT_OUT)/
+   $(hide) rm -f $(TARGET_RECOVERY_ROOT_OUT)/sepolicy
+-  $(hide) cp -f $(recovery_sepolicy) $(TARGET_RECOVERY_ROOT_OUT)/sepolicy
++  #$(hide) cp -f $(recovery_sepolicy) $(TARGET_RECOVERY_ROOT_OUT)/sepolicy
+   $(hide) cp $(TARGET_ROOT_OUT)/init.recovery.*.rc $(TARGET_RECOVERY_ROOT_OUT)/ || true # Ignore error when the src file doesn't exist.
+   $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/res
+   $(hide) rm -rf $(TARGET_RECOVERY_ROOT_OUT)/res/*
+@@ -1124,7 +1124,7 @@ endif
+ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
+ 		$(INSTALLED_RAMDISK_TARGET) \
+ 		$(INTERNAL_RECOVERYIMAGE_FILES) \
+-		$(recovery_initrc) $(recovery_sepolicy) $(recovery_kernel) \
++		$(recovery_initrc) $(recovery_kernel) \
+ 		$(INSTALLED_2NDBOOTLOADER_TARGET) \
+ 		$(recovery_build_prop) $(recovery_resource_deps) \
+ 		$(recovery_fstab) \
+@@ -1140,7 +1140,7 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) \
+ 		$(INSTALLED_RAMDISK_TARGET) \
+ 		$(INSTALLED_BOOTIMAGE_TARGET) \
+ 		$(INTERNAL_RECOVERYIMAGE_FILES) \
+-		$(recovery_initrc) $(recovery_sepolicy) \
++		$(recovery_initrc) \
+ 		$(INSTALLED_2NDBOOTLOADER_TARGET) \
+ 		$(recovery_build_prop) $(recovery_resource_deps) $(recovery_root_deps) \
+ 		$(recovery_fstab) \
+@@ -1251,9 +1251,7 @@ FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEP
+ # system image.
+ INSTALLED_FILES_FILE := $(PRODUCT_OUT)/installed-files.txt
+ $(INSTALLED_FILES_FILE): $(FULL_SYSTEMIMAGE_DEPS)
+-	$(hide) ./vendor/samsung/tools/changelog
+-	$(hide) mv $(PRODUCT_OUT)/Changelog.txt $(PRODUCT_OUT)/$(LINEAGE_VERSION)-$(TARGET_PRODUCT).txt
+-	$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
++	cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
+ 	@echo Installed file list: $@
+ 	@mkdir -p $(dir $@)
+ 	@rm -f $@
+diff --git a/core/config.mk b/core/config.mk
+index 4936a50..5794244 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -919,7 +919,7 @@ endif
+ ifneq ($(CM_BUILD),)
+ ## We need to be sure the global selinux policies are included
+ ## last, to avoid accidental resetting by device configs
+-$(eval include vendor/cm/sepolicy/sepolicy.mk)
++#$(eval include vendor/cm/sepolicy/sepolicy.mk)
+ 
+ # Include any vendor specific config.mk file
+ -include $(TOPDIR)vendor/*/build/core/config.mk
+diff --git a/tools/releasetools/add_img_to_target_files.py b/tools/releasetools/add_img_to_target_files.py
+index 9595c7e..a063286 100755
+--- a/tools/releasetools/add_img_to_target_files.py
++++ b/tools/releasetools/add_img_to_target_files.py
+@@ -448,14 +448,14 @@ def AddImagesToTargetFiles(filename):
+       if recovery_image:
+         recovery_image.AddToZip(output_zip)
+ 
+-      if use_two_step_recovery:
+-        banner("recovery (two-step image)")
+-        # The special recovery.img for two-step package use.
+-        recovery_two_step_image = common.GetBootableImage(
+-            "IMAGES/recovery-two-step.img", "recovery-two-step.img",
+-            OPTIONS.input_tmp, "RECOVERY", two_step_image=True)
+-        if recovery_two_step_image:
+-          recovery_two_step_image.AddToZip(output_zip)
++      #if use_two_step_recovery:
++      #  banner("recovery (two-step image)")
++      #  # The special recovery.img for two-step package use.
++      #  recovery_two_step_image = common.GetBootableImage(
++      #      "IMAGES/recovery-two-step.img", "recovery-two-step.img",
++      #      OPTIONS.input_tmp, "RECOVERY", two_step_image=True)
++      #  if recovery_two_step_image:
++      #    recovery_two_step_image.AddToZip(output_zip)
+ 
+   banner("system")
+   system_imgname = AddSystem(output_zip, recovery_img=recovery_image,
+-- 
+2.5.0
+

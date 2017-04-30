@@ -1,0 +1,796 @@
+Subject: [PATCH] OMXCodec: fix MediaSource
+
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index 4188905..120a48e 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -70,20 +70,20 @@ const static int64_t kBufferFilledEventTimeOutNs = 3000000000LL;
+ const static uint32_t kMaxColorFormatSupported = 1000;
+ 
+ #define FACTORY_CREATE_ENCODER(name) \
+-static sp<IMediaSource> Make##name(const sp<IMediaSource> &source, const sp<MetaData> &meta) { \
++static sp<MediaSource> Make##name(const sp<MediaSource> &source, const sp<MetaData> &meta) { \
+     return new name(source, meta); \
+ }
+ 
+ #define FACTORY_REF(name) { #name, Make##name },
+ 
+ FACTORY_CREATE_ENCODER(AACEncoder)
+ 
+-static sp<IMediaSource> InstantiateSoftwareEncoder(
+-        const char *name, const sp<IMediaSource> &source,
++static sp<MediaSource> InstantiateSoftwareEncoder(
++        const char *name, const sp<MediaSource> &source,
+         const sp<MetaData> &meta) {
+     struct FactoryInfo {
+         const char *name;
+-        sp<IMediaSource> (*CreateFunc)(const sp<IMediaSource> &, const sp<MetaData> &);
++        sp<MediaSource> (*CreateFunc)(const sp<MediaSource> &, const sp<MetaData> &);
+     };
+ 
+     static const FactoryInfo kFactoryInfo[] = {
+@@ -150,7 +155,8 @@ static void InitOMXParams(T *params) {
+ }
+ 
+ static bool IsSoftwareCodec(const char *componentName) {
+-    if (!strncmp("OMX.google.", componentName, 11)) {
++    if (!strncmp("OMX.google.", componentName, 11)
++        || !strncmp("OMX.ffmpeg.", componentName, 11)) {
+         return true;
+     }
+ 
+@@ -288,10 +288,10 @@ bool OMXCodec::findCodecQuirks(const char *componentName, uint32_t *quirks) {
+ }
+ 
+ // static
+-sp<IMediaSource> OMXCodec::Create(
++sp<MediaSource> OMXCodec::Create(
+         const sp<IOMX> &omx,
+         const sp<MetaData> &meta, bool createEncoder,
+-        const sp<IMediaSource> &source,
++        const sp<MediaSource> &source,
+         const char *matchComponentName,
+         uint32_t flags,
+         const sp<ANativeWindow> &nativeWindow) {
+@@ -336,7 +336,7 @@ sp<MediaSource> OMXCodec::Create(
+         }
+ 
+         if (createEncoder) {
+-            sp<IMediaSource> softwareCodec =
++            sp<MediaSource> softwareCodec =
+                 InstantiateSoftwareEncoder(componentName, source, meta);
+ 
+             if (softwareCodec != NULL) {
+@@ -348,24 +374,7 @@ sp<IMediaSource> OMXCodec::Create(
+ 
+         ALOGV("Attempting to allocate OMX node '%s'", componentName);
+ 
+-        if (!createEncoder
+-                && (quirks & kOutputBuffersAreUnreadable)
+-                && (flags & kClientNeedsFramebuffer)) {
+-            if (strncmp(componentName, "OMX.SEC.", 8)) {
+-                // For OMX.SEC.* decoders we can enable a special mode that
+-                // gives the client access to the framebuffer contents.
+-
+-                ALOGW("Component '%s' does not give the client access to "
+-                     "the framebuffer contents. Skipping.",
+-                     componentName);
+-
+-                continue;
+-            }
+-        }
+-
+-        status_t err = omx->allocateNode(componentName, observer,
+-		NULL /* nodeBinder */, &node);
+-
++        status_t err = omx->allocateNode(componentName, observer, &node);
+         if (err == OK) {
+             ALOGV("Successfully allocated OMX node '%s'", componentName);
+ 
+@@ -676,35 +685,6 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
+ 
+     initOutputFormat(meta);
+ 
+-    if ((mFlags & kClientNeedsFramebuffer)
+-            && !strncmp(mComponentName, "OMX.SEC.", 8)) {
+-        // This appears to no longer be needed???
+-
+-        OMX_INDEXTYPE index;
+-
+-        status_t err =
+-            mOMX->getExtensionIndex(
+-                    mNode,
+-                    "OMX.SEC.index.ThumbnailMode",
+-                    &index);
+-
+-        if (err != OK) {
+-            return err;
+-        }
+-
+-        OMX_BOOL enable = OMX_TRUE;
+-        err = mOMX->setConfig(mNode, index, &enable, sizeof(enable));
+-
+-        if (err != OK) {
+-            CODEC_LOGE("setConfig('OMX.SEC.index.ThumbnailMode') "
+-                       "returned error 0x%08x", err);
+-
+-            return err;
+-        }
+-
+-        mQuirks &= ~kOutputBuffersAreUnreadable;
+-    }
+-
+     if (mNativeWindow != NULL
+         && !mIsEncoder
+         && !strncasecmp(mMIME, "video/", 6)
+@@ -908,7 +888,8 @@ void OMXCodec::setVideoInputFormat(
+         compressionFormat = OMX_VIDEO_CodingAVC;
+     } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_HEVC, mime)) {
+         compressionFormat = OMX_VIDEO_CodingHEVC;
+-    } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG4, mime)) {
++    } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG4, mime) ||
++            !strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG4_DP, mime)) {
+         compressionFormat = OMX_VIDEO_CodingMPEG4;
+     } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_H263, mime)) {
+         compressionFormat = OMX_VIDEO_CodingH263;
+@@ -1300,7 +1281,8 @@ status_t OMXCodec::setVideoOutputFormat(
+     OMX_VIDEO_CODINGTYPE compressionFormat = OMX_VIDEO_CodingUnused;
+     if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mime)) {
+         compressionFormat = OMX_VIDEO_CodingAVC;
+-    } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG4, mime)) {
++    } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG4, mime) ||
++            !strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG4_DP, mime)) {
+         compressionFormat = OMX_VIDEO_CodingMPEG4;
+     } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_HEVC, mime)) {
+         compressionFormat = OMX_VIDEO_CodingHEVC;
+@@ -1312,8 +1294,6 @@ status_t OMXCodec::setVideoOutputFormat(
+         compressionFormat = OMX_VIDEO_CodingVP9;
+     } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_MPEG2, mime)) {
+         compressionFormat = OMX_VIDEO_CodingMPEG2;
+-    } else if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_DOLBY_VISION, mime)) {
+-        compressionFormat = OMX_VIDEO_CodingDolbyVision;
+     } else {
+         ALOGE("Not a supported video mime type: %s", mime);
+         CHECK(!"Should not be here. Not a supported video mime type.");
+@@ -1433,7 +1433,7 @@ OMXCodec::OMXCodec(
+         bool isEncoder,
+         const char *mime,
+         const char *componentName,
+-        const sp<IMediaSource> &source,
++        const sp<MediaSource> &source,
+         const sp<ANativeWindow> &nativeWindow)
+     : mOMX(omx),
+       mOMXLivesLocally(omx->livesLocally(node, getpid())),
+@@ -1504,6 +1484,8 @@ void OMXCodec::setComponentRole(
+             "video_decoder.hevc", "video_encoder.hevc" },
+         { MEDIA_MIMETYPE_VIDEO_MPEG4,
+             "video_decoder.mpeg4", "video_encoder.mpeg4" },
++        { MEDIA_MIMETYPE_VIDEO_MPEG4_DP,
++            "video_decoder.mpeg4", NULL },
+         { MEDIA_MIMETYPE_VIDEO_H263,
+             "video_decoder.h263", "video_encoder.h263" },
+ #ifdef STE_HARDWARE
+@@ -1516,8 +1498,6 @@ void OMXCodec::setComponentRole(
+             "video_decoder.vp9", "video_encoder.vp9" },
+         { MEDIA_MIMETYPE_AUDIO_RAW,
+             "audio_decoder.raw", "audio_encoder.raw" },
+-        { MEDIA_MIMETYPE_VIDEO_DOLBY_VISION,
+-            "video_decoder.dolby-vision", "video_encoder.dolby-vision" },
+         { MEDIA_MIMETYPE_AUDIO_FLAC,
+             "audio_decoder.flac", "audio_encoder.flac" },
+         { MEDIA_MIMETYPE_AUDIO_MSGSM,
+@@ -1635,6 +1615,8 @@ bool OMXCodec::isIntermediateState(State state) {
+     return state == LOADED_TO_IDLE
+         || state == IDLE_TO_EXECUTING
+         || state == EXECUTING_TO_IDLE
++        || state == PAUSING
++        || state == FLUSHING
+         || state == IDLE_TO_LOADED
+         || state == RECONFIGURING;
+ }
+@@ -2545,6 +2563,7 @@ void OMXCodec::onCmdComplete(OMX_COMMANDTYPE cmd, OMX_U32 data) {
+ 
+                     // We implicitly resume pulling on our upstream source.
+                     mPaused = false;
++                    mNoMoreOutputData = false;
+ 
+                     drainInputBuffers();
+                     fillOutputBuffers();
+@@ -2661,6 +2680,14 @@ void OMXCodec::onStateChange(OMX_STATETYPE newState) {
+             break;
+         }
+ 
++        case OMX_StatePause:
++        {
++            CODEC_LOGV("Now paused.");
++            CHECK_EQ((int)mState, (int)PAUSING);
++            setState(PAUSED);
++            break;
++        }
++
+         case OMX_StateInvalid:
+         {
+             setState(ERROR);
+@@ -2776,7 +2803,7 @@ void OMXCodec::onPortSettingsChanged(OMX_U32 portIndex) {
+ 
+ bool OMXCodec::flushPortAsync(OMX_U32 portIndex) {
+     CHECK(mState == EXECUTING || mState == RECONFIGURING
+-            || mState == EXECUTING_TO_IDLE);
++            || mState == EXECUTING_TO_IDLE || mState == FLUSHING);
+ 
+     CODEC_LOGV("flushPortAsync(%u): we own %zu out of %zu buffers already.",
+          portIndex, countBuffersWeOwn(mPortBuffers[portIndex]),
+@@ -2826,7 +2853,7 @@ status_t OMXCodec::enablePortAsync(OMX_U32 portIndex) {
+ }
+ 
+ void OMXCodec::fillOutputBuffers() {
+-    CHECK_EQ((int)mState, (int)EXECUTING);
++    CHECK(mState == EXECUTING || mState == FLUSHING);
+ 
+     // This is a workaround for some decoders not properly reporting
+     // end-of-output-stream. If we own all input buffers and also own
+@@ -2853,7 +2880,7 @@ void OMXCodec::fillOutputBuffers() {
+ }
+ 
+ void OMXCodec::drainInputBuffers() {
+-    CHECK(mState == EXECUTING || mState == RECONFIGURING);
++    CHECK(mState == EXECUTING || mState == RECONFIGURING || mState == FLUSHING);
+ 
+     if (mFlags & kUseSecureInputBuffers) {
+         Vector<BufferInfo> *buffers = &mPortBuffers[kPortIndexInput];
+@@ -3267,7 +3294,7 @@ void OMXCodec::setRawAudioFormat(
+     pcmParams.nSamplingRate = sampleRate;
+     pcmParams.ePCMMode = OMX_AUDIO_PCMModeLinear;
+ 
+-    CHECK_EQ(ACodec::getOMXChannelMapping(
++    CHECK_EQ(getOMXChannelMapping(
+                 numChannels, pcmParams.eChannelMapping), (status_t)OK);
+ 
+     err = mOMX->setParameter(
+@@ -3580,21 +3607,8 @@ void OMXCodec::setJPEGInputFormat(
+ }
+ 
+ void OMXCodec::addCodecSpecificData(const void *data, size_t size) {
+-
+-    if (size > SIZE_MAX - (sizeof(CodecSpecificData) - 1)) {
+-        // this would require the size to be ~4GB, which should be near impossible
+-        // given that it is the size of an in-memory chunk of data
+-        ALOGE("b/23540411");
+-        return;
+-    }
+-
+     CodecSpecificData *specific =
+-        (CodecSpecificData *)malloc(sizeof(CodecSpecificData) - 1 + size);
+-
+-    if (specific == NULL) {
+-        ALOGE("b/23540411");
+-        return;
+-    }
++        (CodecSpecificData *)malloc(sizeof(CodecSpecificData) + size - 1);
+ 
+     specific->mSize = size;
+     memcpy(specific->mData, data, size);
+@@ -3613,6 +3627,11 @@ void OMXCodec::clearCodecSpecificData() {
+ status_t OMXCodec::start(MetaData *meta) {
+     Mutex::Autolock autoLock(mLock);
+ 
++    if (mPaused) {
++        status_t err = resumeLocked(true);
++        return err;
++    }
++
+     if (mState != LOADED) {
+         CODEC_LOGE("called start in the unexpected state: %d", mState);
+         return UNKNOWN_ERROR;
+@@ -3723,6 +3742,7 @@ status_t OMXCodec::stopOmxComponent_l() {
+             isError = true;
+         }
+ 
++        case PAUSED:
+         case EXECUTING:
+         {
+             setState(EXECUTING_TO_IDLE);
+@@ -3794,6 +3814,14 @@ status_t OMXCodec::read(
+ 
+     Mutex::Autolock autoLock(mLock);
+ 
++    if (mPaused) {
++        err = resumeLocked(false);
++        if(err != OK) {
++            CODEC_LOGE("Failed to restart codec err= %d", err);
++            return err;
++        }
++    }
++
+     if (mState != EXECUTING && mState != RECONFIGURING) {
+         return UNKNOWN_ERROR;
+     }
+@@ -3850,6 +3878,8 @@ status_t OMXCodec::read(
+         mFilledBuffers.clear();
+ 
+         CHECK_EQ((int)mState, (int)EXECUTING);
++        //DSP supports flushing of ports simultaneously. Flushing individual port is not supported.
++        setState(FLUSHING);
+ 
+         bool emulateInputFlushCompletion = !flushPortAsync(kPortIndexInput);
+         bool emulateOutputFlushCompletion = !flushPortAsync(kPortIndexOutput);
+@@ -3879,6 +3909,11 @@ status_t OMXCodec::read(
+         return UNKNOWN_ERROR;
+     }
+ 
++    if (seeking) {
++        CHECK_EQ((int)mState, (int)FLUSHING);
++        setState(EXECUTING);
++    }
++
+     if (mFilledBuffers.empty()) {
+         return mSignalledEOS ? mFinalStatus : ERROR_END_OF_STREAM;
+     }
+@@ -4313,11 +4347,60 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
+ }
+ 
+ status_t OMXCodec::pause() {
+-    Mutex::Autolock autoLock(mLock);
++   CODEC_LOGV("pause mState=%d", mState);
++
++   Mutex::Autolock autoLock(mLock);
++
++   if (mState != EXECUTING) {
++       return UNKNOWN_ERROR;
++   }
++
++   while (isIntermediateState(mState)) {
++       mAsyncCompletion.wait(mLock);
++   }
++   if (!strncmp(mComponentName, "OMX.qcom.", 9)) {
++       status_t err = mOMX->sendCommand(mNode,
++           OMX_CommandStateSet, OMX_StatePause);
++       CHECK_EQ(err, (status_t)OK);
++       setState(PAUSING);
++
++       mPaused = true;
++       while (mState != PAUSED && mState != ERROR) {
++           mAsyncCompletion.wait(mLock);
++       }
++       return mState == ERROR ? UNKNOWN_ERROR : OK;
++   } else {
++       mPaused = true;
++       return OK;
++   }
++
++}
+ 
+-    mPaused = true;
++status_t OMXCodec::resumeLocked(bool drainInputBuf) {
++   CODEC_LOGV("resume mState=%d", mState);
+ 
+-    return OK;
++   if (!strncmp(mComponentName, "OMX.qcom.", 9)) {
++        while (isIntermediateState(mState)) {
++            mAsyncCompletion.wait(mLock);
++        }
++        CHECK_EQ(mState, (status_t)PAUSED);
++        status_t err = mOMX->sendCommand(mNode,
++        OMX_CommandStateSet, OMX_StateExecuting);
++        CHECK_EQ(err, (status_t)OK);
++        setState(IDLE_TO_EXECUTING);
++        mPaused = false;
++        while (mState != EXECUTING && mState != ERROR) {
++            mAsyncCompletion.wait(mLock);
++        }
++        if(drainInputBuf)
++            drainInputBuffers();
++        return mState == ERROR ? UNKNOWN_ERROR : OK;
++    } else {   // SW Codec
++        mPaused = false;
++        if(drainInputBuf)
++            drainInputBuffers();
++        return OK;
++    }
+ }
+ 
+ ////////////////////////////////////////////////////////////////////////////////
+@@ -4373,6 +4455,7 @@ status_t QueryCodec(
+     caps->mFlags = 0;
+     caps->mComponentName = componentName;
+ 
++    // NOTE: OMX does not provide a way to query AAC profile support
+     if (isVideo) {
+         OMX_VIDEO_PARAM_PROFILELEVELTYPE param;
+         InitOMXParams(&param);
+@@ -4426,33 +4509,6 @@ status_t QueryCodec(
+             }
+             caps->mColorFormats.push(portFormat.eColorFormat);
+         }
+-    } else if (!strcasecmp(MEDIA_MIMETYPE_AUDIO_AAC, mime)) {
+-        // More audio codecs if they have profiles.
+-        OMX_AUDIO_PARAM_ANDROID_PROFILETYPE param;
+-        InitOMXParams(&param);
+-        param.nPortIndex = isEncoder ? 1 : 0;
+-        for (param.nProfileIndex = 0;; ++param.nProfileIndex) {
+-            err = omx->getParameter(
+-                    node, (OMX_INDEXTYPE)OMX_IndexParamAudioProfileQuerySupported,
+-                    &param, sizeof(param));
+-
+-            if (err != OK) {
+-                break;
+-            }
+-
+-            CodecProfileLevel profileLevel;
+-            profileLevel.mProfile = param.eProfile;
+-            // For audio, level is ignored.
+-            profileLevel.mLevel = 0;
+-
+-            caps->mProfileLevels.push(profileLevel);
+-        }
+-
+-        // NOTE: Without Android extensions, OMX does not provide a way to query
+-        // AAC profile support
+-        if (param.nProfileIndex == 0) {
+-            ALOGW("component %s doesn't support profile query.", componentName);
+-        }
+     }
+ 
+     if (isVideo && !isEncoder) {
+@@ -4477,4 +4533,67 @@ status_t QueryCodecs(
+     return QueryCodecs(omx, mimeType, queryDecoders, false /*hwCodecOnly*/, results);
+ }
+ 
++// These are supposed be equivalent to the logic in
++// "audio_channel_out_mask_from_count".
++status_t getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE map[]) {
++    switch (numChannels) {
++        case 1:
++            map[0] = OMX_AUDIO_ChannelCF;
++            break;
++        case 2:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            break;
++        case 3:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            map[2] = OMX_AUDIO_ChannelCF;
++            break;
++        case 4:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            map[2] = OMX_AUDIO_ChannelLR;
++            map[3] = OMX_AUDIO_ChannelRR;
++            break;
++        case 5:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            map[2] = OMX_AUDIO_ChannelCF;
++            map[3] = OMX_AUDIO_ChannelLR;
++            map[4] = OMX_AUDIO_ChannelRR;
++            break;
++        case 6:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            map[2] = OMX_AUDIO_ChannelCF;
++            map[3] = OMX_AUDIO_ChannelLFE;
++            map[4] = OMX_AUDIO_ChannelLR;
++            map[5] = OMX_AUDIO_ChannelRR;
++            break;
++        case 7:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            map[2] = OMX_AUDIO_ChannelCF;
++            map[3] = OMX_AUDIO_ChannelLFE;
++            map[4] = OMX_AUDIO_ChannelLR;
++            map[5] = OMX_AUDIO_ChannelRR;
++            map[6] = OMX_AUDIO_ChannelCS;
++            break;
++        case 8:
++            map[0] = OMX_AUDIO_ChannelLF;
++            map[1] = OMX_AUDIO_ChannelRF;
++            map[2] = OMX_AUDIO_ChannelCF;
++            map[3] = OMX_AUDIO_ChannelLFE;
++            map[4] = OMX_AUDIO_ChannelLR;
++            map[5] = OMX_AUDIO_ChannelRR;
++            map[6] = OMX_AUDIO_ChannelLS;
++            map[7] = OMX_AUDIO_ChannelRS;
++            break;
++        default:
++            return -EINVAL;
++    }
++
++    return OK;
++}
++
+ }  // namespace android
+diff --git a/include/media/stagefright/OMXCodec.h b/include/media/stagefright/OMXCodec.h
+index 4188906..120a480 100644
+--- a/include/media/stagefright/OMXCodec.h
++++ b/include/media/stagefright/OMXCodec.h
+@@ -34,7 +34,7 @@ struct OMXCodecObserver;
+ struct CodecProfileLevel;
+ class SkipCutBuffer;
+ 
+-struct OMXCodec : public BnMediaSource,
++struct OMXCodec : public MediaSource,
+                   public MediaBufferObserver {
+     enum CreationFlags {
+         kPreferSoftwareCodecs    = 1,
+@@ -61,10 +61,10 @@ struct OMXCodec : public MediaSource,
+         // Secure decoding mode
+         kUseSecureInputBuffers = 256,
+     };
+-    static sp<IMediaSource> Create(
++    static sp<MediaSource> Create(
+             const sp<IOMX> &omx,
+             const sp<MetaData> &meta, bool createEncoder,
+-            const sp<IMediaSource> &source,
++            const sp<MediaSource> &source,
+             const char *matchComponentName = NULL,
+             uint32_t flags = 0,
+             const sp<ANativeWindow> &nativeWindow = NULL);
+@@ -146,6 +146,9 @@ struct OMXCodec : public BnMediaSource,
+         EXECUTING_TO_IDLE,
+         IDLE_TO_LOADED,
+         RECONFIGURING,
++        PAUSING,
++        FLUSHING,
++        PAUSED,
+         ERROR
+     };
+ 
+@@ -196,7 +199,7 @@ struct OMXCodec : public MediaSource,
+     char *mMIME;
+     char *mComponentName;
+     sp<MetaData> mOutputFormat;
+-    sp<IMediaSource> mSource;
++    sp<MediaSource> mSource;
+     Vector<CodecSpecificData *> mCodecSpecificData;
+     size_t mCodecSpecificDataIndex;
+ 
+@@ -241,7 +244,7 @@ struct OMXCodec : public MediaSource,
+     OMXCodec(const sp<IOMX> &omx, IOMX::node_id node,
+              uint32_t quirks, uint32_t flags,
+              bool isEncoder, const char *mime, const char *componentName,
+-             const sp<IMediaSource> &source,
++             const sp<MediaSource> &source,
+              const sp<ANativeWindow> &nativeWindow);
+ 
+     void addCodecSpecificData(const void *data, size_t size);
+@@ -355,6 +358,7 @@ struct OMXCodec : public BnMediaSource,
+ 
+     status_t waitForBufferFilled_l();
+ 
++    status_t resumeLocked(bool drainInputBuf);
+     int64_t getDecodingTimeUs();
+ 
+     status_t parseHEVCCodecSpecificData(
+@@ -410,6 +414,8 @@ status_t QueryCodec(
+         bool isEncoder,
+         CodecCapabilities *caps);
+ 
++status_t getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE map[]);
++
+ }  // namespace android
+ 
+ #endif  // OMX_CODEC_H_
+diff --git a/media/libstagefright/OMXCodec.cpp b/media/libstagefright/OMXCodec.cpp
+index 4188905..120a48e 100644
+--- a/media/libstagefright/OMXCodec.cpp
++++ b/media/libstagefright/OMXCodec.cpp
+@@ -369,8 +369,24 @@ sp<MediaSource> OMXCodec::Create(
+ 
+         ALOGV("Attempting to allocate OMX node '%s'", componentName);
+ 
+-        status_t err = omx->allocateNode(componentName, observer, &node);
+-        if (err == OK) {
++        status_t err = omx->allocateNode(componentName, observer,
++		NULL /* nodeBinder */, &node);
++        if (!createEncoder
++                && (quirks & kOutputBuffersAreUnreadable)
++                && (flags & kClientNeedsFramebuffer)) {
++            if (strncmp(componentName, "OMX.SEC.", 8)) {
++                // For OMX.SEC.* decoders we can enable a special mode that
++                // gives the client access to the framebuffer contents.
++
++                ALOGW("Component '%s' does not give the client access to "
++                     "the framebuffer contents. Skipping.",
++                     componentName);
++
++                continue;
++            }
++        }
++
++       if (err == OK) {
+             ALOGV("Successfully allocated OMX node '%s'", componentName);
+ 
+             sp<OMXCodec> codec = new OMXCodec(
+diff --git a/media/libstagefright/codecs/aacenc/AACEncoder.cpp b/media/libstagefright/codecs/aacenc/AACEncoder.cpp
+index 4188905..120a48e 100644
+--- a/media/libstagefright/codecs/aacenc/AACEncoder.cpp
++++ b/media/libstagefright/codecs/aacenc/AACEncoder.cpp
+@@ -30,7 +30,7 @@
+ 
+ namespace android {
+ 
+-AACEncoder::AACEncoder(const sp<IMediaSource> &source, const sp<MetaData> &meta)
++AACEncoder::AACEncoder(const sp<MediaSource> &source, const sp<MetaData> &meta)
+     : mSource(source),
+       mMeta(meta),
+       mStarted(false),
+diff --git a/media/libstagefright/include/AACEncoder.h b/media/libstagefright/include/AACEncoder.h
+index 4188905..120a48e 100644
+--- a/media/libstagefright/include/AACEncoder.h
++++ b/media/libstagefright/include/AACEncoder.h
+@@ -27,9 +27,9 @@ namespace android {
+ 
+ class MediaBufferGroup;
+ 
+-class AACEncoder: public BnMediaSource {
++class AACEncoder: public MediaSource {
+     public:
+-        AACEncoder(const sp<IMediaSource> &source, const sp<MetaData> &meta);
++        AACEncoder(const sp<MediaSource> &source, const sp<MetaData> &meta);
+ 
+         virtual status_t start(MetaData *params);
+         virtual status_t stop();
+@@ -42,7 +42,7 @@ class AACEncoder: public BnMediaSource {
+         virtual ~AACEncoder();
+ 
+     private:
+-        sp<IMediaSource>   mSource;
++        sp<MediaSource>   mSource;
+         sp<MetaData>      mMeta;
+         bool              mStarted;
+         MediaBufferGroup *mBufferGroup;
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 0016494..7c0ba3d 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -1116,12 +1116,19 @@ status_t StagefrightRecorder::setupRTPRecording() {
+         return BAD_VALUE;
+     }
+ 
+-    sp<MediaCodecSource> source;
+ 
+     if (mAudioSource != AUDIO_SOURCE_CNT) {
++    sp<MediaCodecSource> source;
++
+         source = createAudioSource();
+         mAudioEncoderSource = source;
++
++    mWriter = new ARTPWriter(mOutputFd);
++    mWriter->addSource(source);
++    mWriter->setListener(mListener);
+     } else {
++    sp<MediaSource> source;
++
+         setDefaultVideoEncoderIfNecessary();
+ 
+         sp<MediaSource> mediaSource;
+@@ -1135,12 +1142,14 @@ status_t StagefrightRecorder::setupRTPRecording() {
+             return err;
+         }
+         mVideoEncoderSource = source;
+-    }
+ 
+     mWriter = new ARTPWriter(mOutputFd);
+     mWriter->addSource(source);
+     mWriter->setListener(mListener);
+ 
++
++    }
++
+     return OK;
+ }
+ 
+@@ -1175,7 +1184,7 @@ status_t StagefrightRecorder::setupMPEG2TSRecording() {
+             return err;
+         }
+ 
+-        sp<MediaCodecSource> encoder;
++        sp<MediaSource> encoder;
+         err = setupVideoEncoder(mediaSource, &encoder);
+ 
+         if (err != OK) {
+@@ -1584,7 +1593,7 @@ status_t StagefrightRecorder::setupCameraSource(
+ 
+ status_t StagefrightRecorder::setupVideoEncoder(
+         sp<MediaSource> cameraSource,
+-        sp<MediaCodecSource> *source) {
++        sp<MediaSource> *source) {
+     source->clear();
+ 
+     sp<AMessage> format = new AMessage();
+@@ -1751,7 +1760,7 @@ status_t StagefrightRecorder::setupMPEG4orWEBMRecording() {
+             return err;
+         }
+ 
+-        sp<MediaCodecSource> encoder;
++        sp<MediaSource> encoder;
+         err = setupVideoEncoder(mediaSource, &encoder);
+         if (err != OK) {
+             return err;
+@@ -1858,17 +1867,28 @@ status_t StagefrightRecorder::resume() {
+ 
+     int64_t bufferStartTimeUs = 0;
+     bool allSourcesStarted = true;
+-    for (const auto &source : { mAudioEncoderSource, mVideoEncoderSource }) {
+-        if (source == nullptr) {
+-            continue;
+-        }
+-        int64_t timeUs = source->getFirstSampleSystemTimeUs();
+-        if (timeUs < 0) {
+-            allSourcesStarted = false;
+-        }
+-        if (bufferStartTimeUs < timeUs) {
+-            bufferStartTimeUs = timeUs;
+-        }
++    int64_t timeUs;
++    {
++        if (mAudioEncoderSource != nullptr) {
++	        timeUs = mAudioEncoderSource->getFirstSampleSystemTimeUs();
++	        if (timeUs < 0) {
++	            allSourcesStarted = false;
++	        }
++	        if (bufferStartTimeUs < timeUs) {
++	            bufferStartTimeUs = timeUs;
++	        }
++	 }
++#if 0
++        if (mVideoEncoderSource != nullptr) {
++	        timeUs = mVideoEncoderSource->getFirstSampleSystemTimeUs();
++	        if (timeUs < 0) {
++	            allSourcesStarted = false;
++	        }
++	        if (bufferStartTimeUs < timeUs) {
++	            bufferStartTimeUs = timeUs;
++	        }
++	 }
++#endif
+     }
+ 
+     if (allSourcesStarted) {
+@@ -1882,12 +1902,18 @@ status_t StagefrightRecorder::resume() {
+     if (mCaptureFpsEnable) {
+         timeOffset *= mCaptureFps / mFrameRate;
+     }
+-    for (const auto &source : { mAudioEncoderSource, mVideoEncoderSource }) {
+-        if (source == nullptr) {
+-            continue;
++
++    {
++        if (mAudioEncoderSource != nullptr) {
++            mAudioEncoderSource->setInputBufferTimeOffset((int64_t)timeOffset);
++            mAudioEncoderSource->start();
+         }
+-        source->setInputBufferTimeOffset((int64_t)timeOffset);
+-        source->start();
++#if 0
++        if (mVideoEncoderSource != nullptr) {
++            mVideoEncoderSource->setInputBufferTimeOffset((int64_t)timeOffset);
++            mVideoEncoderSource->start();
++        }
++#endif
+     }
+     mPauseStartTimeUs = 0;
+ 
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.h b/media/libmediaplayerservice/StagefrightRecorder.h
+index 0026494..7c0ba3d 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.h
++++ b/media/libmediaplayerservice/StagefrightRecorder.h
+@@ -137,7 +137,7 @@ struct StagefrightRecorder : public MediaRecorderBase {
+     int64_t mPauseStartTimeUs;
+     int64_t mTotalPausedDurationUs;
+     sp<MediaCodecSource> mAudioEncoderSource;
+-    sp<MediaCodecSource> mVideoEncoderSource;
++    sp<MediaSource> mVideoEncoderSource;
+ 
+     bool mStarted;
+     // Needed when GLFrames are encoded.
+@@ -170,7 +170,7 @@ struct StagefrightRecorder : public MediaRecorderBase {
+     status_t setupSurfaceMediaSource();
+ 
+     status_t setupAudioEncoder(const sp<MediaWriter>& writer);
+-    status_t setupVideoEncoder(sp<MediaSource> cameraSource, sp<MediaCodecSource> *source);
++    status_t setupVideoEncoder(sp<MediaSource> cameraSource, sp<MediaSource> *source);
+     virtual void setupCustomVideoEncoderParams(sp<MediaSource> /*cameraSource*/,
+             sp<AMessage> &/*format*/) {}
+ 

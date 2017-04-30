@@ -1,0 +1,61 @@
+ ActivityManagerNative: Prevent possible soft-reboot
+
+AndroidRuntime: java.lang.NullPointerException: Attempt to invoke interface method 
+'void android.app.IActivityManager.attachApplication(android.app.IApplicationThread)' 
+on a null object reference
+AndroidRuntime: java.lang.NullPointerException: Attempt to invoke interface method 
+'void android.app.IActivityManager.handleApplicationCrash(android.os.IBinder, 
+android.app.ApplicationErrorReport$CrashInfo)' on a null object reference
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index d6d4310..37b6d01 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -5976,7 +5976,9 @@ public void run() {
+             RuntimeInit.setApplicationObject(mAppThread.asBinder());
+             final IActivityManager mgr = ActivityManagerNative.getDefault();
+             try {
+-                mgr.attachApplication(mAppThread);
++                if (mgr != null) {
++                    mgr.attachApplication(mAppThread);
++                }
+             } catch (RemoteException ex) {
+                 throw ex.rethrowFromSystemServer();
+             }
+@@ -5995,7 +5997,9 @@ public void run() {
+                                 + " used=" + (dalvikUsed/1024));
+                         mSomeActivitiesChanged = false;
+                         try {
+-                            mgr.releaseSomeActivities(mAppThread);
++                            if (mgr != null) {
++                                mgr.releaseSomeActivities(mAppThread);
++                            }
+                         } catch (RemoteException e) {
+                             throw e.rethrowFromSystemServer();
+                         }
+diff --git a/core/java/com/android/internal/os/RuntimeInit.java b/core/java/com/android/internal/os/RuntimeInit.java
+index d6d4310..37b6d11 100644
+--- a/core/java/com/android/internal/os/RuntimeInit.java
++++ b/core/java/com/android/internal/os/RuntimeInit.java
+@@ -19,6 +19,7 @@
+ import android.app.ActivityManagerNative;
+ import android.app.ActivityThread;
+ import android.app.ApplicationErrorReport;
++import android.app.IActivityManager;
+ import android.os.Build;
+ import android.os.DeadObjectException;
+ import android.os.Debug;
+@@ -94,8 +95,11 @@ public void uncaughtException(Thread t, Throwable e) {
+                 }
+ 
+                 // Bring up crash dialog, wait for it to be dismissed
+-                ActivityManagerNative.getDefault().handleApplicationCrash(
+-                        mApplicationObject, new ApplicationErrorReport.CrashInfo(e));
++                final IActivityManager mgr = ActivityManagerNative.getDefault();
++                if (mgr != null) {
++                    mgr.handleApplicationCrash(
++                            mApplicationObject, new ApplicationErrorReport.CrashInfo(e));
++                }
+             } catch (Throwable t2) {
+                 if (t2 instanceof DeadObjectException) {
+                     // System process is dead; ignore

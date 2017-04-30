@@ -1,0 +1,60 @@
+Subject: [PATCH] SoftMPEG4: Check the buffer size before writing the reference frame.
+
+Also prevent overflow in SoftMPEG4 and division by zero in SoftMPEG4Encoder.
+
+diff --git a/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
+index bb59ae4..e1cfc06 100644
+--- a/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
++++ b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
+@@ -210,17 +210,8 @@ void SoftMPEG4::onQueueFilled(OMX_U32 /* portIndex */) {
+             PortInfo *port = editPortInfo(1);
+             OMX_BUFFERHEADERTYPE *outHeader = port->mBuffers.editItemAt(1).mHeader;
+ 
+-            OMX_U32 yFrameSize = sizeof(uint8) * mHandle->size;
+-            if ((outHeader->nAllocLen < yFrameSize) ||
+-                    (outHeader->nAllocLen - yFrameSize < yFrameSize / 2)) {
+-                ALOGE("Too small output buffer for reference frame: %lu bytes",
+-                        (unsigned long)outHeader->nAllocLen);
+-                android_errorWriteLog(0x534e4554, "30033990");
+-                notify(OMX_EventError, OMX_ErrorUndefined, 0, NULL);
+-                mSignalledError = true;
+-                return;
+-            }
+             PVSetReferenceYUV(mHandle, outHeader->pBuffer);
++
+             mFramesConfigured = true;
+         }
+ 
+@@ -238,16 +229,7 @@ void SoftMPEG4::onQueueFilled(OMX_U32 /* portIndex */) {
+         int32_t bufferSize = inHeader->nFilledLen;
+         int32_t tmp = bufferSize;
+ 
+-        OMX_U32 frameSize;
+-        OMX_U64 yFrameSize = (OMX_U64)mWidth * (OMX_U64)mHeight;
+-        if (yFrameSize > ((OMX_U64)UINT32_MAX / 3) * 2) {
+-            ALOGE("Frame size too large");
+-            notify(OMX_EventError, OMX_ErrorUndefined, 0, NULL);
+-            mSignalledError = true;
+-            return;
+-        }
+-        frameSize = (OMX_U32)(yFrameSize + (yFrameSize / 2));
+-
++        OMX_U32 frameSize = (mWidth * mHeight * 3) / 2;
+         if (outHeader->nAllocLen < frameSize) {
+             android_errorWriteLog(0x534e4554, "27833616");
+             ALOGE("Insufficient output buffer size");
+diff --git a/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp b/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp
+index 7638bb7..2a949e0 100644
+--- a/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp
++++ b/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp
+@@ -117,10 +117,6 @@ OMX_ERRORTYPE SoftMPEG4Encoder::initEncParams() {
+         ALOGE("Failed to get default encoding parameters");
+         return OMX_ErrorUndefined;
+     }
+-    if (mFramerate == 0) {
+-        ALOGE("Framerate should not be 0");
+-        return OMX_ErrorUndefined;
+-    }
+     mEncParams->encMode = mEncodeMode;
+     mEncParams->encWidth[0] = mWidth;
+     mEncParams->encHeight[0] = mHeight;

@@ -1,0 +1,18 @@
+diff --git a/charger/Android.mk b/charger/Android.mk
+index 9fed3dd..4480ec7 100644
+--- a/charger/Android.mk
++++ b/charger/Android.mk
+@@ -1,4 +1,5 @@
+-LOCAL_PATH := $(call my-dir)
++ifneq ($(WITH_CM_CHARGER),false)
++LOCAL_PATH := $(call my-dir)
+ 
+ # Set healthd_density to the density bucket of the device.
+ healthd_density := unknown
+@@ -67,4 +68,5 @@
+ include $(BUILD_PHONY_PACKAGE)
+ 
+ _add-charger-image :=
+-_img_modules :=
++_img_modules :=
++endif

@@ -1,0 +1,21 @@
+ hwui: Don't discard framebuffer on STE_HARDWARE
+
+The layers gets empty/not cleaned and redrawn on top of the preview,
+causing beautiful glitch on homescreen, and drawing black instead
+of transparency.
+
+diff --git a/libs/hwui/LayerRenderer.cpp b/libs/hwui/LayerRenderer.cpp
+index 3e55fff..6b3732d 100644
+--- a/libs/hwui/LayerRenderer.cpp
++++ b/libs/hwui/LayerRenderer.cpp
+@@ -327,9 +327,8 @@ void LayerRenderer::destroyLayer(Layer* layer) {
+ }
+ 
+ void LayerRenderer::flushLayer(RenderState& renderState, Layer* layer) {
+-#ifdef GL_EXT_discard_framebuffer
++#if defined(GL_EXT_discard_framebuffer) && !defined(STE_HARDWARE)
+     if (!layer) return;
+-
+     GLuint fbo = layer->getFbo();
+     if (fbo) {
+         // If possible, discard any enqueud operations on deferred

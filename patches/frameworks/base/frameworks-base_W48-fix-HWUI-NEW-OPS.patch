@@ -1,0 +1,32 @@
+diff --git a/libs/hwui/Android.mk b/libs/hwui/Android.mk
+index 48bb5dd..64dd301 100644
+--- a/libs/hwui/Android.mk
++++ b/libs/hwui/Android.mk
+@@ -2,7 +2,11 @@
+ include $(CLEAR_VARS)
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+ 
++ifeq ($(TARGET_HWUI_NEW_OPS),true)
+ HWUI_NEW_OPS := true
++else
++HWUI_NEW_OPS := false
++endif
+ BUGREPORT_FONT_CACHE_USAGE := false
+ 
+ # Enables fine-grained GLES error checking
+diff --git a/core/jni/Android.mk b/core/jni/Android.mk
+index 48bb5dd..64dd351 100644
+--- a/core/jni/Android.mk
++++ b/core/jni/Android.mk
+@@ -7,7 +7,11 @@
+ LOCAL_CFLAGS += -Wno-unused-parameter
+ LOCAL_CFLAGS += -Wno-non-virtual-dtor
+ LOCAL_CFLAGS += -Wno-maybe-uninitialized -Wno-parentheses
++
++ifeq ($(TARGET_HWUI_NEW_OPS),true)
+ LOCAL_CFLAGS += -DHWUI_NEW_OPS
++endif
++
+ LOCAL_CPPFLAGS += -Wno-conversion-null
+ 
+ ifeq ($(TARGET_ARCH), arm)

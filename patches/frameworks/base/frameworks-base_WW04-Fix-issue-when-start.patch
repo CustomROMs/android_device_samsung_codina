@@ -1,0 +1,27 @@
+Subject: [PATCH] Fix issue when start android/com.android.internal.backup.LocalTransportService
+
+When SOC vendor do not install gapps, it will not have permission
+backup-transport-whitelisted-service which define in gapps/etc/sysconfig/google.xml.
+
+This patch add the backup-transport-whitelisted-service in
+system/etc/permissions/platform.xml
+
+Error log when boot up:
+ W BackupManagerService: Proposed
+transport ComponentInfo{android/com.android.internal.backup.LocalTransportService}
+not whitelisted; ignoring
+
+diff --git a/data/etc/platform.xml b/data/etc/platform.xml
+index 627f360..a75f187 100644
+--- a/data/etc/platform.xml
++++ b/data/etc/platform.xml
+@@ -179,6 +179,9 @@
+     <!-- These are the packages that are white-listed to be able to run as system user -->
+     <system-user-whitelisted-app package="com.android.settings" />
+ 
++    <!-- These are the transport services that are white-listed to be able to run -->
++    <backup-transport-whitelisted-service service="android/com.android.internal.backup.LocalTransportService" />
++
+     <!-- These are the packages that shouldn't run as system user -->
+     <system-user-blacklisted-app package="com.android.wallpaper.livepicker" />
+ </permissions>

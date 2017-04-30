@@ -1,0 +1,27 @@
+Subject: [PATCH] Skip ANR for processes that have been killed
+
+If a controller is attached and decides to kill a process after an ANR,
+other ANR reports for that app that are queued up won't be handled until
+after the app has died.  This can create a report without the relevant
+callstacks because the app is dead by the time the traces are dumped.
+Since the trace file is global, the traces recorded for the first ANR
+are overwritten, leaving us with no clue as to what happened.
+
+After the app has been killedByAm, it is not interesting to handle ANRs
+for that app until it is started again, so killedByAm can be used to
+filter out these spurious reports.
+
+diff --git a/services/core/java/com/android/server/am/AppErrors.java b/services/core/java/com/android/server/am/AppErrors.java
+index 49106f4..724f66f 100644
+--- a/services/core/java/com/android/server/am/AppErrors.java
++++ b/services/core/java/com/android/server/am/AppErrors.java
+@@ -774,6 +774,9 @@
+             } else if (app.crashing) {
+                 Slog.i(TAG, "Crashing app skipping ANR: " + app + " " + annotation);
+                 return;
++            } else if (app.killedByAm) {
++                Slog.i(TAG, "App already killed by AM skipping ANR: " + app + " " + annotation);
++                return;
+             }
+ 
+             // In case we come through here for the same app before completing

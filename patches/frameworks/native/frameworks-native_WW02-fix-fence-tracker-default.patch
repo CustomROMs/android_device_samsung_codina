@@ -1,0 +1,144 @@
+ fix fence tracker by default
+
+ - Don't check whether the fences have completed or not unless the data
+  has been requested.
+
+diff --git a/services/surfaceflinger/FenceTracker.cpp b/services/surfaceflinger/FenceTracker.cpp
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/FenceTracker.cpp
++++ b/services/surfaceflinger/FenceTracker.cpp
+@@ -185,6 +185,10 @@ void FenceTracker::addFrame(nsecs_t refreshStartTime, sp<Fence> retireFence,
+ 
+     mOffset = (mOffset + 1) % MAX_FRAME_HISTORY;
+     mFrameCounter++;
++
++#ifndef ENABLE_FENCE_TRACKING
++    checkFencesForCompletion();
++#endif
+ }
+ 
+ bool FenceTracker::getFrameTimestamps(const Layer& layer,
+diff --git a/services/surfaceflinger/FenceTracker.h b/services/surfaceflinger/FenceTracker.h
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/FenceTracker.h
++++ b/services/surfaceflinger/FenceTracker.h
+@@ -44,7 +44,11 @@ class FenceTracker {
+              FrameTimestamps* outTimestamps);
+ 
+ protected:
++#ifdef ENABLE_FENCE_TRACKING
+      static constexpr size_t MAX_FRAME_HISTORY = 8;
++#else
++     static constexpr size_t MAX_FRAME_HISTORY = 128;
++#endif
+ 
+      struct LayerRecord {
+          String8 name; // layer name
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -1098,7 +1098,11 @@ bool SurfaceFlinger::handleMessageInvalidate() {
+ void SurfaceFlinger::handleMessageRefresh() {
+     ATRACE_CALL();
+ 
++#ifdef ENABLE_FENCE_TRACKING
+     nsecs_t refreshStartTime = systemTime(SYSTEM_TIME_MONOTONIC);
++#else
++    nsecs_t refreshStartTime = 0;
++#endif
+ 
+     preComposition();
+     rebuildLayerStacks();
+@@ -1188,7 +1192,11 @@ void SurfaceFlinger::preComposition()
+     }
+ }
+ 
++#ifdef ENABLE_FENCE_TRACKING
+ void SurfaceFlinger::postComposition(nsecs_t refreshStartTime)
++#else
++void SurfaceFlinger::postComposition(nsecs_t /*refreshStartTime*/)
++#endif
+ {
+     ATRACE_CALL();
+     ALOGV("postComposition");
+@@ -1220,8 +1228,10 @@ void SurfaceFlinger::postComposition(nsecs_t /*refreshStartTime*/)
+         }
+     }
+ 
++#ifdef ENABLE_FENCE_TRACKING
+     mFenceTracker.addFrame(refreshStartTime, presentFence,
+             hw->getVisibleLayersSortedByZ(), hw->getClientTargetAcquireFence());
++#endif
+ 
+     if (mAnimCompositionPending) {
+         mAnimCompositionPending = false;
+@@ -2848,12 +2858,14 @@ status_t SurfaceFlinger::dump(int fd, const Vector<String16>& args)
+                 dumpAll = false;
+             }
+ 
++#ifdef ENABLE_FENCE_TRACKING
+             if ((index < numArgs) &&
+                     (args[index] == String16("--fences"))) {
+                 index++;
+                 mFenceTracker.dump(&result);
+                 dumpAll = false;
+             }
++#endif
+         }
+ 
+         if (dumpAll) {
+diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -1085,7 +1085,11 @@ bool SurfaceFlinger::handleMessageInvalidate() {
+ void SurfaceFlinger::handleMessageRefresh() {
+     ATRACE_CALL();
+ 
++#ifdef ENABLE_FENCE_TRACKING
+     nsecs_t refreshStartTime = systemTime(SYSTEM_TIME_MONOTONIC);
++#else
++    nsecs_t refreshStartTime = 0;
++#endif
+ 
+     preComposition();
+     rebuildLayerStacks();
+@@ -1150,7 +1154,11 @@ void SurfaceFlinger::preComposition()
+     }
+ }
+ 
++#ifdef ENABLE_FENCE_TRACKING
+ void SurfaceFlinger::postComposition(nsecs_t refreshStartTime)
++#else
++void SurfaceFlinger::postComposition(nsecs_t /*refreshStartTime*/)
++#endif
+ {
+     const LayerVector& layers(mDrawingState.layersSortedByZ);
+     const size_t count = layers.size();
+@@ -1180,8 +1188,10 @@ void SurfaceFlinger::postComposition(nsecs_t /*refreshStartTime*/)
+         }
+     }
+ 
++#ifdef ENABLE_FENCE_TRACKING
+     mFenceTracker.addFrame(refreshStartTime, presentFence,
+             hw->getVisibleLayersSortedByZ(), hw->getClientTargetAcquireFence());
++#endif
+ 
+     if (mAnimCompositionPending) {
+         mAnimCompositionPending = false;
+@@ -2846,12 +2856,14 @@ status_t SurfaceFlinger::dump(int fd, const Vector<String16>& args)
+                 dumpAll = false;
+             }
+ 
++#ifdef ENABLE_FENCE_TRACKING
+             if ((index < numArgs) &&
+                     (args[index] == String16("--fences"))) {
+                 index++;
+                 mFenceTracker.dump(&result);
+                 dumpAll = false;
+             }
++#endif
+         }
+ 
+         if (dumpAll) {

@@ -1,0 +1,99 @@
+ SF: Minimize completion time for short-running threads
+
+The short-running SF threads depend on a
+very quick completion, since the caller
+is waiting for the callback.
+
+While using round-robin RT scheduling
+(SCHED_RR) is smarter for long-running
+SF threads, we should switch back to
+SCHED_FIFO for the short-running SF
+threads to achieve the best result.
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 4e122da..064e105 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -488,11 +488,11 @@ void SurfaceFlinger::init() {
+         mEventQueue.setEventThread(mSFEventThread);
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+-        // set SFEventThread to SCHED_RR to minimize jitter
++        // set SFEventThread to SCHED_FIFO to minimize jitter
+         struct sched_param param = {0};
+         param.sched_priority = 4;
+-        if (sched_setscheduler(mSFEventThread->getTid(), SCHED_RR, &param) != 0) {
+-            ALOGE("Couldn't set SCHED_RR for SFEventThread");
++        if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
++            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
+         }
+ #endif
+ 
+diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+index 4e122da..064e115 100644
+--- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -480,11 +480,11 @@ void SurfaceFlinger::init() {
+         mEventQueue.setEventThread(mSFEventThread);
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+-       // set SFEventThread to SCHED_RR to minimize jitter
++       // set SFEventThread to SCHED_FIFO to minimize jitter
+        struct sched_param param = {0};
+        param.sched_priority = 4;
+-       if (sched_setscheduler(mSFEventThread->getTid(), SCHED_RR, &param) != 0) {
+-           ALOGE("Couldn't set SCHED_RR for SFEventThread");
++       if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
++           ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
+        }
+ #endif
+     } else {
+@@ -494,11 +494,11 @@ void SurfaceFlinger::init() {
+         mEventQueue.setEventThread(mEventThread);
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+-       // set SFEventThread to SCHED_RR to minimize jitter
++       // set EventThread to SCHED_FIFO to minimize jitter
+        struct sched_param param = {0};
+        param.sched_priority = 4;
+-       if (sched_setscheduler(mEventThread->getTid(), SCHED_RR, &param) != 0) {
+-           ALOGE("Couldn't set SCHED_RR for SFEventThread");
++       if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
++           ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
+        }
+ #endif
+     }
+diff --git a/services/surfaceflinger/main_surfaceflinger.cpp b/services/surfaceflinger/main_surfaceflinger.cpp
+index 4e122da..064e125 100644
+--- a/services/surfaceflinger/main_surfaceflinger.cpp
++++ b/services/surfaceflinger/main_surfaceflinger.cpp
+@@ -65,8 +65,8 @@ int main(int, char**) {
+ #ifndef HARDWARE_SCHED_FIFO
+     struct sched_param param = {0};
+     param.sched_priority = 4;
+-    if (sched_setscheduler(0, SCHED_RR, &param) != 0) {
+-        ALOGE("Couldn't set SCHED_RR");
++    if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
++        ALOGE("Couldn't set SCHED_FIFO");
+     }
+ #endif
+ 
+diff --git a/services/surfaceflinger/DispSync.cpp b/services/surfaceflinger/DispSync.cpp
+index 4e122da..064e135 100644
+--- a/services/surfaceflinger/DispSync.cpp
++++ b/services/surfaceflinger/DispSync.cpp
+@@ -384,11 +384,11 @@ DispSync::DispSync(const char* name) :
+ 
+     mThread->run("DispSync", PRIORITY_REALTIME);
+ #ifndef HARDWARE_SCHED_FIFO
+-    // set DispSync to SCHED_RR to minimize jitter
++    // set DispSync to SCHED_FIFO to minimize jitter
+     struct sched_param param = {0};
+     param.sched_priority = 4;
+-    if (sched_setscheduler(mThread->getTid(), SCHED_RR, &param) != 0) {
+-        ALOGE("Couldn't set SCHED_RR for DispSyncThread");
++    if (sched_setscheduler(mThread->getTid(), SCHED_FIFO, &param) != 0) {
++        ALOGE("Couldn't set SCHED_FIFO for DispSyncThread");
+     }
+ #endif
+ 

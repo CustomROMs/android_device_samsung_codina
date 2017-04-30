@@ -1,0 +1,64 @@
+audio polciy: FM audio capture permission
+
+diff --git a/services/audioflinger/ServiceUtilities.cpp b/services/audioflinger/ServiceUtilities.cpp
+index 64b4c2a..1387129 100644
+--- a/services/audioflinger/ServiceUtilities.cpp
++++ b/services/audioflinger/ServiceUtilities.cpp
+@@ -113,6 +113,14 @@ bool captureHotwordAllowed() {
+     return ok;
+ }
+ 
++bool accessFmRadioAllowed() {
++    static const String16 sAccessFmRadio("android.permission.ACCESS_FM_RADIO");
++    // IMPORTANT: Use PermissionCache - not a runtime permission and may not change.
++    bool ok = PermissionCache::checkCallingPermission(sAccessFmRadio);
++    if (!ok) ALOGE("Request requires android.permission.ACCESS_FM_RADIO");
++    return ok;
++}
++
+ bool captureHotwordAllowed() {
+     static const String16 sCaptureHotwordAllowed("android.permission.CAPTURE_AUDIO_HOTWORD");
+     // IMPORTANT: Use PermissionCache - not a runtime permission and may not change.
+diff --git a/services/audioflinger/ServiceUtilities.h b/services/audioflinger/ServiceUtilities.h
+index 5d255e4..22efce0 100644
+--- a/services/audioflinger/ServiceUtilities.h
++++ b/services/audioflinger/ServiceUtilities.h
+@@ -22,6 +22,7 @@ extern pid_t getpid_cached;
+ bool isTrustedCallingUid(uid_t uid);
+ bool recordingAllowed(const String16& opPackageName, pid_t pid, uid_t uid);
+ bool captureAudioOutputAllowed(pid_t pid, uid_t uid);
++bool accessFmRadioAllowed();
+ bool captureHotwordAllowed();
+ bool settingsAllowed();
+ bool modifyAudioRoutingAllowed();
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
+index 5d255e4..21efce0 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
+@@ -315,6 +315,11 @@ status_t AudioPolicyService::getInputForAttr(const audio_attributes_t *attr,
+     if ((attr->source == AUDIO_SOURCE_HOTWORD) && !captureHotwordAllowed()) {
+         return BAD_VALUE;
+     }
++
++    if ((attr->source == AUDIO_SOURCE_FM_TUNER) && !accessFmRadioAllowed()) {
++        return BAD_VALUE;
++    }
++
+     sp<AudioPolicyEffects>audioPolicyEffects;
+     status_t status;
+     AudioPolicyInterface::input_type_t inputType;
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 5d255e4..20efce0 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -276,6 +276,10 @@ status_t AudioPolicyService::getInputForAttr(const audio_attributes_t *attr,
+         return BAD_VALUE;
+     }
+ 
++    if ((inputSource == AUDIO_SOURCE_FM_TUNER) && !accessFmRadioAllowed()) {
++        return BAD_VALUE;
++    }
++
+ #ifdef HAVE_PRE_KITKAT_AUDIO_POLICY_BLOB
+     if (inputSource == AUDIO_SOURCE_HOTWORD)
+         inputSource = AUDIO_SOURCE_VOICE_RECOGNITION;

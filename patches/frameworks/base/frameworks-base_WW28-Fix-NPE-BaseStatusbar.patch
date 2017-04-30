@@ -1,0 +1,23 @@
+Subject: [PATCH] Fix NPE in BaseStatusbar in onListenerConnected
+
+If NotificationListenerService is not bound the
+getActiveNotifications function will return null.
+This will result in a Nullpointer exception in BaseStatusbar
+onListenerConnected if it is called. A Nullpointer check was
+added in onListenerConnected to avoid this Nullpointer exception.
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
+index 9ff86eb..35362e0 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
+@@ -610,6 +610,10 @@
+         public void onListenerConnected() {
+             if (DEBUG) Log.d(TAG, "onListenerConnected");
+             final StatusBarNotification[] notifications = getActiveNotifications();
++            if (notifications == null) {
++                Log.w(TAG, "onListenerConnected unable to get active notifications.");
++                return;
++            }
+             final RankingMap currentRanking = getCurrentRanking();
+             mHandler.post(new Runnable() {
+                 @Override

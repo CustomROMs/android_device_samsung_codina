@@ -1,0 +1,44 @@
+From 1a59e39cbc2ad83aa922e240f0b56c40768b7be1 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 28 Apr 2017 12:58:10 +0300
+Subject: [PATCH 07/10] build_W4-Add-mkdir-ramdisk.patch
+
+Change-Id: I0edf1a6f386280ce8cf879f7e2ce2047ada0e898
+---
+ tools/releasetools/common.py                | 5 +++++
+ tools/releasetools/ota_from_target_files.py | 3 +++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 5e7b905..2c06e8c 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1286,6 +1286,11 @@ class DeviceSpecificParams(object):
+     used to install the image for the device's baseband processor."""
+     return self._DoCall("FullOTA_InstallEnd")
+ 
++  def FullOTA_InstallNew(self):
++    """Called after installing and validating /ramdisk; typically this is
++    used to resize the ramdisk partition after a recovery installation."""
++    return self._DoCall("FullOTA_InstallNew")
++
+   def FullOTA_PostValidate(self):
+     """Called after installing and validating /system; typically this is
+     used to resize the system partition after a block based installation."""
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index a3b9627..01ef345 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -789,6 +789,9 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+ 
+   device_specific.FullOTA_PostValidate()
+ 
++  script.ShowProgress(0.2, 10)
++  device_specific.FullOTA_InstallNew()
++
+   if OPTIONS.backuptool:
+     script.ShowProgress(0.02, 10)
+     if block_based:
+-- 
+2.5.0
+

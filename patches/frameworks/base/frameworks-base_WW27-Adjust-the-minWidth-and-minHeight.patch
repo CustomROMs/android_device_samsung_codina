@@ -1,0 +1,67 @@
+Subject: [PATCH] Adjust the minWidth and minHeight whenever there is change in density.
+
+The caveat is that the unit used should be dp.
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index bc03901..9633fa6 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -19312,6 +19312,7 @@
+ 
+                     killAllBackgroundProcessesExcept(Build.VERSION_CODES.N,
+                             ActivityManager.PROCESS_STATE_FOREGROUND_SERVICE);
++                    mStackSupervisor.ensureTasksMinDimensionsLocked();
+                 }
+ 
+                 for (int i=mLruProcesses.size()-1; i>=0; i--) {
+diff --git a/services/core/java/com/android/server/am/ActivityStackSupervisor.java b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+index c6ab918..74b52b4 100644
+--- a/services/core/java/com/android/server/am/ActivityStackSupervisor.java
++++ b/services/core/java/com/android/server/am/ActivityStackSupervisor.java
+@@ -4592,4 +4592,20 @@
+         }
+         return topActivityTokens;
+     }
++
++    void ensureTasksMinDimensionsLocked() {
++        for (int displayNdx = mActivityDisplays.size() - 1; displayNdx >= 0; --displayNdx) {
++            final ArrayList<ActivityStack> stacks = mActivityDisplays.valueAt(displayNdx).mStacks;
++            final int topStackNdx = stacks.size() - 1;
++            for (int stackNdx = topStackNdx; stackNdx >= 0; --stackNdx) {
++                final ArrayList<TaskRecord> tasks = stacks.get(stackNdx).getAllTasks();
++                for (int taskNdx = tasks.size() - 1; taskNdx >= 0; --taskNdx) {
++                    final TaskRecord task = tasks.get(taskNdx);
++                    if (task.getRootActivity() != null) {
++                        task.setMinDimensions(task.getRootActivity().info);
++                    }
++                }
++            }
++        }
++    }
+ }
+diff --git a/services/core/java/com/android/server/am/TaskRecord.java b/services/core/java/com/android/server/am/TaskRecord.java
+index 4691e1a..56cafb0 100644
+--- a/services/core/java/com/android/server/am/TaskRecord.java
++++ b/services/core/java/com/android/server/am/TaskRecord.java
+@@ -480,10 +480,20 @@
+     }
+ 
+     /** Sets the original minimal width and height. */
+-    private void setMinDimensions(ActivityInfo info) {
++    void setMinDimensions(ActivityInfo info) {
+         if (info != null && info.windowLayout != null) {
+             mMinWidth = info.windowLayout.minWidth;
+             mMinHeight = info.windowLayout.minHeight;
++            final int densityDpi = mService.mConfiguration.densityDpi;
++            if (DisplayMetrics.DENSITY_DEVICE_STABLE > 0) {
++                // adjust min dimensions if system density is changed.
++                if (mMinWidth != INVALID_MIN_SIZE) {
++                   mMinWidth = (mMinWidth * densityDpi) / DisplayMetrics.DENSITY_DEVICE_STABLE;
++                }
++                if (mMinHeight != INVALID_MIN_SIZE) {
++                   mMinHeight = (mMinHeight * densityDpi) / DisplayMetrics.DENSITY_DEVICE_STABLE;
++                }
++            }
+         } else {
+             mMinWidth = INVALID_MIN_SIZE;
+             mMinHeight = INVALID_MIN_SIZE;

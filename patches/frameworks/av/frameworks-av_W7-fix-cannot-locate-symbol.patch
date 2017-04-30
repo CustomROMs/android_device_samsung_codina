@@ -1,0 +1,13 @@
+Subject: [PATCH] fix "cannot locate symbol
+ "_ZN7android16MediaBufferGroupC1Ev" referenced by "/system/vendor/lib/libwvm.so
+
+diff --git a/media/libstagefright/foundation/MediaBufferGroup.cpp b/media/libstagefright/foundation/MediaBufferGroup.cpp
+index 9022324..ecfa13d 100644
+--- a/media/libstagefright/foundation/MediaBufferGroup.cpp
++++ b/media/libstagefright/foundation/MediaBufferGroup.cpp
+@@ -210,3 +210,5 @@
+ }
+ 
+ }  // namespace android
++
++__strong_alias(_ZN7android16MediaBufferGroupC1Ev,_ZN7android16MediaBufferGroupC1Ej);

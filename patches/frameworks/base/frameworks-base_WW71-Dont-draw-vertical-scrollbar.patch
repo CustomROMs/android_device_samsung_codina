@@ -1,0 +1,19 @@
+Subject: [PATCH] UX: Don't draw vertical scrollbar if it is in hidden state
+
+If fast scrollbar exit, vertical scrollbar will be hidden,
+needn't draw it
+
+diff --git a/core/java/android/view/View.java b/core/java/android/view/View.java
+index bdf4141..d9c59ca 100644
+--- a/core/java/android/view/View.java
++++ b/core/java/android/view/View.java
+@@ -13513,7 +13513,8 @@
+             scrollCache.scrollBar.setCallback(this);
+         }
+ 
+-        if (isHorizontalScrollBarEnabled() || isVerticalScrollBarEnabled()) {
++        if (isHorizontalScrollBarEnabled() ||
++                (isVerticalScrollBarEnabled() && !isVerticalScrollBarHidden())) {
+ 
+             if (invalidate) {
+                 // Invalidate to show the scrollbars

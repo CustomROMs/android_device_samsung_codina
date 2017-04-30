@@ -1,0 +1,95 @@
+ SF: Adjust RT sched priorities
+
+This converts the sched priorities
+of RT processes to be able to schedule
+other RT processes lower or in between
+the short- and long running SF processes.
+
+This change by itself is no functional
+change.
+
+diff --git a/services/surfaceflinger/DispSync.cpp b/services/surfaceflinger/DispSync.cpp
+index 4e122da..064e1d6 100644
+--- a/services/surfaceflinger/DispSync.cpp
++++ b/services/surfaceflinger/DispSync.cpp
+@@ -386,7 +386,7 @@ DispSync::DispSync(const char* name) :
+ #ifndef HARDWARE_SCHED_FIFO
+     // set DispSync to SCHED_FIFO to minimize jitter
+     struct sched_param param = {0};
+-    param.sched_priority = 2;
++    param.sched_priority = 4;
+     if (sched_setscheduler(mThread->getTid(), SCHED_FIFO, &param) != 0) {
+         ALOGE("Couldn't set SCHED_FIFO for DispSyncThread");
+     }
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -490,7 +490,7 @@ void SurfaceFlinger::init() {
+ #ifndef HARDWARE_SCHED_FIFO
+         // set SFEventThread to SCHED_FIFO to minimize jitter
+         struct sched_param param = {0};
+-        param.sched_priority = 2;
++        param.sched_priority = 4;
+         if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
+             ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
+         }
+@@ -2744,7 +2744,7 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+         struct sched_param param = {0};
+-        param.sched_priority = 1;
++        param.sched_priority = 2;
+         if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
+             ALOGW("Couldn't set SCHED_FIFO on display on");
+         }
+diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -482,21 +482,21 @@ void SurfaceFlinger::init() {
+ #ifndef HARDWARE_SCHED_FIFO
+        // set SFEventThread to SCHED_FIFO to minimize jitter
+        struct sched_param param = {0};
+-       param.sched_priority = 2;
++       param.sched_priority = 4;
+        if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
+            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
+        }
+ #endif
+     } else {
+         sp<VSyncSource> vsyncSrc = new DispSyncSource(&mPrimaryDispSync,
+                          vsyncPhaseOffsetNs, true, "sf-app");
+         mEventThread = new EventThread(vsyncSrc, *this);
+         mEventQueue.setEventThread(mEventThread);
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+        // set EventThread to SCHED_FIFO to minimize jitter
+        struct sched_param param = {0};
+-       param.sched_priority = 2;
++       param.sched_priority = 4;
+        if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
+            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
+        }
+@@ -2744,7 +2744,7 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+         struct sched_param param = {0};
+-        param.sched_priority = 1;
++        param.sched_priority = 2;
+         if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
+             ALOGW("Couldn't set SCHED_FIFO on display on");
+         }
+diff --git a/services/surfaceflinger/main_surfaceflinger.cpp b/services/surfaceflinger/main_surfaceflinger.cpp
+index 4e122da..064e1d5 100644
+--- a/services/surfaceflinger/main_surfaceflinger.cpp
++++ b/services/surfaceflinger/main_surfaceflinger.cpp
+@@ -64,7 +64,7 @@ int main(int, char**) {
+ 
+ #ifndef HARDWARE_SCHED_FIFO
+     struct sched_param param = {0};
+-    param.sched_priority = 2;
++    param.sched_priority = 4;
+     if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
+         ALOGE("Couldn't set SCHED_FIFO");
+     }

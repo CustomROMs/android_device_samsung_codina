@@ -1,0 +1,26 @@
+Subject: [PATCH] Fix slideshow can't output image issue.
+
+when fb width or height is less than image width or height,
+then x or y will be negative value.
+gr_blit will ignore this draw because the outside(x, y) will return true;
+
+make sure x or y offset great or equal 0.
+
+diff --git a/slideshow/slideshow.cpp b/slideshow/slideshow.cpp
+index 15824f8..8751c49 100644
+--- a/slideshow/slideshow.cpp
++++ b/slideshow/slideshow.cpp
+@@ -68,6 +68,13 @@
+     x = (gr_fb_width() - w) / 2;
+     y = (gr_fb_height() - h) / 2;
+ 
++
++    if (x < 0) {
++        x = 0;
++    }
++    if (y < 0) {
++        y = 0;
++    }
+     gr_blit(surface, 0, 0, w, h, x, y);
+     gr_flip();
+ 

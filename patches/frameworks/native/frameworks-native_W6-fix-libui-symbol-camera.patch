@@ -1,0 +1,14 @@
+ libui: fix unresolved symbol GraphicBufferAllocator::alloc
+until bionic doesn't properly load shim libs, use this workaround
+
+diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
+index 87e5b40..9634db1 100644
+--- a/libs/ui/GraphicBufferAllocator.cpp
++++ b/libs/ui/GraphicBufferAllocator.cpp
+@@ -167,3 +167,6 @@
+ 
+ // ---------------------------------------------------------------------------
+ }; // namespace android
++
++__strong_alias(_ZN7android22GraphicBufferAllocator5allocEjjiiPPK13native_handlePi,
++        _ZN7android22GraphicBufferAllocator5allocEjjijPPK13native_handlePj);

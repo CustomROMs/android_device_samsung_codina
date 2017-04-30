@@ -1,0 +1,15 @@
+Fix possible NPE
+
+diff --git a/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java b/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java
+index 3687512..3660f60 100644
+--- a/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java
++++ b/packages/SystemUI/src/com/android/systemui/screenshot/GlobalScreenshot.java
+@@ -286,7 +286,7 @@ protected Void doInBackground(Void... params) {
+             // Create a delete action for the notification
+             PendingIntent deleteAction = PendingIntent.getBroadcast(context,  0,
+                     new Intent(context, GlobalScreenshot.DeleteScreenshotReceiver.class)
+-                            .putExtra(GlobalScreenshot.SCREENSHOT_URI_ID, uri.toString()),
++                            .putExtra(GlobalScreenshot.SCREENSHOT_URI_ID, uri != null ? uri.toString() : null),
+                     PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+             Notification.Action.Builder deleteActionBuilder = new Notification.Action.Builder(
+                     R.drawable.ic_screenshot_delete,

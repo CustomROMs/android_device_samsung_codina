@@ -1,0 +1,15 @@
+Subject: [PATCH] unbindBackupAgent and initialize inFullBackup
+the package has full backup failed (transport rejected) and broadcast discarded by app.inFullBackup
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index bc03901..a2963b8 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -17725,6 +17725,7 @@
+                 // Not backing this app up any more; reset its OOM adjustment
+                 final ProcessRecord proc = mBackupTarget.app;
+                 updateOomAdjLocked(proc);
++                proc.inFullBackup = false;
+ 
+                 // If the app crashed during backup, 'thread' will be null here
+                 if (proc.thread != null) {

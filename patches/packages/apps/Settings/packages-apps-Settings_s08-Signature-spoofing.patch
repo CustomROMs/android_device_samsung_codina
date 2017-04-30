@@ -1,0 +1,154 @@
+Developer options: Signature spoofing (2/2) 
+
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 0900070..2089013 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -50,4 +50,9 @@
+     <!-- SuperSU -->
+     <string name="supersu_title">SuperSU</string>
+ 
++    <!-- Allow fake signature checkbox in developer settings -->
++    <string name="allow_signature_fake">Allow signature spoofing</string>
++    <string name="allow_signature_fake_summary">Allow apps to bypass security systems by pretending to be a different app</string>
++    <string name="allow_signature_fake_warning">Allowing apps to bypass security systems can lead to serious security and privacy problems! Check that only benign apps use the corresponding permission when this is active.</string>
++
+ </resources>
+diff --git a/res/xml/development_prefs.xml b/res/xml/development_prefs.xml
+index 0900070..2189015 100644
+--- a/res/xml/development_prefs.xml
++++ b/res/xml/development_prefs.xml
+@@ -45,6 +45,11 @@
+         android:entries="@array/media_scanner_on_boot_entries"
+         android:entryValues="@array/media_scanner_on_boot_values" />
+ 
++    <SwitchPreference
++            android:key="allow_signature_fake"
++            android:title="@string/allow_signature_fake"
++            android:summary="@string/allow_signature_fake_summary"/>
++
+     <PreferenceScreen
+             android:key="local_backup_password"
+             android:title="@string/local_backup_password_title"
+diff --git a/src/com/android/settings/DevelopmentSettings.java b/src/com/android/settings/DevelopmentSettings.java
+index 0900070..2289016 100644
+--- a/src/com/android/settings/DevelopmentSettings.java
++++ b/src/com/android/settings/DevelopmentSettings.java
+@@ -219,6 +219,7 @@
+ 
+     private static final String IMMEDIATELY_DESTROY_ACTIVITIES_KEY
+             = "immediately_destroy_activities";
++    private static final String ALLOW_SIGNATURE_FAKE_KEY = "allow_signature_fake";
+     private static final String APP_PROCESS_LIMIT_KEY = "app_process_limit";
+ 
+     private static final String BACKGROUND_CHECK_KEY = "background_check";
+@@ -321,6 +322,7 @@
+ 
+     private SwitchPreference mUSBAudio;
+     private SwitchPreference mImmediatelyDestroyActivities;
++    private SwitchPreference mAllowSignatureFake;
+ 
+     private ListPreference mAppProcessLimit;
+ 
+@@ -355,6 +357,7 @@
+ 
+     private Dialog mAdbTcpDialog;
+     private Dialog mAdbKeysDialog;
++    private Dialog mAllowSignatureFakeDialog;
+     private boolean mUnavailable;
+     private Dialog mRootDialog;
+     private Dialog mUpdateRecoveryDialog;
+@@ -509,6 +512,10 @@ public void onCreate(Bundle icicle) {
+         mAllPrefs.add(mImmediatelyDestroyActivities);
+         mResetSwitchPrefs.add(mImmediatelyDestroyActivities);
+ 
++        mAllowSignatureFake = (SwitchPreference) findPreference(ALLOW_SIGNATURE_FAKE_KEY);
++        mAllPrefs.add(mAllowSignatureFake);
++        mResetSwitchPrefs.add(mAllowSignatureFake);
++
+         mAppProcessLimit = addListPreference(APP_PROCESS_LIMIT_KEY);
+ 
+         mShowAllANRs = (SwitchPreference) findPreference(
+@@ -794,6 +801,7 @@ private void updateAllOptions() {
+         updateAnimationScaleOptions();
+         updateOverlayDisplayDevicesOptions();
+         updateImmediatelyDestroyActivitiesOptions();
++        updateAllowSignatureFakeOption();
+         updateAppProcessLimitOptions();
+         updateShowAllANRsOptions();
+         updateVerifyAppsOverUsbOptions();
+@@ -1927,6 +1935,11 @@ private void updateImmediatelyDestroyActivitiesOptions() {
+                 getActivity().getContentResolver(), Settings.Global.ALWAYS_FINISH_ACTIVITIES, 0) != 0);
+     }
+ 
++    private void updateAllowSignatureFakeOption() {
++        updateSwitchPreference(mAllowSignatureFake, Settings.Secure.getInt(
++                getActivity().getContentResolver(), Settings.Secure.ALLOW_SIGNATURE_FAKE, 0) != 0);
++    }
++
+     private void updateAnimationScaleValue(int which, ListPreference pref) {
+         try {
+             float scale = mWindowManager.getAnimationScale(which);
+@@ -2254,6 +2267,24 @@ public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preferen
+             writeDisableOverlaysOption();
+         } else if (preference == mImmediatelyDestroyActivities) {
+             writeImmediatelyDestroyActivitiesOptions();
++        } else if (preference == mAllowSignatureFake) {
++            if (mAllowSignatureFake.isChecked()) {
++                if (mAllowSignatureFakeDialog != null) {
++                    dismissDialogs();
++                }
++                mAllowSignatureFakeDialog = new AlertDialog.Builder(getActivity()).setMessage(
++                        getResources().getString(R.string.allow_signature_fake_warning))
++                        .setTitle(R.string.allow_signature_fake)
++                        .setIconAttribute(android.R.attr.alertDialogIcon)
++                        .setPositiveButton(android.R.string.yes, this)
++                        .setNegativeButton(android.R.string.no, this)
++                        .show();
++                mAllowSignatureFakeDialog.setOnDismissListener(this);
++            } else {
++                Settings.Secure.putInt(getActivity().getContentResolver(),
++                        Settings.Secure.ALLOW_SIGNATURE_FAKE, 0);
++                updateAllowSignatureFakeOption();
++            }
+         } else if (preference == mShowAllANRs) {
+             writeShowAllANRsOptions();
+         } else if (preference == mForceHardwareUi) {
+@@ -2424,6 +2455,10 @@ public boolean onPreferenceChange(Preference preference, Object newValue) {
+     }
+ 
+     private void dismissDialogs() {
++        if (mAllowSignatureFakeDialog != null) {
++            mAllowSignatureFakeDialog.dismiss();
++            mAllowSignatureFakeDialog = null;
++        }
+         if (mAdbDialog != null) {
+             mAdbDialog.dismiss();
+             mAdbDialog = null;
+@@ -2455,7 +2490,15 @@ private void dismissDialogs() {
+     }
+ 
+     public void onClick(DialogInterface dialog, int which) {
+-        if (dialog == mAdbDialog) {
++        if (dialog == mAllowSignatureFakeDialog) {
++            if (which == DialogInterface.BUTTON_POSITIVE) {
++                Settings.Secure.putInt(getActivity().getContentResolver(),
++                        Settings.Secure.ALLOW_SIGNATURE_FAKE, 1);
++            } else {
++                // Reset the toggle
++                mAllowSignatureFake.setChecked(false);
++            }
++        } else if (dialog == mAdbDialog) {
+             if (which == DialogInterface.BUTTON_POSITIVE) {
+                 mDialogClicked = true;
+                 Settings.Global.putInt(getActivity().getContentResolver(),
+@@ -2540,6 +2583,9 @@ public void onDismiss(DialogInterface dialog) {
+         } else if (dialog == mAdbTcpDialog) {
+             updateAdbOverNetwork();
+             mAdbTcpDialog = null;
++        } else if (dialog == mAllowSignatureFakeDialog) {
++            updateAllowSignatureFakeOption();
++            mAllowSignatureFakeDialog = null;
+         } else if (dialog == mUpdateRecoveryDialog) {
+             updateUpdateRecoveryOptions();
+             mUpdateRecoveryDialog = null;

@@ -1,0 +1,34 @@
+ combo bug when location reported by providers do not come with extras
+
+LocationManagerService tries to create an extra bundle and stick it
+into the location object, but it is not doing it correctly. As a
+result, combo drops report.
+
+diff --git a/services/core/java/com/android/server/LocationManagerService.java b/services/core/java/com/android/server/LocationManagerService.java
+index 8c18c46..0412db6 100644
+--- a/services/core/java/com/android/server/LocationManagerService.java
++++ b/services/core/java/com/android/server/LocationManagerService.java
+@@ -2413,11 +2413,8 @@ private Location screenLocationLocked(Location location, String provider) {
+ 
+         Bundle extras = location.getExtras();
+         boolean isBeingScreened = false;
+-        if (extras == null) {
+-            extras = new Bundle();
+-        }
+ 
+-        if (!extras.containsKey(mComboNlpReadyMarker)) {
++        if (extras == null || !extras.containsKey(mComboNlpReadyMarker)) {
+             // see if Combo Nlp is a passive listener
+             ArrayList<UpdateRecord> records =
+                 mRecordsByProvider.get(LocationManager.PASSIVE_PROVIDER);
+@@ -2426,6 +2423,10 @@ private Location screenLocationLocked(Location location, String provider) {
+                     if (r.mReceiver.mPackageName.equals(mComboNlpPackageName)) {
+                         if (!isBeingScreened) {
+                             isBeingScreened = true;
++                            if (extras == null) {
++                                location.setExtras(new Bundle());
++                                extras = location.getExtras();
++                            }
+                             extras.putBoolean(mComboNlpScreenMarker, true);
+                         }
+                         // send location to Combo Nlp for screening

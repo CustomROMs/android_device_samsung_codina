@@ -1,0 +1,24 @@
+ Check for config before accessing it
+
+When a roam command is received in wifi connected state,
+any existing wifi configuration for the current user is
+searched based on the network ID .
+This search can result in null i.e., no valid configuration
+exists for the desired network ID.
+
+The log misses this NULL check for config while accessing it.
+Hence the check before the access.
+
+diff --git a/service/java/com/android/server/wifi/WifiStateMachine.java b/service/java/com/android/server/wifi/WifiStateMachine.java
+index 5b285f5..b0ea783 100644
+--- a/service/java/com/android/server/wifi/WifiStateMachine.java
++++ b/service/java/com/android/server/wifi/WifiStateMachine.java
+@@ -7551,7 +7551,7 @@ and will break for roams between different (but linked) networkIDs. This
+                             + mSupplicantStateTracker.getSupplicantStateName()
+                             + " my state " + getCurrentState().getName()
+                             + " nid=" + Integer.toString(netId)
+-                            + " config " + config.configKey()
++                            + " config =" + ((config == null) ? "null " :  config.configKey())
+                             + " targetRoamBSSID " + mTargetRoamBSSID);
+ 
+                     /* Determine if this is a regular roam (between BSSIDs sharing the same SSID),

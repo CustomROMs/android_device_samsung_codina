@@ -1,0 +1,34 @@
+Subject: [PATCH] hwui: Allow devices to opt-out of asynchronouse updateSurface initialization
+
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index 30f0077..939c0c7 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -162,7 +162,11 @@
+     SETUP_TASK(updateSurface);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(pauseSurface, CanvasContext* context, Surface* surface) {
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index 30f0077..939c007 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -360,7 +360,11 @@
+     SETUP_TASK(destroyHardwareResources);
+     args->context = mContext;
+     args->observer = observer;
++//#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++//    post(task);
++//#else
+     postAndWait(task);
++//#endif
+ }
+ 
+ CREATE_BRIDGE2(trimMemory, RenderThread* thread, int level) {

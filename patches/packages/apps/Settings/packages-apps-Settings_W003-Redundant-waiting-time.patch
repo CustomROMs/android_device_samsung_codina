@@ -1,0 +1,29 @@
+Subject: [PATCH] Redundant waiting time of keyguard unlocking after reboot
+
+LOCKOUT_ATTEMPT_DEADLINE and LOCKOUT_ATTEMPT_TIMEOUT_MS
+should be cleared for every successful screen unlock.
+
+diff --git a/src/com/android/settings/ConfirmLockPassword.java b/src/com/android/settings/ConfirmLockPassword.java
+index 01e9902..18920f2 100644
+--- a/src/com/android/settings/ConfirmLockPassword.java
++++ b/src/com/android/settings/ConfirmLockPassword.java
+@@ -436,6 +436,7 @@
+                 if (newResult) {
+                     reportSuccessfullAttempt();
+                 }
++                mLockPatternUtils.getLockoutAttemptDeadline(effectiveUserId);
+                 startDisappearAnimation(intent);
+                 checkForPendingIntent();
+             } else {
+diff --git a/src/com/android/settings/ConfirmLockPattern.java b/src/com/android/settings/ConfirmLockPattern.java
+index 34dad58..1ae273f 100644
+--- a/src/com/android/settings/ConfirmLockPattern.java
++++ b/src/com/android/settings/ConfirmLockPattern.java
+@@ -524,6 +524,7 @@
+                 if (newResult) {
+                     reportSuccessfullAttempt();
+                 }
++                mLockPatternUtils.getLockoutAttemptDeadline(effectiveUserId);
+                 startDisappearAnimation(intent);
+                 checkForPendingIntent();
+             } else {

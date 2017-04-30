@@ -1,0 +1,25 @@
+Subject: [PATCH] Fix memory corruption caused by patchCache.clear
+
+The workfolw of drawPatch in HWUI is like this:
+applyDraw -> getMesh -> patchCache.get -> GlopBuilder -> renderGlop
+-> RenderState.render
+
+If trimMemory is invoked before drawPatch, the content in mesh may
+be corrupted by patchCache.clear. Meanwhile, mGenerationId is still
+the same before and after clear operation, so mesh is not updated,
+the wrong info is used in rendering, thus lead to driver crash.
+
+diff --git a/libs/hwui/PatchCache.cpp b/libs/hwui/PatchCache.cpp
+index bd6feb9..67b0086 100644
+--- a/libs/hwui/PatchCache.cpp
++++ b/libs/hwui/PatchCache.cpp
+@@ -85,6 +85,9 @@
+         mMeshBuffer = 0;
+         mSize = 0;
+     }
++
++    // MeshBuffer is deleted, so change generation id to create a new one.
++    mGenerationId++;
+ }
+ 
+ void PatchCache::clearCache() {

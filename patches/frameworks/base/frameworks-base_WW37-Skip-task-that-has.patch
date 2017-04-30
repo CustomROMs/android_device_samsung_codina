@@ -1,0 +1,37 @@
+Subject: [PATCH] Skip task that has not real activities
+
+When using LockTaskMode. TaskRecord without any activities can be made.
+After unpin the screen, Activity is not finished even though back key pressed.
+
+When getNextTask is called to insert task at top. wrong TaskRecord that has non activities is returned as value.
+After that, taskToReturnTo value is setted to wrong TaskRecord.
+
+Test: 1. Enable Lock task mode.
+      2. Start Chrome
+      3. Go to home by home key pressing
+      4. Start Messenger. and pin the messenger from the recent activity
+         (There should be chat list that has photo in timeline)
+      5. Start chat activity and touch photo. finish it by back key pressing
+         (When touch photo in timeline, photo view activity is started as new task and disappeared because of locktask violation)
+      6. Unpin the messenger by back key long pressing
+      7. Finish messenger by back key (Chrome will be showed)
+      8. Press back key to finish chrome.
+
+      Step 8. chrome is not finished.
+      The reason is wrong mTaskToReturnTo value.
+
+      This situation can be happened with any app that uses moveTaskToBack instead of Chrome
+
+diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/services/core/java/com/android/server/am/ActivityStack.java
+index 3aaddd8..7c17422 100644
+--- a/services/core/java/com/android/server/am/ActivityStack.java
++++ b/services/core/java/com/android/server/am/ActivityStack.java
+@@ -2612,7 +2612,7 @@
+             final int numTasks = mTaskHistory.size();
+             for (int i = index + 1; i < numTasks; ++i) {
+                 TaskRecord task = mTaskHistory.get(i);
+-                if (task.userId == targetTask.userId) {
++                if (task.userId == targetTask.userId && task.mActivities.size() > 0) {
+                     return task;
+                 }
+             }

@@ -1,0 +1,31 @@
+Subject: [PATCH] StrictMode to detect untagged network traffic.
+Test: builds, boots, all common traffic tagged
+
+diff --git a/service/java/com/android/server/wifi/WifiStateMachine.java b/service/java/com/android/server/wifi/WifiStateMachine.java
+index e26eab6..4014a98 100644
+--- a/service/java/com/android/server/wifi/WifiStateMachine.java
++++ b/service/java/com/android/server/wifi/WifiStateMachine.java
+@@ -55,6 +55,7 @@
+ import android.net.NetworkUtils;
+ import android.net.RouteInfo;
+ import android.net.StaticIpConfiguration;
++import android.net.TrafficStats;
+ import android.net.dhcp.DhcpClient;
+ import android.net.ip.IpManager;
+ import android.net.wifi.PasspointManagementObjectDefinition;
+@@ -3493,6 +3494,7 @@
+                     /* The gateway's MAC address is known */
+                     if ((address == null) && (timeout > 0)) {
+                         boolean reachable = false;
++                        TrafficStats.setThreadStatsTag(TrafficStats.TAG_SYSTEM_PROBE);
+                         try {
+                             reachable = gateway.isReachable(timeout);
+                         } catch (Exception e) {
+@@ -3500,6 +3502,7 @@
+                                     + gateway.getHostAddress());
+ 
+                         } finally {
++                            TrafficStats.clearThreadStatsTag();
+                             if (reachable == true) {
+ 
+                                 address = macAddressFromRoute(gateway.getHostAddress());

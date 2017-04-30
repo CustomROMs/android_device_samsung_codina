@@ -1,0 +1,47 @@
+Subject: [PATCH] ExifInterface: fix NegativeArraySizeException
+
+The IFD entry has a 4-byte field COUNT. It is read as int type
+and is used as array size by ExifInterface. If a crafted JPEG
+file contains a negative value, a NegativeArraySizeException
+occurs.
+
+diff --git a/media/java/android/media/ExifInterface.java b/media/java/android/media/ExifInterface.java
+index 0e7f995..d808c22 100644
+--- a/media/java/android/media/ExifInterface.java
++++ b/media/java/android/media/ExifInterface.java
+@@ -2198,21 +2198,28 @@
+                         dataFormat, numberOfComponents));
+             }
+ 
+-            if (tag == null || dataFormat <= 0 ||
+-                    dataFormat >= IFD_FORMAT_BYTES_PER_FORMAT.length) {
+-                // Skip if the parsed tag number is not defined or invalid data format.
+-                if (tag == null) {
+-                    Log.w(TAG, "Skip the tag entry since tag number is not defined: " + tagNumber);
++            long byteCount = 0;
++            boolean valid = false;
++            if (tag == null) {
++                Log.w(TAG, "Skip the tag entry since tag number is not defined: " + tagNumber);
++            } else if (dataFormat <= 0 || dataFormat >= IFD_FORMAT_BYTES_PER_FORMAT.length) {
++                Log.w(TAG, "Skip the tag entry since data format is invalid: " + dataFormat);
++            } else {
++                byteCount = (long) numberOfComponents * IFD_FORMAT_BYTES_PER_FORMAT[dataFormat];
++                if (byteCount < 0 || byteCount > Integer.MAX_VALUE) {
++                    Log.w(TAG, "Skip the tag entry since number of components is invalid: "
++                            + numberOfComponents);
+                 } else {
+-                    Log.w(TAG, "Skip the tag entry since data format is invalid: " + dataFormat);
++                    valid = true;
+                 }
++            }
++            if (!valid) {
+                 dataInputStream.seek(nextEntryOffset);
+                 continue;
+             }
+ 
+             // Read a value from data field or seek to the value offset which is stored in data
+             // field if the size of the entry value is bigger than 4.
+-            int byteCount = numberOfComponents * IFD_FORMAT_BYTES_PER_FORMAT[dataFormat];
+             if (byteCount > 4) {
+                 long offset = dataInputStream.readUnsignedInt();
+                 if (DEBUG) {

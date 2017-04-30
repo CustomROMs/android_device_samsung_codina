@@ -1,0 +1,36 @@
+Subject: [PATCH] hwui: Allow devices to opt-out of asynchronouse setSurface initialization
+
+Not all devices seem to be able to deal with this so let them opt
+out of it, even though it does provide a UI slow-down.
+
+diff --git a/libs/hwui/Android.mk b/libs/hwui/Android.mk
+index 91e289c..fb9ac1e 100644
+--- a/libs/hwui/Android.mk
++++ b/libs/hwui/Android.mk
+@@ -118,6 +118,10 @@
+     hwui_cflags += -DUSE_HWC2
+ endif
+ 
++ifeq ($(TARGET_REQUIRES_SYNCHRONOUS_SETSURFACE),true)
++    hwui_cflags += -DREQUIRES_SYNCHRONOUS_SETSURFACE
++endif
++
+ # GCC false-positives on this warning, and since we -Werror that's
+ # a problem
+ hwui_cflags += -Wno-free-nonheap-object
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index 30f0073..939c0c7 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -146,7 +146,11 @@
+     SETUP_TASK(initialize);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(updateSurface, CanvasContext* context, Surface* surface) {

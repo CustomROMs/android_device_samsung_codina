@@ -1,0 +1,29 @@
+ Handle exception when mount service not ready.
+
+I am trying to follow the same way we handel RemoteException
+in these two static functions.
+
+diff --git a/core/java/android/os/storage/StorageManager.java b/core/java/android/os/storage/StorageManager.java
+index a16fcd2..2741050 100644
+--- a/core/java/android/os/storage/StorageManager.java
++++ b/core/java/android/os/storage/StorageManager.java
+@@ -959,6 +959,9 @@ private long readLong(String path) {
+     public static @NonNull StorageVolume[] getVolumeList(int userId, int flags) {
+         final IMountService mountService = IMountService.Stub.asInterface(
+                 ServiceManager.getService("mount"));
++        if (mountService == null) {
++            throw new RuntimeException("mount service not ready yet");
++        }
+         try {
+             String packageName = ActivityThread.currentOpPackageName();
+             if (packageName == null) {
+@@ -1262,6 +1265,9 @@ public static boolean isFileEncryptedNativeOrEmulated() {
+     public static File maybeTranslateEmulatedPathToInternal(File path) {
+         final IMountService mountService = IMountService.Stub.asInterface(
+                 ServiceManager.getService("mount"));
++        if (mountService == null) {
++            return path;
++        }
+         try {
+             final VolumeInfo[] vols = mountService.getVolumes(0);
+             for (VolumeInfo vol : vols) {

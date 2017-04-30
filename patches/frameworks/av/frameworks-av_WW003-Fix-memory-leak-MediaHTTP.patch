@@ -1,0 +1,22 @@
+Subject: [PATCH] Fix memory leak from MediaHTTP.cpp
+
+MediaHTTP::mDrmManagerClient is instantiated from MediaHTTP::DrmIni
+tializationi() if MediaHTTP::mDecryptHandle isn't NULL. But the Med
+iaHTTP::mDrmManagerClient isn't cleared anywhere.
+
+diff --git a/media/libstagefright/http/MediaHTTP.cpp b/media/libstagefright/http/MediaHTTP.cpp
+index 801ff26..f6d0893 100644
+--- a/media/libstagefright/http/MediaHTTP.cpp
++++ b/media/libstagefright/http/MediaHTTP.cpp
+@@ -216,6 +216,11 @@
+         mDrmManagerClient->closeDecryptSession(mDecryptHandle);
+         mDecryptHandle = NULL;
+     }
++
++    if (mDrmManagerClient != NULL) {
++        delete mDrmManagerClient;
++        mDrmManagerClient = NULL;
++    }
+ }
+ 
+ }  // namespace android

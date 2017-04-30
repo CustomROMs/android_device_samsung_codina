@@ -1,0 +1,22 @@
+Subject: [PATCH] Update font size of date and time on QS panel
+
+When the font size is changed in Settings, the font size of date
+and time on Quick Settings panel should be updated according to
+the new font size.
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/QuickStatusBarHeader.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/QuickStatusBarHeader.java
+index e4991d5..2ae12fb 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/QuickStatusBarHeader.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/QuickStatusBarHeader.java
+@@ -174,6 +174,11 @@
+     private void updateResources() {
+         FontSizeUtils.updateFontSize(mAlarmStatus, R.dimen.qs_date_collapsed_size);
+         FontSizeUtils.updateFontSize(mEmergencyOnly, R.dimen.qs_emergency_calls_only_text_size);
++        FontSizeUtils.updateFontSize(this, R.id.date, R.dimen.qs_time_collapsed_size);
++        FontSizeUtils.updateFontSize(mDateTimeGroup, R.id.time_view,
++                R.dimen.qs_time_collapsed_size);
++        FontSizeUtils.updateFontSize(mDateTimeGroup, R.id.am_pm_view,
++                R.dimen.qs_time_collapsed_size);
+ 
+         Builder builder = new Builder()
+                 .addFloat(mShowFullAlarm ? mAlarmStatus : findViewById(R.id.date), "alpha", 0, 1)

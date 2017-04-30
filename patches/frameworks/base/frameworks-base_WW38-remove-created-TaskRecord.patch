@@ -1,0 +1,36 @@
+Subject: [PATCH] with LockTaskMode violation, remove created TaskRecord
+
+After new TaskRecord has created, lock task mode violation is checked.
+if the TaskRecord has been caught from lock task mode violation,
+empty TaskRecord without any activities remained in TaskHistory. it should be removed from the history.
+
+Test: 1. Enable Lock task mode.
+      2. Start Chrome
+      3. Go to home by home key pressing
+      4. Start Messenger. and pin the messenger from the recent activity
+         (There should be chat list that has photo in timeline)
+      5. Start chat activity and touch photo. finish it by back key pressing
+         (When touch photo in timeline, photo view activity is started as new task and disappeared because of locktask violation)
+      6. Unpin the messenger by back key long pressing
+      7. Finish messenger by back key (Chrome will be showed)
+      8. Press back key to finish chrome.
+
+      Step 8. chrome is not finished.
+      The reason is wrong mTaskToReturnTo value.
+
+      This situation can be happened with any app that uses moveTaskToBack instead of Chrome
+
+diff --git a/services/core/java/com/android/server/am/ActivityStarter.java b/services/core/java/com/android/server/am/ActivityStarter.java
+index 907394e..a64f88a 100644
+--- a/services/core/java/com/android/server/am/ActivityStarter.java
++++ b/services/core/java/com/android/server/am/ActivityStarter.java
+@@ -1209,6 +1209,9 @@
+             setTaskFromReuseOrCreateNewTask(taskToAffiliate);
+ 
+             if (mSupervisor.isLockTaskModeViolation(mStartActivity.task)) {
++                if (mReuseTask == null) {
++                    mTargetStack.removeTask(mStartActivity.task, "LockTaskModeViolation");
++                }
+                 Slog.e(TAG, "Attempted Lock Task Mode violation mStartActivity=" + mStartActivity);
+                 return START_RETURN_LOCK_TASK_MODE_VIOLATION;
+             }

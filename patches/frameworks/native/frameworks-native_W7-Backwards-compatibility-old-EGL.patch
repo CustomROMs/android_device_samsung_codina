@@ -1,0 +1,48 @@
+Subject: [PATCH] DisplayDevice: Backwards compatibility with old EGL
+
+From 4.1 to 4.2, the display subsystem was reworked to
+use SurfaceTextureClient/BufferQueue instead of
+FramebufferNativeWindow for the framebuffer itself.
+
+Unfortunately, some legacy EGL libraries make assumptions
+that any framebuffer device will be FramebufferNativeWindow.
+
+These EGL libraries will fail when used in 4.2 as if the
+framebuffer is not FramebufferNativeWindow, they will
+try to dequeue more than one buffer at a time, which
+will cause a hang of the graphics subsystem.
+
+This allows use of FramebufferNativeWindow to keep
+legacy EGL implementations happy.  Confirmed EGL
+implementations that need this include but are
+not limited to:
+
+diff --git a/include/ui/FramebufferNativeWindow.h b/include/ui/FramebufferNativeWindow.h
+index 6b66d5f..5ec738f 100644
+--- a/include/ui/FramebufferNativeWindow.h
++++ b/include/ui/FramebufferNativeWindow.h
+@@ -14,10 +14,6 @@
+  * limitations under the License.
+  */
+ 
+-#ifndef INCLUDED_FROM_FRAMEBUFFER_NATIVE_WINDOW_CPP
+-#warning "FramebufferNativeWindow is deprecated"
+-#endif
+-
+ #ifndef ANDROID_FRAMEBUFFER_NATIVE_WINDOW_H
+ #define ANDROID_FRAMEBUFFER_NATIVE_WINDOW_H
+ 
+diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
+index 3ead25c..b6bfc41 100644
+--- a/libs/ui/FramebufferNativeWindow.cpp
++++ b/libs/ui/FramebufferNativeWindow.cpp
+@@ -29,9 +29,7 @@
+ 
+ #include <ui/ANativeObjectBase.h>
+ #include <ui/Fence.h>
+-#define INCLUDED_FROM_FRAMEBUFFER_NATIVE_WINDOW_CPP
+ #include <ui/FramebufferNativeWindow.h>
+-#undef INCLUDED_FROM_FRAMEBUFFER_NATIVE_WINDOW_CPP
+ #include <ui/Rect.h>
+ 
+ #include <EGL/egl.h>

@@ -1,0 +1,22 @@
+ Fix battery text gap issue
+
+Steps to reproduce
+ 1. Set battery to text only
+ 2. Go into statusbar items (tuner) and switch anything on
+
+diff --git a/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java b/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
+index 58acbcf..0a31099 100644
+--- a/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
++++ b/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
+@@ -81,10 +81,7 @@ public boolean hasOverlappingRendering() {
+ 
+     @Override
+     public void onTuningChanged(String key, String newValue) {
+-        if (StatusBarIconController.ICON_BLACKLIST.equals(key)) {
+-            ArraySet<String> icons = StatusBarIconController.getIconBlacklist(newValue);
+-            setVisibility(icons.contains(mSlotBattery) ? View.GONE : View.VISIBLE);
+-        } else if (STATUS_BAR_BATTERY_STYLE.equals(key)) {
++        if (STATUS_BAR_BATTERY_STYLE.equals(key)) {
+             updateBatteryStyle(newValue);
+         }
+     }

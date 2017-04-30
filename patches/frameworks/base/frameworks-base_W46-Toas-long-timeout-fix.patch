@@ -1,0 +1,21 @@
+Subject: [PATCH] Toast long timeout fix
+
+The long timeout for the Toast widget was set at 1000ms which was
+shorter than the short timeout of 5000ms.
+This was changed to 10000ms to make the long timeout longer
+than the short and for the functionality of the
+long toast timeout to work properly.
+
+diff --git a/core/java/android/widget/Toast.java b/core/java/android/widget/Toast.java
+index 7762675..f353e2e 100644
+--- a/core/java/android/widget/Toast.java
++++ b/core/java/android/widget/Toast.java
+@@ -377,7 +377,7 @@
+         String mPackageName;
+ 
+         static final long SHORT_DURATION_TIMEOUT = 5000;
+-        static final long LONG_DURATION_TIMEOUT = 1000;
++        static final long LONG_DURATION_TIMEOUT = 10000;
+ 
+         TN(String packageName) {
+             // XXX This should be changed to use a Dialog, with a Theme.Toast

@@ -1,0 +1,36 @@
+Subject: [PATCH] Fix leak of file descriptors and memory.
+
+ 1. fds must be explicitly closed if it is not retained by Flattenable::unflatten().
+ 2. must delete allocated handle before setting to NULL.
+
+diff --git a/include/binder/Parcel.h b/include/binder/Parcel.h
+index 74e75d7..2b283be 100644
+--- a/include/binder/Parcel.h
++++ b/include/binder/Parcel.h
+@@ -495,7 +495,13 @@
+         }
+         virtual status_t unflatten(void const* buffer, size_t size, int const* fds, size_t count) {
+ #ifdef STE_HARDWARE
+-            return const_cast<Flattenable&>(val).unflatten(buffer, size, fds, count);
++            status_t err = const_cast<Flattenable&>(val).unflatten(buffer, size, fds, count);
++            if (err != NO_ERROR) {
++                for (size_t i = 0; i < count; i++) {
++                    close(fds[i]);
++                }
++            }
++            return err;
+ #else
+             return const_cast<Flattenable<T>&>(val).unflatten(buffer, size, fds, count);
+ #endif
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 97b948d..0bb0941 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -396,6 +396,7 @@
+         status_t err = mBufferMapper.registerBuffer(handle);
+         if (err != NO_ERROR) {
+             width = height = stride = format = usage = 0;
++            native_handle_delete(const_cast<native_handle*>(handle));
+             handle = NULL;
+             ALOGE("unflatten: registerBuffer failed: %s (%d)",
+                     strerror(-err), err);

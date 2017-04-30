@@ -4,7 +4,7 @@ CURRENT_DIR=$PWD
 
 KERNEL_PATCH="kernel/codina/chrono"
 
-#if [ "$PATCHES" == "" ] ; then
+if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
 	#vendor/cmsdk \
 	#vendor/cm \
@@ -36,7 +36,7 @@ KERNEL_PATCH="kernel/codina/chrono"
 	packages/inputmethods/LatinIME \
 	packages/providers/MediaProvider \
 	bootable/recovery"
-#fi
+fi
 
 export CL_RED="\033[31m"
 export CL_GRN="\033[32m"

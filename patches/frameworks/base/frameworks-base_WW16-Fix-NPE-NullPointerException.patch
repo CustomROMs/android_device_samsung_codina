@@ -1,0 +1,25 @@
+Fix NPE NullPointerException
+
+ FATAL EXCEPTION: Thread-2
+ com.android.browser, PID: 3689
+ java.lang.NullPointerException: Attempt to invoke virtual method 
+ 'void android.content.ContentValues.writeToParcel(android.os.Parcel, int)' on a null object reference
+ at android.content.ContentProviderProxy.update(ContentProviderNative.java:562)
+ at android.content.ContentResolver.update(ContentResolver.java:1412)
+ at com.android.browser.AccountsChangedReceiver$DeleteRemovedAccounts.run(AccountsChangedReceiver.java:65)
+
+diff --git a/core/java/android/content/ContentProviderNative.java b/core/java/android/content/ContentProviderNative.java
+index 0d25f80..7ed827c 100644
+--- a/core/java/android/content/ContentProviderNative.java
++++ b/core/java/android/content/ContentProviderNative.java
+@@ -559,7 +559,9 @@
+ 
+             data.writeString(callingPkg);
+             url.writeToParcel(data, 0);
+-            values.writeToParcel(data, 0);
++            if (values != null) {
++                values.writeToParcel(data, 0);
++            }
+             data.writeString(selection);
+             data.writeStringArray(selectionArgs);
+ 

@@ -1,0 +1,25 @@
+Subject: [PATCH] ExpandableListView: Fix to nofity group collapse event
+
+ExpandableListView is created with all groups as collapsed but this
+isn't relayed to specified adapter. Fix is to invoke onGroupCollapsed
+of ExpandableListAdapter via ExpandableListConnector.
+
+diff --git a/core/java/android/widget/ExpandableListView.java b/core/java/android/widget/ExpandableListView.java
+index a746370..a5039e6 100644
+--- a/core/java/android/widget/ExpandableListView.java
++++ b/core/java/android/widget/ExpandableListView.java
+@@ -593,6 +593,14 @@
+         if (adapter != null) {
+             // Create the connector
+             mConnector = new ExpandableListConnector(adapter);
++            /*
++             * ExpandableListView is created with all groups as collapsed.
++             * Notify the same to the specified adapter.
++             */
++            final int groupCount = adapter.getGroupCount();
++            for (int i=0; i<groupCount; i++) {
++                 mConnector.collapseGroup(i);
++            }
+         } else {
+             mConnector = null;
+         }

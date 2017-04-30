@@ -1,0 +1,27 @@
+Subject: [PATCH] Fix keyguard flash issue
+
+When we start camera from keyguard, if keyguard is secure,
+this will lead to an abnormal flash when pressing back button.
+
+Reproduce step:
+ 1.make the keyguard is secure.
+ 2.start camera from keyguard.
+ 3.press back button to keyguard.
+We could see an ugly flash screen
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index a4408fc..9899e53 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -5819,6 +5819,11 @@
+             // represent should be hidden or if we should hide the lockscreen. For attached app
+             // windows we defer the decision to the window it is attached to.
+             if (appWindow && attached == null) {
++                // The new app window is visible and we know whether to show the keyguard,
++                // so we need to reset the keyguard status at first.
++                mHideLockScreen = false;
++                mWinShowWhenLocked = null;
++
+                 if (showWhenLocked) {
+                     // Remove any previous windows with the same appToken.
+                     mAppsToBeHidden.remove(appToken);

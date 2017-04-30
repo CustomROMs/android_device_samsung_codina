@@ -1,0 +1,59 @@
+Subject: [PATCH] Avoid ANR by previous dead receiver.
+
+Assume a process has a registered receiver for ordered
+broadcast B. And there is a B enqueued. Before deliver
+B, the process process is died and restart with the same
+ProcessRecord (it will happen when the process is persistent
+process or start by "Exception when sending broadcast").
+
+Now it is the turn to deliver B. Because the ProcessRecord
+is reuse, it will not meet "app.thread must not be null".
+Then the previous will still deliver to the new process.
+And there will have DeadObjectException in the new process
+but does not call finishReceiver that results ANR.
+
+android.os.DeadObjectException
+at android.os.BinderProxy.transactNative
+at android.os.BinderProxy.transact
+at android.content.IIntentReceiver$Stub$Proxy.performReceive
+at android.app.ActivityThread$ApplicationThread.scheduleRegisteredReceiver
+
+Because the IIntentReceiver is not belong to the new process,
+it will be BinderProxy so we can use Binder.isProxy to check.
+
+Another way is to clean related record in broadcast queue
+when process died but it should have more cost.
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 890b754..61d3687 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -959,9 +959,25 @@ public void dumpService(FileDescriptor fd, IBinder servicetoken, String[] args)
+         public void scheduleRegisteredReceiver(IIntentReceiver receiver, Intent intent,
+                 int resultCode, String dataStr, Bundle extras, boolean ordered,
+                 boolean sticky, int sendingUser, int processState) throws RemoteException {
+-            updateProcessState(processState, false);
+-            receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
+-                    sticky, sendingUser);
++            RemoteException remoteException = null;
++            if (!Binder.isProxy(receiver)) {
++                updateProcessState(processState, false);
++                try {
++                    receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
++                            sticky, sendingUser);
++                    return;
++                } catch (RemoteException e) {
++                    remoteException = e;
++                }
++            }
++            if (ordered) {
++                Slog.w(TAG, receiver + " is no longer alive");
++                ActivityManagerNative.getDefault().finishReceiver(receiver.asBinder(),
++                        resultCode, dataStr, extras, true, intent.getFlags());
++                if (remoteException != null) {
++                    throw remoteException;
++                }
++            }
+         }
+ 
+         @Override

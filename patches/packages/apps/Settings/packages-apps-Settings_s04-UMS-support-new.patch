@@ -1,0 +1,78 @@
+Bring back UMS support [1/3]
+
+diff --git a/src/com/android/settings/deviceinfo/UsbBackend.java b/src/com/android/settings/deviceinfo/UsbBackend.java
+index 1110072..2889014 100644
+--- a/src/com/android/settings/deviceinfo/UsbBackend.java
++++ b/src/com/android/settings/deviceinfo/UsbBackend.java
+@@ -40,6 +40,7 @@
+     public static final int MODE_DATA_PTP    = 0x02 << 1;
+     public static final int MODE_DATA_MIDI   = 0x03 << 1;
+     public static final int MODE_DATA_TETHERING   = 0x04 << 1;
++    public static final int MODE_DATA_UMS    = 0x05 << 1;
+ 
+     private final boolean mRestricted;
+     private final boolean mRestrictedBySystem;
+@@ -107,6 +108,8 @@ public int getUsbDataMode() {
+             return MODE_DATA_PTP;
+         } else if (mUsbManager.isFunctionEnabled(UsbManager.USB_FUNCTION_MIDI)) {
+             return MODE_DATA_MIDI;
++        } else if (mUsbManager.isFunctionEnabled(UsbManager.USB_FUNCTION_UMS)) {
++            return MODE_DATA_UMS;
+         }
+         return MODE_DATA_NONE; // ...
+     }
+@@ -122,6 +125,9 @@ private void setUsbFunction(int mode) {
+             case MODE_DATA_MIDI:
+                 mUsbManager.setCurrentFunction(UsbManager.USB_FUNCTION_MIDI, true);
+                 break;
++            case MODE_DATA_UMS:
++                mUsbManager.setCurrentFunction(UsbManager.USB_FUNCTION_UMS, true);
++                break;
+             case MODE_DATA_TETHERING:
+                 Intent intent = new Intent();
+                 intent.setClass(mContext, TetherSettings.class);
+diff --git a/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java b/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java
+index 1110073..2889015 100644
+--- a/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java
++++ b/src/com/android/settings/deviceinfo/UsbModeChooserActivity.java
+@@ -56,7 +56,8 @@
+         UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_MTP,
+         UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_PTP,
+         UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_MIDI,
+-        UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_TETHERING
++        UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_TETHERING,
++        UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_UMS
+     };
+ 
+     private UsbBackend mBackend;
+@@ -209,6 +210,8 @@ private static int getSummary(int mode) {
+                 return R.string.usb_use_MIDI_desc;
+             case UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_TETHERING:
+                 return R.string.usb_tethering_desc;
++            case UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_UMS:
++                return R.string.usb_use_UMS_desc;
+         }
+         return 0;
+     }
+@@ -227,6 +230,8 @@ private static int getTitle(int mode) {
+                 return R.string.usb_use_MIDI;
+             case UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_TETHERING:
+                 return R.string.usb_tethering_title;
++            case UsbBackend.MODE_POWER_SINK | UsbBackend.MODE_DATA_UMS:
++                return R.string.usb_use_UMS;
+         }
+         return 0;
+     }
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 022f220..7289093 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -28,4 +28,8 @@
+     <string name="cpu_info">CPU</string>
+     <string name="mem_info">RAM</string>
+ 
++    <!-- transferring files via UMS -->
++    <string name="usb_use_UMS">File transfers via UMS</string>
++    <string name="usb_use_UMS_desc">Transfer files to the host OS via UMS</string>
++
+ </resources>

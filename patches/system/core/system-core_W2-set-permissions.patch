@@ -1,0 +1,35 @@
+set /system/etc/init.d/* permissions
+set permissions on /system/addon.d/ and files within.
+
+diff --git a/libcutils/fs_config.c b/libcutils/fs_config.c
+index b4a25f0..a0397a0 100644
+--- a/libcutils/fs_config.c
++++ b/libcutils/fs_config.c
+@@ -101,6 +101,7 @@ static const struct fs_path_config android_dirs[] = {
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/vendor" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/xbin" },
+     { 00755, AID_ROOT,   AID_ROOT,   0, "system/etc/ppp" },
++    { 00755, AID_ROOT,   AID_SHELL,  0, "system/etc/init.d" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "vendor" },
+     { 00777, AID_ROOT,   AID_ROOT,   0, "sdcard" },
+     { 00755, AID_ROOT,   AID_ROOT,   0, 0 },
+diff --git a/libcutils/fs_config.c b/libcutils/fs_config.c
+index b4a25f1..a0397a0 100644
+--- a/libcutils/fs_config.c
++++ b/libcutils/fs_config.c
+@@ -97,6 +97,7 @@ static const struct fs_path_config android_dirs[] = {
+     { 00755, AID_ROOT,   AID_ROOT,   0, "root" },
+     { 00750, AID_ROOT,   AID_SHELL,  0, "sbin" },
+     { 00751, AID_ROOT,   AID_SDCARD_R, 0, "storage" },
++    { 00755, AID_ROOT,   AID_ROOT,   0, "system/addon.d" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/bin" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/vendor" },
+     { 00755, AID_ROOT,   AID_SHELL,  0, "system/xbin" },
+@@ -123,6 +124,7 @@ static const struct fs_path_config android_files[] = {
+     { 00555, AID_ROOT,      AID_ROOT,      0, "system/etc/ppp/*" },
+     { 00555, AID_ROOT,      AID_ROOT,      0, "system/etc/rc.*" },
+     { 00440, AID_ROOT,      AID_ROOT,      0, "system/etc/recovery.img" },
++    { 00755, AID_ROOT,      AID_ROOT,      0, "system/addon.d/*" },
+     { 00444, AID_ROOT,      AID_ROOT,      0, conf_dir + 1 },
+     { 00444, AID_ROOT,      AID_ROOT,      0, conf_file + 1 },
+     { 00644, AID_SYSTEM,    AID_SYSTEM,    0, "data/app/*" },

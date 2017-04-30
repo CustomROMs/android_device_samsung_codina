@@ -1,0 +1,35 @@
+Subject: [PATCH] Check bitmap usage of widget even when AppWidget provider is supplied
+
+Symptom:
+If a widget have many bitmaps, system_server consumes all file
+descriptors. It causes system_server crash.
+
+Root cause:
+Each bitmap of a RemoteViews consumes file descriptor on system_server.
+And system_server notifies the update of the RemoteView to
+IAppWidgetHosts. At that time, many additional file descriptors are
+consumed when bitmaps are written to a Parcel.
+
+Solution:
+Check bitmap usage of widget at updateAppWidgetProvider().
+If the usage exceeds maximum bitmap memory usage,
+throws IllegalArgumentException.
+
+diff --git a/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java b/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java
+index 2a30229..f9f14c0 100644
+--- a/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java
++++ b/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java
+@@ -1520,6 +1520,13 @@
+         // Make sure the package runs under the caller uid.
+         mSecurityPolicy.enforceCallFromPackage(componentName.getPackageName());
+ 
++        final int bitmapMemoryUsage = (views != null) ? views.estimateMemoryUsage() : 0;
++        if (bitmapMemoryUsage > mMaxWidgetBitmapMemory) {
++            throw new IllegalArgumentException("RemoteViews for widget update exceeds"
++                    + " maximum bitmap memory usage (used: " + bitmapMemoryUsage
++                    + ", max: " + mMaxWidgetBitmapMemory + ")");
++        }
++
+         synchronized (mLock) {
+             ensureGroupStateLoadedLocked(userId);
+ 

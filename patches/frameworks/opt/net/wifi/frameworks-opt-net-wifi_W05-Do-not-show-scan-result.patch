@@ -1,0 +1,26 @@
+ Do not show scan result entries for MESH networks
+
+Currently Mesh networks are being shown as OPEN network
+in wifi settings application and when user tries to connect
+to this network, connection fails.
+
+Do not consider MESH enabled network as part of scan results.
+User and wifi framework will not have any entry for MESH
+enabled network.
+
+diff --git a/service/java/com/android/server/wifi/WifiNative.java b/service/java/com/android/server/wifi/WifiNative.java
+index 5b285f5..b0ea781 100644
+--- a/service/java/com/android/server/wifi/WifiNative.java
++++ b/service/java/com/android/server/wifi/WifiNative.java
+@@ -696,6 +696,11 @@ private String getRawScanResults(String range) {
+                 } else if (line.startsWith(BSS_DELIMITER_STR) || line.startsWith(BSS_END_STR)) {
+                     if (bssid != null) {
+                         try {
++                            if (flags.contains("MESH")) {
++                                Log.d(TAG, "Skipping MESH enabled network with bssid="+bssid);
++                                continue;
++                            }
++
+                             if (infoElementsStr == null) {
+                                 throw new IllegalArgumentException("Null information element data");
+                             }

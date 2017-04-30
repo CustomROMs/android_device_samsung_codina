@@ -1,0 +1,23 @@
+ Frameworks: apple can do...we can do as well
+
+incredible apple engineers speeded up the overall UI and reduced per default slightly
+the animation scales. Well we do as well and reduce it from 1 to 0.5...smooth, looks well
+and does not break anything
+
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 9708a5a..004f6bb 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -725,9 +725,9 @@ public void onChange(boolean selfChange, Uri uri) {
+     PowerManager mPowerManager;
+     PowerManagerInternal mPowerManagerInternal;
+ 
+-    float mWindowAnimationScaleSetting = 1.0f;
+-    float mTransitionAnimationScaleSetting = 1.0f;
+-    float mAnimatorDurationScaleSetting = 1.0f;
++    float mWindowAnimationScaleSetting = 0.5f;
++    float mTransitionAnimationScaleSetting = 0.5f;
++    float mAnimatorDurationScaleSetting = 0.5f;
+     boolean mAnimationsDisabled = false;
+ 
+     final InputManagerService mInputManager;

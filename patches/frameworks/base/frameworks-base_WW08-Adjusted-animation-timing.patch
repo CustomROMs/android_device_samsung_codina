@@ -1,0 +1,75 @@
+Adjusted animation timing 
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
+index 2248baf..052926d 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/BaseStatusBar.java
+@@ -108,6 +108,7 @@
+ import com.android.systemui.statusbar.notification.VisualStabilityManager;
+ import com.android.systemui.statusbar.phone.NavigationBarView;
+ import com.android.systemui.statusbar.phone.NotificationGroupManager;
++import com.android.systemui.statusbar.phone.NotificationPanelView;
+ import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
+ import com.android.systemui.statusbar.policy.HeadsUpManager;
+ import com.android.systemui.statusbar.policy.PreviewInflater;
+@@ -2045,7 +2046,8 @@ public void run() {
+ 
+                     // close the shade if it was open
+                     animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_RECENTS_PANEL,
+-                            true /* force */, true /* delayed */);
++                            true /* force */, true /* delayed */,
++                            NotificationPanelView.SPEED_UP_FACTOR_CLICKED);
+                     visibilityChanged(false);
+ 
+                     return true;
+@@ -2080,6 +2082,10 @@ public void animateCollapsePanels(int flags, boolean force) {
+     public void animateCollapsePanels(int flags, boolean force, boolean delayed) {
+     }
+ 
++    public void animateCollapsePanels(int flags, boolean force, boolean delayed,
++            float speedUpFactor) {
++    }
++
+     public void overrideActivityPendingAppTransition(boolean keyguardShowing) {
+         if (keyguardShowing) {
+             try {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java
+index 2248baf..152926d 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java
+@@ -2217,7 +2217,7 @@ protected boolean onMiddleClicked() {
+ 
+                 // This gets called in the middle of the touch handling, where the state is still
+                 // that we are tracking the panel. Collapse the panel after this is done.
+-                post(mPostCollapseRunnable);
++                post(mEmptySpaceClickedRunnable);
+                 return false;
+             default:
+                 return true;
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java
+index 2248baf..252926d 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java
+@@ -51,6 +51,8 @@
+     public static final boolean DEBUG = PanelBar.DEBUG;
+     public static final String TAG = PanelView.class.getSimpleName();
+ 
++    public static final float SPEED_UP_FACTOR_CLICKED = 1.7f;
++
+     private final void logf(String fmt, Object... args) {
+         Log.v(TAG, (mViewName != null ? (mViewName + ": ") : "") + String.format(fmt, args));
+     }
+@@ -1074,6 +1076,13 @@ protected boolean onEmptySpaceClick(float x) {
+         return onMiddleClicked();
+     }
+ 
++    protected final Runnable mEmptySpaceClickedRunnable = new Runnable() {
++        @Override
++        public void run() {
++            collapse(false /* delayed */, SPEED_UP_FACTOR_CLICKED /* speedUpFactor */);
++        }
++    };
++
+     protected final Runnable mPostCollapseRunnable = new Runnable() {
+         @Override
+         public void run() {

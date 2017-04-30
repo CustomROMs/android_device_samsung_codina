@@ -1,0 +1,18 @@
+ RTSP: fix Media player wrong indication on Starting a LiveStream.
+There will show 1:00:00 total duration  on visible mumeric
+cunter of Media Player. Since the Live Streaming will not
+finish, so there is a wrong display information.
+
+diff --git a/media/libstagefright/rtsp/APacketSource.cpp b/media/libstagefright/rtsp/APacketSource.cpp
+index 2ffd184..ef2e6e1 100644
+--- a/media/libstagefright/rtsp/APacketSource.cpp
++++ b/media/libstagefright/rtsp/APacketSource.cpp
+@@ -418,7 +418,7 @@ APacketSource::APacketSource(
+     if (sessionDesc->getDurationUs(&durationUs)) {
+         mFormat->setInt64(kKeyDuration, durationUs);
+     } else {
+-        mFormat->setInt64(kKeyDuration, 60 * 60 * 1000000ll);
++        mFormat->setInt64(kKeyDuration, -1ll);
+     }
+ 
+     mInitCheck = OK;

@@ -1,0 +1,34 @@
+ Fix the bug in replacing a fragment with itself.
+
+Summary:
+We are facing a bug that some fragments in our app got removed
+randomly. We debugged the app and it seems there is a bug in
+the fragment API.
+When we we are trying to replace a fragment with itself. We will
+try to make the operation a null op, then both `op.fragment` and
+`f` will be reset to null.
+  op.fragment = f = null;
+But since it's inside a loop, if the list `mAdded` still have
+items to be visited, the code will continue to the next
+iteration. Then it will compare the fragment with null, and
+reach the line:
+  mManager.removeFragment(old, mTransition, mTransitionStyle);
+Eventually it will delete all left fragments in the list `mAdded`.
+This diff adds a break to abort the searching after we null
+the operation.
+Test Plan:
+ 1) Tested with our app. No fragment is randomly removed.
+Revert Plan:
+
+diff --git a/core/java/android/app/BackStackRecord.java b/core/java/android/app/BackStackRecord.java
+index 58acbcf..0a31199 100644
+--- a/core/java/android/app/BackStackRecord.java
++++ b/core/java/android/app/BackStackRecord.java
+@@ -751,6 +751,7 @@ public void run() {
+                             if (old.mContainerId == containerId) {
+                                 if (old == f) {
+                                     op.fragment = f = null;
++                                    break;
+                                 } else {
+                                     if (op.removed == null) {
+                                         op.removed = new ArrayList<Fragment>();

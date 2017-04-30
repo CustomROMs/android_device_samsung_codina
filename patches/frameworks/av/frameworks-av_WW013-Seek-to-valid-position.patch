@@ -1,0 +1,31 @@
+Subject: [PATCH] nuplayer: Seek to valid position in setVideoSurface
+
+  - If flush is called on both A/V tracks and video
+  decoder is not yet created, In offload case the
+  first audio buffer will get flush and audio playback
+  starts from timestamp of second buffer, where as
+  video playback starts from zero leads to AV sync
+  issue in start and cause framedrops.
+
+  - Call seek to current position to align the Audio
+  and Video tracks. Seek to zero if playback has not
+  yet started.
+
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index 2ffd184..ef2e6ec 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -704,10 +704,9 @@
+                     // If the video decoder is not set (perhaps audio only in this case)
+                     // do not perform a seek as it is not needed.
+                     int64_t currentPositionUs = 0;
+-                    if (getCurrentPosition(&currentPositionUs) == OK) {
+-                        mDeferredActions.push_back(
+-                                new SeekAction(currentPositionUs));
+-                    }
++                    getCurrentPosition(&currentPositionUs);
++                    mDeferredActions.push_back(
++                            new SeekAction(currentPositionUs));
+                 }
+ 
+                 // If there is a new surface texture, instantiate decoders

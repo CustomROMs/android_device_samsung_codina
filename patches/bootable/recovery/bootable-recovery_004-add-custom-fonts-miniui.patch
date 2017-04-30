@@ -1,0 +1,314 @@
+Subject: [PATCH] Support use of custom fonts in miniui
+
+diff --git a/minui/font_10x18.h b/minui/font_10x18.h
+index 29d7053..30dfb9c 100644
+--- a/minui/font_10x18.h
++++ b/minui/font_10x18.h
+@@ -1,14 +1,14 @@
+ struct {
+   unsigned width;
+   unsigned height;
+-  unsigned cwidth;
+-  unsigned cheight;
++  unsigned char_width;
++  unsigned char_height;
+   unsigned char rundata[2973];
+ } font = {
+   .width = 960,
+   .height = 18,
+-  .cwidth = 10,
+-  .cheight = 18,
++  .char_width = 10,
++  .char_height = 18,
+   .rundata = {
+ 0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x55,0x82,0x06,0x82,0x02,0x82,0x10,0x82,
+ 0x11,0x83,0x08,0x82,0x0a,0x82,0x04,0x82,0x46,0x82,0x08,0x82,0x07,0x84,0x06,
+diff --git a/minui/graphics.cpp b/minui/graphics.cpp
+index 244db3c..a43baf2 100644
+--- a/minui/graphics.cpp
++++ b/minui/graphics.cpp
+@@ -40,12 +40,6 @@
+ #include "minui.h"
+ #include "graphics.h"
+ 
+-struct GRFont {
+-    GRSurface* texture;
+-    int cwidth;
+-    int cheight;
+-};
+-
+ static GRFont* gr_font = NULL;
+ static minui_backend* gr_backend = NULL;
+ 
+@@ -69,15 +63,20 @@
+     return x < 0 || x >= gr_draw->width || y < 0 || y >= gr_draw->height;
+ }
+ 
+-int gr_measure(const char *s)
++const GRFont* gr_sys_font()
+ {
+-    return gr_font->cwidth * strlen(s);
++    return gr_font;
+ }
+ 
+-void gr_font_size(int *x, int *y)
++int gr_measure(const GRFont* font, const char *s)
+ {
+-    *x = gr_font->cwidth;
+-    *y = gr_font->cheight;
++    return font->char_width * strlen(s);
++}
++
++void gr_font_size(const GRFont* font, int *x, int *y)
++{
++    *x = font->char_width;
++    *y = font->char_height;
+ }
+ 
+ void blend_16bpp(unsigned char* px, unsigned r5, unsigned g5, unsigned b5, unsigned char a)
+@@ -146,34 +145,32 @@
+     }
+ }
+ 
+-void gr_text(int x, int y, const char *s, bool bold)
++void gr_text(const GRFont* font, int x, int y, const char *s, bool bold)
+ {
+-    GRFont* font = gr_font;
+-
+     if (!font->texture || gr_current_a == 0) return;
+ 
+-    bold = bold && (font->texture->height != font->cheight);
++    bold = bold && (font->texture->height != font->char_height);
+ 
+     x += overscan_offset_x;
+     y += overscan_offset_y;
+ 
+     unsigned char ch;
+     while ((ch = *s++)) {
+-        if (outside(x, y) || outside(x+font->cwidth-1, y+font->cheight-1)) break;
++        if (outside(x, y) || outside(x+font->char_width-1, y+font->char_height-1)) break;
+ 
+         if (ch < ' ' || ch > '~') {
+             ch = '?';
+         }
+ 
+-        unsigned char* src_p = font->texture->data + ((ch - ' ') * font->cwidth) +
+-                               (bold ? font->cheight * font->texture->row_bytes : 0);
++        unsigned char* src_p = font->texture->data + ((ch - ' ') * font->char_width) +
++                               (bold ? font->char_height * font->texture->row_bytes : 0);
+         unsigned char* dst_p = gr_draw->data + y*gr_draw->row_bytes + x*gr_draw->pixel_bytes;
+ 
+         text_blend(src_p, font->texture->row_bytes,
+                    dst_p, gr_draw->row_bytes,
+-                   font->cwidth, font->cheight);
++                   font->char_width, font->char_height);
+ 
+-        x += font->cwidth;
++        x += font->char_width;
+     }
+ }
+ 
+@@ -383,40 +380,51 @@
+     return surface->height;
+ }
+ 
++int gr_init_font(const char* name, GRFont* dest) {
++    int res = res_create_alpha_surface(name, &(dest->texture));
++    if (res < 0) {
++        return res;
++    }
++
++    // The font image should be a 96x2 array of character images.  The
++    // columns are the printable ASCII characters 0x20 - 0x7f.  The
++    // top row is regular text; the bottom row is bold.
++    dest->char_width = dest->texture->width / 96;
++    dest->char_height = dest->texture->height / 2;
++
++    return 0;
++}
++
+ static void gr_init_font(void)
+ {
+     gr_font = reinterpret_cast<GRFont*>(calloc(sizeof(*gr_font), 1));
+ 
+-    int res = res_create_alpha_surface("font", &(gr_font->texture));
++    int res = gr_init_font("font", gr_font);
+     if (res == 0) {
+-        // The font image should be a 96x2 array of character images.  The
+-        // columns are the printable ASCII characters 0x20 - 0x7f.  The
+-        // top row is regular text; the bottom row is bold.
+-        gr_font->cwidth = gr_font->texture->width / 96;
+-        gr_font->cheight = gr_font->texture->height / 2;
+-    } else {
+-        printf("failed to read font: res=%d\n", res);
+-
+-        // fall back to the compiled-in font.
+-        gr_font->texture = reinterpret_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
+-        gr_font->texture->width = font.width;
+-        gr_font->texture->height = font.height;
+-        gr_font->texture->row_bytes = font.width;
+-        gr_font->texture->pixel_bytes = 1;
+-
+-        unsigned char* bits = reinterpret_cast<unsigned char*>(malloc(font.width * font.height));
+-        gr_font->texture->data = reinterpret_cast<unsigned char*>(bits);
+-
+-        unsigned char data;
+-        unsigned char* in = font.rundata;
+-        while((data = *in++)) {
+-            memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
+-            bits += (data & 0x7f);
+-        }
+-
+-        gr_font->cwidth = font.cwidth;
+-        gr_font->cheight = font.cheight;
++        return;
+     }
++
++    printf("failed to read font: res=%d\n", res);
++
++    // fall back to the compiled-in font.
++    gr_font->texture = reinterpret_cast<GRSurface*>(malloc(sizeof(*gr_font->texture)));
++    gr_font->texture->width = font.width;
++    gr_font->texture->height = font.height;
++    gr_font->texture->row_bytes = font.width;
++    gr_font->texture->pixel_bytes = 1;
++
++    unsigned char* bits = reinterpret_cast<unsigned char*>(malloc(font.width * font.height));
++    gr_font->texture->data = reinterpret_cast<unsigned char*>(bits);
++
++    unsigned char data;
++    unsigned char* in = font.rundata;
++    while((data = *in++)) {
++        memset(bits, (data & 0x80) ? 255 : 0, data & 0x7f);
++        bits += (data & 0x7f);
++    }
++
++    gr_font->char_width = font.char_width;
++    gr_font->char_height = font.char_height;
+ }
+ 
+ #if 0
+diff --git a/minui/minui.h b/minui/minui.h
+index dee4641..628775d 100644
+--- a/minui/minui.h
++++ b/minui/minui.h
+@@ -35,6 +35,12 @@
+     unsigned char* data;
+ };
+ 
++struct GRFont {
++    GRSurface* texture;
++    int char_width;
++    int char_height;
++};
++
+ int gr_init();
+ void gr_exit();
+ 
+@@ -47,10 +53,14 @@
+ void gr_clear();  // clear entire surface to current color
+ void gr_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+ void gr_fill(int x1, int y1, int x2, int y2);
+-void gr_text(int x, int y, const char *s, bool bold);
++
+ void gr_texticon(int x, int y, GRSurface* icon);
+-int gr_measure(const char *s);
+-void gr_font_size(int *x, int *y);
++
++const GRFont* gr_sys_font();
++int gr_init_font(const char* name, GRFont* dest);
++void gr_text(const GRFont* font, int x, int y, const char *s, bool bold);
++int gr_measure(const GRFont* font, const char *s);
++void gr_font_size(const GRFont* font, int *x, int *y);
+ void gr_set_font(__attribute__ ((unused))const char* name);
+ 
+ void gr_blit(GRSurface* source, int sx, int sy, int w, int h, int dx, int dy);
+diff --git a/screen_ui.cpp b/screen_ui.cpp
+index 2a0769e..c2b5326 100644
+--- a/screen_ui.cpp
++++ b/screen_ui.cpp
+@@ -259,7 +259,7 @@
+ }
+ 
+ void ScreenRecoveryUI::DrawTextLine(int x, int* y, const char* line, bool bold) {
+-    gr_text(x, *y, line, bold);
++    gr_text(gr_sys_font(), x, *y, line, bold);
+     *y += char_height_ + 4;
+ }
+ 
+@@ -315,10 +315,10 @@
+                     gr_fill(0, y - 2, gr_fb_width(), y + char_height_ + 2);
+                     // Bold white text for the selected item.
+                     SetColor(MENU_SEL_FG);
+-                    gr_text(4, y, menu_[i], true);
++                    gr_text(gr_sys_font(), 4, y, menu_[i], true);
+                     SetColor(MENU);
+                 } else {
+-                    gr_text(4, y, menu_[i], false);
++                    gr_text(gr_sys_font(), 4, y, menu_[i], false);
+                 }
+                 y += char_height_ + 4;
+             }
+@@ -334,7 +334,7 @@
+         for (int ty = gr_fb_height() - char_height_;
+              ty >= y && count < text_rows_;
+              ty -= char_height_, ++count) {
+-            gr_text(0, ty, text_[row], false);
++            gr_text(gr_sys_font(), 0, ty, text_[row], false);
+             --row;
+             if (row < 0) row = text_rows_ - 1;
+         }
+@@ -457,7 +457,7 @@
+     // Are we the large variant of our base layout?
+     if (gr_fb_height() > PixelsFromDp(800)) ++layout_;
+ 
+-    gr_font_size(&char_width_, &char_height_);
++    gr_font_size(gr_sys_font(), &char_width_, &char_height_);
+     text_rows_ = gr_fb_height() / char_height_;
+     text_cols_ = gr_fb_width() / char_width_;
+ 
+diff --git a/wear_ui.cpp b/wear_ui.cpp
+index b437fd0..f9727af 100644
+--- a/wear_ui.cpp
++++ b/wear_ui.cpp
+@@ -177,7 +177,7 @@
+             // items don't fit on the screen.
+             if (menu_items > menu_end - menu_start) {
+                 sprintf(cur_selection_str, "Current item: %d/%d", menu_sel + 1, menu_items);
+-                gr_text(x+4, y, cur_selection_str, 1);
++                gr_text(gr_sys_font(), x+4, y, cur_selection_str, 1);
+                 y += char_height_+4;
+             }
+ 
+@@ -192,10 +192,10 @@
+                     gr_fill(x, y-2, gr_fb_width()-x, y+char_height_+2);
+                     // white text of selected item
+                     SetColor(MENU_SEL_FG);
+-                    if (menu[i][0]) gr_text(x+4, y, menu[i], 1);
++                    if (menu[i][0]) gr_text(gr_sys_font(), x+4, y, menu[i], 1);
+                     SetColor(MENU);
+-                } else {
+-                    if (menu[i][0]) gr_text(x+4, y, menu[i], 0);
++                } else if (menu[i][0]) {
++                    gr_text(gr_sys_font(), x+4, y, menu[i], 0);
+                 }
+                 y += char_height_+4;
+             }
+@@ -216,7 +216,7 @@
+         for (int ty = gr_fb_height() - char_height_ - outer_height;
+              ty > y+2 && count < text_rows;
+              ty -= char_height_, ++count) {
+-            gr_text(x+4, ty, text[row], 0);
++            gr_text(gr_sys_font(), x+4, ty, text[row], 0);
+             --row;
+             if (row < 0) row = text_rows-1;
+         }
+@@ -285,7 +285,7 @@
+ {
+     gr_init();
+ 
+-    gr_font_size(&char_width_, &char_height_);
++    gr_font_size(gr_sys_font(), &char_width_, &char_height_);
+ 
+     text_col = text_row = 0;
+     text_rows = (gr_fb_height()) / char_height_;

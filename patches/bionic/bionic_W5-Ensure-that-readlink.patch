@@ -1,0 +1,35 @@
+Subject: [PATCH] Ensure that readlink has access to /proc/self/fd
+
+/proc/self/fd is not available when PR_DUMPABLE is set to 0
+which is default for the user builds. It leads to permission
+denials on readlink.
+
+This change fixes the problem by setting PR_DUMPABLE flag to 1
+for readlink and restoring it's previous value after the call.
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index 6cdf1f8..ea21e65 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -36,6 +36,7 @@
+ #include <string.h>
+ #include <sys/mman.h>
+ #include <sys/param.h>
++#include <sys/prctl.h>
+ #include <unistd.h>
+ 
+ #include <new>
+@@ -559,6 +560,13 @@
+ static bool realpath_fd(int fd, std::string* realpath) {
+   std::vector<char> buf(PATH_MAX), proc_self_fd(PATH_MAX);
+   __libc_format_buffer(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
++  // set DUMPABLE to 1 to access /proc/self/fd
++  int dumpable = prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
++  prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
++  auto guard = make_scope_guard([&]() {
++    // restore dumpable
++    prctl(PR_SET_DUMPABLE, dumpable, 0, 0, 0);
++  });
+   if (readlink(&proc_self_fd[0], &buf[0], buf.size()) == -1) {
+     PRINT("readlink(\"%s\") failed: %s [fd=%d]", &proc_self_fd[0], strerror(errno), fd);
+     return false;

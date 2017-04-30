@@ -1,0 +1,52 @@
+Subject: [PATCH] nuplayer: Allow devices to force a flush when surface changes
+
+This fixes some playback problems on the Zenfone2 (running on 5.0
+based blobs).
+
+The problems are easily reproduced by viewing a video in Chrome and
+then switching to full-screen mode.  The change in surface causes
+the log to get flooded with messages like:
+
+ dc_device_post: Buffer ID=14460 not imported by D
+
+until Android crashes.  With this change, it ends up correctly
+mapping the surfaces after the flush fixing the problem.
+
+The code that is being #ifdef'ed out was added in M in commit
+ nuplayer: use codec->setSurface when possible to avoid seeking
+
+and it appears that our blobs simply cannot handle this optimization
+and therefore we need a means by which to disable it.
+
+
+diff --git a/media/libmediaplayerservice/nuplayer/Android.mk b/media/libmediaplayerservice/nuplayer/Android.mk
+index fbb1276..ff2a202 100644
+--- a/media/libmediaplayerservice/nuplayer/Android.mk
++++ b/media/libmediaplayerservice/nuplayer/Android.mk
+@@ -52,6 +52,10 @@
+ endif
+ # DOLBY_END
+ 
++ifeq ($(TARGET_NUPLAYER_CANNOT_SET_SURFACE_WITHOUT_A_FLUSH),true)
++LOCAL_CFLAGS += -DCANNOT_SET_SURFACE_WITHOUT_A_FLUSH
++endif
++
+ LOCAL_CLANG := true
+ 
+ LOCAL_MODULE:= libstagefright_nuplayer
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index caac70b..1835101 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -683,7 +683,10 @@
+             // When mStarted is true, mSource must have been set.
+             if (mSource == NULL || !mStarted || mSource->getFormat(false /* audio */) == NULL
+                     // NOTE: mVideoDecoder's mSurface is always non-null
+-                    || (mVideoDecoder != NULL && mVideoDecoder->setVideoSurface(surface) == OK)) {
++#ifndef CANNOT_SET_SURFACE_WITHOUT_A_FLUSH
++                    || (mVideoDecoder != NULL && mVideoDecoder->setVideoSurface(surface) == OK)
++#endif
++                ) {
+                 performSetSurface(surface);
+                 break;
+             }

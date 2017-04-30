@@ -1,0 +1,11 @@
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index 1812105..ff6f6bb 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -100,5 +100,5 @@
+     private static final boolean DEBUG = KeyguardConstants.DEBUG;
+     private static final boolean DEBUG_SIM_STATES = KeyguardConstants.DEBUG_SIM_STATES;
+-    private static final int LOW_BATTERY_THRESHOLD = 20;
++    private static final int LOW_BATTERY_THRESHOLD = 10;
+ 
+     private static final String ACTION_FACE_UNLOCK_STARTED

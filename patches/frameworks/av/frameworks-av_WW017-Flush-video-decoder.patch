@@ -1,0 +1,30 @@
+Subject: [PATCH] Flush video decoder when audio sink resume.
+
+Video decoder needs to flush when audio sink resume,
+otherwise it takes a long time for AV sync if the restarted
+audio timestamp has a big difference with video timestamp in
+video decoder without flush.
+
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index 4e16fba..435bf60 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -1577,6 +1577,7 @@
+     mRenderer->flush(true /* audio */, false /* notifyComplete */);
+     if (mVideoDecoder != NULL) {
+         mRenderer->flush(false /* audio */, false /* notifyComplete */);
++        flushDecoder(false /* audio */, false /*needShutdown*/);
+     }
+ 
+     performSeek(currentPositionUs);
+@@ -1588,6 +1589,10 @@
+     if (needsToCreateAudioDecoder) {
+         instantiateDecoder(true /* audio */, &mAudioDecoder, !forceNonOffload);
+     }
++    if (mVideoDecoder != NULL) {
++        // After a flush without shutdown, decoder is paused.
++        mVideoDecoder->signalResume(false /* needNotify */);
++    }
+ }
+ 
+ void NuPlayer::determineAudioModeChange(const sp<AMessage> &audioFormat) {

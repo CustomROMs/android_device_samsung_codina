@@ -1,0 +1,29 @@
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 1110070..2889015 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -59,4 +59,8 @@
+     <string name="unlock_quick_unlock_control_title">Quick unlock</string>
+     <string name="unlock_quick_unlock_control_summary">Unlock automatically when the correct PIN/password is entered</string>
+ 
++    <!-- Text for forcing expanded notifications -->
++    <string name="disable_fc_notifications_title">Disable FC Notifications</string>
++    <string name="disable_fc_notifications_summary">This will hide all force close notificaitons</string>
++
+ </resources>
+diff --git a/res/xml/development_prefs.xml b/res/xml/development_prefs.xml
+index 1110070..2889016 100644
+--- a/res/xml/development_prefs.xml
++++ b/res/xml/development_prefs.xml
+@@ -50,6 +50,11 @@
+             android:title="@string/allow_signature_fake"
+             android:summary="@string/allow_signature_fake_summary"/>
+ 
++    <com.android.settings.cyanogenmod.SystemSettingSwitchPreference
++            android:key="disable_fc_notifications"
++            android:title="@string/disable_fc_notifications_title"
++            android:summary="@string/disable_fc_notifications_summary" />
++
+     <PreferenceScreen
+             android:key="local_backup_password"
+             android:title="@string/local_backup_password_title"

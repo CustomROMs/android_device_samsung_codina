@@ -1,0 +1,19 @@
+Subject: [PATCH] SystemUI: Fix SystemUI ANR
+
+Add a condition check before wait operation to avoid potential dead lock.
+
+diff --git a/packages/SystemUI/src/com/android/systemui/recents/model/RecentsTaskLoader.java b/packages/SystemUI/src/com/android/systemui/recents/model/RecentsTaskLoader.java
+index ba31e3e..41c3623 100644
+--- a/packages/SystemUI/src/com/android/systemui/recents/model/RecentsTaskLoader.java
++++ b/packages/SystemUI/src/com/android/systemui/recents/model/RecentsTaskLoader.java
+@@ -233,7 +233,9 @@
+                     synchronized(mLoadQueue) {
+                         try {
+                             mWaitingOnLoadQueue = true;
+-                            mLoadQueue.wait();
++                            while(mLoadQueue.isEmpty()) {
++                                mLoadQueue.wait();
++                            }
+                             mWaitingOnLoadQueue = false;
+                         } catch (InterruptedException ie) {
+                             ie.printStackTrace();

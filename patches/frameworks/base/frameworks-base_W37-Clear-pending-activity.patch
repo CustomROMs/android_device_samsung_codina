@@ -1,0 +1,41 @@
+Subject: [PATCH] Clear pending activity launches when force stop package
+
+It is possible that an activity in pending launches be resumed while
+it's package was stopped by some other reason, like uninstall pkg.
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 74af37f..eb5bf22 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -6363,6 +6363,8 @@
+                 ProcessList.INVALID_ADJ, callerWillRestart, true, doit, evenPersistent,
+                 packageName == null ? ("stop user " + userId) : ("stop " + packageName));
+ 
++        didSomething |= mActivityStarter.clearPendingActivityLaunchesLocked(packageName);
++
+         if (mStackSupervisor.finishDisabledPackageActivitiesLocked(
+                 packageName, null, doit, evenPersistent, userId)) {
+             if (!doit) {
+diff --git a/services/core/java/com/android/server/am/ActivityStarter.java b/services/core/java/com/android/server/am/ActivityStarter.java
+index 7b3f65a..85fa139 100644
+--- a/services/core/java/com/android/server/am/ActivityStarter.java
++++ b/services/core/java/com/android/server/am/ActivityStarter.java
+@@ -2136,4 +2136,18 @@
+             }
+         }
+     }
++
++    boolean clearPendingActivityLaunchesLocked(String packageName) {
++        boolean didSomething = false;
++
++        for (int palNdx = mPendingActivityLaunches.size() - 1; palNdx >= 0; --palNdx) {
++            PendingActivityLaunch pal = mPendingActivityLaunches.get(palNdx);
++            ActivityRecord r = pal.r;
++            if (r != null && r.packageName.equals(packageName)) {
++                mPendingActivityLaunches.remove(palNdx);
++                didSomething = true;
++            }
++        }
++        return didSomething;
++    }
+ }

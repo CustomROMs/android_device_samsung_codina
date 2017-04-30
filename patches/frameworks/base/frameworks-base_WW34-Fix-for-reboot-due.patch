@@ -1,0 +1,37 @@
+Subject: [PATCH] Fix for reboot due to Volume State not updated in callback
+
+When repeatedly formatting external sdcard as portable & internal
+storage there is a possibility of state mismatch in App listener
+volume state and actual volume state maintained by vold. This
+results in reboot when try to create User directory in package-
+manager when the volume is unmounted
+
+The change verifies current volume state as well when volume state
+change callback is received in package-manager. This avoids the
+problem of volume state mismatch
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 7ea9038..d0d6c82 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -1863,8 +1863,18 @@
+         @Override
+         public void onVolumeStateChanged(VolumeInfo vol, int oldState, int newState) {
+             if (vol.type == VolumeInfo.TYPE_PRIVATE) {
+-                if (vol.state == VolumeInfo.STATE_MOUNTED) {
+-                    final String volumeUuid = vol.getFsUuid();
++                final String volumeUuid = vol.getFsUuid();
++                boolean volCurStateMounted = false;
++                // To handle a case where the onVolumeStateChanged callback is called with
++                // volume state MOUNTED, but the current state of volume is changed to
++                // UNMOUNTED/EJECTED state due to asynchronous behaviour of vold.
++                if(volumeUuid != null) {
++                    StorageManager storage = mContext.getSystemService(StorageManager.class);
++                    VolumeInfo currentVol = storage.findVolumeByUuid(volumeUuid);
++                    if(currentVol != null && currentVol.state == VolumeInfo.STATE_MOUNTED)
++                        volCurStateMounted = true;
++                }
++                if (vol.state == VolumeInfo.STATE_MOUNTED && volCurStateMounted) {
+ 
+                     // Clean up any users or apps that were removed or recreated
+                     // while this volume was missing

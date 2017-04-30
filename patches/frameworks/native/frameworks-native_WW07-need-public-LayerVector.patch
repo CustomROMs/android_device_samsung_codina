@@ -1,0 +1,18 @@
+surfaceflinger: add support for devices that need public LayerVector 
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
+index 4e122da..064e119 100644
+--- a/services/surfaceflinger/SurfaceFlinger.h
++++ b/services/surfaceflinger/SurfaceFlinger.h
+@@ -173,7 +173,11 @@ class SurfaceFlinger : public BnSurfaceComposer,
+      * Internal data structures
+      */
+ 
++#ifdef LEGACY_NEEDS_PUBLIC_LAYERVECTOR
++    public: class LayerVector : public SortedVector< sp<Layer> > {
++#else
+     class LayerVector : public SortedVector< sp<Layer> > {
++#endif
+     public:
+         LayerVector();
+         LayerVector(const LayerVector& rhs);

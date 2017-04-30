@@ -1,0 +1,52 @@
+ Fix AAC and AMR format recording hangs
+ When using AAC and AMR encoder, stops recording during pause
+  state would block by mSource
+
+diff --git a/media/libstagefright/AACWriter.cpp b/media/libstagefright/AACWriter.cpp
+index 8b1e1c3..98bdea0 100644
+--- a/media/libstagefright/AACWriter.cpp
++++ b/media/libstagefright/AACWriter.cpp
+@@ -153,17 +153,11 @@
+ 
+     mDone = true;
+ 
++    mSource->stop();
++
+     void *dummy;
+     pthread_join(mThread, &dummy);
+-
+     status_t err = static_cast<status_t>(reinterpret_cast<uintptr_t>(dummy));
+-    {
+-        status_t status = mSource->stop();
+-        if (err == OK &&
+-            (status != OK && status != ERROR_END_OF_STREAM)) {
+-            err = status;
+-        }
+-    }
+ 
+     mStarted = false;
+     return err;
+diff --git a/media/libstagefright/AMRWriter.cpp b/media/libstagefright/AMRWriter.cpp
+index 961b57f..0fd626e 100644
+--- a/media/libstagefright/AMRWriter.cpp
++++ b/media/libstagefright/AMRWriter.cpp
+@@ -148,17 +148,11 @@
+ 
+     mDone = true;
+ 
++    mSource->stop();
++
+     void *dummy;
+     pthread_join(mThread, &dummy);
+-
+     status_t err = static_cast<status_t>(reinterpret_cast<uintptr_t>(dummy));
+-    {
+-        status_t status = mSource->stop();
+-        if (err == OK &&
+-            (status != OK && status != ERROR_END_OF_STREAM)) {
+-            err = status;
+-        }
+-    }
+ 
+     mStarted = false;
+     return err;

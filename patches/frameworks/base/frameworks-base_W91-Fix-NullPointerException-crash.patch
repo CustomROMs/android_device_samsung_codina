@@ -1,0 +1,18 @@
+ SystemUI: Fix NullPointerException crash
+
+Init AssistOrbContainer view.
+
+diff --git a/packages/SystemUI/src/com/android/systemui/assist/AssistManager.java b/packages/SystemUI/src/com/android/systemui/assist/AssistManager.java
+index a9444b4..b0dfd81 100644
+--- a/packages/SystemUI/src/com/android/systemui/assist/AssistManager.java
++++ b/packages/SystemUI/src/com/android/systemui/assist/AssistManager.java
+@@ -133,6 +133,9 @@ public void startAssist(Bundle args) {
+             return;
+         }
+ 
++        if (mView == null) {
++            onConfigurationChanged();
++        }
+         final boolean isService = assistComponent.equals(getVoiceInteractorComponentName());
+         if (!isService || (!isVoiceSessionRunning() && shouldShowOrb())) {
+             showOrb(assistComponent, isService);

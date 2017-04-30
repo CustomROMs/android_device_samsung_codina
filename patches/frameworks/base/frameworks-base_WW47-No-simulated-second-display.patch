@@ -1,0 +1,31 @@
+Subject: [PATCH] No simulated second display shown if overlay size equals display size.
+
+When overlay window size equals default display size, it will cover all screen.
+But the overlay window is black, so it will black all screen and can't recover.
+So, if overlay window size equals display size, change the scale value to
+mid-value between current value and MIN_SCALE. And recalculate overlay window size.
+
+diff --git a/services/core/java/com/android/server/display/OverlayDisplayWindow.java b/services/core/java/com/android/server/display/OverlayDisplayWindow.java
+index f23caf2..8e0836a 100644
+--- a/services/core/java/com/android/server/display/OverlayDisplayWindow.java
++++ b/services/core/java/com/android/server/display/OverlayDisplayWindow.java
+@@ -246,9 +246,18 @@
+         scale = Math.min(scale, (float)mDefaultDisplayInfo.logicalHeight / mHeight);
+         scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+ 
+-        float offsetScale = (scale / mWindowScale - 1.0f) * 0.5f;
+         int width = (int)(mWidth * scale);
+         int height = (int)(mHeight * scale);
++        // when width/height equals default display resolution, it will cover all screen.
++        // but the overlay window is black, so it will black all screen and can't recover.
++        if ((width == mDefaultDisplayInfo.logicalWidth) &&
++            (height == mDefaultDisplayInfo.logicalHeight)) {
++            scale = (scale + MIN_SCALE) / 2;
++            width = (int)(mWidth * scale);
++            height = (int)(mHeight * scale);
++        }
++
++        float offsetScale = (scale / mWindowScale - 1.0f) * 0.5f;
+         int x = (int)(mWindowX + mLiveTranslationX - width * offsetScale);
+         int y = (int)(mWindowY + mLiveTranslationY - height * offsetScale);
+         x = Math.max(0, Math.min(x, mDefaultDisplayInfo.logicalWidth - width));
