@@ -931,7 +931,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     protected DataCallResponse getDataCallResponse(Parcel p, int version) {
         DataCallResponse dataCall = new DataCallResponse();
 
-        dataCall.version = version;
+        //dataCall.version = version;
         if (version < 5) {
             dataCall.cid = p.readInt();
             dataCall.active = p.readInt();
