@@ -116,6 +116,18 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:system/etc/usb_audio_policy_configuration.xml
 endif
 
+# hidl
+PRODUCT_PACKAGES += \
+    android.hardware.audio@2.0-impl \
+    android.hardware.audio.effect@2.0-impl \
+    android.hardware.camera.provider@2.4-impl \
+    android.hardware.power@1.0-impl \
+    android.hardware.light@2.0-impl \
+    android.hardware.sensors@1.0-impl \
+    android.hardware.keymaster@3.0-impl \
+    android.hardware.gatekeeper@1.0-impl
+
+# audio
 PRODUCT_PACKAGES += \
     audio.usb.default \
     audio.a2dp.default \
