@@ -86,6 +86,3 @@ ro.hwui.layer_cache_size=6
 ro.hwui.path_cache_size=2
 ro.hwui.r_buffer_cache_size=1
 ro.hwui.texture_cache_size=8
-
-persist.media.treble_omx=false
-
