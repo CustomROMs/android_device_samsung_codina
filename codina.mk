@@ -122,6 +122,71 @@ PRODUCT_PACKAGES += \
     libaudioutils \
     libtinyalsa
 
+# HIDL
+PRODUCT_COPY_FILES += \
+$(LOCAL_PATH)/configsnew/manifest.xml:system/vendor/manifest.xml
+
+# Bluetooth
+PRODUCT_PACKAGES += \
+libbt-vendor
+
+#
+PRODUCT_PACKAGES += \
+android.hardware.keymaster@3.0-service \
+android.hardware.keymaster@3.0-impl
+
+# Bluetooth HAL
+PRODUCT_PACKAGES += \
+android.hardware.bluetooth@1.0-impl
+
+# wificond
+PRODUCT_PACKAGES += \
+wificond
+
+# Wifi
+PRODUCT_PACKAGES += \
+android.hardware.wifi@1.0-service
+
+# USB HAL
+PRODUCT_PACKAGES += \
+android.hardware.usb@1.0-service
+
+# Power
+PRODUCT_PACKAGES += \
+android.hardware.power@1.0-impl
+
+# vibrato
+PRODUCT_PACKAGES += \
+android.hardware.vibrator@1.0-impl
+
+# Sensors
+#PRODUCT_PACKAGES += \
+#android.hardware.sensors@1.0-impl
+
+# GNSS HAL
+PRODUCT_PACKAGES += \
+android.hardware.gnss@1.0-impl
+
+# RenderScript HAL
+PRODUCT_PACKAGES += \
+android.hardware.renderscript@1.0-impl
+
+# DRM
+PRODUCT_PACKAGES += \
+android.hardware.drm@1.0-impl
+
+# Gatekeeper HAL
+#PRODUCT_PACKAGES += \
+#android.hardware.gatekeeper@1.0-service \
+#android.hardware.gatekeeper@1.0-impl
+
+# graphics HIDL interfaces
+PRODUCT_PACKAGES += \
+android.hardware.graphics.bufferqueue@1.0_hal \
+android.hardware.configstore@1.0_hal \
+android.hardware.configstore@1.0-service \
+android.hardware.configstore-utils
+
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
 
