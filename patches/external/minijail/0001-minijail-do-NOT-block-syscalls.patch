@@ -1,0 +1,91 @@
+From 2ec5d0d09f38f3e7d7cfe54d67c0fc9440356520 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 24 Sep 2017 23:10:04 +0300
+Subject: [PATCH] minijail: do NOT block syscalls
+
+Change-Id: I7e68030724077871854ffb28fc4242c02270c516
+---
+ Android.mk       | 2 +-
+ libminijail.c    | 6 ++++--
+ signal_handler.c | 4 ++++
+ 3 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index ecc5e97..cae888f 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -29,7 +29,7 @@ hostUnittestSrcFiles := \
+ 	linux-x86/libconstants.gen.c \
+ 	linux-x86/libsyscalls.gen.c
+ 
+-minijailCommonCFlags := -DHAVE_SECUREBITS_H -Wall -Werror
++minijailCommonCFlags := -DHAVE_SECUREBITS_H -Wall
+ minijailCommonLibraries := libcap
+ 
+ 
+diff --git a/libminijail.c b/libminijail.c
+index d005803..0408939 100644
+--- a/libminijail.c
++++ b/libminijail.c
+@@ -1535,8 +1535,8 @@ static void set_seccomp_filter(const struct minijail *j)
+ 			 * If logging seccomp filter failures,
+ 			 * install the SIGSYS handler first.
+ 			 */
+-			if (install_sigsys_handler())
+-				pdie("failed to install SIGSYS handler");
++			//if (install_sigsys_handler())
++			//	pdie("failed to install SIGSYS handler");
+ 			warn("logging seccomp filter failures");
+ 		} else if (j->flags.seccomp_filter_tsync) {
+ 			/*
+@@ -1600,6 +1600,7 @@ static void config_net_loopback(void)
+ 
+ void API minijail_enter(const struct minijail *j)
+ {
++#if 0
+ 	/*
+ 	 * If we're dropping caps, get the last valid cap from /proc now,
+ 	 * since /proc can be unmounted before drop_caps() is called.
+@@ -1754,6 +1755,7 @@ void API minijail_enter(const struct minijail *j)
+ 		}
+ 		pdie("prctl(PR_SET_SECCOMP) failed");
+ 	}
++#endif
+ }
+ 
+ /* TODO(wad): will visibility affect this variable? */
+diff --git a/signal_handler.c b/signal_handler.c
+index 5a5ae9c..c6b91f2 100644
+--- a/signal_handler.c
++++ b/signal_handler.c
+@@ -28,6 +28,7 @@ struct local_sigsys {
+ 
+ void log_sigsys_handler(int nr, siginfo_t *info, void *void_context)
+ {
++#if 0
+ 	struct local_sigsys sigsys;
+ 	const char *syscall_name;
+ 	memcpy(&sigsys, &info->_sifields, sizeof(sigsys));
+@@ -46,10 +47,12 @@ void log_sigsys_handler(int nr, siginfo_t *info, void *void_context)
+ 	 */
+ 	for (;;)
+ 		_exit(1);
++#endif
+ }
+ 
+ int install_sigsys_handler()
+ {
++#if 0
+ 	int ret = 0;
+ 	struct sigaction act;
+ 	sigset_t mask;
+@@ -69,5 +72,6 @@ int install_sigsys_handler()
+ 	if (ret < 0)
+ 		return ret;
+ 
++#endif
+ 	return 0;
+ }
+-- 
+2.7.4
+

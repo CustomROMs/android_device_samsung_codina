@@ -13,6 +13,7 @@ if [ "$PATCHES" == "" ] ; then
 	external/jhead \
 	external/boringssl \
 	external/jemalloc \
+	external/minijail \
 	libcore \
 	frameworks/av \
 	#frameworks/base \
