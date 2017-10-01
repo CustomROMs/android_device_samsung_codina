@@ -1,0 +1,59 @@
+From fd1a8cbab3434fe3048abedd4944c64fa9bb9f5c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:28:16 +0300
+Subject: [PATCH 09/35] Flibcameraservice: Don't pass NULL args on setCallbacks
+ call
+
+*This fixes the torch light for cameras with hal 1
+
+*This fix works on the htc m7ul
+
+*Fixed line length
+*Fixed unused parameter names
+
+Change-Id: Ie22aa45fcc7419b175bc20d621eb9a0cdcbcb71c
+---
+ .../camera/libcameraservice/CameraFlashlight.cpp     | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/services/camera/libcameraservice/CameraFlashlight.cpp b/services/camera/libcameraservice/CameraFlashlight.cpp
+index 830867e..3979056 100644
+--- a/services/camera/libcameraservice/CameraFlashlight.cpp
++++ b/services/camera/libcameraservice/CameraFlashlight.cpp
+@@ -495,6 +495,23 @@ status_t CameraHardwareInterfaceFlashControl::initializePreviewWindow(
+     return device->setPreviewWindow(mSurface);
+ }
+ 
++static void notifyCallback(int32_t, int32_t, int32_t, void*) {
++    /* Empty */
++}
++
++static void dataCallback(int32_t, const sp<IMemory>&, camera_frame_metadata_t*, void*) {
++    /* Empty */
++}
++
++static void dataCallbackTimestamp(nsecs_t, int32_t, const sp<IMemory>&, void*) {
++    /* Empty */
++}
++
++static void dataCallbackTimestampBatch(int32_t, const std::vector<HandleTimestampMessage>&,
++        void*) {
++    /* Empty */
++}
++
+ status_t CameraHardwareInterfaceFlashControl::connectCameraDevice(
+         const String8& cameraId) {
+     sp<CameraHardwareInterface> device =
+@@ -508,7 +525,8 @@ status_t CameraHardwareInterfaceFlashControl::connectCameraDevice(
+     }
+ 
+     // need to set __get_memory in set_callbacks().
+-    device->setCallbacks(NULL, NULL, NULL, NULL, NULL);
++    device->setCallbacks(notifyCallback, dataCallback, dataCallbackTimestamp,
++            dataCallbackTimestampBatch, this);
+ 
+     mParameters = device->getParameters();
+ 
+-- 
+2.7.4
+

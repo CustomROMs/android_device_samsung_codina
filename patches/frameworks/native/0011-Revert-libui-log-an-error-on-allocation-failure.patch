@@ -1,0 +1,30 @@
+From d477238e47a629a4437efb7a5ce65525d77fd93e Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Sun, 3 Sep 2017 12:30:36 +0200
+Subject: [PATCH 11/27] Revert "libui: log an error on allocation failure"
+
+This reverts commit 0ffa62b26a941fd17b53acbf1441270958fb87b4.
+
+Change-Id: I147c7758e9556c778d7dc03fdb8edcea626de2f0
+---
+ libs/ui/GraphicBufferAllocator.cpp | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
+index 8ba939a..60ec009 100644
+--- a/libs/ui/GraphicBufferAllocator.cpp
++++ b/libs/ui/GraphicBufferAllocator.cpp
+@@ -133,10 +133,6 @@ status_t GraphicBufferAllocator::allocate(uint32_t width, uint32_t height,
+ 
+         return NO_ERROR;
+     } else {
+-        ALOGE("Failed to allocate (%u x %u) layerCount %u format %d "
+-                "usage %" PRIx64 ": %d",
+-                width, height, layerCount, format, usage,
+-                error);
+         return NO_MEMORY;
+     }
+ }
+-- 
+2.7.4
+

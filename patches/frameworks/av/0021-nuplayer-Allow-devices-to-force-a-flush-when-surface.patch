@@ -1,0 +1,65 @@
+From 48909c90b6013229d5292d79ca5fd9845a060676 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:28:17 +0300
+Subject: [PATCH 21/35] nuplayer: Allow devices to force a flush when surface
+ changes
+
+This fixes some playback problems on the Zenfone2 (running on 5.0
+based blobs).
+
+The problems are easily reproduced by viewing a video in Chrome and
+then switching to full-screen mode.  The change in surface causes
+the log to get flooded with messages like:
+
+dc_device_post: Buffer ID=14460 not imported by D
+
+until Android crashes.  With this change, it ends up correctly
+mapping the surfaces after the flush fixing the problem.
+
+The code that is being
+ifdef'ed out was added in M in commit
+nuplayer: use codec->setSurface when possible to avoid seeking
+
+and it appears that our blobs simply cannot handle this optimization
+and therefore we need a means by which to disable it.
+
+Change-Id: I54365ae5a048dab25340a15421ff200980beb925
+---
+ media/libmediaplayerservice/nuplayer/Android.mk   | 4 ++++
+ media/libmediaplayerservice/nuplayer/NuPlayer.cpp | 5 ++++-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/media/libmediaplayerservice/nuplayer/Android.mk b/media/libmediaplayerservice/nuplayer/Android.mk
+index 08c3cf8..ae61a30 100644
+--- a/media/libmediaplayerservice/nuplayer/Android.mk
++++ b/media/libmediaplayerservice/nuplayer/Android.mk
+@@ -28,6 +28,10 @@ LOCAL_C_INCLUDES := \
+ 
+ LOCAL_CFLAGS += -Werror -Wall
+ 
++ifeq ($(TARGET_NUPLAYER_CANNOT_SET_SURFACE_WITHOUT_A_FLUSH),true)
++LOCAL_CFLAGS += -DCANNOT_SET_SURFACE_WITHOUT_A_FLUSH
++endif
++
+ # enable experiments only in userdebug and eng builds
+ ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+ LOCAL_CFLAGS += -DENABLE_STAGEFRIGHT_EXPERIMENTS
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index 6ded392..2074ede 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -756,7 +756,10 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
+             // When mStarted is true, mSource must have been set.
+             if (mSource == NULL || !mStarted || mSource->getFormat(false /* audio */) == NULL
+                     // NOTE: mVideoDecoder's mSurface is always non-null
+-                    || (mVideoDecoder != NULL && mVideoDecoder->setVideoSurface(surface) == OK)) {
++#ifndef CANNOT_SET_SURFACE_WITHOUT_A_FLUSH
++                    || (mVideoDecoder != NULL && mVideoDecoder->setVideoSurface(surface) == OK)
++#endif
++                ) {
+                 performSetSurface(surface);
+                 break;
+             }
+-- 
+2.7.4
+

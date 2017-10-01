@@ -1,0 +1,54 @@
+From a38f55a931cbeae4af9aa47bc36a8cff84a0895f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 30 Sep 2017 20:39:32 +0300
+Subject: [PATCH 21/27] STE: add GraphicBuffer constructor
+
+Change-Id: I6be81fb8260aa64e7733143c15167e63b6408bed
+---
+ include/ui/GraphicBuffer.h |  3 +++
+ libs/ui/GraphicBuffer.cpp  | 15 +++++++++++++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/include/ui/GraphicBuffer.h b/include/ui/GraphicBuffer.h
+index 4b82cff..76cdc23 100644
+--- a/include/ui/GraphicBuffer.h
++++ b/include/ui/GraphicBuffer.h
+@@ -135,6 +135,9 @@ public:
+     GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
+             uint32_t inUsage, std::string requestorName = "<Unknown>");
+ 
++    // create a buffer from an existing ANativeWindowBuffer
++    GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership);
++
+     // return status
+     status_t initCheck() const;
+ 
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index cfedf10..42a7b1e 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -83,6 +83,21 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+ {
+ }
+ 
++GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
++    : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
++      mBufferMapper(GraphicBufferMapper::get()),
++      mInitCheck(NO_ERROR), mId(getUniqueId()),
++      mGenerationNumber(0)
++{
++    width  = buffer->width;
++    height = buffer->height;
++    stride = buffer->stride;
++    format = buffer->format;
++    layerCount = buffer->layerCount;
++    usage  = buffer->usage;
++    handle = buffer->handle;
++}
++
+ GraphicBuffer::GraphicBuffer(const native_handle_t* handle,
+         HandleWrapMethod method, uint32_t width, uint32_t height,
+         PixelFormat format, uint32_t layerCount,
+-- 
+2.7.4
+

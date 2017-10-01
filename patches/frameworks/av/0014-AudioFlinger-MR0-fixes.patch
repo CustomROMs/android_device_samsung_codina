@@ -1,0 +1,81 @@
+From 31ab7b50fab78d3dcb18ae9b702820a406b25448 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:28:17 +0300
+Subject: [PATCH 14/35] AudioFlinger MR0 fixes
+
+Change-Id: I8200e502ae063b34f554e685d245b591519a55be
+---
+ media/libaudiohal/DevicesFactoryHalLocal.cpp | 3 +++
+ services/audioflinger/AudioFlinger.cpp       | 9 +++++++++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/media/libaudiohal/DevicesFactoryHalLocal.cpp b/media/libaudiohal/DevicesFactoryHalLocal.cpp
+index 13a9acd..3787839 100644
+--- a/media/libaudiohal/DevicesFactoryHalLocal.cpp
++++ b/media/libaudiohal/DevicesFactoryHalLocal.cpp
+@@ -44,12 +44,15 @@ static status_t load_audio_interface(const char *if_name, audio_hw_device_t **de
+                 AUDIO_HARDWARE_MODULE_ID, if_name, strerror(-rc));
+         goto out;
+     }
++#ifndef MR0_AUDIO_BLOB
+     if ((*dev)->common.version < AUDIO_DEVICE_API_VERSION_MIN) {
+         ALOGE("%s wrong audio hw device version %04x", __func__, (*dev)->common.version);
+         rc = BAD_VALUE;
+         audio_hw_device_close(*dev);
+         goto out;
+     }
++#endif
++
+     return OK;
+ 
+ out:
+diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
+index 9f19dfd..b27b501 100644
+--- a/services/audioflinger/AudioFlinger.cpp
++++ b/services/audioflinger/AudioFlinger.cpp
+@@ -1764,6 +1764,7 @@ audio_module_handle_t AudioFlinger::loadHwModule_l(const char *name)
+     {  // scope for auto-lock pattern
+         AutoMutex lock(mHardwareLock);
+ 
++#ifndef MR0_AUDIO_BLOB
+         if (0 == mAudioHwDevs.size()) {
+             mHardwareStatus = AUDIO_HW_GET_MASTER_VOLUME;
+             float mv;
+@@ -1777,6 +1778,7 @@ audio_module_handle_t AudioFlinger::loadHwModule_l(const char *name)
+                 mMasterMute = mm;
+             }
+         }
++#endif
+ 
+         mHardwareStatus = AUDIO_HW_SET_MASTER_VOLUME;
+         if (OK == dev->setMasterVolume(mMasterVolume)) {
+@@ -1784,11 +1786,13 @@ audio_module_handle_t AudioFlinger::loadHwModule_l(const char *name)
+                     AudioHwDevice::AHWD_CAN_SET_MASTER_VOLUME);
+         }
+ 
++#ifndef MR0_AUDIO_BLOB
+         mHardwareStatus = AUDIO_HW_SET_MASTER_MUTE;
+         if (OK == dev->setMasterMute(mMasterMute)) {
+             flags = static_cast<AudioHwDevice::Flags>(flags |
+                     AudioHwDevice::AHWD_CAN_SET_MASTER_MUTE);
+         }
++#endif
+ 
+         mHardwareStatus = AUDIO_HW_IDLE;
+     }
+@@ -2048,7 +2052,12 @@ status_t AudioFlinger::openOutput(audio_module_handle_t module,
+             playbackThread->ioConfigChanged(AUDIO_OUTPUT_OPENED);
+ 
+             // the first primary output opened designates the primary hw device
++#ifdef STE_HARDWARE
++            if (mPrimaryHardwareDev == NULL) {
++#else
+             if ((mPrimaryHardwareDev == NULL) && (flags & AUDIO_OUTPUT_FLAG_PRIMARY)) {
++#endif
++
+                 ALOGI("Using module %d as the primary audio interface", module);
+                 mPrimaryHardwareDev = playbackThread->getOutput()->audioHwDev;
+ 
+-- 
+2.7.4
+

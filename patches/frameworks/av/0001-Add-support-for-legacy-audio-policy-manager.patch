@@ -1,0 +1,289 @@
+From aa22815314ce8652a78646b5ec094ebe44ba3ce0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:28:16 +0300
+Subject: [PATCH 01/35] Add support for legacy audio policy manager
+
+Change-Id: I3165a4b74e3a977c963e076a161dd76bb938d15f
+---
+ services/audiopolicy/Android.mk                    | 28 +++++--
+ services/audiopolicy/AudioPolicyInterface.h        |  2 +
+ .../audiopolicy/service/AudioPolicyService.cpp     | 88 ++++++++++++++++++++++
+ services/audiopolicy/service/AudioPolicyService.h  |  4 +
+ 4 files changed, 117 insertions(+), 5 deletions(-)
+
+diff --git a/services/audiopolicy/Android.mk b/services/audiopolicy/Android.mk
+index 7cd2b81..61cc7ea 100644
+--- a/services/audiopolicy/Android.mk
++++ b/services/audiopolicy/Android.mk
+@@ -4,9 +4,19 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:= \
+     service/AudioPolicyService.cpp \
+-    service/AudioPolicyEffects.cpp \
++    service/AudioPolicyEffects.cpp
++
++ifeq ($(USE_LEGACY_AUDIO_POLICY), 1)
++LOCAL_SRC_FILES += \
++    service/AudioPolicyInterfaceImplLegacy.cpp \
++    service/AudioPolicyClientImplLegacy.cpp
++
++    LOCAL_CFLAGS += -DUSE_LEGACY_AUDIO_POLICY
++else
++LOCAL_SRC_FILES += \
+     service/AudioPolicyInterfaceImpl.cpp \
+     service/AudioPolicyClientImpl.cpp
++endif
+ 
+ LOCAL_C_INCLUDES := \
+     $(TOPDIR)frameworks/av/services/audioflinger \
+@@ -21,11 +31,16 @@ LOCAL_SHARED_LIBRARIES := \
+     liblog \
+     libbinder \
+     libaudioclient \
++    libhardware \
+     libhardware_legacy \
+     libserviceutility \
+-    libaudiopolicymanager \
+     libmedia_helper
+ 
++ifneq ($(USE_LEGACY_AUDIO_POLICY), 1)
++LOCAL_SHARED_LIBRARIES += \
++    libaudiopolicymanager
++endif
++
+ LOCAL_STATIC_LIBRARIES := \
+     libaudiopolicycomponents
+ 
+@@ -34,10 +49,12 @@ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+ LOCAL_MODULE:= libaudiopolicyservice
+ 
+ LOCAL_CFLAGS += -fvisibility=hidden
+-LOCAL_CFLAGS += -Wall -Werror
++LOCAL_CFLAGS += -Wall
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
++ifneq ($(USE_LEGACY_AUDIO_POLICY), 1)
++
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES:= managerdefault/AudioPolicyManager.cpp
+@@ -84,7 +101,7 @@ LOCAL_SHARED_LIBRARIES += libicuuc libxml2
+ LOCAL_CFLAGS += -DUSE_XML_AUDIO_POLICY_CONF
+ endif #ifeq ($(USE_XML_AUDIO_POLICY_CONF), 1)
+ 
+-LOCAL_CFLAGS += -Wall -Werror
++LOCAL_CFLAGS += -Wall
+ 
+ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+ 
+@@ -109,7 +126,7 @@ LOCAL_C_INCLUDES += \
+     $(TOPDIR)frameworks/av/services/audiopolicy/common/include \
+     $(TOPDIR)frameworks/av/services/audiopolicy/engine/interface
+ 
+-LOCAL_CFLAGS := -Wall -Werror
++LOCAL_CFLAGS := -Wall
+ 
+ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+ 
+@@ -118,6 +135,7 @@ LOCAL_MODULE:= libaudiopolicymanager
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
++endif
+ 
+ #######################################################################
+ # Recursive call sub-folder Android.mk
+diff --git a/services/audiopolicy/AudioPolicyInterface.h b/services/audiopolicy/AudioPolicyInterface.h
+index 60ed1d6..9c9e2c9 100644
+--- a/services/audiopolicy/AudioPolicyInterface.h
++++ b/services/audiopolicy/AudioPolicyInterface.h
+@@ -353,8 +353,10 @@ public:
+                     audio_patch_handle_t patchHandle) = 0;
+ };
+ 
++#ifndef USE_LEGACY_AUDIO_POLICY
+ extern "C" AudioPolicyInterface* createAudioPolicyManager(AudioPolicyClientInterface *clientInterface);
+ extern "C" void destroyAudioPolicyManager(AudioPolicyInterface *interface);
++#endif
+ 
+ 
+ }; // namespace android
+diff --git a/services/audiopolicy/service/AudioPolicyService.cpp b/services/audiopolicy/service/AudioPolicyService.cpp
+index c4f6367..b6b6116 100644
+--- a/services/audiopolicy/service/AudioPolicyService.cpp
++++ b/services/audiopolicy/service/AudioPolicyService.cpp
+@@ -39,6 +39,11 @@
+ #include <system/audio.h>
+ #include <system/audio_policy.h>
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++#include <hardware/hardware.h>
++#include <hardware/audio_policy.h>
++#endif
++
+ namespace android {
+ 
+ static const char kDeadlockedString[] = "AudioPolicyService may be deadlocked\n";
+@@ -49,6 +54,11 @@ static const int kDumpLockSleepUs = 20000;
+ 
+ static const nsecs_t kAudioCommandTimeoutNs = seconds(3); // 3 seconds
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++namespace {
++    extern struct audio_policy_service_ops aps_ops;
++};
++#endif
+ 
+ // ----------------------------------------------------------------------------
+ 
+@@ -70,8 +80,40 @@ void AudioPolicyService::onFirstRef()
+         // start output activity command thread
+         mOutputCommandThread = new AudioCommandThread(String8("ApmOutput"), this);
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++        ALOGI("AudioPolicyService CSTOR in legacy mode");
++
++        /* instantiate the audio policy manager */
++        const struct hw_module_t *module;
++        int rc = hw_get_module(AUDIO_POLICY_HARDWARE_MODULE_ID, &module);
++        if (rc) {
++            return;
++        }
++        rc = audio_policy_dev_open(module, &mpAudioPolicyDev);
++        ALOGE_IF(rc, "couldn't open audio policy device (%s)", strerror(-rc));
++        if (rc) {
++            return;
++        }
++
++        rc = mpAudioPolicyDev->create_audio_policy(mpAudioPolicyDev, &aps_ops, this,
++                                                   &mpAudioPolicy);
++        ALOGE_IF(rc, "couldn't create audio policy (%s)", strerror(-rc));
++        if (rc) {
++            return;
++        }
++
++        rc = mpAudioPolicy->init_check(mpAudioPolicy);
++        ALOGE_IF(rc, "couldn't init_check the audio policy (%s)", strerror(-rc));
++        if (rc) {
++            return;
++        }
++        ALOGI("Loaded audio policy from %s (%s)", module->name, module->id);
++#else
++        ALOGI("AudioPolicyService CSTOR in new mode");
++
+         mAudioPolicyClient = new AudioPolicyClient(this);
+         mAudioPolicyManager = createAudioPolicyManager(mAudioPolicyClient);
++#endif
+     }
+     // load audio processing modules
+     sp<AudioPolicyEffects>audioPolicyEffects = new AudioPolicyEffects();
+@@ -87,8 +129,17 @@ AudioPolicyService::~AudioPolicyService()
+     mAudioCommandThread->exit();
+     mOutputCommandThread->exit();
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++    if (mpAudioPolicy != NULL && mpAudioPolicyDev != NULL) {
++        mpAudioPolicyDev->destroy_audio_policy(mpAudioPolicyDev, mpAudioPolicy);
++    }
++    if (mpAudioPolicyDev != NULL) {
++        audio_policy_dev_close(mpAudioPolicyDev);
++    }
++#else
+     destroyAudioPolicyManager(mAudioPolicyManager);
+     delete mAudioPolicyClient;
++#endif
+ 
+     mNotificationClients.clear();
+     mAudioPolicyEffects.clear();
+@@ -136,12 +187,14 @@ void AudioPolicyService::removeNotificationClient(uid_t uid)
+         Mutex::Autolock _l(mNotificationClientsLock);
+         mNotificationClients.removeItem(uid);
+     }
++#ifndef USE_LEGACY_AUDIO_POLICY
+     {
+         Mutex::Autolock _l(mLock);
+         if (mAudioPolicyManager) {
+             mAudioPolicyManager->releaseResourcesForUid(uid);
+         }
+     }
++#endif
+ }
+ 
+ void AudioPolicyService::onAudioPortListUpdate()
+@@ -307,7 +360,11 @@ status_t AudioPolicyService::dumpInternals(int fd)
+     char buffer[SIZE];
+     String8 result;
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++    snprintf(buffer, SIZE, "PolicyManager Interface: %p\n", mpAudioPolicy);
++#else
+     snprintf(buffer, SIZE, "AudioPolicyManager: %p\n", mAudioPolicyManager);
++#endif
+     result.append(buffer);
+     snprintf(buffer, SIZE, "Command Thread: %p\n", mAudioCommandThread.get());
+     result.append(buffer);
+@@ -337,9 +394,15 @@ status_t AudioPolicyService::dump(int fd, const Vector<String16>& args __unused)
+             mTonePlaybackThread->dump(fd);
+         }
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++        if (mpAudioPolicy) {
++            mpAudioPolicy->dump(mpAudioPolicy, fd);
++        }
++#else
+         if (mAudioPolicyManager) {
+             mAudioPolicyManager->dump(fd);
+         }
++#endif
+ 
+         if (locked) mLock.unlock();
+     }
+@@ -1147,4 +1210,29 @@ int aps_stop_tone(void *service);
+ int aps_set_voice_volume(void *service, float volume, int delay_ms);
+ };
+ 
++#ifdef USE_LEGACY_AUDIO_POLICY
++namespace {
++    struct audio_policy_service_ops aps_ops = {
++        .open_output           = aps_open_output,
++        .open_duplicate_output = aps_open_dup_output,
++        .close_output          = aps_close_output,
++        .suspend_output        = aps_suspend_output,
++        .restore_output        = aps_restore_output,
++        .open_input            = aps_open_input,
++        .close_input           = aps_close_input,
++        .set_stream_volume     = aps_set_stream_volume,
++        .invalidate_stream     = aps_invalidate_stream,
++        .set_parameters        = aps_set_parameters,
++        .get_parameters        = aps_get_parameters,
++        .start_tone            = aps_start_tone,
++        .stop_tone             = aps_stop_tone,
++        .set_voice_volume      = aps_set_voice_volume,
++        .move_effects          = aps_move_effects,
++        .load_hw_module        = aps_load_hw_module,
++        .open_output_on_module = aps_open_output_on_module,
++        .open_input_on_module  = aps_open_input_on_module,
++    };
++}; // namespace <unnamed>
++#endif
++
+ }; // namespace android
+diff --git a/services/audiopolicy/service/AudioPolicyService.h b/services/audiopolicy/service/AudioPolicyService.h
+index 9a083f4..ac1ad77 100644
+--- a/services/audiopolicy/service/AudioPolicyService.h
++++ b/services/audiopolicy/service/AudioPolicyService.h
+@@ -30,6 +30,10 @@
+ #include <media/ToneGenerator.h>
+ #include <media/AudioEffect.h>
+ #include <media/AudioPolicy.h>
++#ifdef USE_LEGACY_AUDIO_POLICY
++#include <hardware/audio_policy.h>
++#include <hardware_legacy/AudioPolicyInterface.h>
++#endif
+ #include "AudioPolicyEffects.h"
+ #include "managerdefault/AudioPolicyManager.h"
+ 
+-- 
+2.7.4
+

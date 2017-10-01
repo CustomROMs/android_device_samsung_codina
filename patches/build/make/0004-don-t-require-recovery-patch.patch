@@ -1,0 +1,40 @@
+From ddd8184fbb7c20c936a5135463db41aba6d5c78f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 11 Sep 2017 10:08:20 +0300
+Subject: [PATCH 04/30] don't require recovery patch
+
+Change-Id: I3e07af4d4b6746af8d088f25649f1a2120cfa9b3
+---
+ tools/releasetools/common.py                | 2 +-
+ tools/releasetools/ota_from_target_files.py | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index ab4cec9..fd58078 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -110,7 +110,7 @@ class ExternalError(RuntimeError):
+ def Run(args, **kwargs):
+   """Create and return a subprocess.Popen object, printing the command
+   line on the terminal if -v was specified."""
+-  if OPTIONS.verbose:
++  if 1: #OPTIONS.verbose:
+     print("  running: ", " ".join(args))
+   return subprocess.Popen(args, **kwargs)
+ 
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 7cace96..6cfc975 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -408,7 +408,7 @@ def WriteFullOTAPackage(input_zip, output_zip):
+       metadata=metadata,
+       info_dict=OPTIONS.info_dict)
+ 
+-  assert HasRecoveryPatch(input_zip)
++  #assert HasRecoveryPatch(input_zip)
+ 
+   metadata["ota-type"] = "BLOCK"
+ 
+-- 
+2.7.4
+

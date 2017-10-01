@@ -1,0 +1,45 @@
+From 86c38e6cd51ece06c39c4d45bdbacda53b58f2ff Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 01:56:14 +0300
+Subject: [PATCH 6/7] Revert "gralloc1: getphys implementation for samsung OMX"
+
+This reverts commit 06af49504d54e6c6bf407ec5ec595ed8c823f1a7.
+
+Change-Id: Id1a831e77f9fc5b480d44ac0860c3396e7fc2a0e
+---
+ include/hardware/gralloc1.h | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/include/hardware/gralloc1.h b/include/hardware/gralloc1.h
+index 2dfd815..4845010 100644
+--- a/include/hardware/gralloc1.h
++++ b/include/hardware/gralloc1.h
+@@ -155,12 +155,7 @@ typedef enum {
+     GRALLOC1_FUNCTION_UNLOCK = 20,
+     GRALLOC1_FUNCTION_SET_LAYER_COUNT = 21,
+     GRALLOC1_FUNCTION_GET_LAYER_COUNT = 22,
+-#ifdef STE_HARDWARE
+-    GRALLOC1_FUNCTION_GETPHYS = 23,
+-    GRALLOC1_LAST_FUNCTION = 24,
+-#else
+     GRALLOC1_LAST_FUNCTION = 22,
+-#endif
+ } gralloc1_function_descriptor_t;
+ 
+ typedef enum {
+@@ -953,12 +948,6 @@ typedef int32_t /*gralloc1_error_t*/ (*GRALLOC1_PFN_UNLOCK)(
+         gralloc1_device_t* device, buffer_handle_t buffer,
+         int32_t* outReleaseFence);
+ 
+-#ifdef STE_HARDWARE
+-typedef int32_t /*gralloc1_error_t*/ (*GRALLOC1_PFN_GETPHYS)(
+-        gralloc1_device_t* device, buffer_handle_t buffer,
+-        void **paddr);
+-#endif
+-
+ __END_DECLS
+ 
+ #endif
+-- 
+2.7.4
+

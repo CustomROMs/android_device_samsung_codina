@@ -1,0 +1,46 @@
+Subject: [PATCH] Revert "wifi: update the insmod function to use finit_module"
+
+diff --git a/wifi/wifi.c b/wifi/wifi.c
+index d92cdbd..8b5f061 100644
+--- a/wifi/wifi.c
++++ b/wifi/wifi.c
+@@ -23,7 +23,6 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ #include <poll.h>
+-#include <sys/syscall.h>
+ 
+ #ifdef USES_TI_MAC80211
+ #include <dirent.h>
+@@ -202,19 +201,19 @@ char* get_samsung_wifi_type()
+ 
+ int insmod(const char *filename, const char *args)
+ {
+-     /* O_NOFOLLOW is removed as wlan.ko is symlink pointing to
+-        the vendor specfic file which is in readonly location */
+-     int fd = open(filename, O_RDONLY | O_CLOEXEC);
+-     if (fd == -1) {
+-        ALOGD("insmod: open(\"%s\") failed: %s", filename, strerror(errno));
++    void *module;
++    unsigned int size;
++    int ret;
++
++    module = load_file(filename, &size);
++    if (!module)
+         return -1;
+-     }
+-     int rc = syscall(__NR_finit_module, fd, args, 0);
+-     if (rc == -1) {
+-       ALOGD("finit_module for \"%s\" failed: %s", filename, strerror(errno));
+-     }
+-     close(fd);
+-     return rc;
++
++    ret = init_module(module, size, args);
++
++    free(module);
++
++    return ret;
+ }
+ 
+ int rmmod(const char *modname)

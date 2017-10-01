@@ -1,0 +1,29 @@
+From 27e6082a221f95002ad4b873f70ed96d6953b1b5 Mon Sep 17 00:00:00 2001
+From: Adrian DC <radian.dc@gmail.com>
+Date: Mon, 24 Jul 2017 14:04:34 +0200
+Subject: [PATCH 10/30] soong_config: Add TARGET_HAS_LEGACY_CAMERA_HAL1
+ variable
+
+ * Soong product variable 'has_legacy_camera_hal1'
+
+Change-Id: I41da5ccfb11949c9251f21d80ded0ecf0f00166a
+Signed-off-by: Adrian DC <radian.dc@gmail.com>
+---
+ core/soong_config.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/soong_config.mk b/core/soong_config.mk
+index f5abe9e..9c8a7c9 100644
+--- a/core/soong_config.mk
++++ b/core/soong_config.mk
+@@ -68,6 +68,7 @@ $(SOONG_VARIABLES): FORCE lineage_soong
+ 	echo '    "Treble": $(if $(filter true,$(PRODUCT_FULL_TREBLE)),true,false),'; \
+ 	echo '    "Override_rs_driver": "$(OVERRIDE_RS_DRIVER)",'; \
+ 	echo '    "Libart_img_base": "$(LIBART_IMG_BASE)",'; \
++	echo '    "Has_legacy_camera_hal1": $(if $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)),true,false),'; \
+ 	echo ''; \
+ 	echo '    "ArtUseReadBarrier": $(if $(filter false,$(PRODUCT_ART_USE_READ_BARRIER)),false,true),'; \
+ 	echo ''; \
+-- 
+2.7.4
+

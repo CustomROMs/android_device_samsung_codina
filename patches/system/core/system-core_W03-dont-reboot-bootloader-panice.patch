@@ -1,0 +1,17 @@
+Subject: [PATCH] init: don't reboot to bootloader on panic
+
+Makes device bringups a lot harder.
+
+diff --git a/init/Android.mk b/init/Android.mk
+index 6e79dbd..a5b3eee 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -8,7 +8,7 @@
+ init_options += \
+     -DALLOW_LOCAL_PROP_OVERRIDE=1 \
+     -DALLOW_PERMISSIVE_SELINUX=1 \
+-    -DREBOOT_BOOTLOADER_ON_PANIC=1 \
++    -DREBOOT_BOOTLOADER_ON_PANIC=0 \
+     -DDUMP_ON_UMOUNT_FAILURE=1
+ else
+ init_options += \

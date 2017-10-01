@@ -1,0 +1,33 @@
+From 3fdf768e831469c1d7a34f2319adb75327f17850 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:28:16 +0300
+Subject: [PATCH 03/35] audiopolicy: squashed support for pre-kitkat audio
+ blobs
+
+Squash of the following:
+pre kitkat audio legacy policy fix for hotword (ok google)
+pre-kitkat audio policy blobs re-activated.
+
+Change-Id: Ie04231fcba41a16f5a9f9c8f378cb73ff2c1a794
+---
+ services/audiopolicy/Android.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/audiopolicy/Android.mk b/services/audiopolicy/Android.mk
+index 61cc7ea..d7ca457 100644
+--- a/services/audiopolicy/Android.mk
++++ b/services/audiopolicy/Android.mk
+@@ -41,6 +41,10 @@ LOCAL_SHARED_LIBRARIES += \
+     libaudiopolicymanager
+ endif
+ 
++ifeq ($(BOARD_HAVE_PRE_KITKAT_AUDIO_POLICY_BLOB),true)
++    LOCAL_CFLAGS += -DHAVE_PRE_KITKAT_AUDIO_POLICY_BLOB
++endif
++
+ LOCAL_STATIC_LIBRARIES := \
+     libaudiopolicycomponents
+ 
+-- 
+2.7.4
+

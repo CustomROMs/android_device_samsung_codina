@@ -1,0 +1,37 @@
+From 05e24ff2d7ba6f8b26118e476f2e694615b32487 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:28:17 +0300
+Subject: [PATCH 17/35] AudioFlinger: MR0_AUDIO_BLOB: fix AudioRecord
+
+Our old audio library does not support hardware timestamps
+and return an incorrect value. This causes libaudioflinger crashes when
+attempting to record audio.
+
+Change-Id: Id57c013133d0bf32f440f3084ed9791282d9c957
+---
+ services/audioflinger/Threads.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.cpp
+index a6857fe..fd84b6c 100644
+--- a/services/audioflinger/Threads.cpp
++++ b/services/audioflinger/Threads.cpp
+@@ -6348,6 +6348,7 @@ reacquire_wakelock:
+         mTimestamp.mPosition[ExtendedTimestamp::LOCATION_SERVER] += framesRead;
+         mTimestamp.mTimeNs[ExtendedTimestamp::LOCATION_SERVER] = systemTime();
+ 
++#ifndef MR0_AUDIO_BLOB
+         // Update server timestamp with kernel stats
+         if (mPipeSource.get() == nullptr /* don't obtain for FastCapture, could block */) {
+             int64_t position, time;
+@@ -6362,6 +6363,7 @@ reacquire_wakelock:
+                 // as the read obtains a lock, preventing the timestamp call from executing.
+             }
+         }
++#endif
+         // Use this to track timestamp information
+         // ALOGD("%s", mTimestamp.toString().c_str());
+ 
+-- 
+2.7.4
+

@@ -1,0 +1,171 @@
+From 4230e5f96cd20f04a536eb32fe52657923cfe6e8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 25 Sep 2017 17:04:43 +0300
+Subject: [PATCH 35/35] STE fixes
+
+Change-Id: Ic9e691c1a10c058f986ae1a5530d7ecb6f57675a
+---
+ media/libstagefright/ACodec.cpp              | 43 +++++++++++++++++++++-------
+ media/libstagefright/include/ACodec.h        |  1 +
+ media/libstagefright/omx/OMXNodeInstance.cpp |  5 ++--
+ 3 files changed, 37 insertions(+), 12 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 8909bda..15ab2df 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -843,12 +843,16 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+ #ifdef STE_HARDWARE
+         err = allocateOutputBuffersFromNativeWindow();
+ #else
++#if 0
+         if (storingMetadataInDecodedBuffers()) {
+             err = allocateOutputMetadataBuffers();
+         } else {
++#endif
+             err = allocateOutputBuffersFromNativeWindow();
++#if 0
+         }
+ #endif
++#endif
+     } else {
+         OMX_PARAM_PORTDEFINITIONTYPE def;
+         InitOMXParams(&def);
+@@ -1119,11 +1123,11 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
+             nativeWindow,
+             def.format.video.nFrameWidth,
+             def.format.video.nFrameHeight,
+-//#ifdef STE_HARDWARE
+-            //OMXCodec::OmxToHALFormat(def.format.video.eColorFormat),
+-//#else
+-            def.format.video.eColorFormat,
+-//#endif
++#ifdef STE_HARDWARE
++            ACodec::OmxToHALFormat(def.format.video.eColorFormat),
++#else
++//          def.format.video.eColorFormat,
++#endif
+             mRotationDegrees,
+             usage,
+             reconnect);
+@@ -1225,8 +1229,9 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+     // This method only handles the non-metadata mode (or simulating legacy
+     // mode with metadata, which is transparent to ACodec).
++#ifndef STE_HARDWARE
+     CHECK(!storingMetadataInDecodedBuffers());
+-
++#endif
+     OMX_U32 bufferCount, bufferSize, minUndequeuedBuffers;
+     status_t err = configureOutputBuffersFromNativeWindow(
+             &bufferCount, &bufferSize, &minUndequeuedBuffers, true /* preregister */);
+@@ -1234,14 +1239,14 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+         return err;
+     mNumUndequeuedBuffers = minUndequeuedBuffers;
+ 
++#ifndef STE_HARDWARE
+     static_cast<Surface*>(mNativeWindow.get())
+             ->getIGraphicBufferProducer()->allowAllocation(true);
+-
++#endif
+     ALOGV("[%s] Allocating %u buffers from a native window of size %u on "
+          "output port",
+          mComponentName.c_str(), bufferCount, bufferSize);
+ 
+-    // Dequeue buffers and send them to OMX
+     for (OMX_U32 i = 0; i < bufferCount; i++) {
+         ANativeWindowBuffer *buf;
+         int fenceFd;
+@@ -1260,11 +1265,13 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+         info.mGraphicBuffer = graphicBuffer;
+         info.mNewGraphicBuffer = false;
+ 
++#ifndef STE_HARDWARE
+         // TODO: We shouln't need to create MediaCodecBuffer. In metadata mode
+         //       OMX doesn't use the shared memory buffer, but some code still
+         //       access info.mData. Create an ABuffer as a placeholder.
+         info.mData = new MediaCodecBuffer(mOutputFormat, new ABuffer(bufferSize));
+         info.mCodecData = info.mData;
++#endif
+ 
+         mBuffers[kPortIndexOutput].push(info);
+ 
+@@ -1307,15 +1314,17 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+         }
+     }
+ 
++#ifndef STE_HARDWARE
+     static_cast<Surface*>(mNativeWindow.get())
+             ->getIGraphicBufferProducer()->allowAllocation(false);
+-
++#endif
+     return err;
+ }
+ 
+ status_t ACodec::allocateOutputMetadataBuffers() {
++#ifndef STE_HARDWARE
+     CHECK(storingMetadataInDecodedBuffers());
+-
++#endif
+     OMX_U32 bufferCount, bufferSize, minUndequeuedBuffers;
+     status_t err = configureOutputBuffersFromNativeWindow(
+             &bufferCount, &bufferSize, &minUndequeuedBuffers,
+@@ -7162,6 +7171,20 @@ bool ACodec::ExecutingState::onMessageReceived(const sp<AMessage> &msg) {
+     return handled;
+ }
+ 
++#ifdef STE_HARDWARE
++uint32_t ACodec::OmxToHALFormat(OMX_COLOR_FORMATTYPE omxValue) {
++    switch (omxValue) {
++        case OMX_STE_COLOR_FormatYUV420PackedSemiPlanarMB:
++            return HAL_PIXEL_FORMAT_YCBCR42XMBN;
++        case OMX_COLOR_FormatYUV420Planar:
++            return HAL_PIXEL_FORMAT_YCbCr_420_P;
++        default:
++            ALOGI("Unknown OMX pixel format (0x%X), passing it on unchanged", omxValue);
++            return omxValue;
++    }
++}
++#endif
++
+ status_t ACodec::setParameters(const sp<AMessage> &params) {
+     int32_t videoBitrate;
+     if (params->findInt32("video-bitrate", &videoBitrate)) {
+diff --git a/media/libstagefright/include/ACodec.h b/media/libstagefright/include/ACodec.h
+index 22b8657..e448b04 100644
+--- a/media/libstagefright/include/ACodec.h
++++ b/media/libstagefright/include/ACodec.h
+@@ -561,6 +561,7 @@ private:
+ 
+     status_t requestIDRFrame();
+     status_t setParameters(const sp<AMessage> &params);
++    uint32_t OmxToHALFormat(OMX_COLOR_FORMATTYPE omxValue);
+ 
+     // set vendor extension parameters specified in params that are supported by the codec
+     status_t setVendorParameters(const sp<AMessage> &params);
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 6f16b82..89539bb 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -364,7 +364,7 @@ OMXNodeInstance::OMXNodeInstance(
+     mSecureBufferType[0] = kSecureBufferTypeUnknown;
+     mSecureBufferType[1] = kSecureBufferTypeUnknown;
+     mIsSecure = AString(name).endsWith(".secure");
+-    mLegacyAdaptiveExperiment = ADebug::isExperimentEnabled("legacy-adaptive");
++    mLegacyAdaptiveExperiment = true; //ADebug::isExperimentEnabled("legacy-adaptive");
+ }
+ 
+ OMXNodeInstance::~OMXNodeInstance() {
+@@ -730,7 +730,8 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+             CLOG_INTERNAL(setPortMode, "Legacy adaptive experiment: "
+                     "unable to enable metadata mode on output");
+ 
+-            mLegacyAdaptiveExperiment = false;
++	    ALOGE("//mLegacyAdaptiveExperiment = false;");
++            //mLegacyAdaptiveExperiment = false;
+         }
+ 
+         // Disable secure buffer and enable graphic buffer
+-- 
+2.7.4
+

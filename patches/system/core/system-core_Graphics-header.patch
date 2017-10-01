@@ -1,21 +1,20 @@
-diff --git a/include/system/graphics.h b/include/system/graphics.h
+diff --git a/libsystem/include/system/graphics-base.h b/libsystem/include/system/graphics-base.h
 index b207ee8..8a70153 100644
---- a/include/system/graphics.h
-+++ b/include/system/graphics.h
-@@ -58,7 +58,9 @@ enum {
-     HAL_PIXEL_FORMAT_RGB_888            = 3,
-     HAL_PIXEL_FORMAT_RGB_565            = 4,
-     HAL_PIXEL_FORMAT_BGRA_8888          = 5,
-+    HAL_PIXEL_FORMAT_RGBA_5551          = 6,
-+    HAL_PIXEL_FORMAT_RGBA_4444          = 7,
- 
-     /*
-      * 0x100 - 0x1FF
-      *
-@@ -441,6 +443,21 @@ enum {
-     HAL_PIXEL_FORMAT_YCbCr_422_SP       = 0x10, // NV16
-     HAL_PIXEL_FORMAT_YCrCb_420_SP       = 0x11, // NV21
-     HAL_PIXEL_FORMAT_YCbCr_422_I        = 0x14, // YUY2
+--- a/libsystem/include/system/graphics-base.h
++++ b/libsystem/include/system/graphics-base.h
+@@ -15,6 +15,8 @@ typedef enum {
+     HAL_PIXEL_FORMAT_RGB_888 = 3,
+     HAL_PIXEL_FORMAT_RGB_565 = 4,
+     HAL_PIXEL_FORMAT_BGRA_8888 = 5,
++    HAL_PIXEL_FORMAT_RGBA_5551 = 6,
++    HAL_PIXEL_FORMAT_RGBA_4444 = 7,
+     HAL_PIXEL_FORMAT_RGBA_1010102 = 43, // 0x2B
+     HAL_PIXEL_FORMAT_RGBA_FP16 = 22, // 0x16
+     HAL_PIXEL_FORMAT_YV12 = 842094169, // 0x32315659
+@@ -34,6 +36,22 @@ typedef enum {
+     HAL_PIXEL_FORMAT_YCBCR_422_SP = 16, // 0x10
+     HAL_PIXEL_FORMAT_YCRCB_420_SP = 17, // 0x11
+     HAL_PIXEL_FORMAT_YCBCR_422_I = 20, // 0x14
 +#ifdef STE_HARDWARE
 +    HAL_PIXEL_FORMAT_YCbCr_422_P        = 0x12,
 +    HAL_PIXEL_FORMAT_YCbCr_420_P        = 0x13,
@@ -29,8 +28,9 @@ index b207ee8..8a70153 100644
 +    HAL_PIXEL_FORMAT_YCrCb_422_P        = 0x24,
 +    HAL_PIXEL_FORMAT_YCrCb_420_P        = 0x25,
 +    /* STE: Added Support of YUV42XMBN, required for Copybit CC acceleration */
-+    HAL_PIXEL_FORMAT_YCBCR42XMBN = 0xE,
++    HAL_PIXEL_FORMAT_YCBCR42XMBN        = 0xE,
 +#endif
++
+     HAL_PIXEL_FORMAT_JPEG = 256, // 0x100
  } android_pixel_format_t;
  
- /*

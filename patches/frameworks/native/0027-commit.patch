@@ -1,0 +1,26 @@
+From c86b0fe06eab2a20d12074ca7f5cf4edc1f37fec Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 1 Oct 2017 11:50:26 +0300
+Subject: [PATCH 27/27] commit
+
+Change-Id: Iabf5a3097e457791ad36f10f354e20717a81891a
+---
+ libs/ui/GraphicBuffer.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index bd68416..d36ba97 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -101,7 +101,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
+ GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
+     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
+       mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()),
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  = buffer->width;
+     height = buffer->height;
+-- 
+2.7.4
+

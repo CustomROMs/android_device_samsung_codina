@@ -1,10 +1,10 @@
 Subject: [PATCH] core patch
 
-diff --git a/include/utils/Flattenable.h b/include/utils/Flattenable.h
+diff --git a/libutils/include/utils/Flattenable.h b/libutils/include/utils/Flattenable.h
 index 882a8b2..495b90d 100644
---- a/include/utils/Flattenable.h
-+++ b/include/utils/Flattenable.h
-@@ -79,21 +79,35 @@ public:
+--- a/libutils/include/utils/Flattenable.h
++++ b/libutils/include/utils/Flattenable.h
+@@ -86,21 +86,35 @@ public:
   * Flattenable objects must implement this protocol.
   */
  
@@ -40,7 +40,7 @@ index 882a8b2..495b90d 100644
  
      // unflattens the object from buffer.
      // size should be equal to the value of getFlattenedSize() when the
-@@ -102,6 +116,13 @@ public:
+@@ -109,6 +123,13 @@ public:
      // don't need to be dupped(). ie: the caller of unflatten doesn't
      // keep ownership. If a fd is not retained by unflatten() it must be
      // explicitly closed.
@@ -54,7 +54,7 @@ index 882a8b2..495b90d 100644
      inline status_t unflatten(void const*& buffer, size_t& size, int const*& fds, size_t& count);
  };
  
-@@ -123,6 +144,7 @@ inline status_t Flattenable<T>::unflatten(
+@@ -130,6 +151,7 @@ inline status_t Flattenable<T>::unflatten(
          void const*& buffer, size_t& size, int const*& fds, size_t& count) {
      return static_cast<T*>(this)->T::unflatten(buffer, size, fds, count);
  }
@@ -62,23 +62,30 @@ index 882a8b2..495b90d 100644
  
  /*
   * LightFlattenable is a protocol allowing object to serialize themselves out
-diff --git a/libutils/Android.mk b/libutils/Android.mk
+diff --git a/libutils/Android.bp b/libutils/Android.bp
 index b1dc1f8..44f69c1 100644
---- a/libutils/Android.mk
-+++ b/libutils/Android.mk
-@@ -37,6 +37,12 @@ commonSources:= \
- 	VectorImpl.cpp \
- 	misc.cpp \
+--- a/libutils/Android.bp
++++ b/libutils/Android.bp
+@@ -62,9 +62,10 @@ cc_library {
+         "Unicode.cpp",
+         "VectorImpl.cpp",
+         "misc.cpp",
++        "Flattenable.cpp",
+     ],
  
-+
-+ifeq ($(BOARD_USES_STE_HARDWARE),true)
-+	commonSources += Flattenable.cpp
-+endif
-+
-+
- host_commonCflags := -DLIBUTILS_NATIVE=1 $(TOOL_CFLAGS) -Werror
- 
- # For the host
+-    cflags: ["-Werror"],
++    cflags: ["-DSTE_HARDWARE"],
+     include_dirs: ["external/safe-iop/include"],
+     header_libs: [
+         "libutils_headers",
+@@ -96,7 +97,6 @@ cc_library {
+                 "liblog",
+                 "libvndksupport",
+             ],
+-
+             sanitize: {
+                 misc_undefined: ["integer"],
+             },
 diff --git a/libutils/Flattenable.cpp b/libutils/Flattenable.cpp
 new file mode 100644
 index 0000000..1f2ffaa

@@ -1,0 +1,72 @@
+From 0e8b691c0335156ff02c5fcc4a51a9e258486d31 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 30 Sep 2017 20:29:40 +0300
+Subject: [PATCH 20/27] STE: add android::MemoryBase::getMemory
+
+Change-Id: Iba1286e1a4de2b79bead77a425c7c61971cf5f04
+---
+ libs/binder/MemoryBase.cpp              | 27 +++++++++++++++++++++++++++
+ libs/binder/include/binder/MemoryBase.h |  3 +++
+ 2 files changed, 30 insertions(+)
+
+diff --git a/libs/binder/MemoryBase.cpp b/libs/binder/MemoryBase.cpp
+index 033066b..e6d6401 100644
+--- a/libs/binder/MemoryBase.cpp
++++ b/libs/binder/MemoryBase.cpp
+@@ -25,6 +25,10 @@ namespace android {
+ 
+ // ---------------------------------------------------------------------------
+ 
++#ifdef STE_HARDWARE
++extern "C" void _ZN7android10MemoryBaseC2ERKNS_2spINS_11IMemoryHeapEEElj() __attribute__((alias("_ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEElj")));
++#endif
++
+ MemoryBase::MemoryBase(const sp<IMemoryHeap>& heap,
+         ssize_t offset, size_t size)
+     : mSize(size), mOffset(offset), mHeap(heap)
+@@ -42,5 +46,28 @@ MemoryBase::~MemoryBase()
+ {
+ }
+ 
++#ifdef STE_HARDWARE
++sp<IMemoryHeap> android::MemoryBase::getMemory(long* offset, unsigned int* size) const
++{
++    ssize_t offset_o;
++    size_t size_o;
++    sp<IMemoryHeap> res;
++
++    res = getMemory(&offset_o, & size_o);
++    *offset = offset_o;
++    *size = size_o;
++
++    return res;
++}
++#endif
++
+ // ---------------------------------------------------------------------------
+ }; // namespace android
++
++#ifndef __LP64__
++// Backwards compatibility for libdatabase_sqlcipher (http://b/8253769).
++extern "C" void _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEEij(void*, void*, ssize_t, size_t);
++extern "C" void _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEElj(void* obj, void* h, long o, unsigned int size) {
++    _ZN7android10MemoryBaseC1ERKNS_2spINS_11IMemoryHeapEEEij(obj, h, o, size);
++}
++#endif
+diff --git a/libs/binder/include/binder/MemoryBase.h b/libs/binder/include/binder/MemoryBase.h
+index 463e26d..5bf104b 100644
+--- a/libs/binder/include/binder/MemoryBase.h
++++ b/libs/binder/include/binder/MemoryBase.h
+@@ -38,6 +38,9 @@ protected:
+     size_t getSize() const { return mSize; }
+     ssize_t getOffset() const { return mOffset; }
+     const sp<IMemoryHeap>& getHeap() const { return mHeap; }
++#ifdef STE_HARDWARE
++    virtual sp<IMemoryHeap> getMemory(long* offset, unsigned int* size) const;
++#endif
+ 
+ private:
+     size_t          mSize;
+-- 
+2.7.4
+

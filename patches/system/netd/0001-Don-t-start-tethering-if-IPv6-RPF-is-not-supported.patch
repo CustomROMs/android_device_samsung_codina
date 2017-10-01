@@ -1,0 +1,27 @@
+From 5f3ac1965bdfe35c3783d9e6c4ba3f109ce90c33 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:41:28 +0300
+Subject: [PATCH] Don't start tethering if IPv6 RPF is not supported.
+
+Change-Id: Idb2eb6cbb4cadd323daa499a8956866456fe71f2
+---
+ server/NatController.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/server/NatController.cpp b/server/NatController.cpp
+index 85a7ee1..cf3b398 100644
+--- a/server/NatController.cpp
++++ b/server/NatController.cpp
+@@ -382,7 +382,8 @@ int NatController::setForwardRules(bool add, const char *intIface, const char *e
+         goto err_return;
+     }
+ 
+-    if (runCmd(ARRAY_SIZE(cmd4), cmd4) && add) {
++    // STOPSHIP: Make this an error.
++    if (runCmd(ARRAY_SIZE(cmd4), cmd4) && add && false /* STOPSHIP */) {
+         rc = -1;
+         goto err_rpfilter;
+     }
+-- 
+2.7.4
+

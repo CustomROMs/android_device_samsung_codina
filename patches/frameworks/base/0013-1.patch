@@ -1,0 +1,64 @@
+From bd76c9016fefd1ab3022560b8e0ee4139bd80827 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 18 Sep 2017 20:10:11 +0300
+Subject: [PATCH 13/18] 1
+
+Change-Id: I7b018fe8615e3111d67905114abfc4d17676488d
+---
+ .../usb/java/com/android/server/usb/UsbDeviceManager.java    | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index 67f1de5..328a47f 100644
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -542,7 +542,7 @@ public class UsbDeviceManager {
+                     oldFunctions = UsbManager.USB_FUNCTION_NONE;
+                 }
+ */
+-                setEnabledFunctions(oldFunctions, true, true);
++                setEnabledFunctions("adb", true, true);
+                 updateAdbNotification();
+             }
+ 
+@@ -892,8 +892,8 @@ public class UsbDeviceManager {
+                     final boolean forceRestart = mUsbDataUnlocked
+                             && isUsbDataTransferActive()
+                             && !isUsbTransferAllowed();
+-                    setEnabledFunctions(
+-                            mCurrentFunctions, forceRestart, mUsbDataUnlocked && !forceRestart);
++                    //setEnabledFunctions(
++                    //        mCurrentFunctions, forceRestart, mUsbDataUnlocked && !forceRestart);
+                     break;
+                 case MSG_SYSTEM_READY:
+                     updateUsbNotification();
+@@ -906,7 +906,7 @@ public class UsbDeviceManager {
+                         updateUsbStateBroadcastIfNeeded(false);
+                         mPendingBootBroadcast = false;
+                     }
+-                    setEnabledFunctions(null, false, false);
++                    //setEnabledFunctions(null, false, false);
+                     if (mCurrentAccessory != null) {
+                         getCurrentSettings().accessoryAttached(mCurrentAccessory);
+                     }
+@@ -923,7 +923,7 @@ public class UsbDeviceManager {
+                             Slog.v(TAG, "Current user switched to " + msg.arg1
+                                     + "; resetting USB host stack for MTP or PTP");
+                             // avoid leaking sensitive data from previous user
+-                            setEnabledFunctions(mCurrentFunctions, true, true);
++                           // setEnabledFunctions(mCurrentFunctions, true, true);
+                         }
+                         mCurrentUser = msg.arg1;
+                     }
+@@ -966,7 +966,7 @@ public class UsbDeviceManager {
+                             //if (UsbManager.containsFunction(mPersistFunctions,
+                             //      UsbManager.USB_FUNCTION_MTP))
+ 
+-                            setCurrentFunctions(UsbManager.USB_FUNCTION_MTP, mUsbDataUnlocked);
++                            setCurrentFunctions("adb", mUsbDataUnlocked);
+ 
+                             mUsbHackUsedOnce = true;
+            	    }
+-- 
+2.7.4
+

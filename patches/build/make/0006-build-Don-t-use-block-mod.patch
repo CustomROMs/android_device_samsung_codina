@@ -1,0 +1,25 @@
+From e43de30eb6d9c2814031df2f6871aae97ae55505 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 12 Sep 2017 04:33:06 +0300
+Subject: [PATCH 06/30] build: Don't use block mod
+
+Change-Id: I3abf0de24ca1d2df13073fd973e3b4cb8cb91c57
+---
+ core/Makefile | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 0b038d2..233b0e4 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2515,7 +2515,6 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
+ 	@echo "Package OTA: $@"
+ 	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
+ 	   ./build/tools/releasetools/ota_from_target_files -v \
+-	   --block \
+ 	   --extracted_input_target_files $(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE)) \
+ 	   -p $(HOST_OUT) \
+ 	   -k $(KEY_CERT_PAIR) \
+-- 
+2.7.4
+

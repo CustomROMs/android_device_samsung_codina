@@ -1,0 +1,39 @@
+From 9b16c1ba21ff15006147be77cac7136fcce4a464 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:42:51 +0300
+Subject: [PATCH 09/14] Use Material sounds
+
+Change-Id: I926e55115b9da243321464bec39f111a062fdaa7
+---
+ config/common.mk    | 4 ++--
+ config/telephony.mk | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index a2fc614..266f934 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -18,8 +18,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
+ 
+ # Default notification/alarm sounds
+ PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.config.notification_sound=Argon.ogg \
+-    ro.config.alarm_alert=Hassium.ogg
++    ro.config.notification_sound=Ceres.ogg \
++    ro.config.alarm_alert=Carbon.ogg
+ 
+ ifneq ($(TARGET_BUILD_VARIANT),user)
+ # Thank you, please drive thru!
+diff --git a/config/telephony.mk b/config/telephony.mk
+index 01b471f..f7fe527 100644
+--- a/config/telephony.mk
++++ b/config/telephony.mk
+@@ -14,4 +14,4 @@ PRODUCT_PACKAGES += \
+ 
+ # Default ringtone
+ PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.config.ringtone=Orion.ogg
++    ro.config.ringtone=Dione.ogg
+-- 
+2.7.4
+

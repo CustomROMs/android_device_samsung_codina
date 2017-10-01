@@ -1,0 +1,29 @@
+From 690f1b9297e8a5f455deb60a0f3bef0bef270ac0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:42:45 +0300
+Subject: [PATCH 07/14] device scheduler
+
+Change-Id: I956f08c33c045838866e24e54f3812d69029c24d
+---
+ prebuilt/common/etc/init.local.rc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/prebuilt/common/etc/init.local.rc b/prebuilt/common/etc/init.local.rc
+index 1db6ec5..ffaf0db 100644
+--- a/prebuilt/common/etc/init.local.rc
++++ b/prebuilt/common/etc/init.local.rc
+@@ -103,8 +103,11 @@ on boot
+     chmod 0664 /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_any_cpu_load
+ 
+     chown system system /sys/block/mmcblk0/queue/scheduler
++    chown system system /sys/block/mmcblk1/queue/scheduler
+     chmod 0664 /sys/block/mmcblk0/queue/scheduler
++    chmod 0664 /sys/block/mmcblk1/queue/scheduler
+     restorecon /sys/block/mmcblk0/queue/scheduler
++    restorecon /sys/block/mmcblk1/queue/scheduler
+ 
+     chown system system /sys/block/sda/queue/scheduler
+     chmod 0664 /sys/block/sda/queue/scheduler
+-- 
+2.7.4
+

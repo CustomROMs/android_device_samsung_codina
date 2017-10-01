@@ -1,0 +1,41 @@
+From 88c2b6f0fd52084e41da39891a29e74743430367 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 9 Sep 2017 14:52:38 +0300
+Subject: [PATCH 04/26] sdcard: fix mount flags
+
+Change-Id: I873dc5dbea37495a0791005519d316d66f6ec3ed
+---
+ sdcard/Android.mk | 2 +-
+ sdcard/sdcard.cpp | 3 +--
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/sdcard/Android.mk b/sdcard/Android.mk
+index 0c58574..e0c7fc6 100644
+--- a/sdcard/Android.mk
++++ b/sdcard/Android.mk
+@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES := sdcard.cpp fuse.cpp
+ LOCAL_MODULE := sdcard
+-LOCAL_CFLAGS := -Wall -Wno-unused-parameter -Werror
++LOCAL_CFLAGS := -Wall -Wno-unused-parameter
+ LOCAL_SHARED_LIBRARIES := libbase libcutils libminijail libpackagelistparser
+ 
+ LOCAL_SANITIZE := integer
+diff --git a/sdcard/sdcard.cpp b/sdcard/sdcard.cpp
+index c342cf8..2d69295 100644
+--- a/sdcard/sdcard.cpp
++++ b/sdcard/sdcard.cpp
+@@ -319,8 +319,7 @@ static void run(const char* source_path, const char* label, uid_t uid,
+ 
+ static bool sdcardfs_setup(const std::string& source_path, const std::string& dest_path, uid_t fsuid,
+                         gid_t fsgid, bool multi_user, userid_t userid, gid_t gid, mode_t mask) {
+-    std::string opts = android::base::StringPrintf("fsuid=%d,fsgid=%d,%smask=%d,userid=%d,gid=%d",
+-            fsuid, fsgid, multi_user?"multiuser,":"", mask, userid, gid);
++    std::string opts = android::base::StringPrintf("uid=1023,gid=1023,wgid=1023,derive=unified");
+ 
+     if (mount(source_path.c_str(), dest_path.c_str(), "sdcardfs",
+               MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_NOATIME, opts.c_str()) == -1) {
+-- 
+2.7.4
+

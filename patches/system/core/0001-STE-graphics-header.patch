@@ -1,0 +1,49 @@
+From 8731d4790c1d873db2bbd25e8d3bc29de6dbe54e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 9 Sep 2017 13:25:29 +0300
+Subject: [PATCH 01/26] STE graphics header
+
+Change-Id: Ibbff0ac8ccca25838aa2a8d73e2d02b044957639
+---
+ libsystem/include/system/graphics-base.h | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/libsystem/include/system/graphics-base.h b/libsystem/include/system/graphics-base.h
+index 2a44faf..6d0b709 100644
+--- a/libsystem/include/system/graphics-base.h
++++ b/libsystem/include/system/graphics-base.h
+@@ -15,6 +15,8 @@ typedef enum {
+     HAL_PIXEL_FORMAT_RGB_888 = 3,
+     HAL_PIXEL_FORMAT_RGB_565 = 4,
+     HAL_PIXEL_FORMAT_BGRA_8888 = 5,
++    HAL_PIXEL_FORMAT_RGBA_5551 = 6,
++    HAL_PIXEL_FORMAT_RGBA_4444 = 7,
+     HAL_PIXEL_FORMAT_RGBA_1010102 = 43, // 0x2B
+     HAL_PIXEL_FORMAT_RGBA_FP16 = 22, // 0x16
+     HAL_PIXEL_FORMAT_YV12 = 842094169, // 0x32315659
+@@ -34,6 +36,22 @@ typedef enum {
+     HAL_PIXEL_FORMAT_YCBCR_422_SP = 16, // 0x10
+     HAL_PIXEL_FORMAT_YCRCB_420_SP = 17, // 0x11
+     HAL_PIXEL_FORMAT_YCBCR_422_I = 20, // 0x14
++#ifdef STE_HARDWARE
++    HAL_PIXEL_FORMAT_YCbCr_422_P	= 0x12,
++    HAL_PIXEL_FORMAT_YCbCr_420_P        = 0x13,
++    HAL_PIXEL_FORMAT_YCbCr_420_I        = 0x15,
++    HAL_PIXEL_FORMAT_CbYCrY_422_I       = 0x16,
++    HAL_PIXEL_FORMAT_CbYCrY_420_I       = 0x17,
++    HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED = 0x20,
++    HAL_PIXEL_FORMAT_YCbCr_420_SP       = 0x21,
++    HAL_PIXEL_FORMAT_YCrCb_420_SP_TILED = 0x22,
++    HAL_PIXEL_FORMAT_YCrCb_422_SP       = 0x23,
++    HAL_PIXEL_FORMAT_YCrCb_422_P        = 0x24,
++    HAL_PIXEL_FORMAT_YCrCb_420_P        = 0x25,
++    /* STE: Added Support of YUV42XMBN, required for Copybit CC acceleration */
++    HAL_PIXEL_FORMAT_YCBCR42XMBN	= 0xE,
++#endif
++
+     HAL_PIXEL_FORMAT_JPEG = 256, // 0x100
+ } android_pixel_format_t;
+ 
+-- 
+2.7.4
+

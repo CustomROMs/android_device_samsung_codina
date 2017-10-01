@@ -1,0 +1,117 @@
+From 492a22a7d51df4c6a2ce89f6bcaa79d71ffaecf5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 28 Sep 2017 16:14:24 +0300
+Subject: [PATCH 17/18] Revert "UsbDeviceManager: revert USB hack"
+
+This reverts commit 5988888b9ae241075b7278ebc287e2d2db6fd63d.
+
+Change-Id: I99f6ad097ad0a9eb4367ab0495d368192c40b222
+---
+ .../com/android/server/usb/UsbDeviceManager.java   | 36 ++++++++++++++++------
+ 1 file changed, 26 insertions(+), 10 deletions(-)
+
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index ca74688..67f1de5 100644
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -371,7 +371,9 @@ public class UsbDeviceManager {
+         private boolean mSinkPower;
+         private boolean mConfigured;
+         private boolean mUsbDataUnlocked;
++        private boolean mUsbHackUsedOnce;
+         private String mCurrentFunctions;
++        private String mPersistFunctions;
+         private boolean mCurrentFunctionsApplied;
+         private UsbAccessory mCurrentAccessory;
+         private int mUsbNotificationId;
+@@ -402,9 +404,9 @@ public class UsbDeviceManager {
+                  * Use the normal bootmode persistent prop to maintain state of adb across
+                  * all boot modes.
+                  */
+-                mAdbEnabled = UsbManager.containsFunction(
++                mAdbEnabled = true; /*UsbManager.containsFunction(
+                         SystemProperties.get(USB_PERSISTENT_CONFIG_PROPERTY),
+-                        UsbManager.USB_FUNCTION_ADB);
++                        UsbManager.USB_FUNCTION_ADB);*/
+ 
+                 /**
+                  * Previous versions can set persist config to mtp/ptp but it does not
+@@ -534,12 +536,13 @@ public class UsbDeviceManager {
+                 SystemProperties.set(USB_PERSISTENT_CONFIG_PROPERTY, newFunction);
+ 
+                 // Remove mtp from the config if file transfer is not enabled
++/*
+                 if (oldFunctions.equals(UsbManager.USB_FUNCTION_MTP) &&
+                         !mUsbDataUnlocked && enable) {
+                     oldFunctions = UsbManager.USB_FUNCTION_NONE;
+                 }
+-
+-                setEnabledFunctions(oldFunctions, true, mUsbDataUnlocked);
++*/
++                setEnabledFunctions(oldFunctions, true, true);
+                 updateAdbNotification();
+             }
+ 
+@@ -558,6 +561,8 @@ public class UsbDeviceManager {
+                         + "forceRestart=" + forceRestart + ", usbDataUnlocked=" + usbDataUnlocked);
+             }
+ 
++	    usbDataUnlocked = true;
++
+             if (usbDataUnlocked != mUsbDataUnlocked) {
+                 mUsbDataUnlocked = usbDataUnlocked;
+                 updateUsbNotification();
+@@ -707,7 +712,7 @@ public class UsbDeviceManager {
+             // make sure accessory mode is off
+             // and restore default functions
+             Slog.d(TAG, "exited USB accessory mode");
+-            setEnabledFunctions(null, false, false);
++            //setEnabledFunctions(null, false, false);
+ 
+             if (mCurrentAccessory != null) {
+                 if (mBootCompleted) {
+@@ -850,10 +855,6 @@ public class UsbDeviceManager {
+                         updateCurrentAccessory();
+                     }
+                     if (mBootCompleted) {
+-                        if (!mConnected) {
+-                            // restore defaults when USB is disconnected
+-                            setEnabledFunctions(null, !mAdbEnabled, false);
+-                        }
+                         updateUsbFunctions();
+                     } else {
+                         mPendingBootBroadcast = true;
+@@ -922,7 +923,7 @@ public class UsbDeviceManager {
+                             Slog.v(TAG, "Current user switched to " + msg.arg1
+                                     + "; resetting USB host stack for MTP or PTP");
+                             // avoid leaking sensitive data from previous user
+-                            setEnabledFunctions(mCurrentFunctions, true, false);
++                            setEnabledFunctions(mCurrentFunctions, true, true);
+                         }
+                         mCurrentUser = msg.arg1;
+                     }
+@@ -957,6 +958,21 @@ public class UsbDeviceManager {
+             int id = 0;
+             int titleRes = 0;
+             Resources r = mContext.getResources();
++
++	    mUsbDataUnlocked = true;
++            if (mConnected) {
++                    if (!mUsbHackUsedOnce) {
++                            mPersistFunctions = getDefaultFunctions();
++                            //if (UsbManager.containsFunction(mPersistFunctions,
++                            //      UsbManager.USB_FUNCTION_MTP))
++
++                            setCurrentFunctions(UsbManager.USB_FUNCTION_MTP, mUsbDataUnlocked);
++
++                            mUsbHackUsedOnce = true;
++           	    }
++	    } else
++                    mUsbHackUsedOnce = false;
++
+             if (mConnected) {
+                 if (!mUsbDataUnlocked) {
+                     if (mSourcePower) {
+-- 
+2.7.4
+

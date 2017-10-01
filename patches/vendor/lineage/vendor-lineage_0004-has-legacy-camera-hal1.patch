@@ -1,0 +1,37 @@
+Subject: [PATCH] soong_config: Add TARGET_HAS_LEGACY_CAMERA_HAL1 variable
+
+* Soong product variable 'has_legacy_camera_hal1'
+
+diff --git a/build/soong/android/variable.go b/build/soong/android/variable.go
+index 188d8f2..b322d70 100644
+--- a/build/soong/android/variable.go
++++ b/build/soong/android/variable.go
+@@ -1,5 +1,9 @@
+ package android
+ type Product_variables struct {
++	Has_legacy_camera_hal1 struct {
++		Cflags []string
++	}
++
+ 	Needs_text_relocations struct {
+ 		Cppflags []string
+ 	}
+@@ -6,5 +10,6 @@
+ }
+ 
+ type ProductVariables struct {
++	Has_legacy_camera_hal1  *bool `json:",omitempty"`
+ 	Needs_text_relocations  *bool `json:",omitempty"`
+ }
+diff --git a/build/soong/soong_config.mk b/build/soong/soong_config.mk
+index 9bff1b5..a032db4 100644
+--- a/build/soong/soong_config.mk
++++ b/build/soong/soong_config.mk
+@@ -4,6 +4,7 @@
+ 	$(hide) (\
+ 	echo '{'; \
+ 	echo '"Lineage": {'; \
++	echo '    "Has_legacy_camera_hal1": $(if $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)),true,false),'; \
+ 	echo '    "Needs_text_relocations": $(if $(filter true,$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)),true,false)'; \
+ 	echo '},'; \
+ 	echo '') > $(SOONG_VARIABLES_TMP)

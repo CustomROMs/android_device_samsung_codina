@@ -1,0 +1,86 @@
+From 49c6447c1803a36f5b45b517cdb8682eb186c439 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 12 Sep 2017 00:36:03 +0300
+Subject: [PATCH 07/27] libsensor: keep compaitibility to gpsd
+
+Change-Id: I7dabe95cb46dbea2e3b4a869681e6d6cfca54318
+---
+ libs/sensor/SensorManager.cpp              | 20 ++++++++++++++++++++
+ libs/sensor/include/sensor/SensorManager.h |  8 ++++++++
+ 2 files changed, 28 insertions(+)
+
+diff --git a/libs/sensor/SensorManager.cpp b/libs/sensor/SensorManager.cpp
+index ce8b51d..7b83ce9 100644
+--- a/libs/sensor/SensorManager.cpp
++++ b/libs/sensor/SensorManager.cpp
+@@ -41,6 +41,10 @@ namespace android {
+ Mutex SensorManager::sLock;
+ std::map<String16, SensorManager*> SensorManager::sPackageInstances;
+ 
++#ifdef STE_HARDWARE
++ANDROID_SINGLETON_STATIC_INSTANCE(SensorManager)
++#endif
++
+ SensorManager& SensorManager::getInstanceForPackage(const String16& packageName) {
+     waitForSensorService(nullptr);
+ 
+@@ -97,6 +101,15 @@ SensorManager::SensorManager(const String16& opPackageName)
+     assertStateLocked();
+ }
+ 
++#ifdef STE_HARDWARE
++SensorManager::SensorManager()
++    : mSensorList(0), mOpPackageName(String16(""))
++{
++    // okay we're not locked here, but it's not needed during construction
++    assertStateLocked();
++}
++#endif
++
+ SensorManager::~SensorManager() {
+     free(mSensorList);
+ }
+@@ -234,6 +247,13 @@ Sensor const* SensorManager::getDefaultSensor(int type)
+     return NULL;
+ }
+ 
++#ifdef STE_HARDWARE
++sp<SensorEventQueue> SensorManager::createEventQueue()
++{
++    return createEventQueue(String8(""), 0);
++}
++#endif
++
+ sp<SensorEventQueue> SensorManager::createEventQueue(String8 packageName, int mode) {
+     sp<SensorEventQueue> queue;
+ 
+diff --git a/libs/sensor/include/sensor/SensorManager.h b/libs/sensor/include/sensor/SensorManager.h
+index ad52a02..4dfaa34 100644
+--- a/libs/sensor/include/sensor/SensorManager.h
++++ b/libs/sensor/include/sensor/SensorManager.h
+@@ -54,6 +54,9 @@ class SensorManager : public ASensorManager
+ {
+ public:
+     static SensorManager& getInstanceForPackage(const String16& packageName);
++#ifdef STE_HARDWARE
++    SensorManager();
++#endif
+     ~SensorManager();
+ 
+ #ifdef COMPAT_SENSORS_M
+@@ -63,7 +66,12 @@ public:
+ #endif
+     ssize_t getDynamicSensorList(Vector<Sensor>& list);
+     Sensor const* getDefaultSensor(int type);
++#ifdef STE_HARDWARE
++    sp<SensorEventQueue> createEventQueue();
++    sp<SensorEventQueue> createEventQueue(String8 packageName, int mode = 0);
++#else
+     sp<SensorEventQueue> createEventQueue(String8 packageName = String8(""), int mode = 0);
++#endif
+     bool isDataInjectionEnabled();
+     int createDirectChannel(size_t size, int channelType, const native_handle_t *channelData);
+     void destroyDirectChannel(int channelNativeHandle);
+-- 
+2.7.4
+

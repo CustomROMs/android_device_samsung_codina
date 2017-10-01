@@ -1,0 +1,29 @@
+From 2987ef526ed0b68143cf2d9bcea2173941efd217 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Sun, 10 Sep 2017 10:00:00 +0200
+Subject: [PATCH 12/26] ADB: FORCE DEBUGING
+
+Change-Id: I106b6a062d8daeb29b324c74e73b8519954a2f84
+---
+ adb/daemon/main.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/adb/daemon/main.cpp b/adb/daemon/main.cpp
+index 078ac25..ee536a3 100644
+--- a/adb/daemon/main.cpp
++++ b/adb/daemon/main.cpp
+@@ -157,9 +157,9 @@ int adbd_main(int server_port) {
+     // descriptor will always be open.
+     adbd_cloexec_auth_socket();
+ 
+-    if (ALLOW_ADBD_NO_AUTH && !android::base::GetBoolProperty("ro.adb.secure", false)) {
++//    if (ALLOW_ADBD_NO_AUTH && !android::base::GetBoolProperty("ro.adb.secure", false)) {
+         auth_required = false;
+-    }
++//    }
+ 
+     adbd_auth_init();
+ 
+-- 
+2.7.4
+

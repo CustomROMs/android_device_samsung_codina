@@ -1,0 +1,31 @@
+From 942f5b3e0da33f72f1aaa1e1850e91d4b511696a Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Mon, 4 Sep 2017 14:42:39 +0200
+Subject: [PATCH 18/26] Selinux: Hack: Temporary disable getenforce check
+
+Change-Id: If8590679a8e1ec89f2b8411995eef14e33d06673
+---
+ init/service.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index 0b3942f..1e89306 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -80,10 +80,12 @@ static std::string ComputeContextFromExecutable(std::string& service_name,
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
+         LOG(ERROR) << "service " << service_name << " does not have a SELinux domain defined";
+-        if (selinux_status_getenforce() > 0) {
++/*        if (selinux_status_getenforce() > 0) {
+             return "";
+         }
++*/
+     }
++
+     if (rc < 0) {
+         LOG(ERROR) << "could not get context while starting '" << service_name << "'";
+         return "";
+-- 
+2.7.4
+

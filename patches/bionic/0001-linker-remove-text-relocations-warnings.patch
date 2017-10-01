@@ -1,0 +1,29 @@
+From 9253cb7d2ccc07c3b99d539f1fbdff5eef115ddd Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 12 Sep 2017 00:04:55 +0300
+Subject: [PATCH 1/2] linker: remove text relocations warnings
+
+Change-Id: I61830caa2091dfd500deecb14ffc7c437f9ea4de
+---
+ linker/linker.cpp | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index c661624..7c1ccc0 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -3283,11 +3283,6 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t&
+       DL_ERR_AND_LOG("\"%s\" has text relocations", get_realpath());
+       return false;
+     }
+-    // Make segments writable to allow text relocations to work properly. We will later call
+-    // phdr_table_protect_segments() after all of them are applied.
+-    DL_WARN("\"%s\" has text relocations. This is wasting memory and prevents "
+-            "security hardening. Please fix.", get_realpath());
+-    add_dlwarning(get_realpath(), "text relocations");
+     if (phdr_table_unprotect_segments(phdr, phnum, load_bias) < 0) {
+       DL_ERR("can't unprotect loadable segments for \"%s\": %s",
+              get_realpath(), strerror(errno));
+-- 
+2.7.4
+

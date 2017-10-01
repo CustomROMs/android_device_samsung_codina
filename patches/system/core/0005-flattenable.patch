@@ -1,0 +1,52 @@
+From 30c088e48f716eb4f289f46e876a633faeacc59d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 9 Sep 2017 22:14:05 +0300
+Subject: [PATCH 05/26] flattenable
+
+Change-Id: Ic069d914f3b1a513c04ce8601a4647fb7940c660
+---
+ libutils/include/utils/Flattenable.h | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/libutils/include/utils/Flattenable.h b/libutils/include/utils/Flattenable.h
+index 058ba6f..9af4fef 100644
+--- a/libutils/include/utils/Flattenable.h
++++ b/libutils/include/utils/Flattenable.h
+@@ -64,22 +64,32 @@ public:
+     template<typename T>
+     static void write(void*& buffer, size_t& size, const T& value) {
+ /*
++	(int**)buffer;
++	(void*)size;
++	(void*)value;
++*/
++/*
+         static_assert(std::is_trivially_copyable<T>::value,
+                       "Cannot flatten a non-trivially-copyable type");
++*/
+         memcpy(buffer, &value, sizeof(T));
+         advance(buffer, size, sizeof(T));
+-*/
+     }
+ 
+     // read a POD structure
+     template<typename T>
+     static void read(void const*& buffer, size_t& size, T& value) {
+ /*
++	(int**)buffer;
++	(void*)size;
++	(void*)value;
++*/
++/*
+         static_assert(std::is_trivially_copyable<T>::value,
+                       "Cannot unflatten a non-trivially-copyable type");
++*/
+         memcpy(&value, buffer, sizeof(T));
+         advance(buffer, size, sizeof(T));
+-*/
+     }
+ };
+ 
+-- 
+2.7.4
+

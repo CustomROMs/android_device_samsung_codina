@@ -1,0 +1,31 @@
+From e01965861f6171da5e5104c8c44010581f9fa462 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 12:42:00 +0300
+Subject: [PATCH] Use volume label for mount path, if available.
+
+Change-Id: I3c579eb645fb62cdb4f0345c49d60b39049801bf
+---
+ PublicVolume.cpp | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/PublicVolume.cpp b/PublicVolume.cpp
+index 58fea0c..c9fab18 100644
+--- a/PublicVolume.cpp
++++ b/PublicVolume.cpp
+@@ -105,9 +105,11 @@ status_t PublicVolume::doMount() {
+         return -EIO;
+     }
+ 
+-    // Use UUID as stable name, if available
++    // Use volume label and otherwise UUID as stable name, if available
+     std::string stableName = getId();
+-    if (!mFsUuid.empty()) {
++    if (!mFsLabel.empty()) {
++        stableName = mFsLabel;
++    } else if (!mFsUuid.empty()) {
+         stableName = mFsUuid;
+     }
+ 
+-- 
+2.7.4
+

@@ -1,0 +1,53 @@
+From b3b97721f6e26458299cb2e1b9aa1499a89eb351 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 17 Sep 2017 18:05:59 +0300
+Subject: [PATCH 29/30] Revert "build: Don't use block mod"
+
+This reverts commit e43de30eb6d9c2814031df2f6871aae97ae55505.
+
+Change-Id: I499367cf5a80f13d174841fa89735f2193dd53e0
+---
+ core/Makefile                               | 1 +
+ tools/releasetools/ota_from_target_files.py | 7 ++++---
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 9ff8364..5be5c8d 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2535,6 +2535,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
+ 	@echo "Package OTA: $@"
+ 	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
+ 	   ./build/tools/releasetools/ota_from_target_files -v \
++	   --block \
+ 	   --extracted_input_target_files $(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE)) \
+ 	   -p $(HOST_OUT) \
+ 	   -k $(KEY_CERT_PAIR) \
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 2f1f9bb..692e590 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -690,7 +690,8 @@ def WriteFullOTAPackage(input_zip, output_zip):
+       info_dict=OPTIONS.info_dict)
+ 
+   #assert HasRecoveryPatch(input_zip)
+-  block_based = OPTIONS.block_based and has_recovery_patch
++  #block_based = OPTIONS.block_base # and has_recovery_patch
++  block_based = True
+ 
+   metadata["ota-type"] = "BLOCK" if block_based else "FILE"
+ 
+@@ -2217,8 +2218,8 @@ def main(argv):
+       OPTIONS.no_signing = True
+     elif o == "--verify":
+       OPTIONS.verify = True
+-    #elif o == "--block":
+-    #  OPTIONS.block_based = True
++    elif o == "--block":
++      OPTIONS.block_based = True
+     elif o in ("-b", "--binary"):
+       OPTIONS.updater_binary = a
+     elif o in ("--no_fallback_to_full",):
+-- 
+2.7.4
+

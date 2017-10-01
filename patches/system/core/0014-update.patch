@@ -1,0 +1,25 @@
+From cb03a4f1365c7b9ebcc7cb78dd2a8572b4d91938 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 16 Sep 2017 20:03:24 +0300
+Subject: [PATCH 14/26] update
+
+Change-Id: I86a256a3a1ef92ff33289524e70e2d54772b525e
+---
+ init/init.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 972a544..b5ca077 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -398,6 +398,7 @@ static int set_mmap_rnd_bits_action(const std::vector<std::string>& args)
+ 
+     if (ret == -1) {
+         LOG(INFO) << "Unable to set adequate mmap entropy value!";
++	ret = 0;
+         // security_failure();
+     }
+     return ret;
+-- 
+2.7.4
+

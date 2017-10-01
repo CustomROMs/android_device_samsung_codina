@@ -1,0 +1,98 @@
+From 1e8a6cdd7cad331fc5ea25a5e1242c16888d9f05 Mon Sep 17 00:00:00 2001
+From: Flex1911 <dedsa2002@gmail.com>
+Date: Fri, 7 Apr 2017 12:56:44 +0300
+Subject: [PATCH 07/30] build: allow to disable recovery-two-step.img
+ generation
+
+Android 7.1.2 introduced new mechanism for recovery updating in two-step OTAs.
+Although, recovery-two-step.img generation may be completely broken on some devices with custom mkbootimg handling.
+We can use recovery.img as base for that devices, so recovery-two-step.img generation will not be required in this case.
+Let's add new TARGET_NO_TWO_STEP_RECOVERY flag to skip recovery-two-step.img generation during target files packaging if we need it.
+
+Change-Id: Icbea2da2f9565277622746545cdb96bf7f5ef3df
+---
+ core/Makefile                                 |  4 ++++
+ tools/releasetools/add_img_to_target_files.py | 19 ++++++++++---------
+ tools/releasetools/ota_from_target_files.py   |  6 ++++--
+ 3 files changed, 18 insertions(+), 11 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 233b0e4..8796c2e 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2393,6 +2393,10 @@ endif
+ ifdef BOARD_BPT_DISK_SIZE
+ 	$(hide) echo "board_bpt_disk_size=$(BOARD_BPT_DISK_SIZE)" >> $(zip_root)/META/misc_info.txt
+ endif
++#ifeq ($(TARGET_NO_TWO_STEP_RECOVERY),true)
++	$(hide) echo "no_two_step_recovery=true" >> $(zip_root)/META/misc_info.txt
++#endif
++
+ 	$(call generate-userimage-prop-dictionary, $(zip_root)/META/misc_info.txt)
+ ifneq ($(INSTALLED_RECOVERYIMAGE_TARGET),)
+ 	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
+diff --git a/tools/releasetools/add_img_to_target_files.py b/tools/releasetools/add_img_to_target_files.py
+index 7c3679c..7b5d1d2 100755
+--- a/tools/releasetools/add_img_to_target_files.py
++++ b/tools/releasetools/add_img_to_target_files.py
+@@ -408,6 +408,7 @@ def AddImagesToTargetFiles(filename):
+     images_dir = None
+ 
+   has_recovery = (OPTIONS.info_dict.get("no_recovery") != "true")
++  use_two_step_recovery = (OPTIONS.info_dict.get("no_two_step_recovery") != "true")
+ 
+   def banner(s):
+     print("\n\n++++ " + s + " ++++\n\n")
+@@ -449,16 +450,16 @@ def AddImagesToTargetFiles(filename):
+         else:
+           recovery_image.WriteToDir(OPTIONS.input_tmp)
+ 
+-      banner("recovery (two-step image)")
++      #banner("recovery (two-step image)")
+       # The special recovery.img for two-step package use.
+-      recovery_two_step_image = common.GetBootableImage(
+-          "IMAGES/recovery-two-step.img", "recovery-two-step.img",
+-          OPTIONS.input_tmp, "RECOVERY", two_step_image=True)
+-      if recovery_two_step_image:
+-        if output_zip:
+-          recovery_two_step_image.AddToZip(output_zip)
+-        else:
+-          recovery_two_step_image.WriteToDir(OPTIONS.input_tmp)
++      #recovery_two_step_image = common.GetBootableImage(
++      #    "IMAGES/recovery-two-step.img", "recovery-two-step.img",
++      #    OPTIONS.input_tmp, "RECOVERY", two_step_image=True)
++      #if recovery_two_step_image:
++      #  if output_zip:
++      #    recovery_two_step_image.AddToZip(output_zip)
++      #  else:
++      #    recovery_two_step_image.WriteToDir(OPTIONS.input_tmp)
+ 
+   banner("system")
+   system_img_path = AddSystem(
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 6cfc975..9d53d31 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -1272,6 +1272,8 @@ def WriteABOTAPackageWithBrilloScript(target_file, output_file,
+ def main(argv):
+ 
+   def option_handler(o, a):
++    OPTIONS.block_based = False
++
+     if o == "--board_config":
+       pass   # deprecated
+     elif o in ("-k", "--package_key"):
+@@ -1307,8 +1309,8 @@ def main(argv):
+       OPTIONS.no_signing = True
+     elif o == "--verify":
+       OPTIONS.verify = True
+-    elif o == "--block":
+-      OPTIONS.block_based = True
++    #elif o == "--block":
++    #  OPTIONS.block_based = True
+     elif o in ("-b", "--binary"):
+       OPTIONS.updater_binary = a
+     elif o in ("--no_fallback_to_full",):
+-- 
+2.7.4
+

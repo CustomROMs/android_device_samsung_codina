@@ -1,0 +1,40 @@
+From 865d5e8a430202b82a67ab6c0ba2c948794232c2 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 7 Apr 2017 14:50:23 +0300
+Subject: [PATCH 2/2] fix_build.patch
+
+Change-Id: I9deecdeca0045696ea2a39cf0e06f77b3fc7b00c
+---
+ Android.mk | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/libselinux/Android.mk b/libselinux/Android.mk
+index 1eff9c7..fbbfa4f 100644
+--- a/libselinux/Android.mk
++++ b/libselinux/Android.mk
+@@ -31,14 +31,14 @@ common_SRC_FILES := \
+ 	src/deny_unknown.c
+ 
+ common_HOST_FILES := \
+-	src/callbacks.c \
+-	src/check_context.c \
+-	src/freecon.c \
+-	src/init.c \
+-	src/label.c \
+-	src/label_file.c \
+-	src/label_android_property.c \
+-	src/label_support.c
++	src/host/callbacks.c \
++	src/host/check_context.c \
++	src/host/freecon.c \
++	src/host/init.c \
++	src/host/label.c \
++	src/host/label_file.c \
++	src/host/label_android_property.c \
++	src/host/label_support.c
+ 
+ 
+ include $(CLEAR_VARS)
+-- 
+2.5.0
+

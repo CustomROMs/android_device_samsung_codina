@@ -14,8 +14,8 @@ index 3e3ef2a..9f4005e 100644
 +}
 +
  int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len) {
-   size_t i;
    const uint8_t *a = in_a;
+   const uint8_t *b = in_b;
 diff --git a/src/include/openssl/mem.h b/src/include/openssl/mem.h
 index 4e3ef2a..9f4005e 100644
 --- a/src/include/openssl/mem.h
@@ -37,4 +37,13 @@ index 4e3ef2a..9f4005e 100644
 +
  /* OPENSSL_hash32 implements the 32 bit, FNV-1a hash. */
  OPENSSL_EXPORT uint32_t OPENSSL_hash32(const void *ptr, size_t len);
+ 
+@@ -126,7 +130,7 @@
+ 
+ /* Deprecated functions. */
+ 
+-#define CRYPTO_malloc OPENSSL_malloc
++//#define CRYPTO_malloc OPENSSL_malloc
+ #define CRYPTO_realloc OPENSSL_realloc
+ #define CRYPTO_free OPENSSL_free
  

@@ -1,0 +1,33 @@
+From 0ef300f25ba6e576dd311962f5251c80464e7564 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 18 Sep 2017 10:29:06 +0300
+Subject: [PATCH 32/35] AudioPolicyInterfaceImplLegacy: add
+ handleDeviceConfigChange stub function
+
+Change-Id: Ie781928af6bfa67cec0ec8cee3e31e9d261eaa06
+---
+ services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 9ee9614..9c68905 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -67,6 +67,14 @@ audio_policy_dev_state_t AudioPolicyService::getDeviceConnectionState(
+                                                       device_address);
+ }
+ 
++status_t AudioPolicyService::handleDeviceConfigChange(audio_devices_t device,
++                                                  const char *device_address,
++                                                  const char *device_name)
++{
++    ALOGE("handleDeviceConfigChange()");
++    return INVALID_OPERATION;
++}
++
+ status_t AudioPolicyService::setPhoneState(audio_mode_t state)
+ {
+     if (mpAudioPolicy == NULL) {
+-- 
+2.7.4
+

@@ -1,0 +1,267 @@
+From e81b13a7f4e050c8b27303861a8e849e83e7148e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 18 Sep 2017 10:23:50 +0300
+Subject: [PATCH 30/35] Revert "Add a mechanism for handling audio device
+ configuration change"
+
+This reverts commit f862bc6a7a35054e38cb50fa16ae7a07f683ee01.
+
+Change-Id: I7dcaf1ab21209233937efb7cb03af54825d182d5
+---
+ media/libaudioclient/AudioSystem.cpp               | 19 ---------
+ media/libaudioclient/IAudioPolicyService.cpp       | 31 --------------
+ .../include/media/IAudioPolicyService.h            |  3 --
+ services/audiopolicy/AudioPolicyInterface.h        |  4 --
+ .../managerdefault/AudioPolicyManager.cpp          | 48 +---------------------
+ .../managerdefault/AudioPolicyManager.h            |  3 --
+ .../service/AudioPolicyInterfaceImpl.cpp           | 17 --------
+ services/audiopolicy/service/AudioPolicyService.h  |  3 --
+ 8 files changed, 2 insertions(+), 126 deletions(-)
+
+diff --git a/media/libaudioclient/AudioSystem.cpp b/media/libaudioclient/AudioSystem.cpp
+index 9ef1db7..7fe2826 100644
+--- a/media/libaudioclient/AudioSystem.cpp
++++ b/media/libaudioclient/AudioSystem.cpp
+@@ -757,25 +757,6 @@ audio_policy_dev_state_t AudioSystem::getDeviceConnectionState(audio_devices_t d
+     return aps->getDeviceConnectionState(device, device_address);
+ }
+ 
+-status_t AudioSystem::handleDeviceConfigChange(audio_devices_t device,
+-                                               const char *device_address,
+-                                               const char *device_name)
+-{
+-    const sp<IAudioPolicyService>& aps = AudioSystem::get_audio_policy_service();
+-    const char *address = "";
+-    const char *name = "";
+-
+-    if (aps == 0) return PERMISSION_DENIED;
+-
+-    if (device_address != NULL) {
+-        address = device_address;
+-    }
+-    if (device_name != NULL) {
+-        name = device_name;
+-    }
+-    return aps->handleDeviceConfigChange(device, address, name);
+-}
+-
+ status_t AudioSystem::setPhoneState(audio_mode_t state)
+ {
+     if (uint32_t(state) >= AUDIO_MODE_CNT) return BAD_VALUE;
+diff --git a/media/libaudioclient/IAudioPolicyService.cpp b/media/libaudioclient/IAudioPolicyService.cpp
+index f0f413d..ff3d37e 100644
+--- a/media/libaudioclient/IAudioPolicyService.cpp
++++ b/media/libaudioclient/IAudioPolicyService.cpp
+@@ -33,7 +33,6 @@ namespace android {
+ enum {
+     SET_DEVICE_CONNECTION_STATE = IBinder::FIRST_CALL_TRANSACTION,
+     GET_DEVICE_CONNECTION_STATE,
+-    HANDLE_DEVICE_CONFIG_CHANGE,
+     SET_PHONE_STATE,
+     SET_RINGER_MODE,    // reserved, no longer used
+     SET_FORCE_USE,
+@@ -117,19 +116,6 @@ public:
+         return static_cast <audio_policy_dev_state_t>(reply.readInt32());
+     }
+ 
+-    virtual status_t handleDeviceConfigChange(audio_devices_t device,
+-                                              const char *device_address,
+-                                              const char *device_name)
+-    {
+-        Parcel data, reply;
+-        data.writeInterfaceToken(IAudioPolicyService::getInterfaceDescriptor());
+-        data.writeInt32(static_cast <uint32_t>(device));
+-        data.writeCString(device_address);
+-        data.writeCString(device_name);
+-        remote()->transact(HANDLE_DEVICE_CONFIG_CHANGE, data, &reply);
+-        return static_cast <status_t> (reply.readInt32());
+-    }
+-
+     virtual status_t setPhoneState(audio_mode_t state)
+     {
+         Parcel data, reply;
+@@ -861,23 +847,6 @@ status_t BnAudioPolicyService::onTransact(
+             return NO_ERROR;
+         } break;
+ 
+-        case HANDLE_DEVICE_CONFIG_CHANGE: {
+-            CHECK_INTERFACE(IAudioPolicyService, data, reply);
+-            audio_devices_t device =
+-                    static_cast <audio_devices_t>(data.readInt32());
+-            const char *device_address = data.readCString();
+-            const char *device_name = data.readCString();
+-            if (device_address == nullptr || device_name == nullptr) {
+-                ALOGE("Bad Binder transaction: HANDLE_DEVICE_CONFIG_CHANGE for device %u", device);
+-                reply->writeInt32(static_cast<int32_t> (BAD_VALUE));
+-            } else {
+-                reply->writeInt32(static_cast<uint32_t> (handleDeviceConfigChange(device,
+-                                                                                  device_address,
+-                                                                                  device_name)));
+-            }
+-            return NO_ERROR;
+-        } break;
+-
+         case SET_PHONE_STATE: {
+             CHECK_INTERFACE(IAudioPolicyService, data, reply);
+             reply->writeInt32(static_cast <uint32_t>(setPhoneState(
+diff --git a/media/libaudioclient/include/media/IAudioPolicyService.h b/media/libaudioclient/include/media/IAudioPolicyService.h
+index d111fd2..e8db4b1 100644
+--- a/media/libaudioclient/include/media/IAudioPolicyService.h
++++ b/media/libaudioclient/include/media/IAudioPolicyService.h
+@@ -48,9 +48,6 @@ public:
+                                               const char *device_name) = 0;
+     virtual audio_policy_dev_state_t getDeviceConnectionState(audio_devices_t device,
+                                                                   const char *device_address) = 0;
+-    virtual status_t handleDeviceConfigChange(audio_devices_t device,
+-                                              const char *device_address,
+-                                              const char *device_name) = 0;
+     virtual status_t setPhoneState(audio_mode_t state) = 0;
+     virtual status_t setForceUse(audio_policy_force_use_t usage,
+                                     audio_policy_forced_cfg_t config) = 0;
+diff --git a/services/audiopolicy/AudioPolicyInterface.h b/services/audiopolicy/AudioPolicyInterface.h
+index 9c9e2c9..a3bd14e 100644
+--- a/services/audiopolicy/AudioPolicyInterface.h
++++ b/services/audiopolicy/AudioPolicyInterface.h
+@@ -89,10 +89,6 @@ public:
+     // retrieve a device connection status
+     virtual audio_policy_dev_state_t getDeviceConnectionState(audio_devices_t device,
+                                                                           const char *device_address) = 0;
+-    // indicate a change in device configuration
+-    virtual status_t handleDeviceConfigChange(audio_devices_t device,
+-                                              const char *device_address,
+-                                              const char *device_name) = 0;
+     // indicate a change in phone state. Valid phones states are defined by audio_mode_t
+     virtual void setPhoneState(audio_mode_t state) = 0;
+     // force using a specific device category for the specified usage
+diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+index e8e531a..8047956 100644
+--- a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
++++ b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+@@ -335,50 +335,6 @@ audio_policy_dev_state_t AudioPolicyManager::getDeviceConnectionState(audio_devi
+             AUDIO_POLICY_DEVICE_STATE_AVAILABLE : AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE;
+ }
+ 
+-status_t AudioPolicyManager::handleDeviceConfigChange(audio_devices_t device,
+-                                                      const char *device_address,
+-                                                      const char *device_name)
+-{
+-    status_t status;
+-
+-    ALOGV("handleDeviceConfigChange(() device: 0x%X, address %s name %s",
+-          device, device_address, device_name);
+-
+-    // connect/disconnect only 1 device at a time
+-    if (!audio_is_output_device(device) && !audio_is_input_device(device)) return BAD_VALUE;
+-
+-    // Check if the device is currently connected
+-    sp<DeviceDescriptor> devDesc =
+-            mHwModules.getDeviceDescriptor(device, device_address, device_name);
+-    ssize_t index = mAvailableOutputDevices.indexOf(devDesc);
+-    if (index < 0) {
+-        // Nothing to do: device is not connected
+-        return NO_ERROR;
+-    }
+-
+-    // Toggle the device state: UNAVAILABLE -> AVAILABLE
+-    // This will force reading again the device configuration
+-    status = setDeviceConnectionState(device,
+-                                      AUDIO_POLICY_DEVICE_STATE_UNAVAILABLE,
+-                                      device_address, device_name);
+-    if (status != NO_ERROR) {
+-        ALOGW("handleDeviceConfigChange() error disabling connection state: %d",
+-              status);
+-        return status;
+-    }
+-
+-    status = setDeviceConnectionState(device,
+-                                      AUDIO_POLICY_DEVICE_STATE_AVAILABLE,
+-                                      device_address, device_name);
+-    if (status != NO_ERROR) {
+-        ALOGW("handleDeviceConfigChange() error enabling connection state: %d",
+-              status);
+-        return status;
+-    }
+-
+-    return NO_ERROR;
+-}
+-
+ uint32_t AudioPolicyManager::updateCallRouting(audio_devices_t rxDevice, uint32_t delayMs)
+ {
+     bool createTxPatch = false;
+@@ -4430,7 +4386,7 @@ SortedVector<audio_io_handle_t> AudioPolicyManager::getOutputsForDevice(
+ 
+     ALOGVV("getOutputsForDevice() device %04x", device);
+     for (size_t i = 0; i < openOutputs.size(); i++) {
+-        ALOGVV("output %zu isDuplicated=%d device=%04x",
++        ALOGVV("output %d isDuplicated=%d device=%04x",
+                 i, openOutputs.valueAt(i)->isDuplicated(),
+                 openOutputs.valueAt(i)->supportedDevices());
+         if ((device & openOutputs.valueAt(i)->supportedDevices()) == device) {
+@@ -4862,7 +4818,7 @@ uint32_t AudioPolicyManager::checkDeviceMuteStrategies(const sp<AudioOutputDescr
+                         == AUDIO_DEVICE_NONE) {
+                     continue;
+                 }
+-                ALOGVV("checkDeviceMuteStrategies() %s strategy %zu (curDevice %04x)",
++                ALOGVV("checkDeviceMuteStrategies() %s strategy %d (curDevice %04x)",
+                       mute ? "muting" : "unmuting", i, curDevice);
+                 setStrategyMute((routing_strategy)i, mute, desc, mute ? 0 : delayMs);
+                 if (isStrategyActive(desc, (routing_strategy)i)) {
+diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.h b/services/audiopolicy/managerdefault/AudioPolicyManager.h
+index 03e476d..1ec1191 100644
+--- a/services/audiopolicy/managerdefault/AudioPolicyManager.h
++++ b/services/audiopolicy/managerdefault/AudioPolicyManager.h
+@@ -93,9 +93,6 @@ public:
+                                                           const char *device_name);
+         virtual audio_policy_dev_state_t getDeviceConnectionState(audio_devices_t device,
+                                                                               const char *device_address);
+-        virtual status_t handleDeviceConfigChange(audio_devices_t device,
+-                                                  const char *device_address,
+-                                                  const char *device_name);
+         virtual void setPhoneState(audio_mode_t state);
+         virtual void setForceUse(audio_policy_force_use_t usage,
+                                  audio_policy_forced_cfg_t config);
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
+index a1601e2..5693b25 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
+@@ -59,23 +59,6 @@ audio_policy_dev_state_t AudioPolicyService::getDeviceConnectionState(
+                                                       device_address);
+ }
+ 
+-status_t AudioPolicyService::handleDeviceConfigChange(audio_devices_t device,
+-                                                  const char *device_address,
+-                                                  const char *device_name)
+-{
+-    if (mAudioPolicyManager == NULL) {
+-        return NO_INIT;
+-    }
+-    if (!settingsAllowed()) {
+-        return PERMISSION_DENIED;
+-    }
+-
+-    ALOGV("handleDeviceConfigChange()");
+-    Mutex::Autolock _l(mLock);
+-    return mAudioPolicyManager->handleDeviceConfigChange(device, device_address,
+-                                                         device_name);
+-}
+-
+ status_t AudioPolicyService::setPhoneState(audio_mode_t state)
+ {
+     if (mAudioPolicyManager == NULL) {
+diff --git a/services/audiopolicy/service/AudioPolicyService.h b/services/audiopolicy/service/AudioPolicyService.h
+index a963429..d5abb08 100644
+--- a/services/audiopolicy/service/AudioPolicyService.h
++++ b/services/audiopolicy/service/AudioPolicyService.h
+@@ -66,9 +66,6 @@ public:
+     virtual audio_policy_dev_state_t getDeviceConnectionState(
+                                                                 audio_devices_t device,
+                                                                 const char *device_address);
+-    virtual status_t handleDeviceConfigChange(audio_devices_t device,
+-                                              const char *device_address,
+-                                              const char *device_name);
+     virtual status_t setPhoneState(audio_mode_t state);
+     virtual status_t setForceUse(audio_policy_force_use_t usage, audio_policy_forced_cfg_t config);
+     virtual audio_policy_forced_cfg_t getForceUse(audio_policy_force_use_t usage);
+-- 
+2.7.4
+
