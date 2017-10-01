@@ -65,6 +65,7 @@ endif
 
 PRODUCT_PACKAGES += \
     libnetcmdiface \
+    wificond \
     wpa_supplicant \
     wpa_supplicant.conf
 
@@ -130,7 +131,12 @@ $(LOCAL_PATH)/configsnew/manifest.xml:system/vendor/manifest.xml
 PRODUCT_PACKAGES += \
 libbt-vendor
 
-#
+# Camera
+PRODUCT_PACKAGES += \
+    android.hardware.camera.provider@2.4-impl \
+    camera.device@1.0-impl \
+
+# Keymaster
 PRODUCT_PACKAGES += \
 android.hardware.keymaster@3.0-service \
 android.hardware.keymaster@3.0-impl
