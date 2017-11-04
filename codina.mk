@@ -169,6 +169,10 @@ android.hardware.vibrator@1.0-impl
 #PRODUCT_PACKAGES += \
 #android.hardware.sensors@1.0-impl
 
+# Lights
+PRODUCT_PACKAGES += \
+android.hardware.light@2.0_hal
+
 # GNSS HAL
 PRODUCT_PACKAGES += \
 android.hardware.gnss@1.0-impl
