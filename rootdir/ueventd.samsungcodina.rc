@@ -1,8 +1,8 @@
 # NMF CM devices
 /dev/cm_channel           0777   media      system
 /dev/cm_control           0777   media      system
-/dev/cm_sia_trace         0777   media      system
-/dev/cm_sva_trace         0777   media      system
+/dev/cm_sia_trace         0444   media      system
+/dev/cm_sva_trace         0444   media      system
 
 # XTI trace device
 /dev/stm                  0777   media      system
@@ -23,7 +23,7 @@
 /dev/ddr_opp              0777   media     system
 
 # hwmem driver
-/dev/hwmem                0777   media      system
+/dev/hwmem                0666   media      system
 
 # Mali 3D IP
 /dev/mali                 0666   system     graphics
@@ -41,22 +41,23 @@
 /dev/ttyGS0               0060   root       radio
 
 # Permission for dun
-/dev/dun                  0660   system     system
+/dev/dun                  0777   system     system
 
 # Modem storage pipe
 /dev/rpc                  0600   radio      radio
 
 # wlan
-/dev/rfkill               0660   root       wifi
+/dev/rfkill               0777   root       wifi
 
 # Trusted Eexecution Engine
 /dev/tee                  0666   root       system
 
-/dev/block/mmcblk0p19     0660   system     system
+/dev/block/mmcblk0p19     0777   system     system
 
 # Sensors
-/dev/mpu                  0660   system     system
-/dev/mpuirq               0660   system     system
-/dev/timerirq             0660   system     system
+/dev/mpu                  0777   system     system
+/dev/mpuirq               0777   system     system
+/dev/timerirq             0777   system     system
 
-/dev/block/mmcblk0p19     0660   system     system
+/dev/block/mmcblk0p19     0777   system     system
+/debug/nmf-cm           0777   system     media
