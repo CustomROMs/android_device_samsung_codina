@@ -237,12 +237,12 @@ else
 endif
 
 # Dex Pre-opt
-# WITH_DEXPREOPT := true
+WITH_DEXPREOPT := true
 # Enable position-independent code for odex files
 # WITH_DEXPREOPT_PIC := true
 # Disable compression of precompiled odex with gzip
-# WITH_DEXPREOPT_COMP := false
-# DONT_DEXPREOPT_PREBUILTS := true
+WITH_DEXPREOPT_COMP := true
+DONT_DEXPREOPT_PREBUILTS := true
 
 # Charging mode
 # BOARD_NO_CHARGER_LED := true
