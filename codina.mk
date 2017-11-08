@@ -69,6 +69,9 @@ PRODUCT_PACKAGES += \
     wpa_supplicant \
     wpa_supplicant.conf
 
+PRODUCT_PACKAGES += \
+    libstlport
+
 # Wi-Fi firmware
 # $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4330/device-bcm.mk)
 
