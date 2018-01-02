@@ -224,6 +224,7 @@ on post-fs-data
     mkdir /data/misc/dhcp 0770 dhcp dhcp
     chown dhcp dhcp /data/misc/dhcp
     chown wifi root /dev/rfkill
+    chown wifi wifi /sys/module/dhd/parameters/firmware_path
 
     # for TRP/TIS
     write /data/.psm.info 1

@@ -224,6 +224,7 @@ on post-fs-data
     mkdir /data/misc/dhcp 0770 dhcp dhcp
     chown dhcp dhcp /data/misc/dhcp
     chown wifi root /dev/rfkill
+    chown wifi wifi /sys/module/dhd/parameters/firmware_path
 
     # for TRP/TIS
     write /data/.psm.info 1
@@ -459,7 +460,7 @@ service immvibed /system/bin/immvibed
 on property:ro.dumpstate.dmesg=1
     write /proc/sys/kernel/dmesg_restrict 0
 
-service p2p_supplicant /system/bin/wpa_supplicant \
+service p2p_supplicant /system/vendor/bin/hw/wpa_supplicant \
    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
    -I/system/etc/wifi/wpa_supplicant_overlay.conf -N \
    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf \
@@ -472,7 +473,7 @@ service p2p_supplicant /system/bin/wpa_supplicant \
     group system wakelock
     oneshot
 
-service wpa_supplicant /system/bin/wpa_supplicant \
+service wpa_supplicant /system/vendor/bin/hw/wpa_supplicant \
    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
    -I/system/etc/wifi/wpa_supplicant_overlay.conf \
    -e/data/misc/wifi/entropy.bin -g@android:wpa_wlan0
