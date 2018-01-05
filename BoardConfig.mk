@@ -109,7 +109,7 @@ ifeq ($(DEVICE_ENABLE_TOOLCHAIN),true)
 # KERNEL_TOOLCHAIN := /home/sergeyl/eabi/prebuilt/gcc-linaro-arm-linux-gnueabihf-4.9-2014.09_linux/bin
 # KERNEL_TOOLCHAIN_PREFIX := arm-linux-gnueabihf-
 # KERNEL_TOOLCHAIN_PREFIX:=$(ANDROID_BUILD_TOP)/prebuilts/gcc/$(HOST_OS)-x86/arm/arm-eabi-5.3/bin/arm-eabi-
-KERNEL_TOOLCHAIN := /media/f/root/kernel/armv7a-linux-gnueabihf-5.2/bin
+KERNEL_TOOLCHAIN := /media/disk/root/kernel/armv7a-linux-gnueabihf-5.2/bin
 #KERNEL_TOOLCHAIN := /home/chrono/root/arm-linux-gnueabihf-5.0/bin
 KERNEL_TOOLCHAIN_PREFIX := armv7a-linux-gnueabihf-
 endif
