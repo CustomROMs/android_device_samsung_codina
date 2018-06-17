@@ -242,18 +242,31 @@ endif
 # Disable dexpreopt
 # WITH_DEXPREOPT := false
 # Enable Dex Pre-opt
-WITH_DEXPREOPT := true
+#WITH_DEXPREOPT := true
 # Enable position-independent code for odex files
-WITH_DEXPREOPT_PIC := true
+#WITH_DEXPREOPT_PIC := true
 # Disable/Enable compression of precompiled odex with gzip
-WITH_DEXPREOPT_COMP := false
-DONT_DEXPREOPT_PREBUILTS := true
+#WITH_DEXPREOPT_COMP := false
+#DONT_DEXPREOPT_PREBUILTS := true
+
+# Don't dex preopt apps to avoid I/O congestion due to paging larger sized
+# pre-compiled .odex files as opposed to background generated interpret-only
+# odex files.
+WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true
+WITH_DEX_PREOPT_GENERATE_PROFILE := false
+
+PRODUCT_DEX_PREOPT_BOOT_FLAGS += --compiler-filter=speed
+PRODUCT_SYSTEM_SERVER_COMPILER_FILTER := speed
+
+# Include an expanded selection of fonts
+EXTENDED_FONT_FOOTPRINT := true
 
 # Charging mode
 # BOARD_CHARGER_DISABLE_INIT_BLANK := true
 # BOARD_CHARGING_MODE_BOOTING_LPM := /sys/devices/virtual/power_supply/battery/lpm_mode
 # BOARD_CHARGER_ENABLE_SUSPEND := true
 # BOARD_NO_CHARGER_LED := true
-# BOARD_CHARGER_SHOW_PERCENTAGE := true
+#BOARD_CHARGER_SHOW_PERCENTAGE := true
 BOARD_LPM_BOOT_ARGUMENT_NAME := lpm_boot
 BOARD_LPM_BOOT_ARGUMENT_VALUE := 1
+WITH_LINEAGE_CHARGER := true
