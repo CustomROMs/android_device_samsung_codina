@@ -795,7 +795,7 @@ struct sensors_module_t HAL_MODULE_INFO_SYM = {
 };
 
 /* enable and disable sensors here */
-static int m_poll_activate(struct sensors_poll_device_t *dev,
+static int m_poll_activate(sensors_poll_device_1_t *dev,
 		int handle, int enabled)
 {
 	int status = 0;
@@ -866,7 +866,7 @@ static int set_delay_mag(int microseconds)
 	return set_delay_acc(microseconds);
 }
 
-static int m_poll_set_delay(struct sensors_poll_device_t *dev,
+static int m_poll_set_delay(sensors_poll_device_1_t *dev,
 		int handle, int64_t ns)
 {
 	int microseconds = ns / 1000;
@@ -911,7 +911,7 @@ static int m_poll_set_delay(struct sensors_poll_device_t *dev,
 }
 
 
-static int m_poll(struct sensors_poll_device_t *dev,
+static int m_poll(sensors_poll_device_1_t *dev,
 		sensors_event_t *data, int count)
 {
 	int i;
@@ -943,11 +943,25 @@ static int m_poll(struct sensors_poll_device_t *dev,
 	return events;
 }
 
+static int m_poll_batch(struct sensors_poll_device_1 *dev, int handle,
+        int flags, int64_t period_ns, int64_t timeout) {
+	(void)flags;
+	(void)timeout;
+	m_poll_set_delay(dev, handle, period_ns);
+	return 0;
+}
+
+static int m_poll_flush(struct sensors_poll_device_1 *dev, int handle) {
+	(void)dev;
+	(void)handle;
+	return 0;
+}
+
 /* close instace of the deevie */
 static int m_poll_close(struct hw_device_t *dev)
 {
-	struct sensors_poll_device_t *poll_device =
-		(struct sensors_poll_device_t *) dev;
+	sensors_poll_device_1_t *poll_device =
+		(sensors_poll_device_1_t *) dev;
 	if(DEBUG)
 		ALOGD("Meticulus: Closing poll data context.\n");
 
@@ -970,17 +984,19 @@ static int m_open_sensors(const struct hw_module_t *module,
 	int status = -EINVAL;
 
 	if (!strcmp(name, SENSORS_HARDWARE_POLL)) {
-		struct sensors_poll_device_t *poll_device;
+		sensors_poll_device_1_t *poll_device;
 		poll_device = malloc(sizeof(*poll_device));
 		if (!poll_device)
 			return status;
 		memset(poll_device, 0, sizeof(*poll_device));
 		poll_device->common.tag = HARDWARE_DEVICE_TAG;
-		poll_device->common.version = 0;
+		poll_device->common.version = SENSORS_DEVICE_API_VERSION_1_3;
 		poll_device->common.module = (struct hw_module_t *) module;
 		poll_device->common.close = m_poll_close;
 		poll_device->activate = m_poll_activate;
 		poll_device->setDelay = m_poll_set_delay;
+		poll_device->batch = m_poll_batch;
+		poll_device->flush = m_poll_flush;
 		poll_device->poll = m_poll;
 		*device = &poll_device->common;
 
