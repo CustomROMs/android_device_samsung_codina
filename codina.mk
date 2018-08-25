@@ -352,7 +352,7 @@ include vendor/samsung/u8500-common/vendor-common.mk
 $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.mk)
 
 # Build GO
-# $(call inherit-product, build/make/target/product/go_defaults_512.mk)
+$(call inherit-product, build/make/target/product/go_defaults_512.mk)
 
 # STE Modem
 PRODUCT_COPY_FILES += \
