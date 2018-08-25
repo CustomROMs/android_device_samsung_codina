@@ -1,0 +1,70 @@
+Subject: [PATCH] RemoteViews: Fix "Could not copy bitmap to parcel blob"
+
+Limit the size of mBitmapCache's mBitmaps, to prevent
+opening too many fds when transfering between processes by Parcel.
+
+diff --git a/core/java/android/widget/RemoteViews.java b/core/java/android/widget/RemoteViews.java
+index d0d233e..06c2d31 100644
+--- a/core/java/android/widget/RemoteViews.java
++++ b/core/java/android/widget/RemoteViews.java
+@@ -54,6 +54,7 @@
+ import android.text.TextUtils;
+ import android.util.ArrayMap;
+ import android.util.Log;
++import android.util.Slog;
+ import android.view.LayoutInflater;
+ import android.view.LayoutInflater.Filter;
+ import android.view.RemotableViewMethod;
+@@ -1102,7 +1103,10 @@ public String getActionName() {
+     }
+ 
+     private static class BitmapCache {
++        static final int MAX_CACHE_BITMAPS = 50;
++
+         ArrayList<Bitmap> mBitmaps;
++        int mCount;
+ 
+         public BitmapCache() {
+             mBitmaps = new ArrayList<Bitmap>();
+@@ -1113,7 +1117,22 @@ public BitmapCache(Parcel source) {
+             mBitmaps = new ArrayList<Bitmap>();
+             for (int i = 0; i < count; i++) {
+                 Bitmap b = Bitmap.CREATOR.createFromParcel(source);
++                addBitmap(b);
++            }
++        }
++
++        private int addBitmap(Bitmap b) {
++            mCount ++;
++            if (mCount > MAX_CACHE_BITMAPS) {
++                int index = (mCount - 1) % MAX_CACHE_BITMAPS;
++                Slog.w(LOG_TAG, "RemoteViews try to cache " + mCount
++                        + " bitmaps, only allows " + MAX_CACHE_BITMAPS
++                        + ", replace bitmap at index " + index);
++                mBitmaps.set(index, b);
++                return index;
++            } else {
+                 mBitmaps.add(b);
++                return (mCount - 1);
+             }
+         }
+ 
+@@ -1124,8 +1143,7 @@ public int getBitmapId(Bitmap b) {
+                 if (mBitmaps.contains(b)) {
+                     return mBitmaps.indexOf(b);
+                 } else {
+-                    mBitmaps.add(b);
+-                    return (mBitmaps.size() - 1);
++                    return addBitmap(b);
+                 }
+             }
+         }
+@@ -1152,7 +1170,7 @@ public void assimilate(BitmapCache bitmapCache) {
+             for (int i = 0; i < count; i++) {
+                 Bitmap b = bitmapsToBeAdded.get(i);
+                 if (!mBitmaps.contains(b)) {
+-                    mBitmaps.add(b);
++                    addBitmap(b);
+                 }
+             }
+         }

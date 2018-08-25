@@ -1,0 +1,27 @@
+Subject: [PATCH] allow forcing HighEndGfx mode
+
+people have already started fipping the lomRam prop to enable
+transparent status bar, this will enable it with fewer
+repercussions
+
+diff --git a/core/java/android/app/ActivityManager.java b/core/java/android/app/ActivityManager.java
+index 5eca0b3..3f3a200 100644
+--- a/core/java/android/app/ActivityManager.java
++++ b/core/java/android/app/ActivityManager.java
+@@ -1134,7 +1134,15 @@ public static boolean isLowRamDeviceStatic() {
+      */
+     static public boolean isHighEndGfx() {
+         return !isLowRamDeviceStatic() &&
+-                !Resources.getSystem().getBoolean(com.android.internal.R.bool.config_avoidGfxAccel);
++                !Resources.getSystem().getBoolean(com.android.internal.R.bool.config_avoidGfxAccel)
++                || isForcedHighEndGfx();
++    }
++
++    /**
++     * @hide
++     */
++    public static boolean isForcedHighEndGfx() {
++        return SystemProperties.getBoolean("persist.sys.force_highendgfx", false);
+     }
+ 
+     /**

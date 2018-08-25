@@ -1,0 +1,33 @@
+Subject: [PATCH] Optimize setStorageEncryption code
+
+If the filesystem does not support encryption,
+getActiveAdminForCallerLocked is not necessary to be called
+
+diff --git a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
+index 38d7d25dc34..76b1147e5b6 100644
+--- a/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
++++ b/services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java
+@@ -5832,19 +5832,18 @@ public int setStorageEncryption(ComponentName who, boolean encrypt) {
+             // Only system user can set storage encryption
+             if (userHandle != UserHandle.USER_SYSTEM) {
+                 Slog.w(LOG_TAG, "Only owner/system user is allowed to set storage encryption. User "
+-                        + UserHandle.getCallingUserId() + " is not permitted.");
+-                return 0;
++                        + userHandle + " is not permitted.");
++                return DevicePolicyManager.ENCRYPTION_STATUS_UNSUPPORTED;
+             }
+ 
+-            ActiveAdmin ap = getActiveAdminForCallerLocked(who,
+-                    DeviceAdminInfo.USES_ENCRYPTED_STORAGE);
+-
+             // Quick exit:  If the filesystem does not support encryption, we can exit early.
+             if (!isEncryptionSupported()) {
+                 return DevicePolicyManager.ENCRYPTION_STATUS_UNSUPPORTED;
+             }
+ 
+             // (1) Record the value for the admin so it's sticky
++            ActiveAdmin ap = getActiveAdminForCallerLocked(who,
++                    DeviceAdminInfo.USES_ENCRYPTED_STORAGE);
+             if (ap.encryptionRequested != encrypt) {
+                 ap.encryptionRequested = encrypt;
+                 saveSettingsLocked(userHandle);

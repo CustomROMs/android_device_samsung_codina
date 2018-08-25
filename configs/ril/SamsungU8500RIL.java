@@ -17,27 +17,46 @@
 package com.android.internal.telephony;
 
 import static com.android.internal.telephony.RILConstants.*;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_UNKNOWN;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EDGE;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_GPRS;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_UMTS;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSDPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSUPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPA;
-
-import com.android.internal.telephony.CommandException;
-import com.android.internal.telephony.dataconnection.DataCallResponse;
-import com.android.internal.telephony.dataconnection.DcFailCause;
-import com.android.internal.telephony.RILConstants;
-import com.android.internal.telephony.cdma.CdmaInformationRecords.CdmaSignalInfoRec;
-import com.android.internal.telephony.cdma.SignalToneUtil;
-import com.android.internal.telephony.uicc.IccUtils;
+import static com.android.internal.util.Preconditions.checkNotNull;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.hardware.radio.V1_0.Carrier;
+import android.hardware.radio.V1_0.CarrierRestrictions;
+import android.hardware.radio.V1_0.CdmaBroadcastSmsConfigInfo;
+import android.hardware.radio.V1_0.CdmaSmsAck;
+import android.hardware.radio.V1_0.CdmaSmsMessage;
+import android.hardware.radio.V1_0.CdmaSmsWriteArgs;
+import android.hardware.radio.V1_0.CellInfoCdma;
+import android.hardware.radio.V1_0.CellInfoGsm;
+import android.hardware.radio.V1_0.CellInfoLte;
+import android.hardware.radio.V1_0.CellInfoType;
+import android.hardware.radio.V1_0.CellInfoWcdma;
+import android.hardware.radio.V1_0.DataProfileInfo;
+import android.hardware.radio.V1_0.Dial;
+import android.hardware.radio.V1_0.GsmBroadcastSmsConfigInfo;
+import android.hardware.radio.V1_0.GsmSmsMessage;
+import android.hardware.radio.V1_0.HardwareConfigModem;
+import android.hardware.radio.V1_0.IRadio;
+import android.hardware.radio.V1_0.IccIo;
+import android.hardware.radio.V1_0.ImsSmsMessage;
+import android.hardware.radio.V1_0.LceDataInfo;
+import android.hardware.radio.V1_0.MvnoType;
+import android.hardware.radio.V1_0.NvWriteItem;
+import android.hardware.radio.V1_0.RadioError;
+import android.hardware.radio.V1_0.RadioIndicationType;
+import android.hardware.radio.V1_0.RadioResponseInfo;
+import android.hardware.radio.V1_0.RadioResponseType;
+import android.hardware.radio.V1_0.ResetNvType;
+import android.hardware.radio.V1_0.SelectUiccSub;
+import android.hardware.radio.V1_0.SetupDataCallResult;
+import android.hardware.radio.V1_0.SimApdu;
+import android.hardware.radio.V1_0.SmsWriteArgs;
+import android.hardware.radio.V1_0.UusInfo;
+import android.hardware.radio.deprecated.V1_0.IOemHook;
 import android.net.ConnectivityManager;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;
@@ -47,12 +66,18 @@ import android.net.NetworkRequest;
 import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.HwBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.PowerManager;
-import android.os.SystemProperties;
 import android.os.PowerManager.WakeLock;
+import android.os.RemoteException;
+import android.os.SystemProperties;
+import android.os.WorkSource;
+import android.service.carrier.CarrierIdentifier;
+import android.telephony.CellInfo;
+import android.telephony.ClientRequestStats;
 import android.telephony.ModemActivityInfo;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneNumberUtils;
@@ -67,17 +92,28 @@ import com.android.internal.telephony.gsm.SmsBroadcastConfigInfo;
 import com.android.internal.telephony.gsm.SuppServiceNotification;
 import com.android.internal.telephony.cdma.CdmaCallWaitingNotification;
 import com.android.internal.telephony.cdma.CdmaInformationRecords;
+import com.android.internal.telephony.cdma.CdmaInformationRecords.CdmaSignalInfoRec;
+import com.android.internal.telephony.cdma.SignalToneUtil;
+import com.android.internal.telephony.dataconnection.DataCallResponse;
+import com.android.internal.telephony.dataconnection.DcFailCause;
+import com.android.internal.telephony.uicc.IccUtils;
+import com.android.internal.telephony.CommandException;
+import com.android.internal.telephony.RILConstants;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.Runtime;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Iterator;
+import java.util.Random;
 
 public class SamsungU8500RIL extends RIL implements CommandsInterface {
 
@@ -168,9 +204,12 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     protected ConnectivityHandler mSamsungu8500RILHandler;
     private TelephonyManager mTelephonyManager;
     private Message mPendingGetSimStatus;
+    /* default work source which will blame phone process */
+    private WorkSource mRILDefaultWorkSource;
     private Context mContext;
     private boolean mSignalbarCount = SystemProperties.getInt("ro.telephony.sends_barcount", 0) == 1 ? true : false;
     private boolean mIsSamsungCdma = SystemProperties.getBoolean("ro.ril.samsung_cdma", false);
+    private boolean mSamsungOldRil = SystemProperties.getInt("ro.ril.samsung_old", 0) != 1;
     protected int mPreferredNetworkType;
 
     public SamsungU8500RIL(Context context, int networkMode, int cdmaSubscription, Integer instanceId) {
@@ -180,7 +219,6 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         mContext = context;
     }
 
-    //@Override
     public void setCurrentPreferredNetworkType() {
         if (RILJ_LOGD) riljLog("setCurrentPreferredNetworkType IGNORED");
         /* Google added this as a fix for crespo loosing network type after
@@ -213,7 +251,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     }
 
     @Override
-    public void setPreferredNetworkType(int networkType , Message response) {
+    public void setPreferredNetworkType(int networkType , Message result) {
         /* Samsung modem implementation does bad things when a datacall is running
          * while switching the preferred networktype.
          */
@@ -237,32 +275,38 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             }
             if (hasNetworkTypeChanged(networkType))
             {
-                mSamsungu8500RILHandler.setPreferedNetworkType(networkType, response);
+                mSamsungu8500RILHandler.setPreferedNetworkType(networkType, result);
             }
         } else {
             if (mSamsungu8500RILHandler != null) {
                 mSamsungu8500RILThread = null;
                 mSamsungu8500RILHandler = null;
             }
-            sendPreferedNetworktype(networkType, response);
+            sendPreferedNetworktype(networkType, result);
         }
 
     }
 
     //Sends the real RIL request to the modem.
-    private void sendPreferedNetworktype(int networkType, Message response) {
-        RILRequest rr = RILRequest.obtain(
-                RILConstants.RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE, response);
+    private void sendPreferedNetworktype(int networkType , Message result) {
+        IRadio radioProxy = getRadioProxy(result);
+        if (radioProxy != null) {
+            RILRequest rr = obtainRequest(RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE, result,
+                    mRILDefaultWorkSource);
 
-        rr.mParcel.writeInt(1);
-        rr.mParcel.writeInt(networkType);
+            if (RILJ_LOGD) {
+                riljLog(rr.serialString() + "> " + requestToString(rr.mRequest)
+                        + " networkType = " + networkType);
+            }
+            mPreferredNetworkType = networkType;
+            //mMetrics.writeSetPreferredNetworkType(mPhoneId, networkType);
 
-        mPreferredNetworkType = networkType;
-
-        if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest)
-                + " : " + networkType);
-
-        send(rr);
+            try {
+                radioProxy.setPreferredNetworkType(rr.mSerial, networkType);
+            } catch (RemoteException | RuntimeException e) {
+                handleRadioProxyExceptionForRR(rr, "setPreferredNetworkType", e);
+            }
+        }
     }
 
     /* private class that does the handling for the dataconnection
@@ -573,9 +617,8 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     @Override
     public void
     dial(String address, int clirMode, UUSInfo uusInfo, Message result) {
-        RILRequest rr;
+        RILRequest rr = RILRequest.obtain(RIL_REQUEST_DIAL, result);
 
-        rr = RILRequest.obtain(RIL_REQUEST_DIAL, result);
         rr.mParcel.writeString(address);
         rr.mParcel.writeInt(clirMode);
         rr.mParcel.writeInt(0); // UUS information is absent
@@ -605,6 +648,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             case RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED: ret =  responseVoid(p); break;
             case RIL_UNSOL_RESPONSE_NEW_BROADCAST_SMS: ret = responseString(p); break;
             case RIL_UNSOL_RIL_CONNECTED: ret = responseInts(p); break;
+            // case RIL_UNSOL_STK_SEND_SMS_RESULT: ret = responseInts(p); break; // Samsung STK
             // SAMSUNG STATES
             case RIL_UNSOL_AM: ret = responseString(p); break;
             case RIL_UNSOL_DUN_PIN_CONTROL_SIGNAL: ret = responseVoid(p); break;
@@ -668,6 +712,14 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
                 setCdmaSubscriptionSource(mCdmaSubscription, null);
                 notifyRegistrantsRilConnectionChanged(((int[])ret)[0]);
                 break;
+            /*case RIL_UNSOL_STK_SEND_SMS_RESULT:
+                if (RILJ_LOGD) unsljLogRet(response, ret);
+
+                if (mCatSendSmsResultRegistrant != null) {
+                    mCatSendSmsResultRegistrant.notifyRegistrant(
+                            new AsyncResult (null, ret, null));
+                }
+                break;*/
             // SAMSUNG STATES
             case RIL_UNSOL_AM:
                 if (RILJ_LOGD) samsungUnsljLogRet(response, ret);
@@ -730,7 +782,7 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
     protected Object
     responseCallList(Parcel p) {
         int num;
-        boolean isVideo, isVoicePrivacy;
+        boolean isVideo;
         ArrayList<DriverCall> response;
         DriverCall dc;
         int dataAvail = p.dataAvail();
@@ -758,14 +810,13 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             dc.als                  = p.readInt();
             dc.isVoice              = (0 != p.readInt());
             isVideo                 = (0 != p.readInt());
-            isVoicePrivacy          = (0 != p.readInt());
-            dc.isVoicePrivacy       = isVoicePrivacy;
+            dc.isVoicePrivacy       = (0 != p.readInt());
             dc.number               = p.readString();
-            int np                  = 0;
-            dc.numberPresentation   = 1;
-            dc.name                 = null;
-            dc.namePresentation     = 0;
-            int uusInfoPresent      = 0;
+            int np                  = p.readInt();
+            dc.numberPresentation   = DriverCall.presentationFromCLIP(np);
+            dc.name                 = p.readString();
+            dc.namePresentation     = p.readInt();
+            int uusInfoPresent      = p.readInt();
 
             Rlog.d(RILJ_LOG_TAG, "state = " + dc.state);
             Rlog.d(RILJ_LOG_TAG, "index = " + dc.index);
@@ -877,27 +928,46 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
         return signalStrength;
     }
 
-    @Override public void
-    getVoiceRadioTechnology(Message result) {
-        RILRequest rr = RILRequest.obtain(RIL_REQUEST_VOICE_RADIO_TECH, result);
+    @Override
+    public void getVoiceRadioTechnology(Message result) {
+        IRadio radioProxy = getRadioProxy(result);
+        if (radioProxy != null) {
+            RILRequest rr = obtainRequest(RIL_REQUEST_VOICE_RADIO_TECH, result,
+                    mRILDefaultWorkSource);
 
-        if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
+            if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
-        // RIL versions below 7 do not support this request
-        if (mRilVersion >= 7)
-            send(rr);
-        else
-            Rlog.d(RILJ_LOG_TAG, "RIL_REQUEST_VOICE_RADIO_TECH blocked!!!");
+            try {
+               // RIL versions below 7 do not support this request
+               if (mRilVersion >= 7)
+                    radioProxy.getVoiceRadioTechnology(rr.mSerial);
+               else
+                    Rlog.d(RILJ_LOG_TAG, "RIL_REQUEST_VOICE_RADIO_TECH blocked!!!");
+            } catch (RemoteException | RuntimeException e) {
+                handleRadioProxyExceptionForRR(rr, "getVoiceRadioTechnology", e);
+            }
+        }
     }
 
     @Override
-    public void getCdmaSubscriptionSource(Message response) {
-        RILRequest rr = RILRequest.obtain(
-                RILConstants.RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE, response);
+    public void getCdmaSubscriptionSource(Message result) {
+        IRadio radioProxy = getRadioProxy(result);
+        if (radioProxy != null) {
+            RILRequest rr = obtainRequest(RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE, result,
+                    mRILDefaultWorkSource);
 
-        if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
-        Rlog.d(RILJ_LOG_TAG, "RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE blocked!!!");
-        //send(rr);
+            if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
+
+            try {
+               // RIL versions below 7 do not support this request
+               if (mRilVersion >= 7)
+                  radioProxy.getCdmaSubscriptionSource(rr.mSerial);
+               else
+                  Rlog.d(RILJ_LOG_TAG, "RIL_REQUEST_CDMA_GET_SUBSCRIPTION_SOURCE blocked!!!");
+            } catch (RemoteException | RuntimeException e) {
+                handleRadioProxyExceptionForRR(rr, "getCdmaSubscriptionSource", e);
+            }
+        }
     }
 
     // Hack for Lollipop
@@ -923,65 +993,6 @@ public class SamsungU8500RIL extends RIL implements CommandsInterface {
             super.getIccCardStatus(mPendingGetSimStatus);
             mPendingGetSimStatus = null;
         }
-    }
-
-    // Hack for Lollipop
-    // System expects addresses, not gateways
-    @Override
-    protected DataCallResponse getDataCallResponse(Parcel p, int version) {
-        DataCallResponse dataCall = new DataCallResponse();
-
-        //dataCall.version = version;
-        if (version < 5) {
-            dataCall.cid = p.readInt();
-            dataCall.active = p.readInt();
-            dataCall.type = p.readString();
-            if (version < 4 || needsOldRilFeature("datacallapn")) {
-                p.readString(); // APN - not used
-            }
-            String addresses = p.readString();
-            if (!TextUtils.isEmpty(addresses)) {
-                dataCall.addresses = addresses.split(" ");
-            }
-            // DataCallState needs an ifname. Since we don't have one use the name from the ThrottleService resource (default=rmnet0).
-            dataCall.ifname = Resources.getSystem().getString(com.android.internal.R.string.config_datause_iface);
-        } else {
-            dataCall.status = p.readInt();
-            if (needsOldRilFeature("usehcradio"))
-                dataCall.suggestedRetryTime = -1;
-            else
-                dataCall.suggestedRetryTime = p.readInt();
-            dataCall.cid = p.readInt();
-            dataCall.active = p.readInt();
-            dataCall.type = p.readString();
-            dataCall.ifname = p.readString();
-            if ((dataCall.status == DcFailCause.NONE.getErrorCode()) &&
-                    TextUtils.isEmpty(dataCall.ifname)) {
-              throw new RuntimeException("getDataCallResponse, no ifname");
-            }
-            String addresses = p.readString();
-            if (!TextUtils.isEmpty(addresses)) {
-                dataCall.addresses = addresses.split(" ");
-            }
-            String dnses = p.readString();
-            if (!TextUtils.isEmpty(dnses)) {
-                dataCall.dnses = dnses.split(" ");
-            }
-            p.readString();
-            if (!TextUtils.isEmpty(addresses)) {
-                dataCall.gateways = dataCall.addresses;
-            }
-            if (version >= 10) {
-                String pcscf = p.readString();
-                if (!TextUtils.isEmpty(pcscf)) {
-                    dataCall.pcscf = pcscf.split(" ");
-                }
-            }
-            if (version >= 11) {
-                dataCall.mtu = p.readInt();
-            }
-        }
-        return dataCall;
     }
 
     @Override

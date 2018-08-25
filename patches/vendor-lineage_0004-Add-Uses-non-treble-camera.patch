@@ -1,0 +1,38 @@
+Subject: [PATCH] soong_config: Add TARGET_USES_NON_TREBLE_CAMERA variable
+
+* Soong product variable 'uses_non_treble_camera'
+
+diff --git a/build/soong/android/variable.go b/build/soong/android/variable.go
+index 188d803..b322d70 100644
+--- a/build/soong/android/variable.go
++++ b/build/soong/android/variable.go
+@@ -3,6 +3,9 @@
+ 	Has_legacy_camera_hal1 struct {
+ 		Cflags []string
+ 	}
++	Uses_non_treble_camera struct {
++		Cflags []string
++	}
+ 	Needs_text_relocations struct {
+ 		Cppflags []string
+ 	}
+@@ -26,6 +29,7 @@
+ 
+ type ProductVariables struct {
+ 	Has_legacy_camera_hal1  *bool `json:",omitempty"`
++	Uses_non_treble_camera  *bool `json:",omitempty"`
+ 	Needs_text_relocations  *bool `json:",omitempty"`
+ 	Specific_camera_parameter_library  *string `json:",omitempty"`
+ 	Target_shim_libs  *string `json:",omitempty"`
+diff --git a/build/soong/soong_config.mk b/build/soong/soong_config.mk
+index 9bff104..a032db4 100644
+--- a/build/soong/soong_config.mk
++++ b/build/soong/soong_config.mk
+@@ -5,6 +5,7 @@
+ 	echo '{'; \
+ 	echo '"Lineage": {'; \
+ 	echo '    "Has_legacy_camera_hal1": $(if $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)),true,false),'; \
++	echo '    "Uses_non_treble_camera": $(if $(filter true,$(TARGET_USES_NON_TREBLE_CAMERA)),true,false),'; \
+ 	echo '    "Needs_text_relocations": $(if $(filter true,$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)),true,false),'; \
+ 	echo '    "Specific_camera_parameter_library": "$(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY)",'; \
+ 	echo '    "Target_shim_libs": "$(subst $(space),:,$(TARGET_LD_SHIM_LIBS))",'; \

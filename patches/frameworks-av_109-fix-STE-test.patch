@@ -1,0 +1,14 @@
+diff --git a/media/ndk/NdkImageReader.cpp b/media/ndk/NdkImageReader.cpp
+index 85ba920..e347910 100644
+--- a/media/ndk/NdkImageReader.cpp
++++ b/media/ndk/NdkImageReader.cpp
+@@ -149,7 +149,9 @@
+     msg->setPointer(
+         AImageReader::kCallbackFpKey, (void*) mListener.onBufferRemoved);
+     msg->setPointer(AImageReader::kContextKey, mListener.context);
++#ifndef STE_HARDWARE
+     msg->setObject(AImageReader::kGraphicBufferKey, gBuffer);
++#endif
+     msg->post();
+ }
+ 

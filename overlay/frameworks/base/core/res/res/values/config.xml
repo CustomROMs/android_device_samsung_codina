@@ -103,21 +103,6 @@
     -->
     <integer name="config_doubleTapOnHomeBehavior">3</integer>
 
-    <!-- Hardware keys present on the device with the ability to wake, stored as a bit field.
-         This integer should equal the sum of the corresponding value for each
-         of the following keys present:
-             1 - Home
-             2 - Back
-             4 - Menu
-             8 - Assistant (search)
-            16 - App switch
-            32 - Camera
-            64 - Volume rocker
-         For example, a device with Home, Back and Menu keys would set this
-         config to 7. -->
-<!--
-    <integer name="config_deviceHardwareWakeKeys">1</integer>
--->
     <!-- Package name(s) containing location provider support.
          These packages can contain services implementing location providers,
          such as the Geocode Provider, Network Location Provider, and
@@ -132,11 +117,14 @@
          that matches the signature of at least one package on this list.
          -->
     <string-array name="config_locationProviderPackageNames" translatable="false">
-         <!--The standard AOSP fused location provider -->
+        <!-- The standard AOSP fused location provider -->
         <item>com.android.location.fused</item>
         <!-- The Google Network Location Services location provider -->
         <item>com.google.android.location</item>
+        <!-- The Google provider -->
         <item>com.google.android.gms</item>
+        <!-- microG unifiednlp location provider (standalone) -->
+        <item>org.microg.nlp</item>
     </string-array>
 
     <!-- The default iface on which to monitor data use -->
@@ -163,11 +151,22 @@
 
     <!-- Values for GPS configuration -->
     <string-array translatable="false" name="config_gpsParameters">
+        <item>XTRA_SERVER_1=http://gllto.glpals.com/4day/glo/v2/latest/lto2.dat</item>
+        <item>XTRA_SERVER_2=http://gllto.glpals.com/4day/glo/v2/latest/lto2.dat</item>
+        <item>XTRA_SERVER_3=http://gllto.glpals.com/4day/glo/v2/latest/lto2.dat</item>
+        <item>XTRA_SERVER_4=http://xtra1.gpsonextra.net/xtra.bin</item>
+        <item>XTRA_SERVER_5=http://xtra2.gpsonextra.net/xtra.bin</item>
+        <item>XTRA_SERVER_6=http://xtra3.gpsonextra.net/xtra.bin</item>
+        <item>NTP_SERVER=europe.pool.ntp.org</item>
         <item>SUPL_HOST=supl.google.com</item>
         <item>SUPL_PORT=7276</item>
-        <item>NTP_SERVER=europe.pool.ntp.org</item>
         <item>SUPL_VER=0x20000</item>
         <item>SUPL_MODE=1</item>
+        <item>SUPL_ES=0</item>
+        <item>LPP_PROFILE=0</item>
+        <!-- <item>USE_EMERGENCY_PDN_FOR_EMERGENCY_SUPL=1</item> -->
+        <!-- <item>A_GLONASS_POS_PROTOCOL_SELECT=0</item> -->
+        <item>GPS_LOCK=0</item>
     </string-array>
 
     <!-- Control whether being in the desk dock (and powered) always
@@ -195,30 +194,26 @@
          format is UMTS|LTE|... -->
     <string translatable="false" name="config_radio_access_family">GPRS|EDGE|UMTS|HSDPA|HSUPA|GSM|WCDMA</string>
 
-    <!-- Boolean to enable stk functionality on Samsung phones -->
-<!--
-    <bool name="config_samsung_stk">true</bool>
--->
+    <!-- Boolean to enable stk functionality on Samsung phones
+    <bool name="config_samsung_stk">true</bool> -->
+
     <!-- Enable lockscreen translucent decor by default -->
     <bool name="config_enableLockScreenTranslucentDecor">true</bool>
 
     <!-- The list of components which should be automatically disabled. -->
-<!--
     <string-array name="config_disabledComponents">
         <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateActivity</item>
         <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateService$Receiver</item>
         <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateService$SecretCodeReceiver</item>
+        <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateServiceReceiver</item>
         <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateActivity</item>
         <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateService$Receiver</item>
         <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateService$ActiveReceiver</item>
         <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateService$SecretCodeReceiver</item>
+        <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateServiceReceiver</item>
+        <item>com.google.android.setupwizard/com.google.android.setupwizard.time.DateTimeCheck</item>
     </string-array>
--->
-    <!-- Timeout in MS for how long you have to long-press the back key to
-         kill the foreground app. -->
-<!--
-    <integer name="config_backKillTimeout">500</integer>
--->
+
     <!-- Display low battery warning when battery level dips to this value -->
     <integer name="config_lowBatteryWarningLevel">5</integer>
 
@@ -251,6 +246,15 @@
     -->
     <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
 
+    <!-- Set this to true to enable the platform's auto-power-save modes like doze and
+         app standby.  These are not enabled by default because they require a standard
+         cloud-to-device messaging service for apps to interact correctly with the modes
+         (such as to be able to deliver an instant message to the device even when it is
+         dozing).  This should be enabled if you have such services and expect apps to
+         correctly use them when installed on your device.  Otherwise, keep this disabled
+         so that applications can still use their own mechanisms. -->
+    <bool name="config_enableAutoPowerModes">false</bool>
+
     <!-- Ultrasound support for Mic/speaker path -->
     <!-- Whether the default microphone audio source supports near-ultrasound frequencies
          (range of 18 - 21 kHz). -->
@@ -265,23 +269,21 @@
 
     <!-- Older rotation sensors are not setting event.timestamp correctly. Setting to
          true will use SystemClock.elapsedRealtimeNanos() to set timestamp. -->
-<!--
     <bool name="config_useSystemClockforRotationSensor">true</bool>
--->
-    <!-- Whether device supports double tap to wake
-    <bool name="config_supportDoubleTapWake">true</bool> -->
+
+    <!-- Whether device supports double tap to wake 
+    <bool name="config_supportDoubleTapWake">true</bool>-->
 
     <!-- Boolean indicating if restoring network selection should be skipped -->
     <!-- The restoring is handled by modem if it is true -->
     <bool translatable="false" name="skip_restoring_network_selection">true</bool>
 
+    <!-- Integer indicating wpa_supplicant scan interval when p2p is connected in milliseconds
+    <integer translatable="false" name="config_wifi_scan_interval_p2p_connected">15000</integer> -->
+
     <!-- Wifi driver supports batched scan
     <bool translatable="false" name="config_wifi_batched_scan_supported">true</bool> -->
 
-    <!-- IpReachability monitor enable/Disable -->
-<!--
-    <bool translatable="false" name="config_wifi_ipreachability_monitor">false</bool>
--->
     <!-- Boolean indicating whether Hotspot 2.0/Passpoint and ANQP queries is enabled
     <bool translatable="false" name="config_wifi_hotspot2_enabled">true</bool> -->
 
@@ -294,9 +296,6 @@
 
     <!-- Boolean indicating autojoin will prefer 5GHz and choose 5GHz BSSIDs
     <bool translatable="true" name="config_wifi_enable_5GHz_preference">false</bool> -->
-
-    <!-- Integer indicating wpa_supplicant scan interval in milliseconds
-    <integer translatable="false" name="config_wifi_supplicant_scan_interval">150000</integer> -->
 
     <!-- Whether WiFi display is supported by this device.
          There are many prerequisites for this feature to work correctly.
@@ -318,5 +317,49 @@
 
     <!-- Show battery fully charged notification
     <bool name="config_showBatteryFullyChargedNotification">true</bool> -->
+
+    <!-- Configuartion to support SIM contact batch operation
+    <bool name="config_sim_phonebook_batch_operation">false</bool>.-->
+
+    <!-- If this is true, long press on power button will be available from the non-interactive state -->
+    <bool name="config_supportLongPressPowerWhenNonInteractive">true</bool>
+
+    <!-- Controls the WiFi wakeup feature.
+          0 = Not available.
+          1 = Available.
+     -->
+    <integer translatable="false" name="config_wifi_wakeup_available">1</integer>
+
+    <!-- Boolean indicating whether the HWC setColorTransform function can be performed efficiently
+         in hardware.
+    <bool name="config_setColorTransformAccelerated">true</bool> -->
+
+    <!-- Minimum color temperature, in Kelvin, supported by Night display. -->
+    <integer name="config_nightDisplayColorTemperatureMin">1600</integer>
+
+    <!-- Default color temperature, in Kelvin, to tint the screen when Night display is
+         activated. -->
+    <integer name="config_nightDisplayColorTemperatureDefault">2650</integer>
+
+    <!-- The default value for transition animation scale found in developer settings.
+         1.0 corresponds to 1x animator scale, 0 means that there will be no transition
+         animations. Note that this is only a default and will be overridden by a
+         user-set value if toggled by settings so the "Transition animation scale" setting
+         should also be hidden if intended to be permanent. -->
+    <item name="config_appTransitionAnimationDurationScaleDefault" format="float" type="dimen">0.5</item>
+
+    <!-- Flag indicating which package name can access the persistent data partition -->
+    <string name="config_persistentDataPackageName">com.google.android.gms</string>
+
+    <!-- Apps that are authorized to access shared accounts, overridden by product overlays -->
+    <string name="config_appsAuthorizedForSharedAccounts">;com.android.vending;com.android.settings;</string>
+
+    <!-- A list of potential packages, in priority order, that may contain an
+         ephemeral resolver. Each package will be be queried for a component
+         that has been granted the PACKAGE_EPHEMERAL_AGENT permission.
+         This may be empty if ephemeral apps are not supported. -->
+    <string-array name="config_ephemeralResolverPackage">
+        <item>com.google.android.gms</item>
+    </string-array>
 
 </resources>

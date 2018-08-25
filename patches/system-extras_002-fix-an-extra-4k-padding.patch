@@ -1,0 +1,35 @@
+Subject: [PATCH] squshfs_utils: fix an extra 4k padding may be skiped
+
+In the following android code:
+    ...
+    info->bytes_used_4K_padded =
+        sb->bytes_used + (4096 - (sb->bytes_used & (4096 - 1)));
+    ...
+if sb->bytes_used is divisible by 4096, it will skip an extra 4096 bytes.
+
+while building image in write_filesystem_tables
+(external/squashfs-tools/squashfs-tools/mksquashfs.c):
+    ...
+    if(!nopad && (i = bytes & (4096 - 1))) {
+       char temp[4096] = {0};
+       write_destination(fd, bytes, 4096 - i, temp);
+    }
+    ...
+if bytes_used can be divided by 4096, then no padding will be added.
+
+diff --git a/squashfs_utils/squashfs_utils.c b/squashfs_utils/squashfs_utils.c
+index 1db424b..613ae18 100644
+--- a/squashfs_utils/squashfs_utils.c
++++ b/squashfs_utils/squashfs_utils.c
+@@ -50,6 +50,11 @@
+     info->block_size = sb->block_size;
+     info->inodes = sb->inodes;
+     info->bytes_used = sb->bytes_used;
++
++    if (!(sb->bytes_used & (4096 - 1))) {
++        info->bytes_used_4K_padded = sb->bytes_used;
++        return 0;
++    }
+     // by default mksquashfs pads the filesystem to 4K blocks
+     info->bytes_used_4K_padded =
+         sb->bytes_used + (4096 - (sb->bytes_used & (4096 - 1)));

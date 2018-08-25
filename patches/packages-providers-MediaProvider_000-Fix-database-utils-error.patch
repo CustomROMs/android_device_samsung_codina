@@ -1,0 +1,19 @@
+Fix database utils error in logs
+ Add READ_EXTERNAL_STORAGE permission
+
+ DatabaseUtils: java.lang.SecurityException: Permission Denial: 
+reading com.android.providers.media.MediaProvider uri content://media/external/fs_id from pid=9014, 
+uid=10148 requires android.permission.READ_EXTERNAL_STORAGE, or grantUriPermission()
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 5f0f620..0189d10 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -8,6 +8,7 @@
+     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+     <uses-permission android:name="android.permission.WAKE_LOCK" />
++    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.WRITE_MEDIA_STORAGE" />
+     <uses-permission android:name="android.permission.ACCESS_MTP" />

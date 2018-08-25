@@ -1,0 +1,22 @@
+ Frameworks: Fix Null Pointer Issue
+
+Add a null pointer check to avoid crash while customizing quick settings
+in systemui.
+
+diff --git a/core/java/android/widget/ArrayAdapter.java b/core/java/android/widget/ArrayAdapter.java
+old mode 100644
+new mode 100755
+index 60ccc61..0074e2b
+--- a/core/java/android/widget/ArrayAdapter.java
++++ b/core/java/android/widget/ArrayAdapter.java
+@@ -439,7 +439,9 @@ public long getItemId(int position) {
+         }
+ 
+         final T item = getItem(position);
+-        if (item instanceof CharSequence) {
++        if (item == null) {
++            text.setText("");
++        } else if (item instanceof CharSequence) {
+             text.setText((CharSequence) item);
+         } else {
+             text.setText(item.toString());

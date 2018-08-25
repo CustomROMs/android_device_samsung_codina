@@ -1,0 +1,52 @@
+Subject: [PATCH] Bad token of activity when do the launch work at the app process side.
+
+If the activity destroy timeout, AMS will clear it from the task.
+
+And if activity LAUNCH_ACTIVITY message is blocked in the app main thread,
+it may do the handleLaunchActivity after AMS removed the activity record
+token from the task.At this time, ActivityThread launch the activity and
+call some AMS interfaces like reportSizeConfigurations(isTopOfTask etc.),
+AMS may throw IllegalArgumentException for the bad token.
+
+Good for the system stability, we should check if the launching activity
+is in any stack to deceide whether need to do the follow-up launch work.
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 83dab16..9696ab0 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -417,6 +417,21 @@ public boolean isPersistable() {
+             return activityInfo.persistableMode == ActivityInfo.PERSIST_ACROSS_REBOOTS;
+         }
+ 
++        public boolean isInStack() {
++            try {
++                int stackId = ActivityManagerNative.getDefault().getActivityStackId(token);
++                int taskId = ActivityManagerNative.getDefault().getTaskForActivity(token, false);
++                // INVALID_STACK_ID = -1 and INVALID_TASK_ID = -1
++                if (stackId != -1 && taskId != -1) {
++                    return true;
++                }
++            } catch (RemoteException e) {
++                Log.w(TAG, "remote exception occur while check the task and stack of activity:"
++                        + this.toString(), e);
++            }
++            return false;
++        }
++
+         public String toString() {
+             ComponentName componentName = intent != null ? intent.getComponent() : null;
+             return "ActivityRecord{"
+@@ -2839,6 +2854,12 @@ private ContextImpl createBaseContextForActivity(ActivityClientRecord r) {
+     }
+ 
+     private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent, String reason) {
++        // can not launch the activity that its taskId or stackId is invalid.
++        if (!r.isInStack()) {
++            Log.w(TAG,"handleLaunchActivity stack or task is invalid, can not launch it, r:" + r);
++            return;
++        }
++
+         // If we are getting ready to gc after going to the background, well
+         // we are back active so skip it.
+         unscheduleGcIdler();

@@ -1,0 +1,14 @@
+Subject: [PATCH] Add busybox to CLANG exclusion list
+
+diff --git a/core/clang/config.mk b/core/clang/config.mk
+index 0e59930..a3154f2 100644
+--- a/core/clang/config.mk
++++ b/core/clang/config.mk
+@@ -74,6 +74,7 @@
+   bionic/tests/ \
+   device/huawei/angler/ \
+   device/lge/bullhead/ \
++  external/busybox/ \
+   external/gentoo/integration/ \
+   hardware/qcom/ \
+   test/vts/hals/camera/bullhead/ \

@@ -1,0 +1,40 @@
+Subject: [PATCH] Fix doFadingAnimationLocked in sanitized builds.
+
+The loop as constructed causes i to overflow twice when i = 0 on integer
+overflow sanitized builds.
+
+ runtime error: unsigned integer overflow: 0 - 1 cannot be represented
+ in type 'size_t' (aka 'unsigned long')
+
+ runtime error: unsigned integer overflow: 18446744073709551615 + 1
+ cannot be represented in type 'size_t' (aka 'unsigned long')
+
+This refactors the loop to avoid the overflows.
+
+diff --git a/libs/input/PointerController.cpp b/libs/input/PointerController.cpp
+index 7c60467..e3af655 100644
+--- a/libs/input/PointerController.cpp
++++ b/libs/input/PointerController.cpp
+@@ -551,18 +551,20 @@
+     }
+ 
+     // Animate spots that are fading out and being removed.
+-    for (size_t i = 0; i < mLocked.spots.size(); i++) {
++    for (size_t i = 0; i < mLocked.spots.size();) {
+         Spot* spot = mLocked.spots.itemAt(i);
+         if (spot->id == Spot::INVALID_ID) {
+             spot->alpha -= float(frameDelay) / SPOT_FADE_DURATION;
+             if (spot->alpha <= 0) {
+-                mLocked.spots.removeAt(i--);
++                mLocked.spots.removeAt(i);
+                 releaseSpotLocked(spot);
++                continue;
+             } else {
+                 spot->sprite->setAlpha(spot->alpha);
+                 keepAnimating = true;
+             }
+         }
++        ++i;
+     }
+     return keepAnimating;
+ }

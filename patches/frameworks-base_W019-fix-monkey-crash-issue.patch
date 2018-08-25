@@ -1,0 +1,21 @@
+Subject: [PATCH] SystemUI: fix the monkey crash issue
+
+A runtime exception occurred while executing doInBackground, result
+in by passing a null object to Log printer, adding part of message
+to avoid null exception.
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java
+index efbf76b..c837ef0 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java
+@@ -402,7 +402,9 @@
+                 boolean hasCACerts = !(conn.getService().getUserCaAliases().getList().isEmpty());
+                 return new Pair<Integer, Boolean>(userId[0], hasCACerts);
+             } catch (RemoteException | InterruptedException | AssertionError e) {
+-                Log.i(TAG, e.getMessage());
++                if (e != null && e.getMessage() != null) {
++                    Log.i(TAG, e.getMessage());
++                }
+                 new Handler(Dependency.get(Dependency.BG_LOOPER)).postDelayed(
+                         () -> new CACertLoader().execute(userId[0]),
+                         CA_CERT_LOADING_RETRY_TIME_IN_MS);

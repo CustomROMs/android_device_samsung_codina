@@ -1,0 +1,24 @@
+diff --git a/config/common.mk b/config/common.mk
+index 2fed3dd..448cec7 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -136,7 +136,6 @@
+     Jelly \
+     LockClock \
+     Trebuchet \
+-    Updater \
+     WallpaperPicker \
+     WeatherProvider
+ 
+diff --git a/config/common.mk b/config/common.mk
+index 2fed3d0..448cec0 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -128,7 +128,6 @@
+ 
+ # Custom Lineage packages
+ PRODUCT_PACKAGES += \
+-    AudioFX \
+     LineageSettingsProvider \
+     LineageSetupWizard \
+     Eleven \

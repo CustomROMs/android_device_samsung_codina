@@ -1,0 +1,129 @@
+Subject: [PATCH] Don't count apk size if it's already staged
+
+fix installation failure when installing a veriy big app
+with low disk usable space
+
+diff --git a/core/java/com/android/internal/content/PackageHelper.java b/core/java/com/android/internal/content/PackageHelper.java
+index 97500f2..d1affb6 100644
+--- a/core/java/com/android/internal/content/PackageHelper.java
++++ b/core/java/com/android/internal/content/PackageHelper.java
+@@ -649,6 +649,15 @@
+         }
+     }
+ 
++    public static long calculateRawApkSize(PackageLite pkg) {
++        long sizeBytes = 0;
++        for (String codePath : pkg.getAllCodePaths()) {
++            final File codeFile = new File(codePath);
++            sizeBytes += codeFile.length();
++        }
++        return sizeBytes;
++    }
++
+     public static long calculateInstalledSize(PackageLite pkg, NativeLibraryHelper.Handle handle,
+             boolean isForwardLocked, String abiOverride) throws IOException {
+         long sizeBytes = 0;
+@@ -669,6 +678,13 @@
+         return sizeBytes;
+     }
+ 
++    public static boolean isStageName(String name) {
++        final boolean isFile = name.startsWith("vmdl") && name.endsWith(".tmp");
++        final boolean isContainer = name.startsWith("smdl") && name.endsWith(".tmp");
++        final boolean isLegacyContainer = name.startsWith("smdl2tmp");
++        return isFile || isContainer || isLegacyContainer;
++    }
++
+     public static String replaceEnd(String str, String before, String after) {
+         if (!str.endsWith(before)) {
+             throw new IllegalArgumentException(
+diff --git a/packages/DefaultContainerService/src/com/android/defcontainer/DefaultContainerService.java b/packages/DefaultContainerService/src/com/android/defcontainer/DefaultContainerService.java
+index 3800e6f..2284b30 100644
+--- a/packages/DefaultContainerService/src/com/android/defcontainer/DefaultContainerService.java
++++ b/packages/DefaultContainerService/src/com/android/defcontainer/DefaultContainerService.java
+@@ -164,7 +164,7 @@
+ 
+             final File packageFile = new File(packagePath);
+             final PackageParser.PackageLite pkg;
+-            final long sizeBytes;
++            long sizeBytes;
+             try {
+                 pkg = PackageParser.parsePackageLite(packageFile, 0);
+                 sizeBytes = PackageHelper.calculateInstalledSize(pkg, isForwardLocked, abiOverride);
+@@ -183,6 +183,9 @@
+             final int recommendedInstallLocation;
+             final long token = Binder.clearCallingIdentity();
+             try {
++                if (PackageHelper.isStageName(pkg.baseCodePath)) {
++                    sizeBytes -= PackageHelper.calculateRawApkSize(pkg);
++                }
+                 recommendedInstallLocation = PackageHelper.resolveInstallLocation(context,
+                         pkg.packageName, pkg.installLocation, sizeBytes, flags);
+             } finally {
+diff --git a/services/core/java/com/android/server/pm/PackageInstallerService.java b/services/core/java/com/android/server/pm/PackageInstallerService.java
+index 1fa37b9..2385245 100644
+--- a/services/core/java/com/android/server/pm/PackageInstallerService.java
++++ b/services/core/java/com/android/server/pm/PackageInstallerService.java
+@@ -170,7 +170,7 @@
+     private static final FilenameFilter sStageFilter = new FilenameFilter() {
+         @Override
+         public boolean accept(File dir, String name) {
+-            return isStageName(name);
++            return PackageHelper.isStageName(name);
+         }
+     };
+ 
+@@ -247,7 +247,7 @@
+         synchronized (mSessions) {
+             final ArraySet<String> unclaimed = new ArraySet<>();
+             for (String cid : PackageHelper.getSecureContainerList()) {
+-                if (isStageName(cid)) {
++                if (PackageHelper.isStageName(cid)) {
+                     unclaimed.add(cid);
+                 }
+             }
+@@ -272,13 +272,6 @@
+         }
+     }
+ 
+-    public static boolean isStageName(String name) {
+-        final boolean isFile = name.startsWith("vmdl") && name.endsWith(".tmp");
+-        final boolean isContainer = name.startsWith("smdl") && name.endsWith(".tmp");
+-        final boolean isLegacyContainer = name.startsWith("smdl2tmp");
+-        return isFile || isContainer || isLegacyContainer;
+-    }
+-
+     @Deprecated
+     public File allocateStageDirLegacy(String volumeUuid, boolean isEphemeral) throws IOException {
+         synchronized (mSessions) {
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index a54cf1a..2c00f43 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -9158,7 +9158,7 @@
+         int fileCount = 0;
+         for (File file : files) {
+             final boolean isPackage = (isApkFile(file) || file.isDirectory())
+-                    && !PackageInstallerService.isStageName(file.getName());
++                    && !PackageHelper.isStageName(file.getName());
+             if (!isPackage) {
+                 // Ignore entries which are not packages
+                 continue;
+@@ -23531,7 +23531,7 @@
+             synchronized (mPackages) {
+                 for (String cid : list) {
+                     // Leave stages untouched for now; installer service owns them
+-                    if (PackageInstallerService.isStageName(cid)) continue;
++                    if (PackageHelper.isStageName(cid)) continue;
+ 
+                     if (DEBUG_SD_INSTALL)
+                         Log.i(TAG, "Processing container " + cid);
+@@ -24043,7 +24043,7 @@
+                 Environment.getDataAppDirectory(volumeUuid));
+         for (File file : files) {
+             final boolean isPackage = (isApkFile(file) || file.isDirectory())
+-                    && !PackageInstallerService.isStageName(file.getName());
++                    && !PackageHelper.isStageName(file.getName());
+             if (!isPackage) {
+                 // Ignore entries which are not packages
+                 continue;

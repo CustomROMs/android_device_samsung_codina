@@ -1,0 +1,16 @@
+Subject: [PATCH] add-BOARD-GLOBAL-CFLAGS
+
+diff --git a/core/combo/select.mk b/core/combo/select.mk
+index a075c96..1588c2a 100644
+--- a/core/combo/select.mk
++++ b/core/combo/select.mk
+@@ -31,6 +31,9 @@ combo_var_prefix := $(combo_2nd_arch_prefix)$(combo_target)
+ $(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
+ 
+ $(combo_var_prefix)STATIC_LIB_SUFFIX := .a
++$(combo_var_prefix)GLOBAL_CFLAGS := $(BOARD_GLOBAL_CFLAGS)
++$(combo_var_prefix)RELEASE_CFLAGS := $(BOARD_RELEASE_CFLAGS)
++$(combo_var_prefix)GLOBAL_CPPFLAGS := $(BOARD_GLOBAL_CPPFLAGS)
+ 
+ # Now include the combo for this specific target.
+ include $(BUILD_COMBOS)/$(combo_target)$(combo_os_arch).mk

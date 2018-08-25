@@ -1,0 +1,30 @@
+Subject: [PATCH] [Stability][hwui]Fix Native Crash of EGL_BAD_ALLOC
+
+The Toast window executes eglCreateWindowSurface in RenderThread to
+prepare connect to BufferQueue. If the surface has been destroyed,
+it will report EGL_BAD_ALLOC error and cause the native crash. If it
+is the system_server, the system_server will directly cause the dead
+machine to restart. After the survey found in the N version have
+modified code logic of Toast, increased when Toast to remove
+removeWindowToken operation, the operation is in
+NotificationManagerService thread execution,relative to Toast window
+UI thread belongs to the asynchronous operation, the asynchronous
+operation in the case of a problem will directly destroy surface, leading
+to the problem. Through the process removeWindowToken parameters,
+make NotificationManagerService thread does not destroy the surface
+operation, unified by the Toast of the UI thread to process the surface
+of the create and destroy to solve this problem.
+
+diff --git a/services/core/java/com/android/server/notification/NotificationManagerService.java b/services/core/java/com/android/server/notification/NotificationManagerService.java
+index 842ee91..5e600d8 100644
+--- a/services/core/java/com/android/server/notification/NotificationManagerService.java
++++ b/services/core/java/com/android/server/notification/NotificationManagerService.java
+@@ -4308,7 +4308,7 @@
+         }
+ 
+         ToastRecord lastToast = mToastQueue.remove(index);
+-        mWindowManagerInternal.removeWindowToken(lastToast.token, true, DEFAULT_DISPLAY);
++        mWindowManagerInternal.removeWindowToken(lastToast.token, false, DEFAULT_DISPLAY);
+ 
+         keepProcessAliveIfNeededLocked(record.pid);
+         if (mToastQueue.size() > 0) {

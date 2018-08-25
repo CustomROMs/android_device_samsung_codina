@@ -1,0 +1,24 @@
+ Add load legacy plugins from /vendor/lib/drm
+
+Only the OMA forward lock plugin remains and it is
+loaded from system/lib/drm.
+
+diff --git a/drm/drmserver/DrmManager.cpp b/drm/drmserver/DrmManager.cpp
+index 830def9..73eea89 100644
+--- a/drm/drmserver/DrmManager.cpp
++++ b/drm/drmserver/DrmManager.cpp
+@@ -88,9 +88,14 @@ void DrmManager::removeUniqueId(int uniqueId) {
+ }
+ 
+ status_t DrmManager::loadPlugIns() {
++
++    String8 vendorPluginDirPath("/vendor/lib/drm");
++    loadPlugIns(vendorPluginDirPath);
++
+     String8 pluginDirPath("/system/lib/drm");
+     loadPlugIns(pluginDirPath);
+     return DRM_NO_ERROR;
++
+ }
+ 
+ status_t DrmManager::loadPlugIns(const String8& plugInDirPath) {

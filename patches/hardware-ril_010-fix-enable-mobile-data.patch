@@ -1,0 +1,33 @@
+Subject: [PATCH] libril: enable mobile data fix for STE hardware
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index fd0919d..aadbd1b 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -7418,7 +7418,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v6 *dcResponse,
+     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+     dcResult.addresses = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.dnses = convertCharPtrToHidlString(dcResponse->dnses);
+-    dcResult.gateways = convertCharPtrToHidlString(dcResponse->gateways);
++    dcResult.gateways = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.pcscf = hidl_string();
+     dcResult.mtu = 0;
+ }
+@@ -7433,7 +7433,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v9 *dcResponse,
+     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+     dcResult.addresses = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.dnses = convertCharPtrToHidlString(dcResponse->dnses);
+-    dcResult.gateways = convertCharPtrToHidlString(dcResponse->gateways);
++    dcResult.gateways = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.pcscf = convertCharPtrToHidlString(dcResponse->pcscf);
+     dcResult.mtu = 0;
+ }
+@@ -7448,7 +7448,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+     dcResult.addresses = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.dnses = convertCharPtrToHidlString(dcResponse->dnses);
+-    dcResult.gateways = convertCharPtrToHidlString(dcResponse->gateways);
++    dcResult.gateways = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.pcscf = convertCharPtrToHidlString(dcResponse->pcscf);
+     dcResult.mtu = dcResponse->mtu;
+ }

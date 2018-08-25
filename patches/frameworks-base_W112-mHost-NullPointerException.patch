@@ -1,0 +1,31 @@
+Subject: [PATCH] When monkey test, the object of mHost throws NullPointerException.
+Fail log: java.lang.NullPointerException: Attempt to invoke virtual 
+method 'android.app.LoaderManagerImpl 
+android.app.FragmentHostCallback.getLoaderManager(java.lang.String, boolean, boolean)' on a null object reference
+at android.app.Fragment.onDestroy(Fragment.java:1603)  	at android.app.Fragment.performDestroy(Fragment.java:2433)
+at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1098)
+at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1148)
+at android.app.FragmentManagerImpl.moveToState(FragmentManager.java:1130)
+at android.app.FragmentManagerImpl.dispatchDestroy
+
+Root cause:
+The object of mHost is null, throws NullPointerException.
+
+Solution:
+Add the condition of whether mHost is null
+
+diff --git a/core/java/android/app/Fragment.java b/core/java/android/app/Fragment.java
+index 29e8dd4..6f73520 100644
+--- a/core/java/android/app/Fragment.java
++++ b/core/java/android/app/Fragment.java
+@@ -1781,7 +1781,9 @@
+         //        + " mLoaderManager=" + mLoaderManager);
+         if (!mCheckedForLoaderManager) {
+             mCheckedForLoaderManager = true;
+-            mLoaderManager = mHost.getLoaderManager(mWho, mLoadersStarted, false);
++            if (mHost != null) {
++                mLoaderManager = mHost.getLoaderManager(mWho, mLoadersStarted, false);
++            }
+         }
+         if (mLoaderManager != null) {
+             mLoaderManager.doDestroy();

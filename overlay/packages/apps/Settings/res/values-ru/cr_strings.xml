@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2012-2015 SergeyL Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- MTP Dirty Hack -->
+    <string name="enable_mtp_dirtyhack_title">MTP вместо Зарядки</string>
+    <string name="enable_mtp_dirtyhack_summary">Включить MTP вместо Зарядки при подключении к ПК</string>
+
+    <!-- Allow fake signature checkbox in developer settings -->
+    <string name="allow_signature_fake">Разрешить подмену подписи</string>
+    <string name="allow_signature_fake_summary">Разрешать приложениям обходить систему безопасности, выдавая себя за другое приложение</string>
+    <string name="allow_signature_fake_warning">Внимание! Данное разрешение может привести к серьезным проблемам безопасности и конфиденциальности! Включайте только для проверенных приложений</string>
+
+    <!-- transferring files via UMS -->
+    <string name="usb_use_UMS">"Передача файлов (UMS)"</string>
+
+    <!-- select USB configuration -->
+    <string name="select_default_usb_configuration_title">"Конфигурация USB"</string>
+    <string name="select_default_usb_configuration_dialog_title">"Выберите конфигурацию USB"</string>
+    <string name="default_usb_configuration" translatable="false" >default</string>
+    <string name="select_usb_default_confguration_warning">Внимание!: Конфигурация USB по умолчанию включена также когда устройство заблокировано!\n\nВы действительно хотите включить эту конфигурацию?</string>
+
+    <!-- Changelog -->
+    <string name="changelog_title">Список изменений</string>
+    <string name="changelog_summary">С момента последнего обновления</string>
+    <string name="changelog_error">Не удается загрузить список изменений</string>
+
+    <!-- Option to enable/disable scrolling cache -->
+    <string name="pref_scrollingcache_title">Кэш прокрутки</string>
+    <string name="pref_scrollingcache_summary">Отключение кэша прокрутки может улучшить производительность за счет памяти</string>
+    <string name="pref_scrollingcache_force_enable">Включить принудительно</string>
+    <string name="pref_scrollingcache_default_enable">Включить по умолчанию</string>
+    <string name="pref_scrollingcache_default_disable">Выключить по умолчанию</string>
+    <string name="pref_scrollingcache_force_disable">Выключить принудительно</string>
+    <string name="animation_settings_title">Расширенные функции</string>
+
+    <!-- Screen Off animation -->
+    <string name="screen_off_animation_title">Анимация выключения экрана</string>
+    <string name="screen_off_animation_default">По умолчанию</string>
+    <string name="screen_off_animation_crt">Эффект \"старого\" телевизора</string>
+    <string name="screen_off_animation_scale">Масштабирование</string>
+
+    <!-- MediaScanner behavior on boot -->
+    <string name="media_scanner_on_boot_title">Поведение MediaScanner при загрузке</string>
+    <string name="media_scanner_on_boot_enabled">Сканировать медиа</string>
+    <string name="media_scanner_on_boot_ask">По запросу (уведомление)</string>
+    <string name="media_scanner_on_boot_disabled">Не сканировать медиа</string>
+
+    <string name="device_info_title">Информация о телефоне</string>
+
+    <!-- ListView animation -->
+    <string name="listview_animation_title">Анимация при просмотре списков</string>
+    <string name="listview_off">По умолчанию</string>
+    <string name="listview_wave_left">Волна (слева)</string>
+    <string name="listview_wave_right">Волна (справа)</string>
+    <string name="listview_alpha">Альфа</string>
+    <string name="listview_scale">Маштабирование</string>
+    <string name="listview_stack_top">Стек (сверху)</string>
+    <string name="listview_stack_bottom">Стек (снизу)</string>
+    <string name="listview_unfold">Разворачивание</string>
+    <string name="listview_fold">Сворачивание</string>
+    <string name="listview_translate_left">Переход (слева)</string>
+    <string name="listview_translate_right">Переход (справа)</string>
+    <string name="listview_title">Анимация списков</string>
+    <string name="listview_summary">Установить эффект анимации и интерполяции</string>
+
+    <!-- ListView interpolator -->
+    <string name="listview_interpolator_title">Эффекты анимации списка</string>
+    <string name="listview_accelerate_interpolator">Ускорение</string>
+    <string name="listview_decelerate_interpolator">Замедление</string>
+    <string name="listview_accelerate_decelerate_interpolator">Ускорение и замедление</string>
+    <string name="listview_anticipate_interpolator">Опережение</string>
+    <string name="listview_overshoot_interpolator">Перекрытие</string>
+    <string name="listview_anticipate_overshoot_interpolator">Опережение и перекрытие</string>
+    <string name="listview_bounce_interpolator">Отскок</string>
+
+    <!-- Qucik unlock -->
+    <string name="unlock_quick_unlock_control_title">Быстрая разблокировка</string>
+    <string name="unlock_quick_unlock_control_summary">Автоматически разблокировать, когда введен верный PIN/пароль</string>
+
+    <!-- Battery stats reset -->
+    <string name="battery_stats_reset">Сбросить статистику</string>
+    <string name="battery_stats_message">Статистика батареи будет сброшена</string>
+    <string name="ok_string">Ok</string>
+
+    <!-- System default animation -->
+    <string name="system_default_animation_title">Стиль анимации Android P</string>
+    <string name="system_default_animation_summary">Включить анимацию в стиле Android P</string>
+
+    <!-- Toast Animation -->
+    <string name="toast_animation_title">Анимация тост-уведомлений</string>
+    <string name="toast_none_animation">Нет анимации</string>
+    <string name="toast_default_animation">По умолчанию</string>
+    <string name="toast_fade_animation">Затухание</string>
+    <string name="toast_SlideRight_animation">Слайд вправо</string>
+    <string name="toast_SlideLeft_animation">Слайд влево</string>
+    <string name="toast_Xylon_animation">Анимация Xylon</string>
+    <string name="toast_Toko_animation">Анимация Toko</string>
+    <string name="toast_Tn_animation">Анимация Tn</string>
+    <string name="toast_Honami_animation">Анимация Honami</string>
+    <string name="toast_FastFade_animation">Быстрое затухание</string>
+    <string name="toast_GrowFade_animation">Постепенное затухание</string>
+    <string name="toast_GrowFadeCenter_animation">Постепенное затухание от центра</string>
+    <string name="toast_GrowFadeBottom_animation">Возрастающее затухание вниз</string>
+    <string name="toast_Translucent_animation">Полупрозрачная</string>
+    <string name="toast_SlideLeftRight_animation">Слайд слева направо</string>
+    <string name="toast_SlideRightLeft_animation">Слайд справа налево</string>
+
+    <!-- Hide Apps from Recents -->
+    <string name="hide_apps_from_recents_title">Скрытые приложения</string>
+    <string name="hide_from_recents_add_app">Добавить приложение</string>
+    <string name="hide_apps_from_recents_summary">Выберите приложения, которые будут исключены из панели недавних.</string>
+
+</resources>

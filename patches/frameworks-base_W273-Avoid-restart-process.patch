@@ -1,0 +1,41 @@
+Subject: [PATCH] Avoid the restart process for launching provider killed by AMS
+
+The case is that a content provider process killed by LowmemoryKiller while the
+provider launching time. And AMS will restart it for the launching provider,and
+reuse the ProcessRecord, it may be killed by AMS#updateOomAdjLocked in the end
+of attachApplicationLocked for empty cached process.
+
+After that the process will restart again, and may be killed angian, another
+restart, another restart...
+
+So, we should give time for process to launch its provider, avoid the restart
+and kill circle.
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 7eca116ee98..09a9de633ae 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -7074,6 +7074,7 @@ private final boolean attachApplicationLocked(IApplicationThread thread,
+ 
+         mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
+ 
++        boolean didSomething = false;
+         boolean normalMode = mProcessesReady || isAllowedWhileBooting(app.info);
+         List<ProviderInfo> providers = normalMode ? generateApplicationProvidersLocked(app) : null;
+ 
+@@ -7081,6 +7082,7 @@ private final boolean attachApplicationLocked(IApplicationThread thread,
+             Message msg = mHandler.obtainMessage(CONTENT_PROVIDER_PUBLISH_TIMEOUT_MSG);
+             msg.obj = app;
+             mHandler.sendMessageDelayed(msg, CONTENT_PROVIDER_PUBLISH_TIMEOUT);
++            didSomething = true;
+         }
+ 
+         checkTime(startTime, "attachApplicationLocked: before bindApplication");
+@@ -7237,7 +7239,6 @@ private final boolean attachApplicationLocked(IApplicationThread thread,
+         mProcessesOnHold.remove(app);
+ 
+         boolean badApp = false;
+-        boolean didSomething = false;
+ 
+         // See if the top visible activity is waiting to run in this process...
+         if (normalMode) {

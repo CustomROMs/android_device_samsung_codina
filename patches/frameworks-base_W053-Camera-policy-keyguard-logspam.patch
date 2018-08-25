@@ -1,0 +1,33 @@
+ Silence camera policy keyguard check logspam
+
+This warning is just annoying for us when fixing SystemUI FCs
+or when checking logcat during boot
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
+index 30f0077..939c0c0 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
+@@ -5791,7 +5791,9 @@ private void updateDozing() {
+ 
+     public boolean isKeyguardShowing() {
+         if (mStatusBarKeyguardViewManager == null) {
+-            Slog.i(TAG, "isKeyguardShowing() called before startKeyguard(), returning true");
++            if (DEBUG) {
++                Slog.i(TAG, "isKeyguardShowing() called before startKeyguard(), returning true");
++            }
+             return true;
+         }
+         return mStatusBarKeyguardViewManager.isShowing();
+@@ -7866,8 +7868,10 @@ public boolean isKeyguardSecure() {
+             // startKeyguard() hasn't been called yet, so we don't know.
+             // Make sure anything that needs to know isKeyguardSecure() checks and re-checks this
+             // value onVisibilityChanged().
+-            Slog.w(TAG, "isKeyguardSecure() called before startKeyguard(), returning false",
+-                    new Throwable());
++            if (DEBUG) {
++                Slog.w(TAG, "isKeyguardSecure() called before startKeyguard(), returning false",
++                        new Throwable());
++            }
+             return false;
+         }
+         return mStatusBarKeyguardViewManager.isSecure();

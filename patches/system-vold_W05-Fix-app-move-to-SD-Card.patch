@@ -1,0 +1,26 @@
+Subject: [PATCH] when using mke2fs, app can't move to SD Card On AndroidO, 
+ if enable mke2fs for vold, when moving apps to Sd Card,it would fail when creating Asec,
+ because the param of block nums is wrong
+
+On AndroidO MR1,vold used mke2fs by default, so apps can not be moved
+to Sd Card. We should pass correct params to mke2fs.
+
+Now ,i found another problem. When fix the wrong param above. Some apps
+can be moved successfully, but other apps still failed. The reason is
+"No space left on device" when uncompressing libs. But the size of
+created ext4 image is larger than the size of apk and libs. The reason
+is that when make ext4 image by mke2fs it need extra space for journal.
+
+diff --git a/fs/Ext4.cpp b/fs/Ext4.cpp
+index 0670bb5..96e3da0 100644
+--- a/fs/Ext4.cpp
++++ b/fs/Ext4.cpp
+@@ -215,7 +215,7 @@
+     cmd.push_back(source);
+ 
+     if (numSectors) {
+-        cmd.push_back(StringPrintf("%lu", numSectors * (4096 / 512)));
++        cmd.push_back(StringPrintf("%lu", numSectors * 512 / 4096));
+     }
+ 
+     return ForkExecvp(cmd);

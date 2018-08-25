@@ -1,0 +1,76 @@
+Rild: remove QCOM switch
+
+diff --git a/rild/rild.c b/rild/rild.c
+index 0c99526..d49d5d0 100644
+--- a/rild/rild.c
++++ b/rild/rild.c
+@@ -44,8 +44,10 @@ static void usage(const char *argv0) {
+     exit(EXIT_FAILURE);
+ }
+ 
+-extern char ril_service_name_base[MAX_SERVICE_NAME_LENGTH];
+-extern char ril_service_name[MAX_SERVICE_NAME_LENGTH];
++#ifdef QCOM_HARDWARE
++extern char ril_service_name_base[MAX_SERVICE_NAME_LENGTH];
++extern char ril_service_name[MAX_SERVICE_NAME_LENGTH] __attribute__((weak));
++#endif
+ 
+ extern void RIL_register (const RIL_RadioFunctions *callbacks);
+ extern void rilc_thread_pool ();
+@@ -71,6 +73,7 @@ extern void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
+ extern void RIL_requestTimedCallback (RIL_TimedCallback callback,
+         void *param, const struct timeval *relativeTime);
+ 
++extern void RIL_setRilSocketName(char * s) __attribute__((weak));
+ 
+ static struct RIL_Env s_rilEnv = {
+     RIL_onRequestComplete,
+@@ -139,17 +142,23 @@ int main(int argc, char **argv) {
+         }
+     }
+ 
++#ifdef QCOM_HARDWARE
+     if (clientId == NULL) {
+         clientId = "0";
+     } else if (atoi(clientId) >= MAX_RILDS) {
+         RLOGE("Max Number of rild's supported is: %d", MAX_RILDS);
+         exit(0);
+     }
+     if (strncmp(clientId, "0", MAX_CLIENT_ID_LENGTH)) {
+         strncpy(ril_service_name, ril_service_name_base, MAX_SERVICE_NAME_LENGTH);
+         strncat(ril_service_name, clientId, MAX_SERVICE_NAME_LENGTH);
+-        RIL_setServiceName(ril_service_name);
++        if (RIL_setRilSocketName) {
++            RIL_setRilSocketName(ril_service_name);
++        } else {
++            RLOGE("Trying to instantiate multiple rild sockets without a compatible libril!");
++        }
+     }
++#endif
+ 
+     if (rilLibPath == NULL) {
+         if ( 0 == property_get(LIB_PATH_PROPERTY, libPath, NULL)) {
+@@ -201,9 +210,11 @@ int main(int argc, char **argv) {
+         argc = make_argv(args, rilArgv);
+     }
+ 
++#ifdef QCOM_HARDWARE
+     rilArgv[argc++] = "-c";
+     rilArgv[argc++] = (char*)clientId;
+     RLOGD("RIL_Init argc = %d clientId = %s", argc, rilArgv[argc-1]);
++#endif
+ 
+     // Make sure there's a reasonable argv[0]
+     rilArgv[0] = argv[0];
+diff --git a/include/telephony/ril.h b/include/telephony/ril.h
+index 8aae88d..b479350 100644
+--- a/include/telephony/ril.h
++++ b/include/telephony/ril.h
+@@ -607,6 +607,7 @@ typedef struct {
+              * clir == 2 on "CLIR suppression" (allow CLI presentation)
+              */
+     RIL_UUS_Info *  uusInfo;    /* NULL or Pointer to User-User Signaling Information */
++    int reserved;               /* qcom's ril library Dial structure has extra 4 bytes */
+ } RIL_Dial;
+ 
+ typedef struct {

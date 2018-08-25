@@ -1,0 +1,31 @@
+ am: Add NULL check in TaskRecord.getWindowContainerBounds
+
+com.android.systemui process transact with Activity Manager in which
+NullPointerException happens in TaskRecord.getWindowContainerBounds(),
+then systemui will read this exception and so com.android.systemui
+process force close.
+
+It's hard to reproduce manually since it's monkey test issue, so what
+can do is to check source codes, the NULL vlaue may be related with
+TaskRecord.reparent() or ActivityStarter.setTaskFromIntentActivity()
+or others, not sure the specific scenario, so currently adding NULL
+check in this function to avoid crash for now.
+
+diff --git a/services/core/java/com/android/server/am/TaskRecord.java b/services/core/java/com/android/server/am/TaskRecord.java
+index 66fa001..0114644 100644
+--- a/services/core/java/com/android/server/am/TaskRecord.java
++++ b/services/core/java/com/android/server/am/TaskRecord.java
+@@ -573,7 +573,12 @@ void resizeWindowContainer() {
+     }
+ 
+     void getWindowContainerBounds(Rect bounds) {
+-        mWindowContainerController.getBounds(bounds);
++        if (mWindowContainerController != null) {
++            mWindowContainerController.getBounds(bounds);
++            return;
++        }
++        Slog.w(TAG, "getWindowContainerBounds: task " + this + " has null window container.");
++        bounds.setEmpty();
+     }
+ 
+     /**

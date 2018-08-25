@@ -12,7 +12,6 @@ on init
     mkdir /mnt/.lfs 0755 root root
 
     # Support legacy paths
-    # symlink /sdcard /mnt/sdcard
     symlink /sdcard /storage/sdcard
 
     # By default, primary storage is physical
@@ -222,9 +221,6 @@ on post-fs-data
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
     mkdir /data/misc/dhcp 0770 dhcp dhcp
-    chown dhcp dhcp /data/misc/dhcp
-    chown wifi root /dev/rfkill
-    chown wifi wifi /sys/module/dhd/parameters/firmware_path
 
     # for TRP/TIS
     write /data/.psm.info 1
@@ -375,11 +371,6 @@ service charger /sbin/charger
     critical
     seclabel u:r:healthd:s0
 
-#service charger /sbin/healthd -c
-#    class charger
-#    critical
-#    seclabel u:r:healthd:s0
-
 # Crash Safe Parameter Storage Area, serving production parameter requests from clients.
 # Configuration is read from file "/etc/cspsa.conf" and each found area spawns a CSPSA server
 # process.
@@ -460,11 +451,11 @@ service immvibed /system/bin/immvibed
 on property:ro.dumpstate.dmesg=1
     write /proc/sys/kernel/dmesg_restrict 0
 
-service p2p_supplicant /system/vendor/bin/hw/wpa_supplicant \
+service p2p_supplicant /system/bin/wpa_supplicant \
    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
    -I/system/etc/wifi/wpa_supplicant_overlay.conf -N \
    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf \
-   -I/system/etc/wifi/p2p_supplicant_overlay.conf \
+   -I/system/etc/wifi/wpa_supplicant_overlay.conf \
    -puse_p2p_group_interface=1 \
    -e/data/misc/wifi/entropy.bin -g@android:wpa_wlan0
     class main
@@ -473,7 +464,7 @@ service p2p_supplicant /system/vendor/bin/hw/wpa_supplicant \
     group system wakelock
     oneshot
 
-service wpa_supplicant /system/vendor/bin/hw/wpa_supplicant \
+service wpa_supplicant /system/bin/wpa_supplicant \
    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
    -I/system/etc/wifi/wpa_supplicant_overlay.conf \
    -e/data/misc/wifi/entropy.bin -g@android:wpa_wlan0

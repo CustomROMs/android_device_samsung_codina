@@ -1,0 +1,28 @@
+Subject: [PATCH] modify the parameter in cleanupLocked
+
+after move apk from phone to sdcard, there is nothing in recents,
+the reason is the parameter in cleanupLocked method is wrong,
+so we modify the parameter in cleanupLocked method when send external applications
+available/unavalable broadcast
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index edaa793ab0b3..844d63e533f4 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -19373,14 +19373,14 @@ final int broadcastIntentLocked(ProcessRecord callerApp,
+                                     forceStopPackageLocked(list[i], -1, false, true, true,
+                                             false, false, userId, "storage unmount");
+                                 }
+-                                mRecentTasks.cleanupLocked(UserHandle.USER_ALL);
++                                mRecentTasks.cleanupLocked(userId);
+                                 sendPackageBroadcastLocked(
+                                         ApplicationThreadConstants.EXTERNAL_STORAGE_UNAVAILABLE,
+                                         list, userId);
+                             }
+                             break;
+                         case Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE:
+-                            mRecentTasks.cleanupLocked(UserHandle.USER_ALL);
++                            mRecentTasks.cleanupLocked(userId);
+                             break;
+                         case Intent.ACTION_PACKAGE_REMOVED:
+                         case Intent.ACTION_PACKAGE_CHANGED:

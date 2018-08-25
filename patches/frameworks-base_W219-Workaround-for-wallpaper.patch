@@ -1,0 +1,35 @@
+Subject: [PATCH] Workaround for wallpaper not shown correctly problem
+
+By changing to unbindService and remove window token first,
+and then do the service binding and new window token adding,
+we could make the wallpaper displayed correctly for the 2nd
+and later boot.
+Also fixed the BOOT TIMEOUT problem
+
+diff --git a/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java b/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
+index b888ec21e70..c6a7c45ea54 100644
+--- a/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
++++ b/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
+@@ -2077,7 +2077,10 @@ boolean bindWallpaperComponentLocked(ComponentName componentName, boolean force,
+                     return false;
+                 }
+             }
+-
++            // remove window token and unbind first, then bind and add window token
++            if (wallpaper.userId == mCurrentUserId && mLastWallpaper != null) {
++                detachWallpaperLocked(mLastWallpaper);
++            }
+             // Bind the service!
+             if (DEBUG) Slog.v(TAG, "Binding to:" + componentName);
+             WallpaperConnection newConn = new WallpaperConnection(wi, wallpaper);
+@@ -2101,9 +2104,7 @@ boolean bindWallpaperComponentLocked(ComponentName componentName, boolean force,
+                 Slog.w(TAG, msg);
+                 return false;
+             }
+-            if (wallpaper.userId == mCurrentUserId && mLastWallpaper != null) {
+-                detachWallpaperLocked(mLastWallpaper);
+-            }
++            // Adding window token
+             wallpaper.wallpaperComponent = componentName;
+             wallpaper.connection = newConn;
+             newConn.mReply = reply;

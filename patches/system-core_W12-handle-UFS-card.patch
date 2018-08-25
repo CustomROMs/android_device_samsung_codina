@@ -1,0 +1,30 @@
+Subject: [PATCH] libdiskconfig: handle UFS card
+
+SD card have native sector size of 512 bytes where as UFS card have the
+native sector size of 4096 bytes. Let's allow sector size of 4096 bytes
+as well in order to support UFS cards.
+
+diff --git a/libdiskconfig/diskconfig.c b/libdiskconfig/diskconfig.c
+index c7e1b43..236f79b 100644
+--- a/libdiskconfig/diskconfig.c
++++ b/libdiskconfig/diskconfig.c
+@@ -302,11 +302,17 @@
+             goto fail;
+         }
+ 
+-        if (!sect_sz || sect_sz != dinfo->sect_size) {
+-            ALOGE("Device sector size is zero or sector sizes do not match!");
++        if (!sect_sz) {
++            ALOGE("Device sector size is zero!");
+             goto fail;
+         }
+ 
++        if ((sect_sz != 512) && (sect_sz != 4096)) {
++            ALOGE("Device sector size %d is not supported", sect_sz);
++            goto fail;
++        }
++        dinfo->sect_size = sect_sz;
++
+         /* allow the user override the "disk size" if they provided num_lba */
+         if (!dinfo->num_lba) {
+             if (ioctl(fd, BLKGETSIZE64, &disk_size) < 0) {

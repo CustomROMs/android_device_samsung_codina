@@ -1,0 +1,19 @@
+Subject: [PATCH] fixed handling of data URI schemes in Intent.toUri
+
+Data URIs in intents can use schemes with digits and some special
+characters (see RFC 2396 and 3986). This patch fixes how these
+data URIs are handled by Intent.toUri to support these schemes.
+
+diff --git a/core/java/android/content/Intent.java b/core/java/android/content/Intent.java
+index 08acfb6..8ff6699 100644
+--- a/core/java/android/content/Intent.java
++++ b/core/java/android/content/Intent.java
+@@ -9444,7 +9444,7 @@
+                 for (int i=0; i<N; i++) {
+                     char c = data.charAt(i);
+                     if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+-                            || c == '.' || c == '-') {
++                            || (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '+') {
+                         continue;
+                     }
+                     if (c == ':' && i > 0) {

@@ -1,0 +1,22 @@
+Subject: [PATCH] set the resultTo to null started by a finishing activity
+
+activitya start activityb via startActivityForResult
+if activitya is going to finish, activityb's resultTo
+should be set null. otherwise, activityb will be put
+to the topTask which is not supposed to happen instead of
+creating a new taskrecord.
+
+diff --git a/services/core/java/com/android/server/am/ActivityStarter.java b/services/core/java/com/android/server/am/ActivityStarter.java
+index bf5f1e3..1f6f374 100755
+--- a/services/core/java/com/android/server/am/ActivityStarter.java
++++ b/services/core/java/com/android/server/am/ActivityStarter.java
+@@ -1481,6 +1481,9 @@
+         }
+         mSourceRecord = null;
+         mSourceStack = null;
++        if (mStartActivity != null) {
++            mStartActivity.resultTo = null;
++        }
+     }
+ 
+     /**

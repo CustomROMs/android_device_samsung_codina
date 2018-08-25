@@ -1,0 +1,63 @@
+ libstagefright: Make it possible to skip OMX buffer reallocation
+
+Some devices don't like the call to setParameter() at this point, so
+skip this call if enough buffers are already allocated. This check
+was present in KitKat but got removed when code to allocate extra-
+buffers was introduced.
+This is activated only for omap4 for now, but also has an opt-in via BOARD_CANT_REALLOCATE_OMX_BUFFERS
+
+diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
+index 097d5b1..a898024 100644
+--- a/media/libstagefright/Android.bp
++++ b/media/libstagefright/Android.bp
+@@ -138,6 +138,7 @@
+         "-Wno-multichar",
+         "-Wno-error=deprecated-declarations",
+         "-Wall",
++        "-DBOARD_CANT_REALLOCATE_OMX_BUFFERS",
+     ],
+ 
+     product_variables: {
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index d97d5b1..a898024 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1190,6 +1190,12 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+     // 2. try to allocate two (2) additional buffers to reduce starvation from
+     //    the consumer
+     //    plus an extra buffer to account for incorrect minUndequeuedBufs
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    // Some devices don't like to set OMX_IndexParamPortDefinition at this
++    // point (even with an unmodified def), so skip it if possible.
++    // This check was present in KitKat.
++    if (def.nBufferCountActual < def.nBufferCountMin + *minUndequeuedBuffers) {
++#endif
+     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
+         OMX_U32 newBufferCount =
+             def.nBufferCountMin + *minUndequeuedBuffers + extraBuffers;
+@@ -1209,6 +1215,9 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+             return err;
+         }
+     }
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    }
++#endif
+ 
+     err = native_window_set_buffer_count(
+             mNativeWindow.get(), def.nBufferCountActual);
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 1ca9a4f..4eab70d 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1196,7 +1196,11 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+     // This check was present in KitKat.
+     if (def.nBufferCountActual < def.nBufferCountMin + *minUndequeuedBuffers) {
+ #endif
++#ifdef STE_HARDWARE
++    for (OMX_U32 extraBuffers = 1; /* condition inside loop */; extraBuffers--) {
++#else
+     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
++#endif
+         OMX_U32 newBufferCount =
+             def.nBufferCountMin + *minUndequeuedBuffers + extraBuffers;
+         def.nBufferCountActual = newBufferCount;

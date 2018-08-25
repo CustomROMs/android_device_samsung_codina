@@ -1,0 +1,15 @@
+ramdisk-recovery.cpio
+
+diff --git a/core/Makefile b/core/Makefile
+index 1539900..b227310 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1358,6 +1358,8 @@
+ 		$(call build-recoveryramdisk)
+ 		@echo ----- Making uncompressed recovery ramdisk ------
+ 		$(hide) $(MKBOOTFS) $(TARGET_RECOVERY_ROOT_OUT) > $@
++		@echo ----- Copy uncompressed recovery ------
++		$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
+ 
+ $(recovery_ramdisk): $(MINIGZIP) \
+ 		$(recovery_uncompressed_ramdisk)

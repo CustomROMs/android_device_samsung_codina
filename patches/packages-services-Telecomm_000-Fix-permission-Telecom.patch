@@ -1,0 +1,17 @@
+Subject: [PATCH] Declare READ_EXTERNAL_STORAGE permission for Telecom.
+
+We have seen some bugs where playing a ringtone installed by a third party
+app results in a failure to play the ringtone.
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 2e3bc37..540e4a4 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -38,6 +38,7 @@
+     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+     <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" />
+     <uses-permission android:name="android.permission.READ_CALL_LOG" />
++    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.STOP_APP_SWITCHES" />
+     <uses-permission android:name="android.permission.VIBRATE" />
+     <uses-permission android:name="android.permission.WRITE_CALL_LOG" />

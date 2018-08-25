@@ -1,0 +1,15 @@
+Subject: [PATCH] Should use scan flag, or it will not scan device.
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/CastControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/CastControllerImpl.java
+index 58f4782..78811a7 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/CastControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/CastControllerImpl.java
+@@ -115,7 +115,7 @@
+         }
+         if (mDiscovering) {
+             mMediaRouter.addCallback(ROUTE_TYPE_REMOTE_DISPLAY, mMediaCallback,
+-                    MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
++                    MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
+             mCallbackRegistered = true;
+         } else if (mCallbacks.size() != 0) {
+             mMediaRouter.addCallback(ROUTE_TYPE_REMOTE_DISPLAY, mMediaCallback,

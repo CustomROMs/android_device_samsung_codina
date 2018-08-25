@@ -1,0 +1,26 @@
+Subject: [PATCH] Native crash occurs. android.renderscript.Script#setVer()
+
+Bug Details:
+If null is specified for the argument dims of android.renderscript.Script#setVer(),
+Native crash occurs without RSIllegalArgumentException being thrown
+
+Modification:
+Implemented to throw RSIllegalArgumentException if the argument dims of the setVer() method is null.
+
+diff --git a/rs/java/android/renderscript/Script.java b/rs/java/android/renderscript/Script.java
+old mode 100644
+new mode 100755
+index d0d9a11..5fc3c60
+--- a/rs/java/android/renderscript/Script.java
++++ b/rs/java/android/renderscript/Script.java
+@@ -450,6 +450,10 @@
+      *
+      */
+     public void setVar(int index, FieldPacker v, Element e, int[] dims) {
++        if (dims == null) {
++            throw new RSIllegalArgumentException(
++                "dims should to be non-null.");
++        }
+         mRS.nScriptSetVarVE(getID(mRS), index, v.getData(), e.getID(mRS), dims);
+     }
+ 

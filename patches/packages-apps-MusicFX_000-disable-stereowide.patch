@@ -1,0 +1,83 @@
+Subject: [PATCH] MusicFX: disable stereowide for now
+
+diff --git a/src/com/android/musicfx/ActivityMusic.java b/src/com/android/musicfx/ActivityMusic.java
+index a678a92..ab18bc0 100644
+--- a/src/com/android/musicfx/ActivityMusic.java
++++ b/src/com/android/musicfx/ActivityMusic.java
+@@ -262,8 +262,8 @@
+                 mEqualizerSupported = true;
+             } else if (effect.type.equals(AudioEffect.EFFECT_TYPE_PRESET_REVERB)) {
+                 mPresetReverbSupported = true;
+-            } else if (effect.type.equals(AudioEffect.EFFECT_TYPE_STEREOWIDE)) {
+-                mStereoWideSupported = true;
++            /*} else if (effect.type.equals(AudioEffect.EFFECT_TYPE_STEREOWIDE)) {
++                mStereoWideSupported = true;*/
+             }
+         }
+ 
+diff --git a/src/com/android/musicfx/ControlPanelEffect.java b/src/com/android/musicfx/ControlPanelEffect.java
+index 0a3b25c..6c17f5c 100644
+--- a/src/com/android/musicfx/ControlPanelEffect.java
++++ b/src/com/android/musicfx/ControlPanelEffect.java
+@@ -23,7 +23,6 @@
+ import android.media.audiofx.BassBoost;
+ import android.media.audiofx.Equalizer;
+ import android.media.audiofx.PresetReverb;
+-import android.media.audiofx.StereoWide;
+ import android.media.audiofx.Virtualizer;
+ import android.util.Log;
+ 
+@@ -84,7 +83,6 @@
+         final BassBoost mBassBoost;
+         final Virtualizer mVirtualizer;
+         final PresetReverb mPresetReverb;
+-        StereoWide mStereoWide;
+         int mAudioSession;
+ 
+         protected EffectSet(int sessionId) {
+@@ -93,11 +91,6 @@
+             mBassBoost = new BassBoost(0, sessionId);
+             mVirtualizer = new Virtualizer(0, sessionId);
+             mPresetReverb = new PresetReverb(0, sessionId);
+-            try {
+-                mStereoWide = new StereoWide(0, sessionId);
+-            } catch(Exception e) {
+-                mStereoWide = null;
+-            }
+         }
+ 
+         protected void release() {
+@@ -105,9 +98,6 @@
+             mBassBoost.release();
+             mVirtualizer.release();
+             mPresetReverb.release();
+-            if (mStereoWide != null) {
+-                mStereoWide.release();
+-            }
+         }
+     }
+ 
+@@ -121,8 +111,6 @@
+     private final static int BASS_BOOST_STRENGTH_DEFAULT = 667;
+     private final static boolean PRESET_REVERB_ENABLED_DEFAULT = false;
+     private final static int PRESET_REVERB_CURRENT_PRESET_DEFAULT = 0; // None
+-    private final static boolean STERO_WIDE_ENABLED_DEFAULT = false;
+-    private final static int STERO_WIDE_STRENGTH_DEFAULT = 0; // None
+ 
+     // EQ defaults
+     private final static boolean EQUALIZER_ENABLED_DEFAULT = true;
+@@ -619,14 +607,6 @@
+         }
+         boolean eqOn = prefs.getBoolean(Key.eq_enabled.toString(), EQUALIZER_ENABLED_DEFAULT);
+         effectSet.mEqualizer.setEnabled(isGlobalEnabled && eqOn);
+-
+-        if (effectSet.mStereoWide != null) {
+-            final int swStrength = prefs.getInt(Key.sw_strength.toString(),
+-                    STERO_WIDE_STRENGTH_DEFAULT);
+-            effectSet.mStereoWide.setStrength((short) (swStrength - 1));
+-            boolean swOn = prefs.getBoolean(Key.sw_enabled.toString(), STERO_WIDE_ENABLED_DEFAULT);
+-            effectSet.mStereoWide.setEnabled(isGlobalEnabled && swOn);
+-        }
+     }
+ 
+     private static void updateDsp(Context context, final String prefLevel) {

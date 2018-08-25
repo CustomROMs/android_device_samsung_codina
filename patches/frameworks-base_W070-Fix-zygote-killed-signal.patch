@@ -1,0 +1,24 @@
+Subject: [PATCH] app_main: Fix "zygote is killed by signal 1"
+
+ignore the signal SIGHUP
+
+diff --git a/cmds/app_process/app_main.cpp b/cmds/app_process/app_main.cpp
+index 1671337..640f5dd 100644
+--- a/cmds/app_process/app_main.cpp
++++ b/cmds/app_process/app_main.cpp
+@@ -7,6 +7,7 @@
+ 
+ #define LOG_TAG "appproc"
+ 
++#include <signal.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <sys/prctl.h>
+@@ -347,6 +348,7 @@
+     }
+ 
+     if (zygote) {
++        signal(SIGHUP, SIG_IGN);
+         runtime.start("com.android.internal.os.ZygoteInit", args, zygote);
+     } else if (className) {
+         runtime.start("com.android.internal.os.RuntimeInit", args, zygote);

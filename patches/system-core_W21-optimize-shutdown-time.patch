@@ -1,0 +1,32 @@
+Subject: [PATCH] init: optimize shutdown time
+
+Android O adds 3 steps for the shutdown sequence, kill services/
+vold shutdown/umount. It need more than 700ms to kill services
+in which bootanimation will be stopped due to zygote died.
+However system turns off backlight at the step "umount" which is
+too late to get screen stuck in different interface. So turn
+off backlight before the step "kill services".
+
+diff --git a/init/reboot.cpp b/init/reboot.cpp
+index aac1b5c..d1bb774 100644
+--- a/init/reboot.cpp
++++ b/init/reboot.cpp
+@@ -315,8 +315,6 @@
+     std::vector<MountEntry> block_devices;
+     std::vector<MountEntry> emulated_devices;
+ 
+-    TurnOffBacklight();  // this part can take time. save power.
+-
+     if (runFsck && !FindPartitionsToUmount(&block_devices, &emulated_devices, false)) {
+         return UMOUNT_STAT_ERROR;
+     }
+@@ -431,7 +429,8 @@
+         LOG(INFO) << "Terminating running services took " << t
+                   << " with remaining services:" << service_count;
+     }
+-
++    // turn off backlight before killing services to avoid screen stuck
++    TurnOffBacklight();  // this part can take time. save power.
+     // minimum safety steps before restarting
+     // 2. kill all services except ones that are necessary for the shutdown sequence.
+     ServiceManager::GetInstance().ForEachService([](Service* s) {

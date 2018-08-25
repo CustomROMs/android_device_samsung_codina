@@ -1,0 +1,23 @@
+Subject: [PATCH] MediaProvider: Fix SQLiteDiskIOException.
+
+The SQLiteDiskIOExcept occur from monkey test.
+
+diff --git a/src/com/android/providers/media/MediaProvider.java b/src/com/android/providers/media/MediaProvider.java
+index 3977af8..dcd7699 100644
+--- a/src/com/android/providers/media/MediaProvider.java
++++ b/src/com/android/providers/media/MediaProvider.java
+@@ -1307,7 +1307,13 @@ public Cursor query(Uri uri, String[] projectionIn, String selection,
+             return null;
+         }
+         helper.mNumQueries++;
+-        SQLiteDatabase db = helper.getReadableDatabase();
++        SQLiteDatabase db = null;
++        try {
++            db = helper.getReadableDatabase();
++        } catch (Exception e) {
++            e.printStackTrace();
++            return null;
++        }
+         if (db == null) return null;
+         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+         String limit = uri.getQueryParameter("limit");

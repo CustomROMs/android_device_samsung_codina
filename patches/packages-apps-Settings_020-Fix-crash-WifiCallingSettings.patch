@@ -1,0 +1,21 @@
+Subject: [PATCH] Fix crash issue when user uses multi-window mode on WifiCallingSettings
+
+There is possibility that an activity object is null in
+PhoneStateListener#onCallStateChanged because it is called by
+ different threads. If the activity object is null, NPE happens.
+So, null check is necessary.
+
+diff --git a/src/com/android/settings/WifiCallingSettings.java b/src/com/android/settings/WifiCallingSettings.java
+index cb661ed9d5..0d90c251bd 100644
+--- a/src/com/android/settings/WifiCallingSettings.java
++++ b/src/com/android/settings/WifiCallingSettings.java
+@@ -87,6 +87,9 @@
+         @Override
+         public void onCallStateChanged(int state, String incomingNumber) {
+             final SettingsActivity activity = (SettingsActivity) getActivity();
++            if (activity == null) {
++                return;
++            }
+             boolean isNonTtyOrTtyOnVolteEnabled = ImsManager
+                     .isNonTtyOrTtyOnVolteEnabled(activity);
+             final SwitchBar switchBar = activity.getSwitchBar();

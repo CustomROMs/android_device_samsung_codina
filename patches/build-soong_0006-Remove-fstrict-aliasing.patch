@@ -1,0 +1,16 @@
+Subject: [PATCH] Remove inconsistent -fstrict-aliasing from ARM compiler configuration.
+
+Test: Build arm devices and run hwui/skia performance tests.
+
+diff --git a/cc/config/arm_device.go b/cc/config/arm_device.go
+index 0d3750e..e89ea1a 100644
+--- a/cc/config/arm_device.go
++++ b/cc/config/arm_device.go
+@@ -114,7 +114,6 @@
+ 	armArmCflags = []string{
+ 		"-O2",
+ 		"-fomit-frame-pointer",
+-		"-fstrict-aliasing",
+ 		"-funswitch-loops",
+ 	}
+ 

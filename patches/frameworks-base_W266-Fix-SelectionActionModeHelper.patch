@@ -1,0 +1,18 @@
+Subject: [PATCH] SelectionActionModeHelper: Prevent NPE
+
+diff --git a/core/java/android/widget/SelectionActionModeHelper.java b/core/java/android/widget/SelectionActionModeHelper.java
+index 384e254e205fa..d3158a0cbcd7f 100644
+--- a/core/java/android/widget/SelectionActionModeHelper.java
++++ b/core/java/android/widget/SelectionActionModeHelper.java
+@@ -446,6 +446,11 @@ public void logSelectionAction(
+                 @SelectionEvent.ActionType int action,
+                 @Nullable TextClassification classification) {
+             try {
++                if (mText == null || mDelegate == null) {
++                    Log.d(LOG_TAG, "logSelectionAction not logged.");
++                    return;
++                }
++
+                 Preconditions.checkArgumentInRange(start, 0, mText.length(), "start");
+                 Preconditions.checkArgumentInRange(end, start, mText.length(), "end");
+                 int[] wordIndices = getWordDelta(start, end);

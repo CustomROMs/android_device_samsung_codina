@@ -1,0 +1,20 @@
+Subject: [PATCH] su: Remove EUID vs UID check
+
+Not sure if this is a good idea, but the old code does not work in Oreo.
+
+diff --git a/su.c b/su.c
+index 99d0232..3d64271 100644
+--- a/su.c
++++ b/su.c
+@@ -363,11 +363,6 @@
+ }
+ 
+ int main(int argc, char *argv[]) {
+-    if (getuid() != geteuid()) {
+-        ALOGE("must not be a setuid binary");
+-        return 1;
+-    }
+-
+     return su_main(argc, argv, 1);
+ }
+ 

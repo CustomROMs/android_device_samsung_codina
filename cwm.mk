@@ -5,7 +5,7 @@ LOCAL_PATH := device/samsung/codina
 # CyanogenMod CWM
 BOARD_RECOVERY_NEEDS_REL_INPUT := true
 # TARGET_RECOVERY_DENSITY := hdpi
-# BOARD_HAS_DOWNLOAD_MODE := true
+BOARD_HAS_DOWNLOAD_MODE := true
 RECOVERY_FSTAB_VERSION := 2
 
 # Init files

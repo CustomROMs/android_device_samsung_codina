@@ -1,0 +1,65 @@
+Subject: [PATCH] Fix crash when DocumentsProviders using duplicate authority exist
+
+Files app crashes when loading roots if it failed to get provider info
+from authority. This could be happen in case there're different
+DocumentsProviders using the same authority.
+
+diff --git a/src/com/android/documentsui/roots/ProvidersCache.java b/src/com/android/documentsui/roots/ProvidersCache.java
+index ffb01e8..bc1d63b 100644
+--- a/src/com/android/documentsui/roots/ProvidersCache.java
++++ b/src/com/android/documentsui/roots/ProvidersCache.java
+@@ -16,6 +16,7 @@
+ 
+ package com.android.documentsui.roots;
+ 
++import static android.support.v4.util.Preconditions.checkArgument;
+ import static com.android.documentsui.base.Shared.DEBUG;
+ import static com.android.documentsui.base.Shared.VERBOSE;
+ 
+@@ -238,11 +239,17 @@
+      */
+     private Collection<RootInfo> loadRootsForAuthority(
+             ContentResolver resolver, String authority, boolean forceRefresh) {
++        checkArgument(authority != null);
+         if (VERBOSE) Log.v(TAG, "Loading roots for " + authority);
+ 
+         final ArrayList<RootInfo> roots = new ArrayList<>();
+-        ProviderInfo provider = mContext.getPackageManager().resolveContentProvider(
++        final PackageManager pm = mContext.getPackageManager();
++        ProviderInfo provider = pm.resolveContentProvider(
+                 authority, PackageManager.GET_META_DATA);
++        if (provider == null) {
++            Log.w(TAG, "Failed to get provider info for " + authority);
++            return roots;
++        }
+         if (!provider.exported) {
+             Log.w(TAG, "Provider is not exported. Failed to load roots for " + authority);
+             return roots;
+@@ -261,7 +268,6 @@
+ 
+         synchronized (mObservedAuthoritiesDetails) {
+             if (!mObservedAuthoritiesDetails.containsKey(authority)) {
+-                PackageManager pm = mContext.getPackageManager();
+                 CharSequence appName = pm.getApplicationLabel(provider.applicationInfo);
+                 String packageName = provider.applicationInfo.packageName;
+ 
+@@ -459,7 +465,10 @@
+             final Intent intent = new Intent(DocumentsContract.PROVIDER_INTERFACE);
+             final List<ResolveInfo> providers = pm.queryIntentContentProviders(intent, 0);
+             for (ResolveInfo info : providers) {
+-                handleDocumentsProvider(info.providerInfo);
++                ProviderInfo providerInfo = info.providerInfo;
++                if (providerInfo.authority != null) {
++                    handleDocumentsProvider(providerInfo);
++                }
+             }
+ 
+             final long delta = SystemClock.elapsedRealtime() - start;
+@@ -480,6 +489,7 @@
+         }
+ 
+         private void handleDocumentsProvider(ProviderInfo info) {
++            checkArgument(info.authority != null);
+             // Ignore stopped packages for now; we might query them
+             // later during UI interaction.
+             if ((info.applicationInfo.flags & ApplicationInfo.FLAG_STOPPED) != 0) {

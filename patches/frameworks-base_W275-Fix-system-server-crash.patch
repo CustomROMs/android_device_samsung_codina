@@ -1,0 +1,23 @@
+Subject: [PATCH] backup: Fix a system server crash
+
+ * If we get into a state where the backup data is null, system server
+   will go down in flames. Abort and kill any active agents if this
+   happens.
+
+diff --git a/services/backup/java/com/android/server/backup/BackupManagerService.java b/services/backup/java/com/android/server/backup/BackupManagerService.java
+index b6fd0729931..278971c7e7b 100644
+--- a/services/backup/java/com/android/server/backup/BackupManagerService.java
++++ b/services/backup/java/com/android/server/backup/BackupManagerService.java
+@@ -3341,6 +3341,12 @@ public void operationComplete(long unusedResult) {
+ 
+                 final String pkgName = mCurrentPackage.packageName;
+                 final long filepos = mBackupDataName.length();
++                if (mBackupDataName == null) {
++                    failAgent(mAgentBinder, "Backup data was null: " + mBackupDataName);
++                    addBackupTrace("backup data was null: " + mBackupDataName);
++                    errorCleanup();
++                    return;
++                }
+                 FileDescriptor fd = mBackupData.getFileDescriptor();
+                 try {
+                     // If it's a 3rd party app, see whether they wrote any protected keys

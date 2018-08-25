@@ -1,0 +1,273 @@
+Subject: [PATCH] Performance: Memory Optimizations
+
+The following optimizations are squashed in this change.
+
+ 1. Enable Aggressive trim settings.
+
+This change will enable aggressive trim settings for targets
+up to 1GB. The change can be turned on/off from system properties.
+By default, the properties are set for targets up to 1GB.
+
+ 2. Propagate B-services to higher adj.
+
+Depending on the inactivity of a service, move the B-services to
+highest adj 906. Under memory pressure, these services will
+be killed first ahead of cached apps which results in better
+concurrency numbers with bg apps. Inactivity time and minumum
+no of services to be maintained are configurable as system properties.
+Improves concurrency.
+
+ 3. Postpone service restart during app launch.
+
+In the android framework, when the service gets killed,
+it will be rescheduled. Postpone the service restart if
+the app is in process of startup. By Default this feature
+is disabled. It can be enabled from build.prop of target.
+
+ 4. Performance: Make Cached apps limit configurable.
+
+Set it via a target specific property
+file. Allows flexibility to set the limit
+based on device config.
+
+Normally, setting a smaller value for
+low-end device helps with performance.
+
+
+diff --git a/services/core/java/com/android/server/am/ActiveServices.java b/services/core/java/com/android/server/am/ActiveServices.java
+index f3c191e32b2a..1e80d1a2fe95 100644
+--- a/services/core/java/com/android/server/am/ActiveServices.java
++++ b/services/core/java/com/android/server/am/ActiveServices.java
+@@ -114,6 +114,10 @@
+     // at the same time.
+     final int mMaxStartingBackground;
+ 
++    // Flag to reschedule the services during app launch. Disable by default.
++    private static final boolean SERVICE_RESCHEDULE
++            = SystemProperties.getBoolean("ro.am.reschedule_service", false);
++
+     final SparseArray<ServiceMap> mServiceMap = new SparseArray<>();
+ 
+     /**
+@@ -1911,6 +1915,14 @@ private final boolean scheduleServiceRestartLocked(ServiceRecord r, boolean allo
+                         r.pendingStarts.add(0, si);
+                         long dur = SystemClock.uptimeMillis() - si.deliveredTime;
+                         dur *= 2;
++                        if (SERVICE_RESCHEDULE && DEBUG_DELAYED_SERVICE) {
++                            Slog.w(TAG,"Can add more delay !!!"
++                               +" si.deliveredTime "+si.deliveredTime
++                               +" dur "+dur
++                               +" si.deliveryCount "+si.deliveryCount
++                               +" si.doneExecutingCount "+si.doneExecutingCount
++                               +" allowCancel "+allowCancel);
++                        }
+                         if (minDuration < dur) minDuration = dur;
+                         if (resetTime < dur) resetTime = dur;
+                     } else {
+@@ -1923,6 +1935,13 @@ private final boolean scheduleServiceRestartLocked(ServiceRecord r, boolean allo
+             }
+ 
+             r.totalRestartCount++;
++            if (SERVICE_RESCHEDULE && DEBUG_DELAYED_SERVICE) {
++                Slog.w(TAG,"r.name "+r.name+" N "+N+" minDuration "+minDuration
++                       +" resetTime "+resetTime+" now "+now
++                       +" r.restartDelay "+r.restartDelay
++                       +" r.restartTime+resetTime "+(r.restartTime+resetTime)
++                       +" allowCancel "+allowCancel);
++            }
+             if (r.restartDelay == 0) {
+                 r.restartCount++;
+                 r.restartDelay = minDuration;
+@@ -1947,6 +1966,14 @@ private final boolean scheduleServiceRestartLocked(ServiceRecord r, boolean allo
+             }
+ 
+             r.nextRestartTime = now + r.restartDelay;
++            if (SERVICE_RESCHEDULE && DEBUG_DELAYED_SERVICE) {
++                Slog.w(TAG,"r.name "+r.name+" N "+N+" minDuration "+minDuration
++                       +" resetTime "+resetTime+" now "+now
++                       +" r.restartDelay "+r.restartDelay
++                       +" r.restartTime+resetTime "+(r.restartTime+resetTime)
++                       +" r.nextRestartTime "+r.nextRestartTime
++                       +" allowCancel "+allowCancel);
++            }
+ 
+             // Make sure that we don't end up restarting a bunch of services
+             // all at the same time.
+@@ -1988,6 +2015,15 @@ private final boolean scheduleServiceRestartLocked(ServiceRecord r, boolean allo
+         r.nextRestartTime = SystemClock.uptimeMillis() + r.restartDelay;
+         Slog.w(TAG, "Scheduling restart of crashed service "
+                 + r.shortName + " in " + r.restartDelay + "ms");
++
++        if (SERVICE_RESCHEDULE && DEBUG_DELAYED_SERVICE) {
++            for (int i=mRestartingServices.size()-1; i>=0; i--) {
++                ServiceRecord r2 = mRestartingServices.get(i);
++                Slog.w(TAG,"Restarting list - i "+i+" r2.nextRestartTime "
++                           +r2.nextRestartTime+" r2.name "+r2.name);
++            }
++        }
++
+         EventLog.writeEvent(EventLogTags.AM_SCHEDULE_SERVICE_RESTART,
+                 r.userId, r.shortName, r.restartDelay);
+ 
+@@ -2008,7 +2044,31 @@ final void performServiceRestartLocked(ServiceRecord r) {
+             return;
+         }
+         try {
+-            bringUpServiceLocked(r, r.intent.getIntent().getFlags(), r.createdFromFg, true, false);
++            if(SERVICE_RESCHEDULE) {
++                boolean shouldDelay = false;
++                ActivityRecord top_rc = null;
++                ActivityStack stack = mAm.getFocusedStack();
++                if(stack != null) {
++                    top_rc = stack.topRunningActivityLocked();
++                }
++                if(top_rc != null) {
++                    if(!top_rc.nowVisible && !r.shortName.contains(top_rc.packageName)) {
++                        shouldDelay = true;
++                    }
++                }
++                if(!shouldDelay) {
++                    bringUpServiceLocked(r, r.intent.getIntent().getFlags(), r.createdFromFg, true, false);
++                } else {
++                    if (DEBUG_DELAYED_SERVICE) {
++                        Slog.v(TAG, "Reschedule service restart due to app launch"
++                              +" r.shortName "+r.shortName+" r.app = "+r.app);
++                    }
++                    r.resetRestartCounter();
++                    scheduleServiceRestartLocked(r, true);
++                }
++            } else {
++                bringUpServiceLocked(r, r.intent.getIntent().getFlags(), r.createdFromFg, true, false);
++            }
+         } catch (TransactionTooLargeException e) {
+             // Ignore, it's been logged and nothing upstack cares.
+         }
+@@ -2249,6 +2309,11 @@ private final void realStartServiceLocked(ServiceRecord r,
+                 if (newService) {
+                     app.services.remove(r);
+                     r.app = null;
++                    if (SERVICE_RESCHEDULE && DEBUG_DELAYED_SERVICE) {
++                    Slog.w(TAG, " Failed to create Service !!!! ."
++                           +"This will introduce huge delay...  "
++                           +r.shortName + " in " + r.restartDelay + "ms");
++                    }
+                 }
+ 
+                 // Retry.
+diff --git a/services/core/java/com/android/server/am/ActivityManagerConstants.java b/services/core/java/com/android/server/am/ActivityManagerConstants.java
+index b52db872f978..fe58328cfcc0 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerConstants.java
++++ b/services/core/java/com/android/server/am/ActivityManagerConstants.java
+@@ -69,8 +69,8 @@
+     static final String KEY_BOUND_SERVICE_CRASH_RESTART_DURATION = "service_crash_restart_duration";
+     static final String KEY_BOUND_SERVICE_CRASH_MAX_RETRY = "service_crash_max_retry";
+ 
+-    private static final int DEFAULT_MAX_CACHED_PROCESSES =
+-            SystemProperties.getInt("ro.vendor.qti.sys.fw.bg_apps_limit", 32);
++    private static final int DEFAULT_MAX_CACHED_PROCESSES =
++            SystemProperties.getInt("ro.sys.fw.bg_apps_limit", 32);
+     private static final long DEFAULT_BACKGROUND_SETTLE_TIME = 60*1000;
+     private static final long DEFAULT_FGSERVICE_MIN_SHOWN_TIME = 2*1000;
+     private static final long DEFAULT_FGSERVICE_MIN_REPORT_TIME = 3*1000;
+@@ -222,16 +222,15 @@
+     // process limit.
+     public int CUR_MAX_CACHED_PROCESSES;
+ 
+-    static final boolean USE_TRIM_SETTINGS =
+-            SystemProperties.getBoolean("ro.vendor.qti.sys.fw.use_trim_settings", true);
+-    static final int EMPTY_APP_PERCENT =
+-            SystemProperties.getInt("ro.vendor.qti.sys.fw.empty_app_percent", 50);
+-    static final int TRIM_EMPTY_PERCENT =
+-            SystemProperties.getInt("ro.vendor.qti.sys.fw.trim_empty_percent", 100);
+-    static final int TRIM_CACHE_PERCENT =
+-            SystemProperties.getInt("ro.vendor.qti.sys.fw.trim_cache_percent", 100);
+-    static final long TRIM_ENABLE_MEMORY =
+-            SystemProperties.getLong("ro.vendor.qti.sys.fw.trim_enable_memory", 1073741824);
++    static final boolean USE_TRIM_SETTINGS =
++            SystemProperties.getBoolean("ro.sys.fw.use_trim_settings", true);
++    static final int EMPTY_APP_PERCENT = SystemProperties.getInt("ro.sys.fw.empty_app_percent", 50);
++    static final int TRIM_EMPTY_PERCENT =
++            SystemProperties.getInt("ro.sys.fw.trim_empty_percent", 100);
++    static final int TRIM_CACHE_PERCENT =
++            SystemProperties.getInt("ro.sys.fw.trim_cache_percent", 100);
++    static final long TRIM_ENABLE_MEMORY =
++            SystemProperties.getLong("ro.sys.fw.trim_enable_memory", 1073741824);
+ 
+     // The maximum number of empty app processes we will let sit around.
+     public int CUR_MAX_EMPTY_PROCESSES;
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index b1c0392ee322..06485bd37d32 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -1707,6 +1707,16 @@ public void binderDied() {
+     UnsupportedDisplaySizeDialog mUnsupportedDisplaySizeDialog;
+     long mLastMemUsageReportTime = 0;
+ 
++    // Min aging threshold in milliseconds to consider a B-service
++    int mMinBServiceAgingTime =
++            SystemProperties.getInt("ro.sys.fw.bservice_age", 5000);
++    // Threshold for B-services when in memory pressure
++    int mBServiceAppThreshold =
++            SystemProperties.getInt("ro.sys.fw.bservice_limit", 5);
++    // Enable B-service aging propagation on memory pressure.
++    boolean mEnableBServicePropagation =
++            SystemProperties.getBoolean("ro.sys.fw.bservice_enable", false);
++
+     /**
+      * Flag whether the current user is a "monkey", i.e. whether
+      * the UI is driven by a UI automation tool.
+@@ -22656,8 +22666,39 @@ final void updateOomAdjLocked() {
+         int nextCachedAdj = curCachedAdj+1;
+         int curEmptyAdj = ProcessList.CACHED_APP_MIN_ADJ;
+         int nextEmptyAdj = curEmptyAdj+2;
++        ProcessRecord selectedAppRecord = null;
++        long serviceLastActivity = 0;
++        int numBServices = 0;
+         for (int i=N-1; i>=0; i--) {
+             ProcessRecord app = mLruProcesses.get(i);
++            if (mEnableBServicePropagation && app.serviceb
++                    && (app.curAdj == ProcessList.SERVICE_B_ADJ)) {
++                numBServices++;
++                for (int s = app.services.size() - 1; s >= 0; s--) {
++                    ServiceRecord sr = app.services.valueAt(s);
++                    if (DEBUG_OOM_ADJ) Slog.d(TAG,"app.processName = " + app.processName
++                            + " serviceb = " + app.serviceb + " s = " + s + " sr.lastActivity = "
++                            + sr.lastActivity + " packageName = " + sr.packageName
++                            + " processName = " + sr.processName);
++                    if (SystemClock.uptimeMillis() - sr.lastActivity
++                            < mMinBServiceAgingTime) {
++                        if (DEBUG_OOM_ADJ) {
++                            Slog.d(TAG,"Not aged enough!!!");
++                        }
++                        continue;
++                    }
++                    if (serviceLastActivity == 0) {
++                        serviceLastActivity = sr.lastActivity;
++                        selectedAppRecord = app;
++                    } else if (sr.lastActivity < serviceLastActivity) {
++                        serviceLastActivity = sr.lastActivity;
++                        selectedAppRecord = app;
++                    }
++                }
++            }
++            if (DEBUG_OOM_ADJ && selectedAppRecord != null) Slog.d(TAG,
++                    "Identified app.processName = " + selectedAppRecord.processName
++                    + " app.pid = " + selectedAppRecord.pid);
+             if (!app.killedByAm && app.thread != null) {
+                 app.procStateChanged = false;
+                 computeOomAdjLocked(app, ProcessList.UNKNOWN_ADJ, TOP_APP, true, now);
+@@ -22772,6 +22813,14 @@ final void updateOomAdjLocked() {
+                 }
+             }
+         }
++        if ((numBServices > mBServiceAppThreshold) && (true == mAllowLowerMemLevel)
++                && (selectedAppRecord != null)) {
++            ProcessList.setOomAdj(selectedAppRecord.pid, selectedAppRecord.info.uid,
++                    ProcessList.CACHED_APP_MAX_ADJ);
++            selectedAppRecord.setAdj = selectedAppRecord.curAdj;
++            if (DEBUG_OOM_ADJ) Slog.d(TAG,"app.processName = " + selectedAppRecord.processName
++                        + " app.pid = " + selectedAppRecord.pid + " is moved to higher adj");
++        }
+ 
+         incrementProcStateSeqAndNotifyAppsLocked();
+ 

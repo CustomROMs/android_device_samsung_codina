@@ -1,0 +1,20 @@
+ Nuplayer: Ensure AudioSink is closed before clearing Renderer
+
+Close AudioSink object explicitly before clearing NuPlayerRenderer
+to avoid race conditions between NuPlayerRenderer and AudioSink callback
+thread.
+
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index 083421f..ed7a200 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -1308,6 +1308,9 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {
+                         FLUSH_CMD_SHUTDOWN /* audio */,
+                         FLUSH_CMD_SHUTDOWN /* video */));
+ 
++            mDeferredActions.push_back(
++                    new SimpleAction(&NuPlayer::closeAudioSink));
++
+             mDeferredActions.push_back(
+                     new SimpleAction(&NuPlayer::performReset));
+ 

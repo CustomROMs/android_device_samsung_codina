@@ -1,0 +1,26 @@
+Subject: [PATCH] ClientManager: Avoid evicting negative priority clients
+
+ * When launching Camera2, the ClientService stack could
+    launch as a back camera client (ID 0) and have a second
+    instance retrieving front camera characteristics (ID 1),
+    thus triggering an eviction of the Camera2 client
+
+ * Example stack logs :
+
+    CameraService: CameraService::connect call (PID -1
+      "com.android.camera2", camera ID 0) for HAL version
+      default and Camera API version 1
+
+diff --git a/services/camera/libcameraservice/utils/ClientManager.h b/services/camera/libcameraservice/utils/ClientManager.h
+index d7135f1bd..71450d348 100644
+--- a/services/camera/libcameraservice/utils/ClientManager.h
++++ b/services/camera/libcameraservice/utils/ClientManager.h
+@@ -461,7 +461,7 @@ ClientManager<KEY, VALUE, LISTENER>::wouldEvictLocked(
+                 evictList.push_back(client);
+                 return evictList;
+             } else if (conflicting || ((totalCost > mMaxCost && curCost > 0) &&
+-                    (curPriority >= priority) &&
++                    (curPriority >= priority && priority.getScore() >= 0) &&
+                     !(highestPriorityOwner == owner && owner == curOwner))) {
+                 // Add a pre-existing client to the eviction list if:
+                 // - We are adding a client with higher priority that conflicts with this one.

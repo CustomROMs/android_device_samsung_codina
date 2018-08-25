@@ -1,0 +1,20 @@
+Subject: [PATCH] Fix text cutting off during shutdown animation
+
+No better way to explain it than through a picture
+
+Google some how did not account for what I like to call 'Can't see
+shit mode' and so this happened :p
+
+diff --git a/core/res/res/layout/shutdown_dialog.xml b/core/res/res/layout/shutdown_dialog.xml
+index 398bfb1824c7..c3fc51e096c6 100644
+--- a/core/res/res/layout/shutdown_dialog.xml
++++ b/core/res/res/layout/shutdown_dialog.xml
+@@ -29,7 +29,7 @@
+     <TextView
+         android:id="@id/text1"
+         android:layout_width="wrap_content"
+-        android:layout_height="32dp"
++        android:layout_height="wrap_content"
+         android:text="@string/shutdown_progress"
+         android:textDirection="locale"
+         android:textSize="24sp"

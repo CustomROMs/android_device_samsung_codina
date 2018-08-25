@@ -1,0 +1,21 @@
+Subject: [PATCH] Telephony: Add getDefaultDataSubId for compatibility
+
+ * Some applications are still using getDefaultDataSubId, which
+   has changed to the more verbose getDefaultDataSubscriptionId.
+
+diff --git a/telephony/java/android/telephony/SubscriptionManager.java b/telephony/java/android/telephony/SubscriptionManager.java
+index 74582bf..932f55d 100644
+--- a/telephony/java/android/telephony/SubscriptionManager.java
++++ b/telephony/java/android/telephony/SubscriptionManager.java
+@@ -1234,6 +1234,11 @@
+         }
+     }
+ 
++    /** @hide */
++    public static int getDefaultDataSubId() {
++        return getDefaultDataSubscriptionId();
++    }
++
+     /**
+      * Return the SubscriptionInfo for default data subscription.
+      *

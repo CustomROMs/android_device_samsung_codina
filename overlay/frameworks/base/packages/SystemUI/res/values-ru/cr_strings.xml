@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2016-2018 crDroid Android Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Compass QS tile -->
+    <string name="quick_settings_compass_label">Компас</string>
+    <string name="quick_settings_compass_init">Включение\u2026</string>
+    <string name="quick_settings_compass_value"><xliff:g id="degrees">%1$.0f</xliff:g>\u00b0 <xliff:g id="direction">%2$s</xliff:g></string>
+    <string name="accessibility_quick_settings_compass_off">Компас выкл.</string>
+    <string name="accessibility_quick_settings_compass_on">Компас вкл.</string>
+    <string name="accessibility_quick_settings_compass_changed_off">Компас был выключен</string>
+    <string name="accessibility_quick_settings_compass_changed_on">Компас был включен</string>
+    <string name="quick_settings_compass_N">С</string>
+    <string name="quick_settings_compass_NE">СВ</string>
+    <string name="quick_settings_compass_E">В</string>
+    <string name="quick_settings_compass_SE">ЮВ</string>
+    <string name="quick_settings_compass_S">Ю</string>
+    <string name="quick_settings_compass_SW">ЮЗ</string>
+    <string name="quick_settings_compass_W">З</string>
+    <string name="quick_settings_compass_NW">СЗ</string>
+
+</resources>

@@ -1,0 +1,20 @@
+Subject: [PATCH] Fix the system_error while calling thread::join() in NativeCallbackThread.
+
+system_server crashed because the system_error "resource_deadlock_would_occur"
+occurred while calling thread::join(). It is caused by the value of thread is same
+with the calling thread. Correct it using std::this_thread::get_id() to check
+whether it is the same thread with the calling thread.
+
+diff --git a/services/core/jni/BroadcastRadio/NativeCallbackThread.cpp b/services/core/jni/BroadcastRadio/NativeCallbackThread.cpp
+index 81d46f3..777d344 100644
+--- a/services/core/jni/BroadcastRadio/NativeCallbackThread.cpp
++++ b/services/core/jni/BroadcastRadio/NativeCallbackThread.cpp
+@@ -106,7 +106,7 @@
+         mQueueCond.notify_one();
+     }
+ 
+-    if (mThread.get_id() == std::thread::id()) {
++    if (mThread.get_id() == std::this_thread::get_id()) {
+         // you can't self-join a thread, but it's ok when calling from our sub-task
+         ALOGD("About to stop native callback thread %p", this);
+         mThread.detach();

@@ -1,0 +1,50 @@
+Subject: [PATCH] Update wifi state even if wifi info be null
+
+So once no get_link_stats implementation in wifi_hal,
+it will cause the codes return null.
+However, wifi_get_link_stats is not necessary to implement.
+We update the wifi info even if wifi info be null,
+when wifi_get_link_stats not support.
+
+diff --git a/services/core/java/com/android/server/am/BatteryExternalStatsWorker.java b/services/core/java/com/android/server/am/BatteryExternalStatsWorker.java
+index 8af1f3e..4472f59 100644
+--- a/services/core/java/com/android/server/am/BatteryExternalStatsWorker.java
++++ b/services/core/java/com/android/server/am/BatteryExternalStatsWorker.java
+@@ -21,6 +21,7 @@
+ import android.content.Context;
+ import android.net.wifi.IWifiManager;
+ import android.net.wifi.WifiActivityEnergyInfo;
++import android.net.wifi.WifiManager;
+ import android.os.BatteryStats;
+ import android.os.Parcelable;
+ import android.os.RemoteException;
+@@ -74,6 +75,8 @@
+     private final Context mContext;
+     private final BatteryStatsImpl mStats;
+ 
++    private WifiManager mWifi;
++
+     @GuardedBy("this")
+     private int mUpdateFlags = 0;
+ 
+@@ -209,6 +212,7 @@
+         SynchronousResultReceiver bluetoothReceiver = null;
+         SynchronousResultReceiver modemReceiver = null;
+ 
++        Slog.e(TAG, "updateExternalStatsLocked reason:" + reason + " flag:" + updateFlags);
+         if ((updateFlags & BatteryStatsImpl.ExternalStatsSync.UPDATE_WIFI) != 0) {
+             // We were asked to fetch WiFi data.
+             if (mWifiManager == null) {
+@@ -286,6 +290,12 @@
+             } else {
+                 Slog.e(TAG, "wifi info is invalid: " + wifiInfo);
+             }
++        } else {
++                mWifi = (WifiManager) mContext.getSystemService(mContext.WIFI_SERVICE);
++                if (mWifi != null && !mWifi.isEnhancedPowerReportingSupported()) {
++                    mStats.updateWifiState(null);
++                }
++                Slog.e(TAG, "wifi info is null ");
+         }
+ 
+         if (modemInfo != null) {

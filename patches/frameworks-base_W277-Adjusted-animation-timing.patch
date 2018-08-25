@@ -1,0 +1,182 @@
+Subject: [PATCH] SystemUI: Adjusted animation timing
+
+diff --git a/core/res/res/anim/activity_open_enter.xml b/core/res/res/anim/activity_open_enter.xml
+index 1d949d2f744..64776ec1496 100644
+--- a/core/res/res/anim/activity_open_enter.xml
++++ b/core/res/res/anim/activity_open_enter.xml
+@@ -28,5 +28,5 @@
+     <translate android:fromYDelta="8%" android:toYDelta="0"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/decelerate_quint"
+-            android:duration="350"/>
++            android:duration="300"/>
+ </set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/task_close_enter.xml b/core/res/res/anim/task_close_enter.xml
+index bea0ee51d59..a9c0ee968d6 100644
+--- a/core/res/res/anim/task_close_enter.xml
++++ b/core/res/res/anim/task_close_enter.xml
+@@ -23,14 +23,14 @@
+     <alpha android:fromAlpha="0.6" android:toAlpha="1.0"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/decelerate_cubic"
+-            android:startOffset="600"
++            android:startOffset="500"
+             android:duration="133"/>
+ 
+     <translate android:fromYDelta="10%" android:toYDelta="0"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/decelerate_cubic"
+             android:startOffset="300"
+-            android:duration="433" />
++            android:duration="350" />
+ 
+     <scale android:fromXScale=".9" android:toXScale="1.0"
+             android:fromYScale=".9" android:toYScale="1.0"
+@@ -38,5 +38,5 @@
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/fast_out_slow_in"
+             android:startOffset="300"
+-            android:duration="433" />
++            android:duration="350" />
+ </set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/task_close_exit.xml b/core/res/res/anim/task_close_exit.xml
+index b6a08070c3c..49b91cb881b 100644
+--- a/core/res/res/anim/task_close_exit.xml
++++ b/core/res/res/anim/task_close_exit.xml
+@@ -23,15 +23,15 @@
+     <alpha android:fromAlpha="1.0" android:toAlpha="0"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/accelerate_quad"
+-            android:startOffset="250"
++            android:startOffset="193"
+             android:duration="167"/>
+ 
+     <translate android:fromYDelta="0" android:toYDelta="110%"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/accelerate_quint"
+-            android:duration="417"/>
++            android:duration="350"/>
+ 
+     <!-- This is needed to keep the animation running while task_open_enter completes -->
+     <alpha android:fromAlpha="1.0" android:toAlpha="1.0"
+-            android:duration="700" />
++            android:duration="650" />
+ </set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/task_open_enter.xml b/core/res/res/anim/task_open_enter.xml
+index e511cc9d993..19a30e658dc 100644
+--- a/core/res/res/anim/task_open_enter.xml
++++ b/core/res/res/anim/task_open_enter.xml
+@@ -30,5 +30,5 @@
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/decelerate_quint"
+             android:startOffset="300"
+-            android:duration="417" />
++            android:duration="350" />
+ </set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/task_open_exit.xml b/core/res/res/anim/task_open_exit.xml
+index 78d0fb015ce..4ffa9f54948 100644
+--- a/core/res/res/anim/task_open_exit.xml
++++ b/core/res/res/anim/task_open_exit.xml
+@@ -28,16 +28,16 @@
+     <translate android:fromYDelta="0" android:toYDelta="10%"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:interpolator="@interpolator/accelerate_cubic"
+-            android:duration="433"/>
++            android:duration="350"/>
+ 
+     <scale android:fromXScale="1.0" android:toXScale="0.9"
+             android:fromYScale="1.0" android:toYScale="0.9"
+             android:fillEnabled="true" android:fillBefore="true" android:fillAfter="true"
+             android:pivotX="50%p" android:pivotY="50%p"
+             android:interpolator="@interpolator/fast_out_slow_in"
+-            android:duration="433" />
++            android:duration="350" />
+ 
+     <!-- This is needed to keep the animation running while task_open_enter completes -->
+     <alpha android:fromAlpha="1.0" android:toAlpha="1.0"
+-            android:duration="700" />
++            android:duration="650" />
+ </set>
+\ No newline at end of file
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java
+index 72dc1a57f7e..c48372c8b3e 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NotificationPanelView.java
+@@ -2315,7 +2315,7 @@ protected boolean onMiddleClicked() {
+ 
+                 // This gets called in the middle of the touch handling, where the state is still
+                 // that we are tracking the panel. Collapse the panel after this is done.
+-                post(mPostCollapseRunnable);
++                post(mEmptySpaceClickedRunnable);
+                 return false;
+             default:
+                 return true;
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java
+index a962a2c98a7..7a869838162 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PanelView.java
+@@ -67,6 +67,8 @@
+     private boolean mPanelUpdateWhenAnimatorEnds;
+     private boolean mVibrateOnOpening;
+ 
++    public static final float SPEED_UP_FACTOR_CLICKED = 1.7f;
++
+     private final void logf(String fmt, Object... args) {
+         Log.v(TAG, (mViewName != null ? (mViewName + ": ") : "") + String.format(fmt, args));
+     }
+@@ -1189,6 +1191,13 @@ protected boolean onEmptySpaceClick(float x) {
+         return onMiddleClicked();
+     }
+ 
++    protected final Runnable mEmptySpaceClickedRunnable = new Runnable() {
++        @Override
++        public void run() {
++            collapse(false /* delayed */, SPEED_UP_FACTOR_CLICKED /* speedUpFactor */);
++        }
++    };
++
+     protected final Runnable mPostCollapseRunnable = new Runnable() {
+         @Override
+         public void run() {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
+index 4e66b3f0d79..ccdf6cb4c05 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
+@@ -7275,7 +7275,8 @@ public void run() {
+                 if (!mNotificationPanel.isFullyCollapsed()) {
+                     // close the shade if it was open
+                     animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_RECENTS_PANEL,
+-                            true /* force */, true /* delayed */);
++                            true /* force */, true /* delayed */,
++                            NotificationPanelView.SPEED_UP_FACTOR_CLICKED);
+                     visibilityChanged(false);
+ 
+                     return true;
+diff --git a/services/core/java/com/android/server/wm/AppTransition.java b/services/core/java/com/android/server/wm/AppTransition.java
+index 68dd57df789..a928cfbeb77 100644
+--- a/services/core/java/com/android/server/wm/AppTransition.java
++++ b/services/core/java/com/android/server/wm/AppTransition.java
+@@ -161,7 +161,7 @@
+     /** Fraction of animation at which the recents thumbnail becomes completely transparent */
+     private static final float RECENTS_THUMBNAIL_FADEOUT_FRACTION = 0.5f;
+ 
+-    static final int DEFAULT_APP_TRANSITION_DURATION = 336;
++    static final int DEFAULT_APP_TRANSITION_DURATION = 270;
+ 
+     /** Interpolator to be used for animations that respond directly to a touch */
+     static final Interpolator TOUCH_RESPONSE_INTERPOLATOR =
+@@ -174,8 +174,8 @@
+      * Maximum duration for the clip reveal animation. This is used when there is a lot of movement
+      * involved, to make it more understandable.
+      */
+-    private static final int MAX_CLIP_REVEAL_TRANSITION_DURATION = 420;
+-    private static final int THUMBNAIL_APP_TRANSITION_DURATION = 336;
++    private static final int MAX_CLIP_REVEAL_TRANSITION_DURATION = 270;
++    private static final int THUMBNAIL_APP_TRANSITION_DURATION = 270;
+     private static final long APP_TRANSITION_TIMEOUT_MS = 5000;
+ 
+     private final Context mContext;

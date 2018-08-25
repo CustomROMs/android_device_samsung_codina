@@ -1,0 +1,54 @@
+Subject: [PATCH] Expose PhoneInfo
+
+This is helpful for carrier locked devices to be able to acess certain provisioning items
+
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index d21e2483d5..cb95660e85 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -59,4 +59,6 @@
+     <string name="media_scanner_on_boot_ask">Ask to scan (notification)</string>
+     <string name="media_scanner_on_boot_disabled">Do not scan media</string>
+ 
++    <string name="device_info_title">Phone info</string>
++
+ </resources>
+diff --git a/res/xml/device_info_status.xml b/res/xml/device_info_status.xml
+index b381d04242..1160c8d6e3 100644
+--- a/res/xml/device_info_status.xml
++++ b/res/xml/device_info_status.xml
+@@ -47,6 +47,14 @@
+             android:targetPackage="com.android.settings"
+             android:targetClass="com.android.settings.Settings$ImeiInformationActivity" />
+     </Preference>
++    <Preference 
++        android:key="radio_info"
++        android:title="@string/device_info_title"
++        android:persistent="false">
++        <intent
++            android:targetPackage="com.android.settings"
++            android:targetClass="com.android.settings.RadioInfo" />
++    </Preference>
+     <Preference
+         android:key="wifi_ip_address"
+         android:enabled="false"
+diff --git a/src/com/android/settings/deviceinfo/Status.java b/src/com/android/settings/deviceinfo/Status.java
+index 624103a179..78c6db16dc 100644
+--- a/src/com/android/settings/deviceinfo/Status.java
++++ b/src/com/android/settings/deviceinfo/Status.java
+@@ -61,6 +61,7 @@
+     private static final String KEY_WIMAX_MAC_ADDRESS = "wimax_mac_address";
+     private static final String KEY_SIM_STATUS = "sim_status";
+     private static final String KEY_IMEI_INFO = "imei_info";
++    private static final String KEY_RADIO_INFO = "radio_info";
+ 
+     // Broadcasts to listen to for connectivity changes.
+     private static final String[] CONNECTIVITY_INTENTS = {
+@@ -200,6 +201,7 @@ public void onCreate(Bundle icicle) {
+                 || Utils.isWifiOnly(getContext())) {
+             removePreferenceFromScreen(KEY_SIM_STATUS);
+             removePreferenceFromScreen(KEY_IMEI_INFO);
++            removePreferenceFromScreen(KEY_RADIO_INFO);
+         }
+     }
+ 

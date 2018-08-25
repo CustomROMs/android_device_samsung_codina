@@ -1,0 +1,17 @@
+Subject: [PATCH] ActivityStack: Add task null checker before proceeding
+
+diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/services/core/java/com/android/server/am/ActivityStack.java
+index 2dee7065860..b5aa119f8d3 100644
+--- a/services/core/java/com/android/server/am/ActivityStack.java
++++ b/services/core/java/com/android/server/am/ActivityStack.java
+@@ -1101,7 +1101,9 @@ void addRecentActivityLocked(ActivityRecord r) {
+         if (r != null) {
+             final TaskRecord task = r.getTask();
+             mRecentTasks.addLocked(task);
+-            task.touchActiveTime();
++            if (task != null) {
++                task.touchActiveTime();
++            }
+         }
+     }
+ 

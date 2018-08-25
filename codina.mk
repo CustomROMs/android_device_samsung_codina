@@ -29,8 +29,10 @@ PRODUCT_AAPT_PREF_CONFIG := hdpi
 DEVICE_ENABLE_LOV := true
 DEVICE_WiFi_NEW := true
 # DEVICE_ENABLE_SUBMIX := true
-# DEVICE_ENABLE_XML_AUDIO := true
-# DEVICE_ENABLE_CHANGER_CM := true
+DEVICE_ENABLE_CHANGER_CM := true
+DEVICE_AUDIO_MOD := true
+# Sensors modules HAL
+# DEVICE_SENSOR_MULTI_HAL := true
 
 # Media
 ifeq ($(DEVICE_ENABLE_LOV),true)
@@ -65,12 +67,8 @@ endif
 
 PRODUCT_PACKAGES += \
     libnetcmdiface \
-    wificond \
     wpa_supplicant \
     wpa_supplicant.conf
-
-PRODUCT_PACKAGES += \
-    libstlport
 
 # Wi-Fi firmware
 # $(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4330/device-bcm.mk)
@@ -108,103 +106,11 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/asound.conf:system/etc/asound.conf
 endif
 
-# XML Audio configuration files
-ifeq ($(DEVICE_ENABLE_XML_AUDIO),true)
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/audioconfiguration/audio_output_policy.conf:system/vendor/etc/audio_output_policy.conf \
-    $(LOCAL_PATH)/audioconfiguration/audio_policy_configuration.xml:system/etc/audio_policy_configuration.xml \
-    frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:system/etc/a2dp_audio_policy_configuration.xml \
-    frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:system/etc/audio_policy_volumes.xml \
-    frameworks/av/services/audiopolicy/config/default_volume_tables.xml:system/etc/default_volume_tables.xml \
-    frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:system/etc/r_submix_audio_policy_configuration.xml \
-    frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:system/etc/usb_audio_policy_configuration.xml
-endif
-
 PRODUCT_PACKAGES += \
     audio.usb.default \
     audio.a2dp.default \
     libaudioutils \
     libtinyalsa
-
-# HIDL
-PRODUCT_COPY_FILES += \
-$(LOCAL_PATH)/manifest.xml:system/vendor/manifest.xml \
-$(LOCAL_PATH)/manifest.xml:system/manifest.xml
-
-# Bluetooth
-PRODUCT_PACKAGES += \
-libbt-vendor
-
-# Camera
-PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.4-impl \
-    camera.device@1.0-impl \
-
-# Keymaster
-PRODUCT_PACKAGES += \
-android.hardware.keymaster@3.0-service \
-android.hardware.keymaster@3.0-impl
-
-# Bluetooth HAL
-PRODUCT_PACKAGES += \
-android.hardware.bluetooth@1.0-impl
-
-# wificond
-PRODUCT_PACKAGES += \
-wificond
-
-# Wifi
-PRODUCT_PACKAGES += \
-android.hardware.wifi@1.0-service
-
-# USB HAL
-PRODUCT_PACKAGES += \
-android.hardware.usb@1.0-service
-
-# Power
-PRODUCT_PACKAGES += \
-android.hardware.power@1.0-impl
-
-# vibrator
-PRODUCT_PACKAGES += \
-android.hardware.vibrator@1.0-impl
-
-# Sensors
-
-PRODUCT_COPY_FILES += \
-$(LOCAL_PATH)/configs/hals.conf:system/vendor/etc/sensors/hals.conf
-
-PRODUCT_PACKAGES += \
-sensors.montblanc \
-android.hardware.sensors@1.0-impl
-
-# Lights
-PRODUCT_PACKAGES += \
-android.hardware.light@2.0-impl
-
-# GNSS HAL
-PRODUCT_PACKAGES += \
-android.hardware.gnss@1.0-impl
-
-# RenderScript HAL
-PRODUCT_PACKAGES += \
-android.hardware.renderscript@1.0-impl
-
-# DRM
-PRODUCT_PACKAGES += \
-android.hardware.drm@1.0-impl
-
-# Gatekeeper HAL
-#PRODUCT_PACKAGES += \
-#android.hardware.gatekeeper@1.0-service \
-#android.hardware.gatekeeper@1.0-impl
-
-# graphics HIDL interfaces
-PRODUCT_PACKAGES += \
-android.hardware.graphics.bufferqueue@1.0_hal \
-android.hardware.configstore@1.0_hal \
-android.hardware.configstore@1.0-service \
-android.hardware.configstore-utils
 
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
@@ -290,13 +196,149 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libstlport
 
+# Busybox
+PRODUCT_PACKAGES += \
+    Busybox
+
 # Snap Camera
 PRODUCT_PACKAGES += \
     Snap
 
-# Telephony-ext
-# PRODUCT_PACKAGES += telephony-ext
-# PRODUCT_BOOT_JARS += telephony-ext
+ifeq ($(DEVICE_AUDIO_MOD),true)
+# MusicFX
+PRODUCT_PACKAGES += \
+    MusicFX
+else
+# AudioFX
+PRODUCT_PACKAGES += \
+    AudioFX
+endif
+
+# HIDL
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configsnew/manifest.xml:system/vendor/manifest.xml
+
+# Bluetooth
+PRODUCT_PACKAGES += \
+    libbt-vendor
+
+# Bluetooth HAL
+PRODUCT_PACKAGES += \
+    android.hardware.bluetooth@1.0-impl
+
+# wificond
+PRODUCT_PACKAGES += \
+    wificond
+
+# Wifi
+PRODUCT_PACKAGES += \
+    android.hardware.wifi@1.0-service
+
+# USB HAL
+PRODUCT_PACKAGES += \
+    android.hardware.usb@1.0-service
+
+# Power
+PRODUCT_PACKAGES += \
+    android.hardware.power@1.0-impl
+
+# vibrato
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator@1.0-impl
+
+# GNSS HAL
+PRODUCT_PACKAGES += \
+    android.hardware.gnss@1.0-impl
+
+# RenderScript HAL
+PRODUCT_PACKAGES += \
+    android.hardware.renderscript@1.0-impl
+
+# DRM
+PRODUCT_PACKAGES += \
+    android.hardware.drm@1.0-impl
+
+# graphics HIDL interfaces
+PRODUCT_PACKAGES += \
+    android.hardware.configstore@1.0-service
+
+# Keymaster
+PRODUCT_PACKAGES += \
+    android.hardware.keymaster@3.0-impl
+
+# Camera legacy
+#PRODUCT_PACKAGES += \
+#    android.hardware.camera.provider@2.4-impl-legacy \
+#    camera.device@1.0-impl-legacy
+
+# Camera
+PRODUCT_PACKAGES += \
+    android.hardware.camera.provider@2.4-impl \
+    camera.device@1.0-impl
+
+# health
+PRODUCT_PACKAGES += \
+    android.hardware.health@1.0-impl
+
+# Lights
+PRODUCT_PACKAGES += \
+    android.hardware.light@2.0-impl
+
+# memtrack
+PRODUCT_PACKAGES += \
+    android.hardware.memtrack@1.0-impl
+
+ifeq ($(DEVICE_SENSOR_MULTI_HAL),true)
+# Sensors
+PRODUCT_PACKAGES += \
+    android.hardware.sensors@1.0-impl \
+    sensors.montblanc
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configsnew/hals.conf:system/vendor/etc/sensors/hals.conf
+endif
+
+# Gralloc Mapper
+PRODUCT_PACKAGES += \
+     android.hardware.graphics.mapper@2.0-impl \
+     android.hardware.graphics.allocator@2.0-impl-exynos4
+
+# Display HIDL interfaces
+#PRODUCT_PACKAGES += \
+#    android.hardware.graphics.allocator@2.0-service
+#    android.hardware.graphics.composer@2.1-service \
+#    android.hardware.graphics.composer@2.1-impl
+
+# Gatekeeper HAL
+#PRODUCT_PACKAGES += \
+#    android.hardware.gatekeeper@1.0-service \
+#    android.hardware.gatekeeper@1.0-impl
+
+# Audio
+#PRODUCT_PACKAGES += \
+#    android.hardware.audio@2.0-impl \
+#    android.hardware.audio.effect@2.0-impl \
+#    android.hardware.broadcastradio@1.0-impl
+#    android.hardware.soundtrigger@2.0-impl
+
+# Selective SPN list for operator number who has the problem.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/selective-spn-conf.xml:system/etc/selective-spn-conf.xml
+
+# Selective power profile from a file.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/power_profile.xml:system/etc/power_profile.xml
+
+# Screencast
+#PRODUCT_PACKAGES += \
+#    Screencast
+
+PRODUCT_PACKAGES += \
+    su
+
+# Permissions
+PRODUCT_PACKAGES += \
+    privapp-permissions-microg.xml
 
 # We have enough storage space to hold precise GC data
 PRODUCT_TAGS += dalvik.gc.type-precise
@@ -309,13 +351,12 @@ include vendor/samsung/u8500-common/vendor-common.mk
 # For better compatibility with ROMs (like Slim, PAC)
 $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.mk)
 
+# Build GO
+# $(call inherit-product, build/make/target/product/go_defaults_512.mk)
+
 # STE Modem
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/ste_modem.sh:system/etc/ste_modem.sh
-
-# UMS config
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/ums_init.sh:system/bin/ums_init.sh
 
 # Audio
 PRODUCT_COPY_FILES += \

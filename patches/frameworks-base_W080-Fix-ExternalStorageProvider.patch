@@ -1,0 +1,38 @@
+Subject: [PATCH] Avoid NullPointerExeption when VOLUME_STATE_CHANGED broadcast recieved
+
+Symptom:
+ExternalStorageProvider crashed due to NullPointerException at
+com.android.externalstorage.MountReceiver.onReceive()
+
+Root cause:
+There is no provider associated with the uri.
+
+Solution:
+To verify the null before useing the provider and
+illegalStateException throw when the provider was alive.
+
+diff --git a/packages/ExternalStorageProvider/src/com/android/externalstorage/MountReceiver.java b/packages/ExternalStorageProvider/src/com/android/externalstorage/MountReceiver.java
+index 8a6c7d6..84296cb 100644
+--- a/packages/ExternalStorageProvider/src/com/android/externalstorage/MountReceiver.java
++++ b/packages/ExternalStorageProvider/src/com/android/externalstorage/MountReceiver.java
+@@ -20,12 +20,20 @@
+ import android.content.ContentProviderClient;
+ import android.content.Context;
+ import android.content.Intent;
++import android.util.Log;
+ 
+ public class MountReceiver extends BroadcastReceiver {
++    private static final String TAG = "MountReceiver";
++
+     @Override
+     public void onReceive(Context context, Intent intent) {
+         final ContentProviderClient client = context.getContentResolver()
+                 .acquireContentProviderClient(ExternalStorageProvider.AUTHORITY);
++        if (client == null) {
++            Log.e(TAG, "Failed to find provider info for "
++                                    + ExternalStorageProvider.AUTHORITY);
++            return;
++        }
+         try {
+             ((ExternalStorageProvider) client.getLocalContentProvider()).updateVolumes();
+         } finally {

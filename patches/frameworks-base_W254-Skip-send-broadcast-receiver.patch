@@ -1,0 +1,78 @@
+Subject: [PATCH] Skip send broadcast to the receiver whoes user has not started
+
+After switch user from guest to owner,there may have some send
+to all user broadcasts still need to deliver,and in the send
+workflow may start process that relate to guest to receive the
+broadcast, BUT if the process start service with the stopped user
+AMS will throw SecurityException make the process crash.
+
+diff --git a/services/core/java/com/android/server/am/BroadcastQueue.java b/services/core/java/com/android/server/am/BroadcastQueue.java
+index d8673bfe4ff..4a53816f44c 100644
+--- a/services/core/java/com/android/server/am/BroadcastQueue.java
++++ b/services/core/java/com/android/server/am/BroadcastQueue.java
+@@ -1336,12 +1336,7 @@ final void processNextBroadcast(boolean fromMsg) {
+                     // from a client, so throwing an exception out from here
+                     // will crash the entire system instead of just whoever
+                     // sent the broadcast.
+-                    logBroadcastReceiverDiscardLocked(r);
+-                    finishReceiverLocked(r, r.resultCode, r.resultData,
+-                            r.resultExtras, r.resultAbort, false);
+-                    scheduleBroadcastsLocked();
+-                    // We need to reset the state if we failed to start the receiver.
+-                    r.state = BroadcastRecord.IDLE;
++                    resetBroadcastStateAndContinueDelivery(r);
+                     return;
+                 }
+ 
+@@ -1353,6 +1348,11 @@ final void processNextBroadcast(boolean fromMsg) {
+             if (DEBUG_BROADCAST)  Slog.v(TAG_BROADCAST,
+                     "Need to start app ["
+                     + mQueueName + "] " + targetProcess + " for broadcast " + r);
++            // skip send broadcast to the receiver whoes user has not started.
++            if (!isUserOfReceiverStarted(info)) {
++                resetBroadcastStateAndContinueDelivery(r);
++                return;
++            }
+             if ((r.curApp=mService.startProcessLocked(targetProcess,
+                     info.activityInfo.applicationInfo, true,
+                     r.intent.getFlags() | Intent.FLAG_FROM_BACKGROUND,
+@@ -1365,11 +1365,7 @@ final void processNextBroadcast(boolean fromMsg) {
+                         + info.activityInfo.applicationInfo.packageName + "/"
+                         + info.activityInfo.applicationInfo.uid + " for broadcast "
+                         + r.intent + ": process is bad");
+-                logBroadcastReceiverDiscardLocked(r);
+-                finishReceiverLocked(r, r.resultCode, r.resultData,
+-                        r.resultExtras, r.resultAbort, false);
+-                scheduleBroadcastsLocked();
+-                r.state = BroadcastRecord.IDLE;
++                resetBroadcastStateAndContinueDelivery(r);
+                 return;
+             }
+ 
+@@ -1378,6 +1374,26 @@ final void processNextBroadcast(boolean fromMsg) {
+         }
+     }
+ 
++    private final void resetBroadcastStateAndContinueDelivery(BroadcastRecord r) {
++        logBroadcastReceiverDiscardLocked(r);
++        finishReceiverLocked(r, r.resultCode, r.resultData,
++                r.resultExtras, r.resultAbort, false);
++        scheduleBroadcastsLocked();
++        // We need to reset the state if we failed to start or skip the receiver
++        r.state = BroadcastRecord.IDLE;
++    }
++
++    private final boolean isUserOfReceiverStarted(ResolveInfo info) {
++        // the process has not start yet, do not concern the isolated uid
++        final int userId = UserHandle.getUserId(info.activityInfo.applicationInfo.uid);
++        if (mService.mUserController.hasStartedUserState(userId)) {
++            return true;
++        }
++        Slog.w(TAG, "The user[" + userId + "] of receiver:"
++                + info + " is not started, skip it !");
++        return false;
++    }
++
+     final void setBroadcastTimeoutLocked(long timeoutTime) {
+         if (! mPendingBroadcastTimeoutMessage) {
+             Message msg = mHandler.obtainMessage(BROADCAST_TIMEOUT_MSG, this);

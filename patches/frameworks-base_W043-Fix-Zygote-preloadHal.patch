@@ -1,0 +1,15 @@
+ Fix Zygote preloadHal
+
+diff --git a/core/jni/com_android_internal_os_ZygoteInit.cpp b/core/jni/com_android_internal_os_ZygoteInit.cpp
+index 7ed6b20..7ebef4a 100644
+--- a/core/jni/com_android_internal_os_ZygoteInit.cpp
++++ b/core/jni/com_android_internal_os_ZygoteInit.cpp
+@@ -23,7 +23,7 @@
+ namespace {
+ 
+ void android_internal_os_ZygoteInit_nativePreloadAppProcessHALs(JNIEnv* env, jclass) {
+-    android::GraphicBufferMapper::preloadHal();
++    //android::GraphicBufferMapper::preloadHal();
+     // Add preloading here for other HALs that are (a) always passthrough, and
+     // (b) loaded by most app processes.
+ }

@@ -1,0 +1,38 @@
+Subject: [PATCH] Keyguard: Actually kill the Fancy Colon
+
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardStatusView.java b/packages/SystemUI/src/com/android/keyguard/KeyguardStatusView.java
+index d9d130045f2..ecd0e63a7b4 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardStatusView.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardStatusView.java
+@@ -162,9 +162,6 @@ protected void onFinishInflate() {
+         mDateView = findViewById(R.id.date_view);
+         mClockView = findViewById(R.id.clock_view);
+         mClockView.setShowCurrentUserTime(true);
+-        if (KeyguardClockAccessibilityDelegate.isNeeded(mContext)) {
+-            mClockView.setAccessibilityDelegate(new KeyguardClockAccessibilityDelegate(mContext));
+-        }
+         mOwnerInfo = findViewById(R.id.owner_info);
+         mBatteryDoze = findViewById(R.id.battery_doze);
+         mKeyguardStatusArea = findViewById(R.id.keyguard_status_area);
+@@ -177,10 +174,6 @@ protected void onFinishInflate() {
+         setEnableMarquee(shouldMarquee);
+         refresh();
+         updateOwnerInfo();
+-
+-        // Disable elegant text height because our fancy colon makes the ymin value huge for no
+-        // reason.
+-        mClockView.setElegantTextHeight(false);
+     }
+ 
+     @Override
+@@ -321,10 +314,6 @@ static void update(Context context, boolean hasAlarm) {
+ 
+             clockView24 = DateFormat.getBestDateTimePattern(locale, clockView24Skel);
+ 
+-            // Use fancy colon.
+-            clockView24 = clockView24.replace(':', '\uee01');
+-            clockView12 = clockView12.replace(':', '\uee01');
+-
+             cacheKey = key;
+         }
+     }

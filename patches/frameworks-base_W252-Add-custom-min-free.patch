@@ -1,0 +1,21 @@
+Subject: [PATCH] low memory killer: Add custom min free
+persist.sys.ram_minfree=138240
+
+diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
+index 475b155d8d2..4f06eb4c278 100644
+--- a/services/core/java/com/android/server/am/ProcessList.java
++++ b/services/core/java/com/android/server/am/ProcessList.java
+@@ -227,8 +227,11 @@ private void updateOomLevels(int displayWidth, int displayHeight, boolean write)
+         else if (scale > 1) scale = 1;
+         int minfree_adj = Resources.getSystem().getInteger(
+                 com.android.internal.R.integer.config_lowMemoryKillerMinFreeKbytesAdjust);
+-        int minfree_abs = Resources.getSystem().getInteger(
+-                com.android.internal.R.integer.config_lowMemoryKillerMinFreeKbytesAbsolute);
++        int minfree_abs = SystemProperties.getInt("persist.sys.ram_minfree", -1);
++        if (minfree_abs < 0) {
++            minfree_abs = Resources.getSystem().getInteger(
++                    com.android.internal.R.integer.config_lowMemoryKillerMinFreeKbytesAbsolute);
++        }
+         if (false) {
+             Slog.i("XXXXXX", "minfree_adj=" + minfree_adj + " minfree_abs=" + minfree_abs);
+         }

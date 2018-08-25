@@ -1,0 +1,28 @@
+Subject: [PATCH] Revert check if sdcard daemon exited.
+
+diff --git a/PublicVolume.cpp b/PublicVolume.cpp
+index e0550c3..6a687e1 100644
+--- a/PublicVolume.cpp
++++ b/PublicVolume.cpp
+@@ -256,8 +256,6 @@ status_t PublicVolume::doMount() {
+         LOG(VERBOSE) << "Waiting for FUSE to spin up...";
+         usleep(50000); // 50ms
+     }
+-    /* sdcardfs will have exited already. FUSE will still be running */
+-    TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, WNOHANG));
+ 
+     return OK;
+ }
+diff --git a/EmulatedVolume.cpp b/EmulatedVolume.cpp
+index e1550c3..6a687e1 100644
+--- a/EmulatedVolume.cpp
++++ b/EmulatedVolume.cpp
+@@ -116,8 +116,6 @@ status_t EmulatedVolume::doMount() {
+         LOG(VERBOSE) << "Waiting for FUSE to spin up...";
+         usleep(50000); // 50ms
+     }
+-    /* sdcardfs will have exited already. FUSE will still be running */
+-    TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, WNOHANG));
+ 
+     return OK;
+ }

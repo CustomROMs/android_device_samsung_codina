@@ -1,0 +1,16 @@
+diff --git a/core/config.mk b/core/config.mk
+index 43c98e3..b22731f 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -373,9 +373,9 @@ TARGET_CPU_ABI_LIST_32_BIT := $(subst $(space),$(comma),$(strip $(TARGET_CPU_ABI
+ TARGET_CPU_ABI_LIST_64_BIT := $(subst $(space),$(comma),$(strip $(TARGET_CPU_ABI_LIST_64_BIT)))
+ 
+ # GCC version selection
+-TARGET_GCC_VERSION := 4.9
++TARGET_GCC_VERSION := 4.9-linaro
+ ifdef TARGET_2ND_ARCH
+-2ND_TARGET_GCC_VERSION := 4.9
++2ND_TARGET_GCC_VERSION := 4.9-linaro
+ endif
+ 
+ # Normalize WITH_STATIC_ANALYZER

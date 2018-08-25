@@ -1,0 +1,28 @@
+Subject: [PATCH] [NativeDaemonConnector] Timeout should not include sleep time.
+
+The command execution time should not include sleep time,
+but the elapsedRealtime include sleep time, and the
+uptimeMillis is not counting time spent in deep sleep.
+
+diff --git a/services/core/java/com/android/server/NativeDaemonConnector.java b/services/core/java/com/android/server/NativeDaemonConnector.java
+index f5f7732..35ad416 100644
+--- a/services/core/java/com/android/server/NativeDaemonConnector.java
++++ b/services/core/java/com/android/server/NativeDaemonConnector.java
+@@ -455,7 +455,7 @@
+                     + Integer.toHexString(System.identityHashCode(mWarnIfHeld)), new Throwable());
+         }
+ 
+-        final long startTime = SystemClock.elapsedRealtime();
++        final long startTime = SystemClock.uptimeMillis();
+ 
+         final ArrayList<NativeDaemonEvent> events = Lists.newArrayList();
+ 
+@@ -493,7 +493,7 @@
+             events.add(event);
+         } while (event.isClassContinue());
+ 
+-        final long endTime = SystemClock.elapsedRealtime();
++        final long endTime = SystemClock.uptimeMillis();
+         if (endTime - startTime > WARN_EXECUTE_DELAY_MS) {
+             loge("NDC Command {" + logCmd + "} took too long (" + (endTime - startTime) + "ms)");
+         }

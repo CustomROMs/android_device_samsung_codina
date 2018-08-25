@@ -1,0 +1,369 @@
+ libgui: Add Consumer 32-bit-usage
+ GrallocUsage to legacy 32-bit
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 4112201..064e135 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -1564,4 +1564,12 @@ status_t BufferQueueProducer::getUniqueId(uint64_t* outId) const {
+     return NO_ERROR;
+ }
+ 
++status_t BufferQueueProducer::getConsumerUsage(uint32_t* outUsage) const {
++    BQ_LOGV("getConsumerUsage");
++
++    Mutex::Autolock lock(mCore->mMutex);
++    *outUsage = mCore->mConsumerUsageBits;
++    return NO_ERROR;
++}
++
+ } // namespace android
+diff --git a/libs/gui/IGraphicBufferProducer.cpp b/libs/gui/IGraphicBufferProducer.cpp
+index 060a39a..320b27f 100644
+--- a/libs/gui/IGraphicBufferProducer.cpp
++++ b/libs/gui/IGraphicBufferProducer.cpp
+@@ -62,7 +62,8 @@ enum {
+     SET_DEQUEUE_TIMEOUT,
+     GET_LAST_QUEUED_BUFFER,
+     GET_FRAME_TIMESTAMPS,
+-    GET_UNIQUE_ID
++    GET_UNIQUE_ID,
++    GET_CONSUMER_USAGE,
+ };
+ 
+ class BpGraphicBufferProducer : public BpInterface<IGraphicBufferProducer>
+@@ -504,6 +505,25 @@ class BpGraphicBufferProducer : public BpInterface<IGraphicBufferProducer>
+         }
+         return actualResult;
+     }
++
++    virtual status_t getConsumerUsage(uint32_t* outUsage) const {
++        Parcel data, reply;
++        data.writeInterfaceToken(IGraphicBufferProducer::getInterfaceDescriptor());
++        status_t result = remote()->transact(GET_CONSUMER_USAGE, data, &reply);
++        if (result != NO_ERROR) {
++            ALOGE("getConsumerUsage failed to transact: %d", result);
++        }
++        status_t actualResult = NO_ERROR;
++        result = reply.readInt32(&actualResult);
++        if (result != NO_ERROR) {
++            return result;
++        }
++        result = reply.readUint32(outUsage);
++        if (result != NO_ERROR) {
++            return result;
++        }
++        return actualResult;
++    }
+ };
+ 
+ // Out-of-line virtual method definition to trigger vtable emission in this
+@@ -622,6 +642,10 @@ class HpGraphicBufferProducer : public HpInterface<
+     status_t getUniqueId(uint64_t* outId) const override {
+         return mBase->getUniqueId(outId);
+     }
++
++    status_t getConsumerUsage(uint32_t* outUsage) const override {
++        return mBase->getConsumerUsage(outUsage);
++    }
+ };
+ 
+ IMPLEMENT_HYBRID_META_INTERFACE(GraphicBufferProducer, HGraphicBufferProducer,
+@@ -889,6 +913,20 @@ status_t BnGraphicBufferProducer::onTransact(
+             }
+             return NO_ERROR;
+         }
++        case GET_CONSUMER_USAGE: {
++            CHECK_INTERFACE(IGraphicBufferProducer, data, reply);
++            uint32_t outUsage = 0;
++            status_t actualResult = getConsumerUsage(&outUsage);
++            status_t result = reply->writeInt32(actualResult);
++            if (result != NO_ERROR) {
++                return result;
++            }
++            result = reply->writeUint32(outUsage);
++            if (result != NO_ERROR) {
++                return result;
++            }
++            return NO_ERROR;
++        }
+     }
+     return BBinder::onTransact(code, data, reply, flags);
+ }
+diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
+index 060a39a..320b27f 100644
+--- a/libs/gui/Surface.cpp
++++ b/libs/gui/Surface.cpp
+@@ -965,6 +965,9 @@ int Surface::perform(int operation, va_list args)
+     case NATIVE_WINDOW_GET_HDR_SUPPORT:
+         res = dispatchGetHdrSupport(args);
+         break;
++    case NATIVE_WINDOW_GET_CONSUMER_USAGE64:
++        res = dispatchGetConsumerUsage64(args);
++        break;
+     default:
+         res = NAME_NOT_FOUND;
+         break;
+@@ -1138,6 +1141,11 @@ int Surface::dispatchGetHdrSupport(va_list args) {
+     return getHdrSupport(outSupport);
+ }
+ 
++int Surface::dispatchGetConsumerUsage64(va_list args) {
++    uint32_t* usage = va_arg(args, uint32_t*);
++    return getConsumerUsage(usage);
++}
++
+ int Surface::connect(int api) {
+     static sp<IProducerListener> listener = new DummyProducerListener();
+     return connect(api, listener);
+@@ -1708,6 +1716,11 @@ status_t Surface::getUniqueId(uint64_t* outId) const {
+     return mGraphicBufferProducer->getUniqueId(outId);
+ }
+ 
++int Surface::getConsumerUsage(uint32_t* outUsage) const {
++    Mutex::Autolock lock(mMutex);
++    return mGraphicBufferProducer->getConsumerUsage(outUsage);
++}
++
+ nsecs_t Surface::getLastDequeueStartTime() const {
+     Mutex::Autolock lock(mMutex);
+     return mLastDequeueStartTime;
+diff --git a/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp b/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
+index 060a39a..320b27f 100644
+--- a/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
++++ b/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
+@@ -21,6 +21,8 @@
+ #include <gui/bufferqueue/1.0/H2BGraphicBufferProducer.h>
+ #include <gui/bufferqueue/1.0/B2HProducerListener.h>
+ 
++#include <system/window.h>
++
+ namespace android {
+ namespace hardware {
+ namespace graphics {
+@@ -1231,6 +1233,18 @@ status_t H2BGraphicBufferProducer::getUniqueId(uint64_t* outId) const {
+     return transStatus == NO_ERROR ? fnStatus : transStatus;
+ }
+ 
++status_t H2BGraphicBufferProducer::getConsumerUsage(uint32_t* outUsage) const {
++    ALOGW("getConsumerUsage is not fully supported");
++    int result;
++    status_t transStatus = toStatusT(mBase->query(
++            NATIVE_WINDOW_CONSUMER_USAGE_BITS,
++            [&result, outUsage] (int32_t tResult, int32_t tValue) {
++                result = static_cast<int>(tResult);
++                *outUsage = static_cast<uint32_t>(tValue);
++            }));
++    return transStatus == NO_ERROR ? result : static_cast<int>(transStatus);
++}
++
+ }  // namespace utils
+ }  // namespace V1_0
+ }  // namespace bufferqueue
+diff --git a/libs/gui/include/gui/BufferQueueProducer.h b/libs/gui/include/gui/BufferQueueProducer.h
+index 060a39a..320b27f 100644
+--- a/libs/gui/include/gui/BufferQueueProducer.h
++++ b/libs/gui/include/gui/BufferQueueProducer.h
+@@ -183,6 +183,9 @@ class BufferQueueProducer : public BnGraphicBufferProducer,
+     // See IGraphicBufferProducer::getUniqueId
+     virtual status_t getUniqueId(uint64_t* outId) const override;
+ 
++    // See IGraphicBufferProducer::getConsumerUsage
++    virtual status_t getConsumerUsage(uint32_t* outUsage) const override;
++
+ private:
+     // This is required by the IBinder::DeathRecipient interface
+     virtual void binderDied(const wp<IBinder>& who);
+diff --git a/libs/gui/include/gui/IGraphicBufferProducer.h b/libs/gui/include/gui/IGraphicBufferProducer.h
+index 060a39a..320b27f 100644
+--- a/libs/gui/include/gui/IGraphicBufferProducer.h
++++ b/libs/gui/include/gui/IGraphicBufferProducer.h
+@@ -601,6 +601,12 @@ class IGraphicBufferProducer : public IInterface
+ 
+     // Returns a unique id for this BufferQueue
+     virtual status_t getUniqueId(uint64_t* outId) const = 0;
++
++    // Returns the consumer usage flags for this BufferQueue. This returns the
++    // full 64-bit usage flags, rather than the truncated 32-bit usage flags
++    // returned by querying the now deprecated
++    // NATIVE_WINDOW_CONSUMER_USAGE_BITS attribute.
++    virtual status_t getConsumerUsage(uint32_t* outUsage) const = 0;
+ };
+ 
+ // ----------------------------------------------------------------------------
+diff --git a/libs/gui/include/gui/Surface.h b/libs/gui/include/gui/Surface.h
+index 060a39a..320b27f 100644
+--- a/libs/gui/include/gui/Surface.h
++++ b/libs/gui/include/gui/Surface.h
+@@ -159,6 +159,7 @@ class Surface
+     status_t getHdrSupport(bool* supported);
+ 
+     status_t getUniqueId(uint64_t* outId) const;
++    status_t getConsumerUsage(uint32_t* outUsage) const;
+ 
+     // Returns the CLOCK_MONOTONIC start time of the last dequeueBuffer call
+     nsecs_t getLastDequeueStartTime() const;
+@@ -223,6 +224,7 @@ class Surface
+     int dispatchGetFrameTimestamps(va_list args);
+     int dispatchGetWideColorSupport(va_list args);
+     int dispatchGetHdrSupport(va_list args);
++    int dispatchGetConsumerUsage64(va_list args);
+ 
+ protected:
+     virtual int dequeueBuffer(ANativeWindowBuffer** buffer, int* fenceFd);
+diff --git a/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h b/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
+index 060a39a..320b27f 100644
+--- a/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
++++ b/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
+@@ -94,6 +94,7 @@ struct H2BGraphicBufferProducer : public ::android::H2BConverter<
+           sp<Fence>* outFence, float outTransformMatrix[16]) override;
+     void getFrameTimestamps(FrameEventHistoryDelta* outDelta) override;
+     status_t getUniqueId(uint64_t* outId) const override;
++    status_t getConsumerUsage(uint32_t* outUsage) const override;
+ };
+ 
+ }  // namespace utils
+diff --git a/libs/gui/tests/Malicious.cpp b/libs/gui/tests/Malicious.cpp
+index 060a39a..320b27f 100644
+--- a/libs/gui/tests/Malicious.cpp
++++ b/libs/gui/tests/Malicious.cpp
+@@ -92,6 +92,9 @@ class ProxyBQP : public BnGraphicBufferProducer {
+     }
+     void getFrameTimestamps(FrameEventHistoryDelta*) override {}
+     status_t getUniqueId(uint64_t* outId) const override { return mProducer->getUniqueId(outId); }
++    status_t getConsumerUsage(uint32_t* outUsage) const override {
++        return mProducer->getConsumerUsage(outUsage);
++    }
+ 
+ protected:
+     sp<IGraphicBufferProducer> mProducer;
+diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
+index 060a39a..320b27f 100644
+--- a/libs/nativewindow/include/system/window.h
++++ b/libs/nativewindow/include/system/window.h
+@@ -115,7 +115,7 @@ enum {
+      * The consumer gralloc usage bits currently set by the consumer.
+      * The values are defined in hardware/libhardware/include/gralloc.h.
+      */
+-    NATIVE_WINDOW_CONSUMER_USAGE_BITS = 10,
++    NATIVE_WINDOW_CONSUMER_USAGE_BITS = 10, /* deprecated */
+ 
+     /**
+      * Transformation that will by applied to buffers by the hwcomposer.
+@@ -223,6 +223,7 @@ enum {
+     NATIVE_WINDOW_GET_FRAME_TIMESTAMPS      = 27,
+     NATIVE_WINDOW_GET_WIDE_COLOR_SUPPORT    = 28,
+     NATIVE_WINDOW_GET_HDR_SUPPORT           = 29,
++    NATIVE_WINDOW_GET_CONSUMER_USAGE64      = 31,
+ // clang-format on
+ };
+ 
+@@ -940,13 +941,18 @@ static inline int native_window_get_frame_timestamps(
+ 
+ static inline int native_window_get_wide_color_support(
+     struct ANativeWindow* window, bool* outSupport) {
+-  return window->perform(window, NATIVE_WINDOW_GET_WIDE_COLOR_SUPPORT,
+-                         outSupport);
++    return window->perform(window, NATIVE_WINDOW_GET_WIDE_COLOR_SUPPORT,
++            outSupport);
+ }
+ 
+ static inline int native_window_get_hdr_support(struct ANativeWindow* window,
+                                                 bool* outSupport) {
+-  return window->perform(window, NATIVE_WINDOW_GET_HDR_SUPPORT, outSupport);
++    return window->perform(window, NATIVE_WINDOW_GET_HDR_SUPPORT, outSupport);
++}
++
++static inline int native_window_get_consumer_usage(struct ANativeWindow* window,
++                                                   uint32_t* outUsage) {
++    return window->perform(window, NATIVE_WINDOW_GET_CONSUMER_USAGE64, outUsage);
+ }
+ 
+ __END_DECLS
+diff --git a/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp b/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
+index 060a39a..320b27f 100644
+--- a/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
++++ b/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
+@@ -609,6 +609,14 @@ status_t BufferHubQueueProducer::getUniqueId(uint64_t* out_id) const {
+   return NO_ERROR;
+ }
+ 
++status_t BufferHubQueueProducer::getConsumerUsage(uint32_t* out_usage) const {
++  ALOGD_IF(TRACE, __FUNCTION__);
++
++  // same value as returned by querying NATIVE_WINDOW_CONSUMER_USAGE_BITS
++  *out_usage = 0;
++  return NO_ERROR;
++}
++
+ status_t BufferHubQueueProducer::AllocateBuffer(uint32_t width, uint32_t height,
+                                                 uint32_t layer_count,
+                                                 PixelFormat format,
+diff --git a/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h b/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
+index 060a39a..320b27f 100644
+--- a/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
++++ b/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
+@@ -112,6 +112,9 @@ class BufferHubQueueProducer : public BnGraphicBufferProducer {
+   // See |IGraphicBufferProducer::getUniqueId|
+   status_t getUniqueId(uint64_t* out_id) const override;
+ 
++  // See |IGraphicBufferProducer::getConsumerUsage|
++  status_t getConsumerUsage(uint32_t* out_usage) const override;
++
+  private:
+   using LocalHandle = pdx::LocalHandle;
+ 
+diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
+index 060a39a..320b27f 100644
+--- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
++++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
+@@ -624,6 +624,10 @@ status_t VirtualDisplaySurface::getUniqueId(uint64_t* /*outId*/) const {
+     return INVALID_OPERATION;
+ }
+ 
++status_t VirtualDisplaySurface::getConsumerUsage(uint32_t* outUsage) const {
++    return mSource[SOURCE_SINK]->getConsumerUsage(outUsage);
++}
++
+ void VirtualDisplaySurface::updateQueueBufferOutput(
+         QueueBufferOutput&& qbo) {
+     mQueueBufferOutput = std::move(qbo);
+diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
+index 060a39a..320b27f 100644
+--- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
++++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
+@@ -130,6 +130,7 @@ class VirtualDisplaySurface : public DisplaySurface,
+     virtual status_t getLastQueuedBuffer(sp<GraphicBuffer>* outBuffer,
+             sp<Fence>* outFence, float outTransformMatrix[16]) override;
+     virtual status_t getUniqueId(uint64_t* outId) const override;
++    virtual status_t getConsumerUsage(uint32_t* outUsage) const override;
+ 
+     //
+     // Utility methods
+diff --git a/services/surfaceflinger/MonitoredProducer.cpp b/services/surfaceflinger/MonitoredProducer.cpp
+index 060a39a..320b27f 100644
+--- a/services/surfaceflinger/MonitoredProducer.cpp
++++ b/services/surfaceflinger/MonitoredProducer.cpp
+@@ -158,6 +158,10 @@ status_t MonitoredProducer::getUniqueId(uint64_t* outId) const {
+     return mProducer->getUniqueId(outId);
+ }
+ 
++status_t MonitoredProducer::getConsumerUsage(uint32_t* outUsage) const {
++    return mProducer->getConsumerUsage(outUsage);
++}
++
+ IBinder* MonitoredProducer::onAsBinder() {
+     return this;
+ }
+diff --git a/services/surfaceflinger/MonitoredProducer.h b/services/surfaceflinger/MonitoredProducer.h
+index 060a39a..320b27f 100644
+--- a/services/surfaceflinger/MonitoredProducer.h
++++ b/services/surfaceflinger/MonitoredProducer.h
+@@ -68,6 +68,7 @@ class MonitoredProducer : public BnGraphicBufferProducer {
+     virtual status_t setAutoRefresh(bool autoRefresh) override;
+     virtual void getFrameTimestamps(FrameEventHistoryDelta *outDelta) override;
+     virtual status_t getUniqueId(uint64_t* outId) const override;
++    virtual status_t getConsumerUsage(uint32_t* outUsage) const override;
+ 
+     // The Layer which created this producer, and on which queued Buffer's will be displayed.
+     sp<Layer> getLayer() const;

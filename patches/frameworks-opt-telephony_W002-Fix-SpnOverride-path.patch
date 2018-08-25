@@ -1,0 +1,15 @@
+Subject: [PATCH] SpnOverride: fix path to xml
+
+diff --git a/src/java/com/android/internal/telephony/uicc/SpnOverride.java b/src/java/com/android/internal/telephony/uicc/SpnOverride.java
+index 9c83390..57422fa 100644
+--- a/src/java/com/android/internal/telephony/uicc/SpnOverride.java
++++ b/src/java/com/android/internal/telephony/uicc/SpnOverride.java
+@@ -36,7 +36,7 @@
+ 
+ 
+     static final String LOG_TAG = "SpnOverride";
+-    static final String PARTNER_SPN_OVERRIDE_PATH ="etc/spn-conf.xml";
++    static final String PARTNER_SPN_OVERRIDE_PATH ="etc/selective-spn-conf.xml";
+     static final String OEM_SPN_OVERRIDE_PATH = "telephony/spn-conf.xml";
+ 
+     SpnOverride () {

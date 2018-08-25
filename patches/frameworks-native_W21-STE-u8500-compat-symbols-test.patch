@@ -1,0 +1,37 @@
+ libui libgui: STE u8500 compat symbols test
+
+diff --git a/include/gui/DisplayEventReceiver.h b/include/gui/DisplayEventReceiver.h
+index 32ce59a..2e1e9a5 100644
+--- a/include/gui/DisplayEventReceiver.h
++++ b/include/gui/DisplayEventReceiver.h
+@@ -84,8 +84,15 @@
+      * or requestNextVsync to receive them.
+      * Other events start being delivered immediately.
+      */
+-    DisplayEventReceiver(
+-            ISurfaceComposer::VsyncSource vsyncSource = ISurfaceComposer::eVsyncSourceApp);
++    DisplayEventReceiver();
++
++    /*
++     * DisplayEventReceiver creates and registers an event connection with
++     * SurfaceFlinger. VSync events are disabled by default. Call setVSyncRate
++     * or requestNextVsync to receive them.
++     * Other events start being delivered immediately.
++     */
++    DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSource);
+ 
+     /*
+      * ~DisplayEventReceiver severs the connection with SurfaceFlinger, new events
+diff --git a/libs/gui/DisplayEventReceiver.cpp b/libs/gui/DisplayEventReceiver.cpp
+index 1757ec1..73c2361 100644
+--- a/libs/gui/DisplayEventReceiver.cpp
++++ b/libs/gui/DisplayEventReceiver.cpp
+@@ -32,6 +32,8 @@
+ 
+ // ---------------------------------------------------------------------------
+ 
++DisplayEventReceiver::DisplayEventReceiver() : DisplayEventReceiver(ISurfaceComposer::eVsyncSourceApp) {}
++
+ DisplayEventReceiver::DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSource) {
+     sp<ISurfaceComposer> sf(ComposerService::getComposerService());
+     if (sf != NULL) {

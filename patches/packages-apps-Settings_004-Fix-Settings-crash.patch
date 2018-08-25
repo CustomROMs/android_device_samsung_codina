@@ -1,0 +1,19 @@
+ Fix NPE in SettingsPreferenceFragment 
+
+diff --git a/src/com/android/settings/SettingsPreferenceFragment.java b/src/com/android/settings/SettingsPreferenceFragment.java
+index 125939c..0cd83d5 100644
+--- a/src/com/android/settings/SettingsPreferenceFragment.java
++++ b/src/com/android/settings/SettingsPreferenceFragment.java
+@@ -203,8 +203,10 @@ public View setPinnedHeaderView(int layoutResId) {
+     }
+ 
+     public void setPinnedHeaderView(View pinnedHeader) {
+-        mPinnedHeaderFrameLayout.addView(pinnedHeader);
+-        mPinnedHeaderFrameLayout.setVisibility(View.VISIBLE);
++        if (mPinnedHeaderFrameLayout != null) {
++            mPinnedHeaderFrameLayout.addView(pinnedHeader);
++            mPinnedHeaderFrameLayout.setVisibility(View.VISIBLE);
++        }
+     }
+ 
+     @Override

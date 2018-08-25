@@ -1,0 +1,14 @@
+Subject: [PATCH] FileUtils: Avoid null pointer dereference
+
+diff --git a/core/java/android/os/FileUtils.java b/core/java/android/os/FileUtils.java
+index 56d6e0a62f94d..4b7e07761e8a1 100644
+--- a/core/java/android/os/FileUtils.java
++++ b/core/java/android/os/FileUtils.java
+@@ -436,6 +436,7 @@ public static boolean contains(File dir, File file) {
+     }
+ 
+     public static boolean contains(String dirPath, String filePath) {
++        if (dirPath == null || filePath == null) return false;
+         if (dirPath.equals(filePath)) {
+             return true;
+         }

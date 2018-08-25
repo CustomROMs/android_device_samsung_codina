@@ -1,0 +1,28 @@
+Subject: [PATCH] Use scanning timeout
+
+diff --git a/src/drivers/driver_nl80211_scan.c b/src/drivers/driver_nl80211_scan.c
+index 1727720..5698443 100644
+--- a/src/drivers/driver_nl80211_scan.c
++++ b/src/drivers/driver_nl80211_scan.c
+@@ -385,7 +385,7 @@
+ 		 * complete, so use longer timeout to avoid race conditions
+ 		 * with scanning and following association request.
+ 		 */
+-		timeout = 30;
++		timeout = 5;
+ 	}
+ 	wpa_printf(MSG_DEBUG, "Scan requested (ret=%d) - scan timeout %d "
+ 		   "seconds", ret, timeout);
+diff --git a/src/drivers/driver_wext.c b/src/drivers/driver_wext.c
+index 1727720..5698403 100644
+--- a/src/drivers/driver_wext.c
++++ b/src/drivers/driver_wext.c
+@@ -1133,7 +1133,7 @@
+ 		 * when scan is complete, so use longer timeout to avoid race
+ 		 * conditions with scanning and following association request.
+ 		 */
+-		timeout = 30;
++		timeout = 5;
+ 	}
+ 	wpa_printf(MSG_DEBUG, "Scan requested (ret=%d) - scan timeout %d "
+ 		   "seconds", ret, timeout);

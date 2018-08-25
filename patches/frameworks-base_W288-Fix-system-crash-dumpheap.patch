@@ -1,0 +1,19 @@
+Subject: [PATCH] Avoid system crash when doing "dumpheap" during disk full
+
+This patch add RuntimeException catch at
+ActivityThread::handleDumpHeap(), because system server crash happens
+when doing "dumpheap" during disk full.
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 6faded5..e70ef4f 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -5246,7 +5246,7 @@
+         if (dhd.managed) {
+             try {
+                 Debug.dumpHprofData(dhd.path, dhd.fd.getFileDescriptor());
+-            } catch (IOException e) {
++            } catch (IOException | RuntimeException e) {
+                 Slog.w(TAG, "Managed heap dump failed on path " + dhd.path
+                         + " -- can the process access this path?");
+             } finally {

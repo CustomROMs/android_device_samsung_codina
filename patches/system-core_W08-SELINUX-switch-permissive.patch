@@ -1,0 +1,56 @@
+Subject: [PATCH] SELINUX: switch to permissive
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 60bd8d8..3d42598 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -584,14 +584,6 @@ static selinux_enforcing_status selinux_status_from_cmdline() {
+     return status;
+ }
+ 
+-static bool selinux_is_enforcing(void)
+-{
+-    if (ALLOW_PERMISSIVE_SELINUX) {
+-        return selinux_status_from_cmdline() == SELINUX_ENFORCING;
+-    }
+-    return true;
+-}
+-
+ static int audit_callback(void *data, security_class_t /*cls*/, char *buf, size_t len) {
+ 
+     property_audit_data *d = reinterpret_cast<property_audit_data*>(data);
+@@ -888,7 +880,7 @@ static void selinux_initialize(bool in_kernel_domain) {
+         }
+ 
+         bool kernel_enforcing = (security_getenforce() == 1);
+-        bool is_enforcing = selinux_is_enforcing();
++        bool is_enforcing = false;
+         if (kernel_enforcing != is_enforcing) {
+             if (security_setenforce(is_enforcing)) {
+                 PLOG(ERROR) << "security_setenforce(%s) failed" << (is_enforcing ? "true" : "false");
+diff --git a/init/Android.mk b/init/Android.mk
+index 6e79dbd..e6cf548 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -36,8 +36,7 @@ init_cflags += \
+     $(init_options) \
+     -Wall -Wextra \
+     -Wno-unused-parameter \
+-    -Werror \
+-    -std=gnu++1z \
++    -std=gnu++1z
+ 
+ # --
+ 
+diff --git a/init/Android.bp b/init/Android.bp
+index 6e79dbd..e6cf548 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -25,7 +25,6 @@
+         "-Wall",
+         "-Wextra",
+         "-Wno-unused-parameter",
+-        "-Werror",
+         "-DALLOW_LOCAL_PROP_OVERRIDE=1",
+         "-DALLOW_PERMISSIVE_SELINUX=0",
+         "-DREBOOT_BOOTLOADER_ON_PANIC=0",

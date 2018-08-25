@@ -1,0 +1,19 @@
+Subject: [PATCH] [BUG] NullPointerException in RemotePrintSpooler.java
+
+diff --git a/services/print/java/com/android/server/print/RemotePrintSpooler.java b/services/print/java/com/android/server/print/RemotePrintSpooler.java
+index 6b919df..40f9e66 100644
+--- a/services/print/java/com/android/server/print/RemotePrintSpooler.java
++++ b/services/print/java/com/android/server/print/RemotePrintSpooler.java
+@@ -705,8 +705,10 @@
+         @Override
+         public void onServiceDisconnected(ComponentName name) {
+             synchronized (mLock) {
+-                clearClientLocked();
+-                mRemoteInstance = null;
++                if (mRemoteInstance != null) {
++                    clearClientLocked();
++                    mRemoteInstance = null;
++                }
+             }
+         }
+     }

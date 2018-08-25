@@ -1,0 +1,41 @@
+Subject: [PATCH] System Server Force Close.
+
+Rootcause:  Wrong CommandNum isbeing set because of threaded
+implementation of rtsol command. This is resulting in IllegalStateException
+in framework.
+
+diff --git a/libsysutils/include/sysutils/SocketClient.h b/libsysutils/include/sysutils/SocketClient.h
+index 1004f0611..3547d490a 100644
+--- a/libsysutils/include/sysutils/SocketClient.h
++++ b/libsysutils/include/sysutils/SocketClient.h
+@@ -48,6 +48,7 @@ class SocketClient {
+     int sendMsg(int code, const char *msg, bool addErrno);
+     int sendMsg(int code, const char *msg, bool addErrno, bool useCmdNum);
+     int sendMsg(const char *msg);
++    int sendMsgWithCmdNum(int code, const char *msg, int cmdNum);
+ 
+     // Provides a mechanism to send a response code to the client.
+     // Sends the code and a null character.
+diff --git a/libsysutils/src/SocketClient.cpp b/libsysutils/src/SocketClient.cpp
+index 949312431..431d57ba0 100644
+--- a/libsysutils/src/SocketClient.cpp
++++ b/libsysutils/src/SocketClient.cpp
+@@ -121,6 +121,18 @@ int SocketClient::sendBinaryMsg(int code, const void *data, int len) {
+     return result;
+ }
+ 
++int SocketClient::sendMsgWithCmdNum(int code, const char *msg, int cmdNum) {
++    char *buf;
++    int ret = 0;
++    ret = asprintf(&buf, "%d %d %s", code, cmdNum, msg);
++    /* Send the zero-terminated message */
++    if (ret != -1) {
++        ret = sendMsg(buf);
++        free(buf);
++    }
++    return ret;
++}
++
+ // Sends the code (c-string null-terminated).
+ int SocketClient::sendCode(int code) {
+     char buf[4];

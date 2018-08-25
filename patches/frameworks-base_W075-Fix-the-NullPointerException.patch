@@ -1,0 +1,16 @@
+ Fix the NullPointerException
+Checking Account object for NULL before accessing it.
+
+diff --git a/core/java/android/accounts/ChooseTypeAndAccountActivity.java b/core/java/android/accounts/ChooseTypeAndAccountActivity.java
+index 0262f54..f9b5deb 100644
+--- a/core/java/android/accounts/ChooseTypeAndAccountActivity.java
++++ b/core/java/android/accounts/ChooseTypeAndAccountActivity.java
+@@ -320,7 +320,7 @@ protected void onActivityResult(final int requestCode, final int resultCode,
+         if (resultCode == RESULT_CANCELED) {
+             // if canceling out of addAccount and the original state caused us to skip this,
+             // finish this activity
+-            if (mPossiblyVisibleAccounts.isEmpty()) {
++            if (null == mPossiblyVisibleAccounts || mPossiblyVisibleAccounts.isEmpty()) {
+                 setResult(Activity.RESULT_CANCELED);
+                 finish();
+             }

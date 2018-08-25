@@ -1,0 +1,20 @@
+Subject: [PATCH] Add missing INTERACT_ACROSS_USERS_FULL permission
+
+ * DatabaseUtils: java.lang.SecurityException: Permission Denial:
+     get/set setting for user asks to run as user 0 but is calling
+     from user 10; this requires android.permission.INTERACT_ACROSS_USERS_FULL
+
+diff --git a/packages/SettingsProvider/AndroidManifest.xml b/packages/SettingsProvider/AndroidManifest.xml
+index 9374d52..08498cd 100644
+--- a/packages/SettingsProvider/AndroidManifest.xml
++++ b/packages/SettingsProvider/AndroidManifest.xml
+@@ -3,6 +3,9 @@
+         coreApp="true"
+         android:sharedUserId="android.uid.system">
+ 
++    <!-- ActivityManager -->
++    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
++
+     <application android:allowClearUserData="false"
+                  android:label="@string/app_label"
+                  android:process="system"

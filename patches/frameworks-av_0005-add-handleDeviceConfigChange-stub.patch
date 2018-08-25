@@ -1,0 +1,52 @@
+ AudioPolicyInterfaceImplLegacy: add handleDeviceConfigChange stub function
+ audiopolicy: fixes for 8.1 
+
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 575ed02..6674f1a 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -67,6 +67,14 @@ audio_policy_dev_state_t AudioPolicyService::getDeviceConnectionState(
+                                                       device_address);
+ }
+ 
++status_t AudioPolicyService::handleDeviceConfigChange(audio_devices_t device,
++                                                  const char *device_address,
++                                                  const char *device_name)
++{
++    ALOGE("handleDeviceConfigChange()");
++    return INVALID_OPERATION;
++}
++
+ status_t AudioPolicyService::setPhoneState(audio_mode_t state)
+ {
+     if (mpAudioPolicy == NULL) {
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 575ed02..6674f10 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -279,7 +279,7 @@ status_t AudioPolicyService::getInputForAttr(const audio_attributes_t *attr,
+         inputSource = AUDIO_SOURCE_MIC;
+     }
+ 
+-    if ((inputSource == AUDIO_SOURCE_HOTWORD) && !captureHotwordAllowed()) {
++    if ((inputSource == AUDIO_SOURCE_HOTWORD) && !captureHotwordAllowed(pid, uid)) {
+         return BAD_VALUE;
+     }
+ 
+@@ -664,4 +665,16 @@ status_t AudioPolicyService::getMasterMono(bool *mono)
+     return INVALID_OPERATION;
+ }
+ 
++float AudioPolicyService::getStreamVolumeDB(
++            audio_stream_type_t stream, int index, audio_devices_t device)
++{
++    return INVALID_OPERATION;
++}
++
++status_t AudioPolicyService::listAudioSessions(audio_stream_type_t streams,
++                                               Vector< sp<AudioSessionInfo>> &sessions)
++{
++    return INVALID_OPERATION;
++}
++
+ }; // namespace android

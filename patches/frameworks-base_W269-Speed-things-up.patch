@@ -1,0 +1,139 @@
+Subject: [PATCH] android.view: Speed things up!!
+Subject: [PATCH] Speed up Orientation Listener
+Subject: [PATCH] ViewConfiguration: misc changes (rev)
+
+diff --git a/core/java/android/view/ViewConfiguration.java b/core/java/android/view/ViewConfiguration.java
+index 574137b30f1e..d1400da2087d 100644
+--- a/core/java/android/view/ViewConfiguration.java
++++ b/core/java/android/view/ViewConfiguration.java
+@@ -136,12 +136,12 @@
+      * Defines the duration in milliseconds we want to display zoom controls in response
+      * to a user panning within an application.
+      */
+-    private static final int ZOOM_CONTROLS_TIMEOUT = 3000;
++    private static final int ZOOM_CONTROLS_TIMEOUT = 1500;
+ 
+     /**
+      * Inset in dips to look for touchable content when the user touches the edge of the screen
+      */
+-    private static final int EDGE_SLOP = 12;
++    private static final int EDGE_SLOP = 6;
+ 
+     /**
+      * Distance a touch can wander before we think the user is scrolling in dips.
+@@ -200,7 +200,7 @@
+     /**
+      * Maximum velocity to initiate a fling, as measured in dips per second
+      */
+-    private static final int MAXIMUM_FLING_VELOCITY = 8000;
++    private static final int MAXIMUM_FLING_VELOCITY = 16000;
+ 
+     /**
+      * Delay before dispatching a recurring accessibility event in milliseconds.
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index decee4fa261d..1a7d7f0caa0d 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -126,17 +126,17 @@
+     <bool name="config_sendAudioBecomingNoisy">true</bool>
+ 
+     <!-- The duration (in milliseconds) of a short animation. -->
+-    <integer name="config_shortAnimTime">200</integer>
++    <integer name="config_shortAnimTime">100</integer>
+ 
+     <!-- The duration (in milliseconds) of a medium-length animation. -->
+-    <integer name="config_mediumAnimTime">400</integer>
++    <integer name="config_mediumAnimTime">200</integer>
+ 
+     <!-- The duration (in milliseconds) of a long animation. -->
+-    <integer name="config_longAnimTime">500</integer>
++    <integer name="config_longAnimTime">250</integer>
+ 
+     <!-- The duration (in milliseconds) of the activity open/close and fragment open/close animations. -->
+-    <integer name="config_activityShortDur">150</integer>
+-    <integer name="config_activityDefaultDur">220</integer>
++    <integer name="config_activityShortDur">75</integer>
++    <integer name="config_activityDefaultDur">110</integer>
+ 
+     <!-- The duration (in milliseconds) of the tooltip show/hide animations. -->
+     <integer name="config_tooltipAnimTime">150</integer>
+diff --git a/services/core/java/com/android/server/policy/WindowOrientationListener.java b/services/core/java/com/android/server/policy/WindowOrientationListener.java
+index 9d556ff6803c..e0a8cac80cab 100644
+--- a/services/core/java/com/android/server/policy/WindowOrientationListener.java
++++ b/services/core/java/com/android/server/policy/WindowOrientationListener.java
+@@ -371,22 +371,22 @@ public void dump(PrintWriter pw, String prefix) {
+         // the low-pass filter already suppresses most of the noise so we're really just
+         // looking for quick confirmation that the last few samples are in agreement as to
+         // the desired orientation.
+-        private static final long PROPOSAL_SETTLE_TIME_NANOS = 40 * NANOS_PER_MS;
++        private static final long PROPOSAL_SETTLE_TIME_NANOS = 25 * NANOS_PER_MS;
+ 
+         // The minimum amount of time that must have elapsed since the device last exited
+         // the flat state (time since it was picked up) before the proposed rotation
+         // can change.
+-        private static final long PROPOSAL_MIN_TIME_SINCE_FLAT_ENDED_NANOS = 500 * NANOS_PER_MS;
++        private static final long PROPOSAL_MIN_TIME_SINCE_FLAT_ENDED_NANOS = 250 * NANOS_PER_MS;
+ 
+         // The minimum amount of time that must have elapsed since the device stopped
+         // swinging (time since device appeared to be in the process of being put down
+         // or put away into a pocket) before the proposed rotation can change.
+-        private static final long PROPOSAL_MIN_TIME_SINCE_SWING_ENDED_NANOS = 300 * NANOS_PER_MS;
++        private static final long PROPOSAL_MIN_TIME_SINCE_SWING_ENDED_NANOS = 150 * NANOS_PER_MS;
+ 
+         // The minimum amount of time that must have elapsed since the device stopped
+         // undergoing external acceleration before the proposed rotation can change.
+         private static final long PROPOSAL_MIN_TIME_SINCE_ACCELERATION_ENDED_NANOS =
+-                500 * NANOS_PER_MS;
++                250 * NANOS_PER_MS;
+ 
+         // If the tilt angle remains greater than the specified angle for a minimum of
+         // the specified time, then the device is deemed to be lying flat
+diff --git a/core/java/android/view/ViewConfiguration.java b/core/java/android/view/ViewConfiguration.java
+index d1400da2087d..5fe4ad6a0b60 100644
+--- a/core/java/android/view/ViewConfiguration.java
++++ b/core/java/android/view/ViewConfiguration.java
+@@ -41,7 +41,7 @@
+     /**
+      * Duration of the fade when scrollbars fade away in milliseconds
+      */
+-    private static final int SCROLL_BAR_FADE_DURATION = 250;
++    private static final int SCROLL_BAR_FADE_DURATION = 280;
+ 
+     /**
+      * Default delay before the scrollbars fade in milliseconds
+@@ -57,7 +57,7 @@
+      * Defines the duration in milliseconds of the pressed state in child
+      * components.
+      */
+-    private static final int PRESSED_STATE_DURATION = 64;
++    private static final int PRESSED_STATE_DURATION = 56;
+ 
+     /**
+      * Defines the default duration in milliseconds before a press turns into
+@@ -95,7 +95,7 @@
+      * is a tap or a scroll. If the user does not move within this interval, it is
+      * considered to be a tap.
+      */
+-    private static final int TAP_TIMEOUT = 100;
++    private static final int TAP_TIMEOUT = 96;
+ 
+     /**
+      * Defines the duration in milliseconds we will wait to see if a touch event
+@@ -195,7 +195,7 @@
+     /**
+      * Minimum velocity to initiate a fling, as measured in dips per second
+      */
+-    private static final int MINIMUM_FLING_VELOCITY = 50;
++    private static final int MINIMUM_FLING_VELOCITY = 60;
+ 
+     /**
+      * Maximum velocity to initiate a fling, as measured in dips per second
+@@ -215,7 +215,7 @@
+      * should be at least equal to the size of the screen in ARGB888 format.
+      */
+     @Deprecated
+-    private static final int MAXIMUM_DRAWING_CACHE_SIZE = 480 * 800 * 4; // ARGB8888
++    private static final int MAXIMUM_DRAWING_CACHE_SIZE = 480 * 854 * 4; // ARGB8888
+ 
+     /**
+      * The coefficient of friction applied to flings/scrolls.

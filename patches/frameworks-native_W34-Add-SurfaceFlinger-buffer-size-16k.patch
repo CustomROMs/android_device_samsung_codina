@@ -1,0 +1,17 @@
+Subject: [PATCH] surfaceflinger: Increase SurfaceFlinger dump buffer size to 16k.
+
+ - Increase the SurfaceFlinger dump buffer size from 4k to 16k bytes to avoid buffer overflow.
+
+diff --git a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+index bba199f..ec0716e 100644
+--- a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
++++ b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+@@ -1262,7 +1262,7 @@
+     }
+ 
+     if (mHwc && mHwc->dump) {
+-        const size_t SIZE = 4096;
++        const size_t SIZE = 16*1024;
+         char buffer[SIZE];
+         mHwc->dump(mHwc, buffer, SIZE);
+         result.append(buffer);

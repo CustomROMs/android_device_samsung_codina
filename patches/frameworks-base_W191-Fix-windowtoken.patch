@@ -1,0 +1,25 @@
+Subject: [PATCH] Fix the windowtoken index out of bound exception
+
+mChildren is not thread safe, which is remove/add in another
+thread. So there is index out bound exception here.
+Duplicate the array list, which make the window status list
+access not excceed the size.
+
+diff --git a/services/core/java/com/android/server/wm/WindowToken.java b/services/core/java/com/android/server/wm/WindowToken.java
+index 48d1618..2956d69 100644
+--- a/services/core/java/com/android/server/wm/WindowToken.java
++++ b/services/core/java/com/android/server/wm/WindowToken.java
+@@ -112,8 +112,11 @@
+     }
+ 
+     void removeAllWindowsIfPossible() {
+-        for (int i = mChildren.size() - 1; i >= 0; --i) {
+-            final WindowState win = mChildren.get(i);
++        WindowList<WindowState> dupChildren = new WindowList<WindowState>();
++        dupChildren.addAll(mChildren);
++
++        for (int i = dupChildren.size() - 1; i >= 0; --i) {
++            final WindowState win = dupChildren.get(i);
+             if (DEBUG_WINDOW_MOVEMENT) Slog.w(TAG_WM,
+                     "removeAllWindowsIfPossible: removing win=" + win);
+             win.removeIfPossible();
