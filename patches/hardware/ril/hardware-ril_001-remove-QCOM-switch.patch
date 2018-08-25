@@ -1,7 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Rild: remove QCOM switch
+Subject: [PATCH] Rild: remove QCOM switch
 
 diff --git a/rild/rild.c b/rild/rild.c
 index 0c99526..d49d5d0 100644

@@ -1,6 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Remove apps
 diff --git a/config/common.mk b/config/common.mk
 index 2fed3dd..448cec7 100644
 --- a/config/common.mk

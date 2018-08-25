@@ -1,0 +1,4328 @@
+From ad25e9d03d53970c378ae1c1faf1fe519d3ef6f8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 3 Jun 2018 07:35:09 +0300
+Subject: [PATCH 1/1] disable selinux
+
+Change-Id: I62bbcd1ff6d46ae7163e07fef8d915730d32b903
+---
+ Android.mk                                       |    1 +
+ libselinux/Android.bp                            |  183 +--
+ libselinux/Android.mk                            |   18 +
+ libselinux/Makefile                              |   10 +-
+ libselinux/include/selinux/selinux.h             |    3 -
+ libselinux/man/man3/security_getenforce.3        |   11 +-
+ libselinux/src/Makefile                          |   37 +-
+ libselinux/src/android/android.c                 | 1529 +++++++++++++++++++++-
+ libselinux/src/audit2why.c                       |    4 +-
+ libselinux/src/avc.c                             |    4 -
+ libselinux/src/booleans.c                        |   72 +-
+ libselinux/src/canonicalize_context.c            |    2 +-
+ libselinux/src/check_context.c                   |    2 +-
+ libselinux/src/compute_av.c                      |    2 +-
+ libselinux/src/compute_create.c                  |    2 +-
+ libselinux/src/compute_member.c                  |    2 +-
+ libselinux/src/compute_relabel.c                 |    2 +-
+ libselinux/src/compute_user.c                    |    2 +-
+ libselinux/src/deny_unknown.c                    |    2 +-
+ libselinux/src/disable.c                         |    2 +-
+ libselinux/src/enabled.c                         |    2 +-
+ libselinux/src/fgetfilecon.c                     |   26 +
+ libselinux/src/fsetfilecon.c                     |    8 +-
+ libselinux/src/get_context_list.c                |    6 +-
+ libselinux/src/get_default_type.c                |    2 +-
+ libselinux/src/get_initial_context.c             |    2 +-
+ libselinux/src/getenforce.c                      |    2 +-
+ libselinux/src/getfilecon.c                      |   13 +-
+ libselinux/src/getpeercon.c                      |   10 +-
+ libselinux/src/init.c                            |    4 +-
+ libselinux/src/is_customizable_type.c            |    2 +-
+ libselinux/src/label.c                           |   56 +-
+ libselinux/src/label_backends_android.c          |    2 +-
+ libselinux/src/label_file.c                      |    2 +-
+ libselinux/src/label_media.c                     |    2 +-
+ libselinux/src/label_x.c                         |    2 +-
+ libselinux/src/lgetfilecon.c                     |    8 +-
+ libselinux/src/load_policy.c                     |   13 +-
+ libselinux/src/lsetfilecon.c                     |    8 +-
+ libselinux/src/matchmediacon.c                   |    5 +-
+ libselinux/src/matchpathcon.c                    |   57 +
+ libselinux/src/policyvers.c                      |    2 +-
+ libselinux/src/procattr.c                        |   36 +-
+ libselinux/src/selinux_check_securetty_context.c |    2 +-
+ libselinux/src/selinux_config.c                  |    5 +-
+ libselinux/src/selinux_internal.h                |    1 -
+ libselinux/src/selinux_restorecon.c              |   30 +-
+ libselinux/src/selinuxswig.i                     |    4 +-
+ libselinux/src/setenforce.c                      |    2 +-
+ libselinux/src/setexecfilecon.c                  |    9 +
+ libselinux/src/setfilecon.c                      |    7 +-
+ libselinux/src/seusers.c                         |    4 +-
+ libselinux/src/stringrep.c                       |    2 +-
+ libselinux/utils/.gitignore                      |    2 +-
+ libselinux/utils/Makefile                        |   28 +-
+ libselinux/utils/getsebool.c                     |    7 +-
+ libselinux/utils/selinux_restorecon.c            |  299 +++++
+ 57 files changed, 2253 insertions(+), 309 deletions(-)
+ create mode 100644 Android.mk
+ create mode 100644 libselinux/Android.mk
+ create mode 100644 libselinux/utils/selinux_restorecon.c
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 00000000..3a4b6a4f
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1 @@
++include $(call all-named-subdir-makefiles, libselinux)
+diff --git a/libselinux/Android.bp b/libselinux/Android.bp
+index 3e881c24..94395cbd 100644
+--- a/libselinux/Android.bp
++++ b/libselinux/Android.bp
+@@ -1,4 +1,7 @@
++common_LIBRARIES = ["libpcre2"]
+ common_CFLAGS = [
++    "-DUSE_PCRE2",
++
+     // Persistently stored patterns (pcre2) are architecture dependent.
+     // In particular paterns built on amd64 can not run on devices with armv7
+     // (32bit). Therefore, this feature stays off for now.
+@@ -8,121 +11,40 @@ common_CFLAGS = [
+     "-D_GNU_SOURCE",
+     "-DNO_MEDIA_BACKEND",
+     "-DNO_X_BACKEND",
+-    "-DNO_DB_BACKEND",
++    "-DNO_DB_BACKEND"
+ ]
+ 
+ cc_defaults {
+-    name: "libselinux_defaults",
++    name: "libselinux_flags",
+ 
+     cflags: common_CFLAGS,
+ 
+-    srcs: [
+-        "src/booleans.c",
+-        "src/callbacks.c",
+-        "src/freecon.c",
+-        "src/label_backends_android.c",
+-        "src/label.c",
+-        "src/label_support.c",
+-        "src/matchpathcon.c",
+-        "src/setrans_client.c",
+-        "src/sha1.c",
+-    ],
+-
+     target: {
+         host: {
+             cflags: [
+                 "-DBUILD_HOST",
+             ],
+         },
+-
+-        android: {
+-            srcs: [
+-                "src/android/android.c",
+-                "src/avc.c",
+-                "src/avc_internal.c",
+-                "src/avc_sidtab.c",
+-                "src/canonicalize_context.c",
+-                "src/checkAccess.c",
+-                "src/check_context.c",
+-                "src/compute_av.c",
+-                "src/compute_create.c",
+-                "src/compute_member.c",
+-                "src/context.c",
+-                "src/deny_unknown.c",
+-                "src/disable.c",
+-                "src/enabled.c",
+-                "src/fgetfilecon.c",
+-                "src/fsetfilecon.c",
+-                "src/getenforce.c",
+-                "src/getfilecon.c",
+-                "src/get_initial_context.c",
+-                "src/getpeercon.c",
+-                "src/init.c",
+-                "src/lgetfilecon.c",
+-                "src/load_policy.c",
+-                "src/lsetfilecon.c",
+-                "src/mapping.c",
+-                "src/policyvers.c",
+-                "src/procattr.c",
+-                "src/sestatus.c",
+-                "src/setenforce.c",
+-                "src/setfilecon.c",
+-                "src/stringrep.c",
+-            ],
+-
+-            shared_libs: [
+-                "libcrypto",
+-                "liblog",
+-            ],
+-
+-            local_include_dirs: [ "src" ],
+-
+-            // 1003 corresponds to auditd, from system/core/logd/event.logtags
+-            cflags: [
+-                "-DAUDITD_LOG_TAG=1003",
+-            ],
+-
+-            // mapping.c has redundant check of array p_in->perms.
+-            clang_cflags: ["-Wno-pointer-bool-conversion"],
+-        }
+-    },
+-
+-    product_variables: {
+-        treble: {
+-            cflags: ["-DFULL_TREBLE"],
+-        },
+     },
+-
+-    local_include_dirs: ["include"],
+-    export_include_dirs: ["include"],
+-}
+-
+-cc_library_shared {
+-    name: "libselinux_vendor",
+-    defaults: ["libselinux_defaults"],
+-    vendor: true,
+-    cflags: ["-DNO_FILE_BACKEND"],
+-
+-    target: {
+-        android: {
+-            version_script: "exported_vendor.map",
+-        },
+-    },
+-
+-    srcs: [
+-        "src/android/android_vendor.c",
+-    ],
+ }
+ 
+ cc_library {
+     name: "libselinux",
+-    defaults: ["libselinux_defaults"],
++    defaults: ["libselinux_flags"],
+     host_supported: true,
+-    cflags: ["-DUSE_PCRE2"],
+ 
+     srcs: [
++        "src/booleans.c",
++        "src/callbacks.c",
++        "src/freecon.c",
++        "src/label_backends_android.c",
++        "src/label.c",
+         "src/label_file.c",
++        "src/label_support.c",
++        "src/matchpathcon.c",
+         "src/regex.c",
++        "src/setrans_client.c",
++        "src/sha1.c",
+     ],
+ 
+     target: {
+@@ -150,62 +72,93 @@ cc_library {
+         },
+         linux_bionic: {
+             enabled: true,
++        },
++        android: {
+             srcs: [
+-                "src/android/android_host.c",
++                "src/android/android.c",
+                 "src/avc.c",
+                 "src/avc_internal.c",
+                 "src/avc_sidtab.c",
++                "src/canonicalize_context.c",
++                "src/checkAccess.c",
++                "src/check_context.c",
+                 "src/compute_av.c",
+                 "src/compute_create.c",
+                 "src/compute_member.c",
+                 "src/context.c",
++                "src/deny_unknown.c",
++                "src/disable.c",
+                 "src/enabled.c",
++                "src/fgetfilecon.c",
++                "src/fsetfilecon.c",
+                 "src/getenforce.c",
+                 "src/getfilecon.c",
+                 "src/get_initial_context.c",
++                "src/getpeercon.c",
+                 "src/init.c",
++                "src/lgetfilecon.c",
+                 "src/load_policy.c",
++                "src/lsetfilecon.c",
+                 "src/mapping.c",
++                "src/policyvers.c",
+                 "src/procattr.c",
+-                "src/setexecfilecon.c",
++                "src/sestatus.c",
++                "src/setenforce.c",
++                "src/setfilecon.c",
+                 "src/stringrep.c",
+             ],
+-        },
+ 
+-        android: {
+-            srcs: [
+-                "src/android/android_platform.c",
++            shared_libs: [
++                "libcrypto",
++                "liblog",
+             ],
+-
+             static: {
+                 whole_static_libs: ["libpackagelistparser"],
+             },
+-
+             shared: {
+                 shared_libs: ["libpackagelistparser"],
+             },
+ 
++            local_include_dirs: [ "src" ],
++
+             version_script: "exported.map",
++
++            // 1003 corresponds to auditd, from system/core/logd/event.logtags
++            cflags: [
++                "-DAUDITD_LOG_TAG=1003",
++            ],
++            // mapping.c has redundant check of array p_in->perms.
++            clang_cflags: ["-Wno-pointer-bool-conversion"],
+         },
+     },
+ 
+     static: {
+-        whole_static_libs: ["libpcre2"],
++        whole_static_libs: common_LIBRARIES,
+     },
+     shared: {
+-        shared_libs: ["libpcre2"],
++        shared_libs: common_LIBRARIES,
+     },
+-}
+-
+-cc_binary_host {
+-    name: "sefcontext_compile",
+-    defaults: ["libselinux_defaults"],
+-    cflags: ["-DUSE_PCRE2"],
+-    srcs: ["utils/sefcontext_compile.c"],
+ 
+-    static_libs: [
+-        "libselinux",
+-        "libsepol",
+-    ],
+-    whole_static_libs: ["libpcre2"],
++    local_include_dirs: ["include"],
++    export_include_dirs: ["include"],
+ }
++
++// If one attempts to comment out the sefcontext_compile target in the
++// Android.mk that exists in the directory of this Android.bp file, understand
++// that I encountered 2 issues. The first issue was that it could not find
++// sepol/sepol.h. This is usually an issue if a dependency between the
++// export_includes of another component is not coupled to this component
++// properly. Looking at the Makefile from upstream, sefcontext_compile seems
++// to have a dependency on libsepol. The second issue occurs when you add the
++// libsepol dependency. The build system claims that their is no libsepol
++// library declared anywhere. Switching sefcontext_compile to an Android.mk for
++// now resolved the issue.
++//################################
++//cc_binary_host {
++//    name: "sefcontext_compile",
++//    defaults: ["libselinux_flags"],
++//    srcs: ["utils/sefcontext_compile.c"],
++//
++//    static_libs: ["libselinux"],
++//    whole_static_libs: common_LIBRARIES,
++//}
+diff --git a/libselinux/Android.mk b/libselinux/Android.mk
+new file mode 100644
+index 00000000..92697f4c
+--- /dev/null
++++ b/libselinux/Android.mk
+@@ -0,0 +1,18 @@
++LOCAL_PATH:= $(call my-dir)
++
++# This Android.mk serves only to build sefcontext_compile. This was needed
++# to work-around an issue/bug in the blueprint files. See the Android.bp
++# file in the same directory for more details.
++
++###################################
++include $(CLEAR_VARS)
++
++LOCAL_MODULE := sefcontext_compile
++LOCAL_MODULE_TAGS := optional
++LOCAL_CFLAGS := -Wall -Werror -DUSE_PCRE2 -DNO_PERSISTENTLY_STORED_PATTERNS
++LOCAL_SRC_FILES := utils/sefcontext_compile.c
++LOCAL_STATIC_LIBRARIES := libsepol libselinux
++LOCAL_WHOLE_STATIC_LIBRARIES := libpcre2
++LOCAL_CXX_STL := none
++
++include $(BUILD_HOST_EXECUTABLE)
+diff --git a/libselinux/Makefile b/libselinux/Makefile
+index 1ecab178..979e225f 100644
+--- a/libselinux/Makefile
++++ b/libselinux/Makefile
+@@ -1,6 +1,5 @@
+ SUBDIRS = src include utils man
+ 
+-PKG_CONFIG ?= pkg-config
+ DISABLE_SETRANS ?= n
+ DISABLE_RPM ?= n
+ ANDROID_HOST ?= n
+@@ -21,13 +20,12 @@ export DISABLE_SETRANS DISABLE_RPM DISABLE_FLAGS ANDROID_HOST
+ 
+ USE_PCRE2 ?= n
+ ifeq ($(USE_PCRE2),y)
+-	PCRE_CFLAGS := -DUSE_PCRE2 -DPCRE2_CODE_UNIT_WIDTH=8 $(shell $(PKG_CONFIG) --cflags libpcre2-8)
+-	PCRE_LDLIBS := $(shell $(PKG_CONFIG) --libs libpcre2-8)
++	PCRE_CFLAGS := -DUSE_PCRE2 -DPCRE2_CODE_UNIT_WIDTH=8
++	PCRE_LDFLAGS := -lpcre2-8
+ else
+-	PCRE_CFLAGS := $(shell $(PKG_CONFIG) --cflags libpcre)
+-	PCRE_LDLIBS := $(shell $(PKG_CONFIG) --libs libpcre)
++	PCRE_LDFLAGS := -lpcre
+ endif
+-export PCRE_CFLAGS PCRE_LDLIBS
++export PCRE_CFLAGS PCRE_LDFLAGS
+ 
+ OS := $(shell uname)
+ export OS
+diff --git a/libselinux/include/selinux/selinux.h b/libselinux/include/selinux/selinux.h
+index 173daeae..8600ca45 100644
+--- a/libselinux/include/selinux/selinux.h
++++ b/libselinux/include/selinux/selinux.h
+@@ -333,9 +333,6 @@ extern int security_setenforce(int value);
+ /* Get the behavior for undefined classes/permissions */
+ extern int security_deny_unknown(void);
+ 
+-/* Get the checkreqprot value */
+-extern int security_get_checkreqprot(void);
+-
+ /* Disable SELinux at runtime (must be done prior to initial policy load). */
+ extern int security_disable(void);
+ 
+diff --git a/libselinux/man/man3/security_getenforce.3 b/libselinux/man/man3/security_getenforce.3
+index 29cf3de7..7658014a 100644
+--- a/libselinux/man/man3/security_getenforce.3
++++ b/libselinux/man/man3/security_getenforce.3
+@@ -1,6 +1,6 @@
+ .TH "security_getenforce" "3" "1 January 2004" "russell@coker.com.au" "SELinux API documentation"
+ .SH "NAME"
+-security_getenforce, security_setenforce, security_deny_unknown, security_get_checkreqprot\- get or set the enforcing state of SELinux
++security_getenforce, security_setenforce, security_deny_unknown \- get or set the enforcing state of SELinux
+ .
+ .SH "SYNOPSIS"
+ .B #include <selinux/selinux.h>
+@@ -10,8 +10,6 @@ security_getenforce, security_setenforce, security_deny_unknown, security_get_ch
+ .BI "int security_setenforce(int "value );
+ .sp
+ .B int security_deny_unknown(void);
+-.sp
+-.B int security_get_checkreqprot(void);
+ .
+ .SH "DESCRIPTION"
+ .BR security_getenforce ()
+@@ -26,13 +24,6 @@ returned.
+ .BR security_deny_unknown ()
+ returns 0 if SELinux treats policy queries on undefined object classes or
+ permissions as being allowed, 1 if such queries are denied, and \-1 on error.
+-
+-.BR security_get_checkreqprot ()
+-can be used to determine whether SELinux is configured to check the
+-protection requested by the application or the actual protection that will
+-be applied by the kernel (including the effects of READ_IMPLIES_EXEC) on
+-mmap and mprotect calls.  It returns 0 if SELinux checks the actual
+-protection, 1 if it checks the requested protection, and \-1 on error.
+ .
+ .SH "SEE ALSO"
+ .BR selinux "(8)"
+diff --git a/libselinux/src/Makefile b/libselinux/src/Makefile
+index 4306dd0e..5640a57d 100644
+--- a/libselinux/src/Makefile
++++ b/libselinux/src/Makefile
+@@ -2,7 +2,7 @@
+ # runtimes (e.g. Python 2 vs Python 3) by optionally prefixing the build
+ # targets with "PYPREFIX":
+ PYTHON ?= python
+-PYPREFIX ?= $(shell $(PYTHON) -c 'import sys;print("python-%d.%d" % sys.version_info[:2])')
++PYPREFIX ?= $(notdir $(PYTHON))
+ RUBY ?= ruby
+ RUBYPREFIX ?= $(notdir $(RUBY))
+ PKG_CONFIG ?= pkg-config
+@@ -55,15 +55,6 @@ SRCS= $(filter-out $(GENERATED) audit2why.c, $(sort $(wildcard *.c)))
+ 
+ MAX_STACK_SIZE=32768
+ 
+-ifeq ($(COMPILER), gcc)
+-EXTRA_CFLAGS = -fipa-pure-const -Wlogical-op -Wpacked-bitfield-compat -Wsync-nand \
+-	-Wcoverage-mismatch -Wcpp -Wformat-contains-nul -Wnormalized=nfc -Wsuggest-attribute=const \
+-	-Wsuggest-attribute=noreturn -Wsuggest-attribute=pure -Wtrampolines -Wjump-misses-init \
+-	-Wno-suggest-attribute=pure -Wno-suggest-attribute=const -Wp,-D_FORTIFY_SOURCE=2
+-else
+-EXTRA_CFLAGS = -Wunused-command-line-argument
+-endif
+-
+ OBJS= $(patsubst %.c,%.o,$(SRCS))
+ LOBJS= $(patsubst %.c,%.lo,$(SRCS))
+ CFLAGS ?= -O -Wall -W -Wundef -Wformat-y2k -Wformat-security -Winit-self -Wmissing-include-dirs \
+@@ -81,20 +72,28 @@ CFLAGS ?= -O -Wall -W -Wundef -Wformat-y2k -Wformat-security -Winit-self -Wmissi
+           -Wno-format-nonliteral -Wframe-larger-than=$(MAX_STACK_SIZE) \
+           -fstack-protector-all --param=ssp-buffer-size=4 -fexceptions \
+           -fasynchronous-unwind-tables -fdiagnostics-show-option -funit-at-a-time \
+-          -Werror -Wno-aggregate-return -Wno-redundant-decls \
+-          $(EXTRA_CFLAGS)
++          -Werror -Wno-aggregate-return -Wno-redundant-decls
+ 
+ LD_SONAME_FLAGS=-soname,$(LIBSO),-z,defs,-z,relro
+ 
++ifeq ($(COMPILER), gcc)
++CFLAGS += -fipa-pure-const -Wlogical-op -Wpacked-bitfield-compat -Wsync-nand \
++	-Wcoverage-mismatch -Wcpp -Wformat-contains-nul -Wnormalized=nfc -Wsuggest-attribute=const \
++	-Wsuggest-attribute=noreturn -Wsuggest-attribute=pure -Wtrampolines -Wjump-misses-init \
++	-Wno-suggest-attribute=pure -Wno-suggest-attribute=const -Wp,-D_FORTIFY_SOURCE=2
++else
++CFLAGS += -Wunused-command-line-argument
++endif
++
+ ifeq ($(OS), Darwin)
+ override CFLAGS += -I/opt/local/include
+ override LDFLAGS += -L/opt/local/lib -undefined dynamic_lookup
+ LD_SONAME_FLAGS=-install_name,$(LIBSO)
+ endif
+ 
+-PCRE_LDLIBS ?= -lpcre
++PCRE_LDFLAGS ?= -lpcre
+ 
+-override CFLAGS += -I../include -D_GNU_SOURCE $(DISABLE_FLAGS) $(PCRE_CFLAGS)
++override CFLAGS += -I../include -I$(INCLUDEDIR) -D_GNU_SOURCE $(DISABLE_FLAGS) $(PCRE_CFLAGS)
+ 
+ SWIG_CFLAGS += -Wno-error -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-parameter \
+ 		-Wno-shadow -Wno-uninitialized -Wno-missing-prototypes -Wno-missing-declarations
+@@ -134,18 +133,18 @@ $(SWIGRUBYLOBJ): $(SWIGRUBYCOUT)
+ 	$(CC) $(CFLAGS) $(SWIG_CFLAGS) $(RUBYINC) -fPIC -DSHARED -c -o $@ $<
+ 
+ $(SWIGSO): $(SWIGLOBJ)
+-	$(CC) $(CFLAGS) $(LDFLAGS) -L. -shared -o $@ $< -lselinux $(PYLIBS)
++	$(CC) $(CFLAGS) -shared -o $@ $< -L. -lselinux $(LDFLAGS) $(PYLIBS) -L$(LIBDIR)
+ 
+ $(SWIGRUBYSO): $(SWIGRUBYLOBJ)
+-	$(CC) $(CFLAGS) $(LDFLAGS) -L. -shared -o $@ $^ -lselinux $(RUBYLIBS)
++	$(CC) $(CFLAGS) -shared -o $@ $^ -L. -lselinux $(LDFLAGS) $(RUBYLIBS) -L$(LIBDIR)
+ 
+ $(LIBA): $(OBJS)
+ 	$(AR) rcs $@ $^
+ 	$(RANLIB) $@
+ 
+ $(LIBSO): $(LOBJS)
+-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ $(PCRE_LDLIBS) -ldl -Wl,$(LD_SONAME_FLAGS)
+-	ln -sf $@ $(TARGET)
++	$(CC) $(CFLAGS) -shared -o $@ $^ $(PCRE_LDFLAGS) -ldl $(LDFLAGS) -L$(LIBDIR) -Wl,$(LD_SONAME_FLAGS)
++	ln -sf $@ $(TARGET) 
+ 
+ $(LIBPC): $(LIBPC).in ../VERSION
+ 	sed -e 's/@VERSION@/$(VERSION)/; s:@prefix@:$(PREFIX):; s:@libdir@:$(LIBBASE):; s:@includedir@:$(INCLUDEDIR):' < $< > $@
+@@ -157,7 +156,7 @@ $(AUDIT2WHYLOBJ): audit2why.c
+ 	$(CC) $(filter-out -Werror, $(CFLAGS)) $(PYINC) -fPIC -DSHARED -c -o $@ $<
+ 
+ $(AUDIT2WHYSO): $(AUDIT2WHYLOBJ) $(LIBSEPOLA)
+-	$(CC) $(CFLAGS) $(LDFLAGS) -L. -shared -o $@ $^ -lselinux $(PYLIBS)
++	$(CC) $(CFLAGS) -shared -o $@ $^ -L. $(LDFLAGS) -lselinux $(PYLIBS) -L$(LIBDIR)
+ 
+ %.o:  %.c policy.h
+ 	$(CC) $(CFLAGS) $(TLSFLAGS) -c -o $@ $<
+diff --git a/libselinux/src/android/android.c b/libselinux/src/android/android.c
+index b79b4635..fcc12471 100644
+--- a/libselinux/src/android/android.c
++++ b/libselinux/src/android/android.c
+@@ -1,10 +1,81 @@
+-#include "android_common.h"
++#include <sys/types.h>
++#include <unistd.h>
++#include <string.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdbool.h>
++#include <ctype.h>
++#include <errno.h>
++#include <pwd.h>
++#include <grp.h>
++#include <sys/mman.h>
++#include <sys/mount.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/xattr.h>
++#include <fcntl.h>
++#include <fts.h>
++#include <selinux/selinux.h>
++#include <selinux/context.h>
++#include <selinux/android.h>
++#include <selinux/label.h>
++#include <selinux/avc.h>
++#include <openssl/sha.h>
++#include <private/android_filesystem_config.h>
++#include <log/log.h>
++#include "policy.h"
++#include "callbacks.h"
++#include "selinux_internal.h"
++#include "label_internal.h"
++#include <fnmatch.h>
++#include <limits.h>
++#include <sys/vfs.h>
++#include <linux/magic.h>
++#include <libgen.h>
++#include <packagelistparser/packagelistparser.h>
+ 
+-#ifdef __ANDROID_VNDK__
+-#ifndef LOG_EVENT_STRING
+-#define LOG_EVENT_STRING(...)
+-#endif  // LOG_EVENT_STRING
+-#endif  // __ANDROID_VNDK__
++#define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
++#include <sys/_system_properties.h>
++
++#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
++
++/*
++ * XXX Where should this configuration file be located?
++ * Needs to be accessible by zygote and installd when
++ * setting credentials for app processes and setting permissions
++ * on app data directories.
++ */
++static char const * const seapp_contexts_split[] = {
++	"/system/etc/selinux/plat_seapp_contexts",
++	"/vendor/etc/selinux/nonplat_seapp_contexts"
++};
++
++static char const * const seapp_contexts_rootfs[] = {
++	"/plat_seapp_contexts",
++	"/nonplat_seapp_contexts"
++};
++
++static const struct selinux_opt seopts_file_split[] = {
++    { SELABEL_OPT_PATH, "/system/etc/selinux/plat_file_contexts" },
++    { SELABEL_OPT_PATH, "/vendor/etc/selinux/nonplat_file_contexts" }
++};
++
++static const struct selinux_opt seopts_file_rootfs[] = {
++    { SELABEL_OPT_PATH, "/plat_file_contexts" },
++    { SELABEL_OPT_PATH, "/nonplat_file_contexts" }
++};
++
++static const char *const sepolicy_file = "/sepolicy";
++
++static const struct selinux_opt seopts_prop_split[] = {
++    { SELABEL_OPT_PATH, "/system/etc/selinux/plat_property_contexts" },
++    { SELABEL_OPT_PATH, "/vendor/etc/selinux/nonplat_property_contexts"}
++};
++
++static const struct selinux_opt seopts_prop_rootfs[] = {
++    { SELABEL_OPT_PATH, "/plat_property_contexts" },
++    { SELABEL_OPT_PATH, "/nonplat_property_contexts"}
++};
+ 
+ static const struct selinux_opt seopts_service_split[] = {
+     { SELABEL_OPT_PATH, "/system/etc/selinux/plat_service_contexts" },
+@@ -26,12 +97,1387 @@ static const struct selinux_opt seopts_hwservice_rootfs[] = {
+     { SELABEL_OPT_PATH, "/nonplat_hwservice_contexts" }
+ };
+ 
++
+ static const struct selinux_opt seopts_vndservice =
+     { SELABEL_OPT_PATH, "/vendor/etc/selinux/vndservice_contexts" };
+ 
+ static const struct selinux_opt seopts_vndservice_rootfs =
+     { SELABEL_OPT_PATH, "/vndservice_contexts" };
+ 
++
++enum levelFrom {
++	LEVELFROM_NONE,
++	LEVELFROM_APP,
++	LEVELFROM_USER,
++	LEVELFROM_ALL
++};
++
++#if DEBUG
++static char const * const levelFromName[] = {
++	"none",
++	"app",
++	"user",
++	"all"
++};
++#endif
++
++struct prefix_str {
++	size_t len;
++	char *str;
++	char is_prefix;
++};
++
++static void free_prefix_str(struct prefix_str *p)
++{
++	if (!p)
++		return;
++	free(p->str);
++}
++
++struct seapp_context {
++	/* input selectors */
++	bool isSystemServer;
++	bool isEphemeralAppSet;
++	bool isEphemeralApp;
++	bool isV2AppSet;
++	bool isV2App;
++	bool isOwnerSet;
++	bool isOwner;
++	struct prefix_str user;
++	char *seinfo;
++	struct prefix_str name;
++	struct prefix_str path;
++	bool isPrivAppSet;
++	bool isPrivApp;
++	int32_t minTargetSdkVersion;
++	/* outputs */
++	char *domain;
++	char *type;
++	char *level;
++	enum levelFrom levelFrom;
++};
++
++static void free_seapp_context(struct seapp_context *s)
++{
++	if (!s)
++		return;
++
++	free_prefix_str(&s->user);
++	free(s->seinfo);
++	free_prefix_str(&s->name);
++	free_prefix_str(&s->path);
++	free(s->domain);
++	free(s->type);
++	free(s->level);
++}
++
++static bool seapp_contexts_dup = false;
++
++static int seapp_context_cmp(const void *A, const void *B)
++{
++	const struct seapp_context *const *sp1 = (const struct seapp_context *const *) A;
++	const struct seapp_context *const *sp2 = (const struct seapp_context *const *) B;
++	const struct seapp_context *s1 = *sp1, *s2 = *sp2;
++	bool dup;
++
++	/* Give precedence to isSystemServer=true. */
++	if (s1->isSystemServer != s2->isSystemServer)
++		return (s1->isSystemServer ? -1 : 1);
++
++	/* Give precedence to a specified isEphemeral= over an
++	 * unspecified isEphemeral=. */
++	if (s1->isEphemeralAppSet != s2->isEphemeralAppSet)
++		return (s1->isEphemeralAppSet ? -1 : 1);
++
++	/* Give precedence to a specified isV2= over an
++	 * unspecified isV2=. */
++	if (s1->isV2AppSet != s2->isV2AppSet)
++		return (s1->isV2AppSet ? -1 : 1);
++
++
++	/* Give precedence to a specified isOwner= over an unspecified isOwner=. */
++	if (s1->isOwnerSet != s2->isOwnerSet)
++		return (s1->isOwnerSet ? -1 : 1);
++
++	/* Give precedence to a specified user= over an unspecified user=. */
++	if (s1->user.str && !s2->user.str)
++		return -1;
++	if (!s1->user.str && s2->user.str)
++		return 1;
++
++	if (s1->user.str) {
++		/* Give precedence to a fixed user= string over a prefix. */
++		if (s1->user.is_prefix != s2->user.is_prefix)
++			return (s2->user.is_prefix ? -1 : 1);
++
++		/* Give precedence to a longer prefix over a shorter prefix. */
++		if (s1->user.is_prefix && s1->user.len != s2->user.len)
++			return (s1->user.len > s2->user.len) ? -1 : 1;
++	}
++
++	/* Give precedence to a specified seinfo= over an unspecified seinfo=. */
++	if (s1->seinfo && !s2->seinfo)
++		return -1;
++	if (!s1->seinfo && s2->seinfo)
++		return 1;
++
++	/* Give precedence to a specified name= over an unspecified name=. */
++	if (s1->name.str && !s2->name.str)
++		return -1;
++	if (!s1->name.str && s2->name.str)
++		return 1;
++
++	if (s1->name.str) {
++		/* Give precedence to a fixed name= string over a prefix. */
++		if (s1->name.is_prefix != s2->name.is_prefix)
++			return (s2->name.is_prefix ? -1 : 1);
++
++		/* Give precedence to a longer prefix over a shorter prefix. */
++		if (s1->name.is_prefix && s1->name.len != s2->name.len)
++			return (s1->name.len > s2->name.len) ? -1 : 1;
++	}
++
++	/* Give precedence to a specified path= over an unspecified path=. */
++	if (s1->path.str && !s2->path.str)
++		return -1;
++	if (!s1->path.str && s2->path.str)
++		return 1;
++
++	if (s1->path.str) {
++		/* Give precedence to a fixed path= string over a prefix. */
++		if (s1->path.is_prefix != s2->path.is_prefix)
++			return (s2->path.is_prefix ? -1 : 1);
++
++		/* Give precedence to a longer prefix over a shorter prefix. */
++		if (s1->path.is_prefix && s1->path.len != s2->path.len)
++			return (s1->path.len > s2->path.len) ? -1 : 1;
++	}
++
++	/* Give precedence to a specified isPrivApp= over an unspecified isPrivApp=. */
++	if (s1->isPrivAppSet != s2->isPrivAppSet)
++		return (s1->isPrivAppSet ? -1 : 1);
++
++	/* Give precedence to a higher minTargetSdkVersion= over a lower minTargetSdkVersion=.
++	 * If unspecified, minTargetSdkVersion has a default value of 0.
++	 */
++	if (s1->minTargetSdkVersion > s2->minTargetSdkVersion)
++		return -1;
++	else if (s1->minTargetSdkVersion < s2->minTargetSdkVersion)
++		return 1;
++
++	/*
++	 * Check for a duplicated entry on the input selectors.
++	 * We already compared isSystemServer, isOwnerSet, and isOwner above.
++	 * We also have already checked that both entries specify the same
++	 * string fields, so if s1 has a non-NULL string, then so does s2.
++	 */
++	dup = (!s1->user.str || !strcmp(s1->user.str, s2->user.str)) &&
++		(!s1->seinfo || !strcmp(s1->seinfo, s2->seinfo)) &&
++		(!s1->name.str || !strcmp(s1->name.str, s2->name.str)) &&
++		(!s1->path.str || !strcmp(s1->path.str, s2->path.str)) &&
++		(s1->isPrivAppSet && s1->isPrivApp == s2->isPrivApp) &&
++		(s1->isOwnerSet && s1->isOwner == s2->isOwner) &&
++		(s1->isSystemServer && s1->isSystemServer == s2->isSystemServer) &&
++		(s1->isV2AppSet && s1->isV2App == s2->isV2App) &&
++		(s1->isEphemeralAppSet && s1->isEphemeralApp == s2->isEphemeralApp);
++
++	if (dup) {
++		seapp_contexts_dup = true;
++		selinux_log(SELINUX_ERROR, "seapp_contexts:  Duplicated entry\n");
++		if (s1->user.str)
++			selinux_log(SELINUX_ERROR, " user=%s\n", s1->user.str);
++		if (s1->seinfo)
++			selinux_log(SELINUX_ERROR, " seinfo=%s\n", s1->seinfo);
++		if (s1->name.str)
++			selinux_log(SELINUX_ERROR, " name=%s\n", s1->name.str);
++		if (s1->path.str)
++			selinux_log(SELINUX_ERROR, " path=%s\n", s1->path.str);
++	}
++
++	/* Anything else has equal precedence. */
++	return 0;
++}
++
++static struct seapp_context **seapp_contexts = NULL;
++static int nspec = 0;
++
++static void free_seapp_contexts(void)
++{
++	int n;
++
++	if (!seapp_contexts)
++		return;
++
++	for (n = 0; n < nspec; n++)
++		free_seapp_context(seapp_contexts[n]);
++
++	free(seapp_contexts);
++	seapp_contexts = NULL;
++	nspec = 0;
++}
++
++static int32_t get_minTargetSdkVersion(const char *value)
++{
++	char *endptr;
++	long minTargetSdkVersion;
++	minTargetSdkVersion = strtol(value, &endptr, 10);
++	if (('\0' != *endptr) || (minTargetSdkVersion < 0) || (minTargetSdkVersion > INT32_MAX)) {
++		return -1; /* error parsing minTargetSdkVersion */
++	} else {
++		return (int32_t) minTargetSdkVersion;
++	}
++}
++
++int selinux_android_seapp_context_reload(void)
++{
++	FILE *fp = NULL;
++	char line_buf[BUFSIZ];
++	char *token;
++	unsigned lineno;
++	struct seapp_context *cur;
++	char *p, *name = NULL, *value = NULL, *saveptr;
++	size_t i, len, files_len;
++	int n, ret;
++	const char *const *seapp_contexts_files;
++
++	// Prefer files from /system & /vendor, fall back to files from /
++	if (access(seapp_contexts_split[0], R_OK) != -1) {
++		seapp_contexts_files = seapp_contexts_split;
++		files_len = sizeof(seapp_contexts_split)/sizeof(seapp_contexts_split[0]);
++	} else {
++		seapp_contexts_files = seapp_contexts_rootfs;
++		files_len = sizeof(seapp_contexts_rootfs)/sizeof(seapp_contexts_rootfs[0]);
++	}
++
++	free_seapp_contexts();
++
++	nspec = 0;
++	for (i = 0; i < files_len; i++) {
++		fp = fopen(seapp_contexts_files[i], "re");
++		if (!fp) {
++			selinux_log(SELINUX_ERROR, "%s:  could not open seapp_contexts file: %s",
++				    __FUNCTION__, seapp_contexts_files[i]);
++			return -1;
++		}
++		while (fgets(line_buf, sizeof line_buf - 1, fp)) {
++			p = line_buf;
++			while (isspace(*p))
++				p++;
++			if (*p == '#' || *p == 0)
++				continue;
++			nspec++;
++		}
++		fclose(fp);
++	}
++
++	seapp_contexts = (struct seapp_context **) calloc(nspec, sizeof(struct seapp_context *));
++	if (!seapp_contexts)
++		goto oom;
++
++	nspec = 0;
++	for (i = 0; i < files_len; i++) {
++		lineno = 1;
++		fp = fopen(seapp_contexts_files[i], "re");
++		if (!fp) {
++			selinux_log(SELINUX_ERROR, "%s:  could not open seapp_contexts file: %s",
++				    __FUNCTION__, seapp_contexts_files[i]);
++			free_seapp_contexts();
++			return -1;
++		}
++		while (fgets(line_buf, sizeof line_buf - 1, fp)) {
++			len = strlen(line_buf);
++			if (line_buf[len - 1] == '\n')
++				line_buf[len - 1] = 0;
++			p = line_buf;
++			while (isspace(*p))
++				p++;
++			if (*p == '#' || *p == 0)
++				continue;
++
++			cur = (struct seapp_context *) calloc(1, sizeof(struct seapp_context));
++			if (!cur)
++				goto oom;
++
++			token = strtok_r(p, " \t", &saveptr);
++			if (!token) {
++				free_seapp_context(cur);
++				goto err;
++			}
++
++			while (1) {
++				name = token;
++				value = strchr(name, '=');
++				if (!value) {
++					free_seapp_context(cur);
++					goto err;
++				}
++				*value++ = 0;
++
++				if (!strcasecmp(name, "isSystemServer")) {
++					if (!strcasecmp(value, "true"))
++						cur->isSystemServer = true;
++					else if (!strcasecmp(value, "false"))
++						cur->isSystemServer = false;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "isEphemeralApp")) {
++					cur->isEphemeralAppSet = true;
++					if (!strcasecmp(value, "true"))
++						cur->isEphemeralApp = true;
++					else if (!strcasecmp(value, "false"))
++						cur->isEphemeralApp = false;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "isV2App")) {
++					cur->isV2AppSet = true;
++					if (!strcasecmp(value, "true"))
++						cur->isV2App = true;
++					else if (!strcasecmp(value, "false"))
++						cur->isV2App = false;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "isOwner")) {
++					cur->isOwnerSet = true;
++					if (!strcasecmp(value, "true"))
++						cur->isOwner = true;
++					else if (!strcasecmp(value, "false"))
++						cur->isOwner = false;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "user")) {
++					if (cur->user.str) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->user.str = strdup(value);
++					if (!cur->user.str) {
++						free_seapp_context(cur);
++						goto oom;
++					}
++					cur->user.len = strlen(cur->user.str);
++					if (cur->user.str[cur->user.len-1] == '*')
++						cur->user.is_prefix = 1;
++				} else if (!strcasecmp(name, "seinfo")) {
++					if (cur->seinfo) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->seinfo = strdup(value);
++					if (!cur->seinfo) {
++						free_seapp_context(cur);
++						goto oom;
++					}
++					if (strstr(value, ":")) {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "name")) {
++					if (cur->name.str) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->name.str = strdup(value);
++					if (!cur->name.str) {
++						free_seapp_context(cur);
++						goto oom;
++					}
++					cur->name.len = strlen(cur->name.str);
++					if (cur->name.str[cur->name.len-1] == '*')
++						cur->name.is_prefix = 1;
++				} else if (!strcasecmp(name, "domain")) {
++					if (cur->domain) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->domain = strdup(value);
++					if (!cur->domain) {
++						free_seapp_context(cur);
++						goto oom;
++					}
++				} else if (!strcasecmp(name, "type")) {
++					if (cur->type) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->type = strdup(value);
++					if (!cur->type) {
++						free_seapp_context(cur);
++						goto oom;
++					}
++				} else if (!strcasecmp(name, "levelFromUid")) {
++					if (cur->levelFrom) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					if (!strcasecmp(value, "true"))
++						cur->levelFrom = LEVELFROM_APP;
++					else if (!strcasecmp(value, "false"))
++						cur->levelFrom = LEVELFROM_NONE;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "levelFrom")) {
++					if (cur->levelFrom) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					if (!strcasecmp(value, "none"))
++						cur->levelFrom = LEVELFROM_NONE;
++					else if (!strcasecmp(value, "app"))
++						cur->levelFrom = LEVELFROM_APP;
++					else if (!strcasecmp(value, "user"))
++						cur->levelFrom = LEVELFROM_USER;
++					else if (!strcasecmp(value, "all"))
++						cur->levelFrom = LEVELFROM_ALL;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "level")) {
++					if (cur->level) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->level = strdup(value);
++					if (!cur->level) {
++						free_seapp_context(cur);
++						goto oom;
++					}
++				} else if (!strcasecmp(name, "path")) {
++					if (cur->path.str) {
++						free_seapp_context(cur);
++						goto err;
++					}
++					cur->path.str = strdup(value);
++					if (!cur->path.str) {
++						free_seapp_context(cur);
++					goto oom;
++					}
++					cur->path.len = strlen(cur->path.str);
++					if (cur->path.str[cur->path.len-1] == '*')
++						cur->path.is_prefix = 1;
++				} else if (!strcasecmp(name, "isPrivApp")) {
++					cur->isPrivAppSet = true;
++					if (!strcasecmp(value, "true"))
++						cur->isPrivApp = true;
++					else if (!strcasecmp(value, "false"))
++						cur->isPrivApp = false;
++					else {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else if (!strcasecmp(name, "minTargetSdkVersion")) {
++					cur->minTargetSdkVersion = get_minTargetSdkVersion(value);
++					if (cur->minTargetSdkVersion < 0) {
++						free_seapp_context(cur);
++						goto err;
++					}
++				} else {
++					free_seapp_context(cur);
++					goto err;
++				}
++
++				token = strtok_r(NULL, " \t", &saveptr);
++				if (!token)
++					break;
++			}
++
++			if (cur->name.str &&
++			    (!cur->seinfo || !strcmp(cur->seinfo, "default"))) {
++				selinux_log(SELINUX_ERROR, "%s:  No specific seinfo value specified with name=\"%s\", on line %u:  insecure configuration!\n",
++					    seapp_contexts_files[i], cur->name.str, lineno);
++				free_seapp_context(cur);
++				goto err;
++			}
++
++			seapp_contexts[nspec] = cur;
++			nspec++;
++			lineno++;
++		}
++		fclose(fp);
++		fp = NULL;
++	}
++
++	qsort(seapp_contexts, nspec, sizeof(struct seapp_context *),
++	      seapp_context_cmp);
++
++	if (seapp_contexts_dup)
++		goto err_no_log;
++
++#if DEBUG
++	{
++		int i;
++		for (i = 0; i < nspec; i++) {
++			cur = seapp_contexts[i];
++			selinux_log(SELINUX_INFO, "%s:  isSystemServer=%s  isEphemeralApp=%s isV2App=%s isOwner=%s user=%s seinfo=%s "
++					"name=%s path=%s isPrivApp=%s minTargetSdkVersion=%d -> domain=%s type=%s level=%s levelFrom=%s",
++				__FUNCTION__,
++				cur->isSystemServer ? "true" : "false",
++				cur->isEphemeralAppSet ? (cur->isEphemeralApp ? "true" : "false") : "null",
++				cur->isV2AppSet ? (cur->isV2App ? "true" : "false") : "null",
++				cur->isOwnerSet ? (cur->isOwner ? "true" : "false") : "null",
++				cur->user.str,
++				cur->seinfo, cur->name.str, cur->path.str,
++				cur->isPrivAppSet ? (cur->isPrivApp ? "true" : "false") : "null",
++				cur->minTargetSdkVersion,
++				cur->domain, cur->type, cur->level,
++				levelFromName[cur->levelFrom]);
++		}
++	}
++#endif
++
++	ret = 0;
++
++out:
++	if (fp) {
++		fclose(fp);
++	}
++	return ret;
++
++err:
++	selinux_log(SELINUX_ERROR, "%s:  Invalid entry on line %u\n",
++		    seapp_contexts_files[i], lineno);
++err_no_log:
++	free_seapp_contexts();
++	ret = -1;
++	goto out;
++oom:
++	selinux_log(SELINUX_ERROR,
++		    "%s:  Out of memory\n", __FUNCTION__);
++	free_seapp_contexts();
++	ret = -1;
++	goto out;
++}
++
++
++static void seapp_context_init(void)
++{
++        selinux_android_seapp_context_reload();
++}
++
++static pthread_once_t once = PTHREAD_ONCE_INIT;
++
++/*
++ * Max id that can be mapped to category set uniquely
++ * using the current scheme.
++ */
++#define CAT_MAPPING_MAX_ID (0x1<<16)
++
++enum seapp_kind {
++	SEAPP_TYPE,
++	SEAPP_DOMAIN
++};
++
++#define PRIVILEGED_APP_STR ":privapp"
++#define EPHEMERAL_APP_STR ":ephemeralapp"
++#define V2_APP_STR ":v2"
++#define TARGETSDKVERSION_STR ":targetSdkVersion="
++static int32_t get_app_targetSdkVersion(const char *seinfo)
++{
++	char *substr = strstr(seinfo, TARGETSDKVERSION_STR);
++	long targetSdkVersion;
++	char *endptr;
++	if (substr != NULL) {
++		substr = substr + strlen(TARGETSDKVERSION_STR);
++		if (substr != NULL) {
++			targetSdkVersion = strtol(substr, &endptr, 10);
++			if (('\0' != *endptr && ':' != *endptr)
++					|| (targetSdkVersion < 0) || (targetSdkVersion > INT32_MAX)) {
++				return -1; /* malformed targetSdkVersion value in seinfo */
++			} else {
++				return (int32_t) targetSdkVersion;
++			}
++		}
++	}
++	return 0; /* default to 0 when targetSdkVersion= is not present in seinfo */
++}
++
++static int seinfo_parse(char *dest, const char *src, size_t size)
++{
++	size_t len;
++	char *p;
++
++	if ((p = strchr(src, ':')) != NULL)
++		len = p - src;
++	else
++		len = strlen(src);
++
++	if (len > size - 1)
++		return -1;
++
++	strncpy(dest, src, len);
++	dest[len] = '\0';
++
++	return 0;
++}
++
++static int seapp_context_lookup(enum seapp_kind kind,
++				uid_t uid,
++				bool isSystemServer,
++				const char *seinfo,
++				const char *pkgname,
++				const char *path,
++				context_t ctx)
++{
++	struct passwd *pwd;
++	bool isOwner;
++	const char *username = NULL;
++	struct seapp_context *cur = NULL;
++	int i;
++	size_t n;
++	uid_t userid;
++	uid_t appid;
++	bool isPrivApp = false;
++	bool isEphemeralApp = false;
++	int32_t targetSdkVersion = 0;
++	bool isV2App = false;
++	char parsedseinfo[BUFSIZ];
++
++	__selinux_once(once, seapp_context_init);
++
++	if (seinfo) {
++		if (seinfo_parse(parsedseinfo, seinfo, BUFSIZ))
++			goto err;
++		isPrivApp = strstr(seinfo, PRIVILEGED_APP_STR) ? true : false;
++		isEphemeralApp = strstr(seinfo, EPHEMERAL_APP_STR) ? true : false;
++		isV2App = strstr(seinfo, V2_APP_STR) ? true : false;
++		targetSdkVersion = get_app_targetSdkVersion(seinfo);
++		if (targetSdkVersion < 0) {
++			selinux_log(SELINUX_ERROR,
++					"%s:  Invalid targetSdkVersion passed for app with uid %d, seinfo %s, name %s\n",
++					__FUNCTION__, uid, seinfo, pkgname);
++			goto err;
++		}
++		seinfo = parsedseinfo;
++	}
++
++	userid = uid / AID_USER;
++	isOwner = (userid == 0);
++	appid = uid % AID_USER;
++	if (appid < AID_APP) {
++            /*
++             * This code is Android specific, bionic guarantees that
++             * calls to non-reentrant getpwuid() are thread safe.
++             */
++#ifndef __BIONIC__
++#warning "This code assumes that getpwuid is thread safe, only true with Bionic!"
++#endif
++		pwd = getpwuid(appid);
++		if (!pwd)
++			goto err;
++
++		username = pwd->pw_name;
++
++	} else if (appid < AID_ISOLATED_START) {
++		username = "_app";
++		appid -= AID_APP;
++	} else {
++		username = "_isolated";
++		appid -= AID_ISOLATED_START;
++	}
++
++	if (appid >= CAT_MAPPING_MAX_ID || userid >= CAT_MAPPING_MAX_ID)
++		goto err;
++
++	for (i = 0; i < nspec; i++) {
++		cur = seapp_contexts[i];
++
++		if (cur->isSystemServer != isSystemServer)
++			continue;
++
++		if (cur->isEphemeralAppSet && cur->isEphemeralApp != isEphemeralApp)
++			continue;
++
++		if (cur->isV2AppSet && cur->isV2App != isV2App)
++			continue;
++
++		if (cur->isOwnerSet && cur->isOwner != isOwner)
++			continue;
++
++		if (cur->user.str) {
++			if (cur->user.is_prefix) {
++				if (strncasecmp(username, cur->user.str, cur->user.len-1))
++					continue;
++			} else {
++				if (strcasecmp(username, cur->user.str))
++					continue;
++			}
++		}
++
++		if (cur->seinfo) {
++			if (!seinfo || strcasecmp(seinfo, cur->seinfo))
++				continue;
++		}
++
++		if (cur->name.str) {
++			if(!pkgname)
++				continue;
++
++			if (cur->name.is_prefix) {
++				if (strncasecmp(pkgname, cur->name.str, cur->name.len-1))
++					continue;
++			} else {
++				if (strcasecmp(pkgname, cur->name.str))
++					continue;
++			}
++		}
++
++		if (cur->isPrivAppSet && cur->isPrivApp != isPrivApp)
++			continue;
++
++		if (cur->minTargetSdkVersion > targetSdkVersion)
++			continue;
++
++		if (cur->path.str) {
++			if (!path)
++				continue;
++
++			if (cur->path.is_prefix) {
++				if (strncmp(path, cur->path.str, cur->path.len-1))
++					continue;
++			} else {
++				if (strcmp(path, cur->path.str))
++					continue;
++			}
++		}
++
++		if (kind == SEAPP_TYPE && !cur->type)
++			continue;
++		else if (kind == SEAPP_DOMAIN && !cur->domain)
++			continue;
++
++		if (kind == SEAPP_TYPE) {
++			if (context_type_set(ctx, cur->type))
++				goto oom;
++		} else if (kind == SEAPP_DOMAIN) {
++			if (context_type_set(ctx, cur->domain))
++				goto oom;
++		}
++
++		if (cur->levelFrom != LEVELFROM_NONE) {
++			char level[255];
++			switch (cur->levelFrom) {
++			case LEVELFROM_APP:
++				snprintf(level, sizeof level, "s0:c%u,c%u",
++					 appid & 0xff,
++					 256 + (appid>>8 & 0xff));
++				break;
++			case LEVELFROM_USER:
++				snprintf(level, sizeof level, "s0:c%u,c%u",
++					 512 + (userid & 0xff),
++					 768 + (userid>>8 & 0xff));
++				break;
++			case LEVELFROM_ALL:
++				snprintf(level, sizeof level, "s0:c%u,c%u,c%u,c%u",
++					 appid & 0xff,
++					 256 + (appid>>8 & 0xff),
++					 512 + (userid & 0xff),
++					 768 + (userid>>8 & 0xff));
++				break;
++			default:
++				goto err;
++			}
++			if (context_range_set(ctx, level))
++				goto oom;
++		} else if (cur->level) {
++			if (context_range_set(ctx, cur->level))
++				goto oom;
++		}
++
++		break;
++	}
++
++	if (kind == SEAPP_DOMAIN && i == nspec) {
++		/*
++		 * No match.
++		 * Fail to prevent staying in the zygote's context.
++		 */
++		selinux_log(SELINUX_ERROR,
++			    "%s:  No match for app with uid %d, seinfo %s, name %s\n",
++			    __FUNCTION__, uid, seinfo, pkgname);
++
++		if (security_getenforce() == 1)
++			goto err;
++	}
++
++	return 0;
++err:
++	return -1;
++oom:
++	return -2;
++}
++
++int selinux_android_setfilecon(const char *pkgdir,
++				const char *pkgname,
++				const char *seinfo,
++				uid_t uid)
++{
++	char *orig_ctx_str = NULL;
++	char *ctx_str = NULL;
++	context_t ctx = NULL;
++	int rc = -1;
++
++	if (is_selinux_enabled() <= 0)
++		return 0;
++
++	rc = getfilecon(pkgdir, &ctx_str);
++	if (rc < 0)
++		goto err;
++
++	ctx = context_new(ctx_str);
++	orig_ctx_str = ctx_str;
++	if (!ctx)
++		goto oom;
++
++	rc = seapp_context_lookup(SEAPP_TYPE, uid, 0, seinfo, pkgname, NULL, ctx);
++	if (rc == -1)
++		goto err;
++	else if (rc == -2)
++		goto oom;
++
++	ctx_str = context_str(ctx);
++	if (!ctx_str)
++		goto oom;
++
++	rc = security_check_context(ctx_str);
++	if (rc < 0)
++		goto err;
++
++	if (strcmp(ctx_str, orig_ctx_str)) {
++		rc = setfilecon(pkgdir, ctx_str);
++		if (rc < 0)
++			goto err;
++	}
++
++	rc = 0;
++out:
++	freecon(orig_ctx_str);
++	context_free(ctx);
++	return rc;
++err:
++	selinux_log(SELINUX_ERROR, "%s:  Error setting context for pkgdir %s, uid %d: %s\n",
++		    __FUNCTION__, pkgdir, uid, strerror(errno));
++	rc = -1;
++	goto out;
++oom:
++	selinux_log(SELINUX_ERROR, "%s:  Out of memory\n", __FUNCTION__);
++	rc = -1;
++	goto out;
++}
++
++int selinux_android_setcon(const char *con)
++{
++	int ret = setcon(con);
++	if (ret)
++		return ret;
++	/*
++	  System properties must be reinitialized after setcon() otherwise the
++	  previous property files will be leaked since mmap()'ed regions are not
++	  closed as a result of setcon().
++	*/
++	return __system_properties_init();
++}
++
++int selinux_android_setcontext(uid_t uid,
++			       bool isSystemServer,
++			       const char *seinfo,
++			       const char *pkgname)
++{
++	char *orig_ctx_str = NULL, *ctx_str;
++	context_t ctx = NULL;
++	int rc = -1;
++
++	if (is_selinux_enabled() <= 0)
++		return 0;
++
++	rc = getcon(&ctx_str);
++	if (rc)
++		goto err;
++
++	ctx = context_new(ctx_str);
++	orig_ctx_str = ctx_str;
++	if (!ctx)
++		goto oom;
++
++	rc = seapp_context_lookup(SEAPP_DOMAIN, uid, isSystemServer, seinfo, pkgname, NULL, ctx);
++	if (rc == -1)
++		goto err;
++	else if (rc == -2)
++		goto oom;
++
++	ctx_str = context_str(ctx);
++	if (!ctx_str)
++		goto oom;
++
++	rc = security_check_context(ctx_str);
++	if (rc < 0)
++		goto err;
++
++	if (strcmp(ctx_str, orig_ctx_str)) {
++		rc = selinux_android_setcon(ctx_str);
++		if (rc < 0)
++			goto err;
++	}
++
++	rc = 0;
++out:
++	freecon(orig_ctx_str);
++	context_free(ctx);
++	avc_netlink_close();
++	return rc;
++err:
++	if (isSystemServer)
++		selinux_log(SELINUX_ERROR,
++				"%s:  Error setting context for system server: %s\n",
++				__FUNCTION__, strerror(errno));
++	else
++		selinux_log(SELINUX_ERROR,
++				"%s:  Error setting context for app with uid %d, seinfo %s: %s\n",
++				__FUNCTION__, uid, seinfo, strerror(errno));
++
++	rc = -1;
++	goto out;
++oom:
++	selinux_log(SELINUX_ERROR, "%s:  Out of memory\n", __FUNCTION__);
++	rc = -1;
++	goto out;
++}
++
++static struct selabel_handle *fc_sehandle = NULL;
++#define FC_DIGEST_SIZE SHA_DIGEST_LENGTH
++static uint8_t fc_digest[FC_DIGEST_SIZE];
++
++static bool compute_file_contexts_hash(uint8_t c_digest[], const struct selinux_opt *opts, unsigned nopts)
++{
++    int fd = -1;
++    void *map = MAP_FAILED;
++    bool ret = false;
++    uint8_t *fc_data = NULL;
++    size_t total_size = 0;
++    struct stat sb;
++    size_t i;
++
++    for (i = 0; i < nopts; i++) {
++        fd = open(opts[i].value, O_CLOEXEC | O_RDONLY);
++        if (fd < 0) {
++            selinux_log(SELINUX_ERROR, "SELinux:  Could not open %s:  %s\n",
++                    opts[i].value, strerror(errno));
++            goto cleanup;
++        }
++
++        if (fstat(fd, &sb) < 0) {
++            selinux_log(SELINUX_ERROR, "SELinux:  Could not stat %s:  %s\n",
++                    opts[i].value, strerror(errno));
++            goto cleanup;
++        }
++
++        map = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
++        if (map == MAP_FAILED) {
++            selinux_log(SELINUX_ERROR, "SELinux:  Could not map %s:  %s\n",
++                    opts[i].value, strerror(errno));
++            goto cleanup;
++        }
++
++        fc_data = realloc(fc_data, total_size + sb.st_size);
++        if (!fc_data) {
++            selinux_log(SELINUX_ERROR, "SELinux: Count not re-alloc for %s:  %s\n",
++                     opts[i].value, strerror(errno));
++            goto cleanup;
++        }
++
++        memcpy(fc_data + total_size, map, sb.st_size);
++        total_size += sb.st_size;
++
++        /* reset everything for next file */
++        munmap(map, sb.st_size);
++        close(fd);
++        map = MAP_FAILED;
++        fd = -1;
++    }
++
++    SHA1(fc_data, total_size, c_digest);
++    ret = true;
++
++cleanup:
++    if (map != MAP_FAILED)
++        munmap(map, sb.st_size);
++    if (fd >= 0)
++        close(fd);
++    free(fc_data);
++
++    return ret;
++}
++
++static void file_context_init(void)
++{
++    if (!fc_sehandle)
++        fc_sehandle = selinux_android_file_context_handle();
++}
++
++
++
++static pthread_once_t fc_once = PTHREAD_ONCE_INIT;
++
++#define PKGTAB_SIZE 256
++static struct pkg_info *pkgTab[PKGTAB_SIZE];
++
++static unsigned int pkghash(const char *pkgname)
++{
++    unsigned int h = 7;
++    for (; *pkgname; pkgname++) {
++        h = h * 31 + *pkgname;
++    }
++    return h & (PKGTAB_SIZE - 1);
++}
++
++static bool pkg_parse_callback(pkg_info *info, void *userdata) {
++
++    (void) userdata;
++
++    unsigned int hash = pkghash(info->name);
++    if (pkgTab[hash])
++        info->private_data = pkgTab[hash];
++    pkgTab[hash] = info;
++    return true;
++}
++
++static void package_info_init(void)
++{
++
++    bool rc = packagelist_parse(pkg_parse_callback, NULL);
++    if (!rc) {
++        selinux_log(SELINUX_ERROR, "SELinux: Could NOT parse package list\n");
++        return;
++    }
++
++#if DEBUG
++    {
++        unsigned int hash, buckets, entries, chainlen, longestchain;
++        struct pkg_info *info = NULL;
++
++        buckets = entries = longestchain = 0;
++        for (hash = 0; hash < PKGTAB_SIZE; hash++) {
++            if (pkgTab[hash]) {
++                buckets++;
++                chainlen = 0;
++                for (info = pkgTab[hash]; info; info = (pkg_info *)info->private_data) {
++                    chainlen++;
++                    selinux_log(SELINUX_INFO, "%s:  name=%s uid=%u debuggable=%s dataDir=%s seinfo=%s\n",
++                                __FUNCTION__,
++                                info->name, info->uid, info->debuggable ? "true" : "false", info->data_dir, info->seinfo);
++                }
++                entries += chainlen;
++                if (longestchain < chainlen)
++                    longestchain = chainlen;
++            }
++        }
++        selinux_log(SELINUX_INFO, "SELinux:  %d pkg entries and %d/%d buckets used, longest chain %d\n", entries, buckets, PKGTAB_SIZE, longestchain);
++    }
++#endif
++
++}
++
++static pthread_once_t pkg_once = PTHREAD_ONCE_INIT;
++
++struct pkg_info *package_info_lookup(const char *name)
++{
++    struct pkg_info *info;
++    unsigned int hash;
++
++    __selinux_once(pkg_once, package_info_init);
++
++    hash = pkghash(name);
++    for (info = pkgTab[hash]; info; info = (pkg_info *)info->private_data) {
++        if (!strcmp(name, info->name))
++            return info;
++    }
++    return NULL;
++}
++
++/* The contents of these paths are encrypted on FBE devices until user
++ * credentials are presented (filenames inside are mangled), so we need
++ * to delay restorecon of those until vold explicitly requests it. */
++// NOTE: these paths need to be kept in sync with vold
++#define DATA_SYSTEM_CE_PREFIX "/data/system_ce/"
++#define DATA_MISC_CE_PREFIX "/data/misc_ce/"
++
++/* The path prefixes of package data directories. */
++#define DATA_DATA_PATH "/data/data"
++#define DATA_USER_PATH "/data/user"
++#define DATA_USER_DE_PATH "/data/user_de"
++#define EXPAND_USER_PATH "/mnt/expand/\?\?\?\?\?\?\?\?-\?\?\?\?-\?\?\?\?-\?\?\?\?-\?\?\?\?\?\?\?\?\?\?\?\?/user"
++#define EXPAND_USER_DE_PATH "/mnt/expand/\?\?\?\?\?\?\?\?-\?\?\?\?-\?\?\?\?-\?\?\?\?-\?\?\?\?\?\?\?\?\?\?\?\?/user_de"
++#define DATA_DATA_PREFIX DATA_DATA_PATH "/"
++#define DATA_USER_PREFIX DATA_USER_PATH "/"
++#define DATA_USER_DE_PREFIX DATA_USER_DE_PATH "/"
++
++static int pkgdir_selabel_lookup(const char *pathname,
++                                 const char *seinfo,
++                                 uid_t uid,
++                                 char **secontextp)
++{
++    char *pkgname = NULL, *end = NULL;
++    struct pkg_info *info = NULL;
++    char *secontext = *secontextp;
++    context_t ctx = NULL;
++    int rc = 0;
++
++    /* Skip directory prefix before package name. */
++    if (!strncmp(pathname, DATA_DATA_PREFIX, sizeof(DATA_DATA_PREFIX)-1)) {
++        pathname += sizeof(DATA_DATA_PREFIX) - 1;
++    } else if (!strncmp(pathname, DATA_USER_PREFIX, sizeof(DATA_USER_PREFIX)-1)) {
++        pathname += sizeof(DATA_USER_PREFIX) - 1;
++        while (isdigit(*pathname))
++            pathname++;
++        if (*pathname == '/')
++            pathname++;
++        else
++            return 0;
++    } else if (!strncmp(pathname, DATA_USER_DE_PREFIX, sizeof(DATA_USER_DE_PREFIX)-1)) {
++        pathname += sizeof(DATA_USER_DE_PREFIX) - 1;
++        while (isdigit(*pathname))
++            pathname++;
++        if (*pathname == '/')
++            pathname++;
++        else
++            return 0;
++    } else if (!fnmatch(EXPAND_USER_PATH, pathname, FNM_LEADING_DIR|FNM_PATHNAME)) {
++        pathname += sizeof(EXPAND_USER_PATH);
++        while (isdigit(*pathname))
++            pathname++;
++        if (*pathname == '/')
++            pathname++;
++        else
++            return 0;
++    } else if (!fnmatch(EXPAND_USER_DE_PATH, pathname, FNM_LEADING_DIR|FNM_PATHNAME)) {
++        pathname += sizeof(EXPAND_USER_DE_PATH);
++        while (isdigit(*pathname))
++            pathname++;
++        if (*pathname == '/')
++            pathname++;
++        else
++            return 0;
++    } else
++        return 0;
++
++    if (!(*pathname))
++        return 0;
++
++    pkgname = strdup(pathname);
++    if (!pkgname)
++        return -1;
++
++    for (end = pkgname; *end && *end != '/'; end++)
++        ;
++    pathname = end;
++    if (*end)
++        pathname++;
++    *end = '\0';
++
++    if (!seinfo) {
++        info = package_info_lookup(pkgname);
++        if (!info) {
++            selinux_log(SELINUX_WARNING, "SELinux:  Could not look up information for package %s, cannot restorecon %s.\n",
++                        pkgname, pathname);
++            free(pkgname);
++            return -1;
++        }
++    }
++
++    ctx = context_new(secontext);
++    if (!ctx)
++        goto err;
++
++    rc = seapp_context_lookup(SEAPP_TYPE, info ? info->uid : uid, 0,
++                              info ? info->seinfo : seinfo, info ? info->name : pkgname, pathname, ctx);
++    if (rc < 0)
++        goto err;
++
++    secontext = context_str(ctx);
++    if (!secontext)
++        goto err;
++
++    if (!strcmp(secontext, *secontextp))
++        goto out;
++
++    rc = security_check_context(secontext);
++    if (rc < 0)
++        goto err;
++
++    freecon(*secontextp);
++    *secontextp = strdup(secontext);
++    if (!(*secontextp))
++        goto err;
++
++    rc = 0;
++
++out:
++    free(pkgname);
++    context_free(ctx);
++    return rc;
++err:
++    selinux_log(SELINUX_ERROR, "%s:  Error looking up context for path %s, pkgname %s, seinfo %s, uid %u: %s\n",
++                __FUNCTION__, pathname, pkgname, info->seinfo, info->uid, strerror(errno));
++    rc = -1;
++    goto out;
++}
++
++#define RESTORECON_LAST "security.restorecon_last"
++
++static int restorecon_sb(const char *pathname, const struct stat *sb,
++                         bool nochange, bool verbose,
++                         const char *seinfo, uid_t uid)
++{
++    char *secontext = NULL;
++    char *oldsecontext = NULL;
++    int rc = 0;
++
++    if (selabel_lookup(fc_sehandle, &secontext, pathname, sb->st_mode) < 0)
++        return 0;  /* no match, but not an error */
++
++    if (lgetfilecon(pathname, &oldsecontext) < 0)
++        goto err;
++
++    /*
++     * For subdirectories of /data/data or /data/user, we ignore selabel_lookup()
++     * and use pkgdir_selabel_lookup() instead. Files within those directories
++     * have different labeling rules, based off of /seapp_contexts, and
++     * installd is responsible for managing these labels instead of init.
++     */
++    if (!strncmp(pathname, DATA_DATA_PREFIX, sizeof(DATA_DATA_PREFIX)-1) ||
++        !strncmp(pathname, DATA_USER_PREFIX, sizeof(DATA_USER_PREFIX)-1) ||
++        !strncmp(pathname, DATA_USER_DE_PREFIX, sizeof(DATA_USER_DE_PREFIX)-1) ||
++        !fnmatch(EXPAND_USER_PATH, pathname, FNM_LEADING_DIR|FNM_PATHNAME) ||
++        !fnmatch(EXPAND_USER_DE_PATH, pathname, FNM_LEADING_DIR|FNM_PATHNAME)) {
++        if (pkgdir_selabel_lookup(pathname, seinfo, uid, &secontext) < 0)
++            goto err;
++    }
++
++    if (strcmp(oldsecontext, secontext) != 0) {
++        if (verbose)
++            selinux_log(SELINUX_INFO,
++                        "SELinux:  Relabeling %s from %s to %s.\n", pathname, oldsecontext, secontext);
++        if (!nochange) {
++            if (lsetfilecon(pathname, secontext) < 0)
++                goto err;
++        }
++    }
++
++    rc = 0;
++
++out:
++    freecon(oldsecontext);
++    freecon(secontext);
++    return rc;
++
++err:
++    selinux_log(SELINUX_ERROR,
++                "SELinux: Could not set context for %s:  %s\n",
++                pathname, strerror(errno));
++    //rc = -1;
++    rc = 0;
++    goto out;
++}
++
++#define SYS_PATH "/sys"
++#define SYS_PREFIX SYS_PATH "/"
++
++static int selinux_android_restorecon_common(const char* pathname_orig,
++                                             const char *seinfo,
++                                             uid_t uid,
++                                             unsigned int flags)
++{
++    return 0;
++}
++
++int selinux_android_restorecon(const char *file, unsigned int flags)
++{
++    return 0;
++}
++
++int selinux_android_restorecon_pkgdir(const char *pkgdir,
++                                      const char *seinfo,
++                                      uid_t uid,
++                                      unsigned int flags)
++{
++    return 0;
++}
++
++static struct selabel_handle* selinux_android_file_context(const struct selinux_opt *opts,
++                                                    unsigned nopts)
++{
++    struct selabel_handle *sehandle;
++    struct selinux_opt fc_opts[nopts + 1];
++
++    memcpy(fc_opts, opts, nopts*sizeof(struct selinux_opt));
++    fc_opts[nopts].type = SELABEL_OPT_BASEONLY;
++    fc_opts[nopts].value = (char *)1;
++
++    sehandle = selabel_open(SELABEL_CTX_FILE, fc_opts, ARRAY_SIZE(fc_opts));
++    if (!sehandle) {
++        selinux_log(SELINUX_ERROR, "%s: Error getting file context handle (%s)\n",
++                __FUNCTION__, strerror(errno));
++        return NULL;
++    }
++    if (!compute_file_contexts_hash(fc_digest, opts, nopts)) {
++        selabel_close(sehandle);
++        return NULL;
++    }
++
++    selinux_log(SELINUX_INFO, "SELinux: Loaded file_contexts\n");
++
++    return sehandle;
++}
++
++static bool selinux_android_opts_file_exists(const struct selinux_opt *opt)
++{
++    return (access(opt[0].value, R_OK) != -1);
++}
++
++struct selabel_handle* selinux_android_file_context_handle(void)
++{
++    if (selinux_android_opts_file_exists(seopts_file_split)) {
++        return selinux_android_file_context(seopts_file_split,
++                                            ARRAY_SIZE(seopts_file_split));
++    } else {
++        return selinux_android_file_context(seopts_file_rootfs,
++                                            ARRAY_SIZE(seopts_file_rootfs));
++    }
++}
++struct selabel_handle* selinux_android_prop_context_handle(void)
++{
++    struct selabel_handle* sehandle;
++    const struct selinux_opt* seopts_prop;
++
++    // Prefer files from /system & /vendor, fall back to files from /
++    if (access(seopts_prop_split[0].value, R_OK) != -1) {
++        seopts_prop = seopts_prop_split;
++    } else {
++        seopts_prop = seopts_prop_rootfs;
++    }
++
++    sehandle = selabel_open(SELABEL_CTX_ANDROID_PROP,
++            seopts_prop, 2);
++    if (!sehandle) {
++        selinux_log(SELINUX_ERROR, "%s: Error getting property context handle (%s)\n",
++                __FUNCTION__, strerror(errno));
++        return NULL;
++    }
++    selinux_log(SELINUX_INFO, "SELinux: Loaded property_contexts from %s & %s.\n",
++            seopts_prop[0].value, seopts_prop[1].value);
++
++    return sehandle;
++}
++
+ struct selabel_handle* selinux_android_service_open_context_handle(const struct selinux_opt* seopts_service,
+                                                                    unsigned nopts)
+ {
+@@ -63,12 +1509,8 @@ struct selabel_handle* selinux_android_service_context_handle(void)
+         seopts_service = seopts_service_rootfs;
+     }
+ 
+-#ifdef FULL_TREBLE
+-    // Treble compliant devices can only serve plat_service_contexts from servicemanager
+-    return selinux_android_service_open_context_handle(seopts_service, 1);
+-#else
++    // TODO(b/36866029) full treble devices can't load non-plat
+     return selinux_android_service_open_context_handle(seopts_service, 2);
+-#endif
+ }
+ 
+ struct selabel_handle* selinux_android_hw_service_context_handle(void)
+@@ -95,6 +1537,71 @@ struct selabel_handle* selinux_android_vendor_service_context_handle(void)
+     return selinux_android_service_open_context_handle(seopts_service, 1);
+ }
+ 
++void selinux_android_set_sehandle(const struct selabel_handle *hndl)
++{
++    fc_sehandle = (struct selabel_handle *) hndl;
++}
++
++int selinux_android_load_policy()
++{
++	int fd = -1;
++
++	fd = open(sepolicy_file, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
++	if (fd < 0) {
++		selinux_log(SELINUX_ERROR, "SELinux:  Could not open %s:  %s\n",
++				sepolicy_file, strerror(errno));
++		return -1;
++	}
++	int ret = selinux_android_load_policy_from_fd(fd, sepolicy_file);
++	close(fd);
++	return ret;
++}
++
++int selinux_android_load_policy_from_fd(int fd, const char *description)
++{
++	int rc;
++	struct stat sb;
++	void *map = NULL;
++	static int load_successful = 0;
++
++	/*
++	 * Since updating policy at runtime has been abolished
++	 * we just check whether a policy has been loaded before
++	 * and return if this is the case.
++	 * There is no point in reloading policy.
++	 */
++	if (load_successful){
++	  selinux_log(SELINUX_WARNING, "SELinux: Attempted reload of SELinux policy!/n");
++	  return 0;
++	}
++
++	set_selinuxmnt(SELINUXMNT);
++	if (fstat(fd, &sb) < 0) {
++		selinux_log(SELINUX_ERROR, "SELinux:  Could not stat %s:  %s\n",
++				description, strerror(errno));
++		return -1;
++	}
++	map = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
++	if (map == MAP_FAILED) {
++		selinux_log(SELINUX_ERROR, "SELinux:  Could not map %s:  %s\n",
++				description, strerror(errno));
++		return -1;
++	}
++
++	rc = security_load_policy(map, sb.st_size);
++	if (rc < 0) {
++		selinux_log(SELINUX_ERROR, "SELinux:  Could not load policy:  %s\n",
++				strerror(errno));
++		munmap(map, sb.st_size);
++		return -1;
++	}
++
++	munmap(map, sb.st_size);
++	selinux_log(SELINUX_INFO, "SELinux: Loaded policy from %s\n", description);
++	load_successful = 1;
++	return 0;
++}
++
+ int selinux_log_callback(int type, const char *fmt, ...)
+ {
+     va_list ap;
+diff --git a/libselinux/src/audit2why.c b/libselinux/src/audit2why.c
+index 857383ac..3135eeda 100644
+--- a/libselinux/src/audit2why.c
++++ b/libselinux/src/audit2why.c
+@@ -201,7 +201,7 @@ static int __policy_init(const char *init_path)
+ 	path[PATH_MAX-1] = '\0';
+ 	if (init_path) {
+ 		strncpy(path, init_path, PATH_MAX-1);
+-		fp = fopen(path, "re");
++		fp = fopen(path, "r");
+ 		if (!fp) {
+ 			snprintf(errormsg, sizeof(errormsg), 
+ 				 "unable to open %s:  %s\n",
+@@ -218,7 +218,7 @@ static int __policy_init(const char *init_path)
+ 			PyErr_SetString( PyExc_ValueError, errormsg);
+ 			return 1;
+ 		}
+-		fp = fopen(curpolicy, "re");
++		fp = fopen(curpolicy, "r");
+ 		if (!fp) {
+ 			snprintf(errormsg, sizeof(errormsg), 
+ 				 "unable to open %s:  %s\n",
+diff --git a/libselinux/src/avc.c b/libselinux/src/avc.c
+index 96b2678b..b1ec57fb 100644
+--- a/libselinux/src/avc.c
++++ b/libselinux/src/avc.c
+@@ -723,10 +723,6 @@ void avc_audit(security_id_t ssid, security_id_t tsid,
+ 
+ 	log_append(avc_audit_buf, " ");
+ 	avc_dump_query(ssid, tsid, tclass);
+-
+-	if (denied)
+-		log_append(avc_audit_buf, " permissive=%u", result ? 0 : 1);
+-
+ 	log_append(avc_audit_buf, "\n");
+ 	avc_log(SELINUX_AVC, "%s", avc_audit_buf);
+ 
+diff --git a/libselinux/src/booleans.c b/libselinux/src/booleans.c
+index 1da55bfd..ba9d9348 100644
+--- a/libselinux/src/booleans.c
++++ b/libselinux/src/booleans.c
+@@ -97,7 +97,7 @@ char *selinux_boolean_sub(const char *name)
+ 	if (!name)
+ 		return NULL;
+ 
+-	cfg = fopen(selinux_booleans_subs_path(), "re");
++	cfg = fopen(selinux_booleans_subs_path(), "r");
+ 	if (!cfg)
+ 		goto out;
+ 
+@@ -210,7 +210,7 @@ static int get_bool_value(const char *name, char **buf)
+ 
+ 	(*buf)[STRBUF_SIZE] = 0;
+ 
+-	fd = bool_open(name, O_RDONLY | O_CLOEXEC);
++	fd = bool_open(name, O_RDONLY);
+ 	if (fd < 0)
+ 		goto out_err;
+ 
+@@ -274,7 +274,7 @@ int security_set_boolean(const char *name, int value)
+ 		return -1;
+ 	}
+ 
+-	fd = bool_open(name, O_WRONLY | O_CLOEXEC);
++	fd = bool_open(name, O_WRONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+@@ -305,7 +305,7 @@ int security_commit_booleans(void)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/commit_pending_bools", selinux_mnt);
+-	fd = open(path, O_WRONLY | O_CLOEXEC);
++	fd = open(path, O_WRONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+@@ -342,42 +342,30 @@ static int process_boolean(char *buffer, char *name, int namesize, int *val)
+ {
+ 	char name1[BUFSIZ];
+ 	char *ptr = NULL;
+-	char *tok;
+-
+-	/* Skip spaces */
+-	while (isspace(buffer[0]))
+-		buffer++;
+-	/* Ignore comments */
+-	if (buffer[0] == '#')
+-		return 0;
+-
+-	tok = strtok_r(buffer, "=", &ptr);
+-	if (!tok) {
+-		errno = EINVAL;
+-		return -1;
+-	}
+-	strncpy(name1, tok, BUFSIZ - 1);
+-	strtrim(name, name1, namesize - 1);
+-
+-	tok = strtok_r(NULL, "\0", &ptr);
+-	if (!tok) {
+-		errno = EINVAL;
+-		return -1;
+-	}
++	char *tok = strtok_r(buffer, "=", &ptr);
++	if (tok) {
++		strncpy(name1, tok, BUFSIZ - 1);
++		strtrim(name, name1, namesize - 1);
++		if (name[0] == '#')
++			return 0;
++		tok = strtok_r(NULL, "\0", &ptr);
++		if (tok) {
++			while (isspace(*tok))
++				tok++;
++			*val = -1;
++			if (isdigit(tok[0]))
++				*val = atoi(tok);
++			else if (!strncasecmp(tok, "true", sizeof("true") - 1))
++				*val = 1;
++			else if (!strncasecmp
++				 (tok, "false", sizeof("false") - 1))
++				*val = 0;
++			if (*val != 0 && *val != 1) {
++				errno = EINVAL;
++				return -1;
++			}
+ 
+-	while (isspace(*tok))
+-		tok++;
+-
+-	*val = -1;
+-	if (isdigit(tok[0]))
+-		*val = atoi(tok);
+-	else if (!strncasecmp(tok, "true", sizeof("true") - 1))
+-		*val = 1;
+-	else if (!strncasecmp(tok, "false", sizeof("false") - 1))
+-		*val = 0;
+-	if (*val != 0 && *val != 1) {
+-		errno = EINVAL;
+-		return -1;
++		}
+ 	}
+ 	return 1;
+ }
+@@ -411,7 +399,7 @@ static int save_booleans(size_t boolcnt, SELboolean * boollist)
+ 
+ 	snprintf(local_bool_file, sizeof(local_bool_file), "%s.local",
+ 		 bool_file);
+-	boolf = fopen(local_bool_file, "re");
++	boolf = fopen(local_bool_file, "r");
+ 	if (boolf != NULL) {
+ 		ssize_t ret;
+ 		size_t size = 0;
+@@ -530,7 +518,7 @@ int security_load_booleans(char *path)
+ 	int val;
+ 	char name[BUFSIZ];
+ 
+-	boolf = fopen(path ? path : selinux_booleans_path(), "re");
++	boolf = fopen(path ? path : selinux_booleans_path(), "r");
+ 	if (boolf == NULL)
+ 		goto localbool;
+ 
+@@ -548,7 +536,7 @@ int security_load_booleans(char *path)
+       localbool:
+ 	snprintf(localbools, sizeof(localbools), "%s.local",
+ 		 (path ? path : selinux_booleans_path()));
+-	boolf = fopen(localbools, "re");
++	boolf = fopen(localbools, "r");
+ 
+ 	if (boolf != NULL) {
+ 		int ret;
+diff --git a/libselinux/src/canonicalize_context.c b/libselinux/src/canonicalize_context.c
+index ba4c9a2c..7cf31395 100644
+--- a/libselinux/src/canonicalize_context.c
++++ b/libselinux/src/canonicalize_context.c
+@@ -23,7 +23,7 @@ int security_canonicalize_context_raw(const char * con,
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/context", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/check_context.c b/libselinux/src/check_context.c
+index 8a7997f0..52063fac 100644
+--- a/libselinux/src/check_context.c
++++ b/libselinux/src/check_context.c
+@@ -20,7 +20,7 @@ int security_check_context_raw(const char * con)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/context", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/compute_av.c b/libselinux/src/compute_av.c
+index 1d05e7b6..937e5c3e 100644
+--- a/libselinux/src/compute_av.c
++++ b/libselinux/src/compute_av.c
+@@ -27,7 +27,7 @@ int security_compute_av_flags_raw(const char * scon,
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/access", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/compute_create.c b/libselinux/src/compute_create.c
+index 0975aeac..9559d421 100644
+--- a/libselinux/src/compute_create.c
++++ b/libselinux/src/compute_create.c
+@@ -65,7 +65,7 @@ int security_compute_create_name_raw(const char * scon,
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/create", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/compute_member.c b/libselinux/src/compute_member.c
+index 4e2d221e..1fc7e41a 100644
+--- a/libselinux/src/compute_member.c
++++ b/libselinux/src/compute_member.c
+@@ -26,7 +26,7 @@ int security_compute_member_raw(const char * scon,
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/member", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/compute_relabel.c b/libselinux/src/compute_relabel.c
+index 49f77ef3..4615aee4 100644
+--- a/libselinux/src/compute_relabel.c
++++ b/libselinux/src/compute_relabel.c
+@@ -26,7 +26,7 @@ int security_compute_relabel_raw(const char * scon,
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/relabel", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/compute_user.c b/libselinux/src/compute_user.c
+index 7b881215..b37c5d33 100644
+--- a/libselinux/src/compute_user.c
++++ b/libselinux/src/compute_user.c
+@@ -25,7 +25,7 @@ int security_compute_user_raw(const char * scon,
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/user", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/deny_unknown.c b/libselinux/src/deny_unknown.c
+index 77d04e37..c93998a0 100644
+--- a/libselinux/src/deny_unknown.c
++++ b/libselinux/src/deny_unknown.c
+@@ -21,7 +21,7 @@ int security_deny_unknown(void)
+ 	}
+ 
+ 	snprintf(path, sizeof(path), "%s/deny_unknown", selinux_mnt);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/disable.c b/libselinux/src/disable.c
+index 8d66262a..dac0f5bd 100644
+--- a/libselinux/src/disable.c
++++ b/libselinux/src/disable.c
+@@ -21,7 +21,7 @@ int security_disable(void)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/disable", selinux_mnt);
+-	fd = open(path, O_WRONLY | O_CLOEXEC);
++	fd = open(path, O_WRONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/enabled.c b/libselinux/src/enabled.c
+index dd628fba..2ec6797a 100644
+--- a/libselinux/src/enabled.c
++++ b/libselinux/src/enabled.c
+@@ -36,7 +36,7 @@ int is_selinux_mls_enabled(void)
+ 		return enabled;
+ 
+ 	snprintf(path, sizeof path, "%s/mls", selinux_mnt);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	if (fd < 0)
+ 		return enabled;
+ 
+diff --git a/libselinux/src/fgetfilecon.c b/libselinux/src/fgetfilecon.c
+index 5522ac16..91b765a8 100644
+--- a/libselinux/src/fgetfilecon.c
++++ b/libselinux/src/fgetfilecon.c
+@@ -9,6 +9,7 @@
+ 
+ int fgetfilecon_raw(int fd, char ** context)
+ {
++#if !defined(__ANDROID__)
+ 	char *buf;
+ 	ssize_t size;
+ 	ssize_t ret;
+@@ -47,12 +48,27 @@ int fgetfilecon_raw(int fd, char ** context)
+ 	else
+ 		*context = buf;
+ 	return ret;
++#else
++	char *buf;
++	ssize_t size;
++
++	size = INITCONTEXTLEN + 1;
++	buf = malloc(size);
++	if (!buf)
++		return -1;
++
++	memset(buf, 0xff, size);
++
++	*context = buf;
++	return 0;
++#endif
+ }
+ 
+ hidden_def(fgetfilecon_raw)
+ 
+ int fgetfilecon(int fd, char ** context)
+ {
++#if !defined(__ANDROID__)
+ 	char * rcontext = NULL;
+ 	int ret;
+ 
+@@ -69,4 +85,14 @@ int fgetfilecon(int fd, char ** context)
+ 		return strlen(*context) + 1;
+ 
+ 	return ret;
++#else
++	char * rcontext = NULL;
++	int ret;
++
++	*context = NULL;
++
++	ret = fgetfilecon_raw(fd, &rcontext);
++
++	return ret;
++#endif
+ }
+diff --git a/libselinux/src/fsetfilecon.c b/libselinux/src/fsetfilecon.c
+index 52707d05..bebbf5ff 100644
+--- a/libselinux/src/fsetfilecon.c
++++ b/libselinux/src/fsetfilecon.c
+@@ -9,6 +9,7 @@
+ 
+ int fsetfilecon_raw(int fd, const char * context)
+ {
++#if !defined(__ANDROID__)
+ 	int rc = fsetxattr(fd, XATTR_NAME_SELINUX, context, strlen(context) + 1,
+ 			 0);
+ 	if (rc < 0 && errno == ENOTSUP) {
+@@ -23,17 +24,22 @@ int fsetfilecon_raw(int fd, const char * context)
+ 		freecon(ccontext);
+ 	}
+ 	return rc;
++#else
++	return 0;
++#endif
+ }
+ 
+ hidden_def(fsetfilecon_raw)
+ 
+ int fsetfilecon(int fd, const char *context)
+ {
+-	int ret;
++	int ret = 0;
+ 	char * rcontext;
+ 
++#if !defined(__ANDROID__)
+ 	if (selinux_trans_to_raw_context(context, &rcontext))
+ 		return -1;
++#endif
+ 
+ 	ret = fsetfilecon_raw(fd, rcontext);
+ 
+diff --git a/libselinux/src/get_context_list.c b/libselinux/src/get_context_list.c
+index 689e4658..f3fa4a9b 100644
+--- a/libselinux/src/get_context_list.c
++++ b/libselinux/src/get_context_list.c
+@@ -275,7 +275,7 @@ static int get_failsafe_context(const char *user, char ** newcon)
+ 	size_t plen, nlen;
+ 	int rc;
+ 
+-	fp = fopen(selinux_failsafe_context_path(), "re");
++	fp = fopen(selinux_failsafe_context_path(), "r");
+ 	if (!fp)
+ 		return -1;
+ 
+@@ -437,7 +437,7 @@ int get_ordered_context_list(const char *user,
+ 	if (!fname)
+ 		goto failsafe;
+ 	snprintf(fname, fname_len, "%s%s", user_contexts_path, user);
+-	fp = fopen(fname, "re");
++	fp = fopen(fname, "r");
+ 	if (fp) {
+ 		__fsetlocking(fp, FSETLOCKING_BYCALLER);
+ 		rc = get_context_order(fp, fromcon, reachable, nreach, ordering,
+@@ -451,7 +451,7 @@ int get_ordered_context_list(const char *user,
+ 		}
+ 	}
+ 	free(fname);
+-	fp = fopen(selinux_default_context_path(), "re");
++	fp = fopen(selinux_default_context_path(), "r");
+ 	if (fp) {
+ 		__fsetlocking(fp, FSETLOCKING_BYCALLER);
+ 		rc = get_context_order(fp, fromcon, reachable, nreach, ordering,
+diff --git a/libselinux/src/get_default_type.c b/libselinux/src/get_default_type.c
+index dd7b5d79..27f2ae52 100644
+--- a/libselinux/src/get_default_type.c
++++ b/libselinux/src/get_default_type.c
+@@ -11,7 +11,7 @@ int get_default_type(const char *role, char **type)
+ {
+ 	FILE *fp = NULL;
+ 
+-	fp = fopen(selinux_default_type_path(), "re");
++	fp = fopen(selinux_default_type_path(), "r");
+ 	if (!fp)
+ 		return -1;
+ 
+diff --git a/libselinux/src/get_initial_context.c b/libselinux/src/get_initial_context.c
+index 5e919f47..522ed78f 100644
+--- a/libselinux/src/get_initial_context.c
++++ b/libselinux/src/get_initial_context.c
+@@ -25,7 +25,7 @@ int security_get_initial_context_raw(const char * name, char ** con)
+ 
+ 	snprintf(path, sizeof path, "%s%s%s", 
+ 		 selinux_mnt, SELINUX_INITCON_DIR, name);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/getenforce.c b/libselinux/src/getenforce.c
+index d909dced..03d3abc5 100644
+--- a/libselinux/src/getenforce.c
++++ b/libselinux/src/getenforce.c
+@@ -21,7 +21,7 @@ int security_getenforce(void)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/enforce", selinux_mnt);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/getfilecon.c b/libselinux/src/getfilecon.c
+index 20bee8ab..45ff83ba 100644
+--- a/libselinux/src/getfilecon.c
++++ b/libselinux/src/getfilecon.c
+@@ -11,14 +11,14 @@ int getfilecon_raw(const char *path, char ** context)
+ {
+ 	char *buf;
+ 	ssize_t size;
+-	ssize_t ret;
++	ssize_t ret = 0;
+ 
+ 	size = INITCONTEXTLEN + 1;
+ 	buf = malloc(size);
+ 	if (!buf)
+ 		return -1;
++#if !defined(__ANDROID__)
+ 	memset(buf, 0, size);
+-
+ 	ret = getxattr(path, XATTR_NAME_SELINUX, buf, size - 1);
+ 	if (ret < 0 && errno == ERANGE) {
+ 		char *newbuf;
+@@ -45,7 +45,10 @@ int getfilecon_raw(const char *path, char ** context)
+ 	if (ret < 0)
+ 		free(buf);
+ 	else
+-		*context = buf;
++#else
++	memset(buf, 0xff, size);
++#endif
++	*context = buf;
+ 	return ret;
+ }
+ 
+@@ -59,14 +62,14 @@ int getfilecon(const char *path, char ** context)
+ 	*context = NULL;
+ 
+ 	ret = getfilecon_raw(path, &rcontext);
+-
++#if !defined(__ANDROID__)
+ 	if (ret > 0) {
+ 		ret = selinux_raw_to_trans_context(rcontext, context);
+ 		freecon(rcontext);
+ 	}
+ 	if (ret >= 0 && *context)
+ 		return strlen(*context) + 1;
+-
++#endif
+ 	return ret;
+ }
+ 
+diff --git a/libselinux/src/getpeercon.c b/libselinux/src/getpeercon.c
+index 3a77a2de..613c0b20 100644
+--- a/libselinux/src/getpeercon.c
++++ b/libselinux/src/getpeercon.c
+@@ -15,12 +15,14 @@ int getpeercon_raw(int fd, char ** context)
+ {
+ 	char *buf;
+ 	socklen_t size;
+-	ssize_t ret;
++	ssize_t ret = 0;
+ 
+ 	size = INITCONTEXTLEN + 1;
+ 	buf = malloc(size);
+ 	if (!buf)
+ 		return -1;
++
++#if !defined(__ANDROID__)
+ 	memset(buf, 0, size);
+ 
+ 	ret = getsockopt(fd, SOL_SOCKET, SO_PEERSEC, buf, &size);
+@@ -39,6 +41,9 @@ int getpeercon_raw(int fd, char ** context)
+ 	if (ret < 0)
+ 		free(buf);
+ 	else
++#else
++	memset(buf, 0xff, size);
++#endif
+ 		*context = buf;
+ 	return ret;
+ }
+@@ -52,10 +57,11 @@ int getpeercon(int fd, char ** context)
+ 
+ 	ret = getpeercon_raw(fd, &rcontext);
+ 
++#if !defined(__ANDROID__)
+ 	if (!ret) {
+ 		ret = selinux_raw_to_trans_context(rcontext, context);
+ 		freecon(rcontext);
+ 	}
+-
++#endif
+ 	return ret;
+ }
+diff --git a/libselinux/src/init.c b/libselinux/src/init.c
+index 2690a72f..ddf91f8d 100644
+--- a/libselinux/src/init.c
++++ b/libselinux/src/init.c
+@@ -61,7 +61,7 @@ int selinuxfs_exists(void)
+ 	size_t len;
+ 	ssize_t num;
+ 
+-	fp = fopen("/proc/filesystems", "re");
++	fp = fopen("/proc/filesystems", "r");
+ 	if (!fp)
+ 		return 1; /* Fail as if it exists */
+ 	__fsetlocking(fp, FSETLOCKING_BYCALLER);
+@@ -101,7 +101,7 @@ static void init_selinuxmnt(void)
+ 
+ 	/* At this point, the usual spot doesn't have an selinuxfs so
+ 	 * we look around for it */
+-	fp = fopen("/proc/mounts", "re");
++	fp = fopen("/proc/mounts", "r");
+ 	if (!fp)
+ 		goto out;
+ 
+diff --git a/libselinux/src/is_customizable_type.c b/libselinux/src/is_customizable_type.c
+index 92876f4d..0b33edc6 100644
+--- a/libselinux/src/is_customizable_type.c
++++ b/libselinux/src/is_customizable_type.c
+@@ -16,7 +16,7 @@ static int get_customizable_type_list(char *** retlist)
+ 	unsigned int ctr = 0, i;
+ 	char **list = NULL;
+ 
+-	fp = fopen(selinux_customizable_types_path(), "re");
++	fp = fopen(selinux_customizable_types_path(), "r");
+ 	if (!fp)
+ 		return -1;
+ 
+diff --git a/libselinux/src/label.c b/libselinux/src/label.c
+index 8e0a8628..9b4b8a26 100644
+--- a/libselinux/src/label.c
++++ b/libselinux/src/label.c
+@@ -17,12 +17,6 @@
+ 
+ #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+ 
+-#ifdef NO_FILE_BACKEND
+-#define CONFIG_FILE_BACKEND(fnptr) NULL
+-#else
+-#define CONFIG_FILE_BACKEND(fnptr) &fnptr
+-#endif
+-
+ #ifdef NO_MEDIA_BACKEND
+ #define CONFIG_MEDIA_BACKEND(fnptr) NULL
+ #else
+@@ -52,7 +46,7 @@ typedef int (*selabel_initfunc)(struct selabel_handle *rec,
+ 				unsigned nopts);
+ 
+ static selabel_initfunc initfuncs[] = {
+-	CONFIG_FILE_BACKEND(selabel_file_init),
++	&selabel_file_init,
+ 	CONFIG_MEDIA_BACKEND(selabel_media_init),
+ 	CONFIG_X_BACKEND(selabel_x_init),
+ 	CONFIG_DB_BACKEND(selabel_db_init),
+@@ -102,7 +96,7 @@ struct selabel_sub *selabel_subs_init(const char *path,
+ 					    struct selabel_digest *digest)
+ {
+ 	char buf[1024];
+-	FILE *cfg = fopen(path, "re");
++	FILE *cfg = fopen(path, "r");
+ 	struct selabel_sub *sub = NULL;
+ 	struct stat sb;
+ 
+@@ -197,11 +191,9 @@ static inline struct selabel_digest *selabel_is_digest_set
+ 	return NULL;
+ 
+ err:
+-	if (digest) {
+-		free(digest->digest);
+-		free(digest->specfile_list);
+-		free(digest);
+-	}
++	free(digest->digest);
++	free(digest->specfile_list);
++	free(digest);
+ 	return NULL;
+ }
+ 
+@@ -227,10 +219,11 @@ static void selabel_digest_fini(struct selabel_digest *ptr)
+ static inline int selabel_is_validate_set(const struct selinux_opt *opts,
+ 					  unsigned n)
+ {
++#if !defined(__ANDROID__)
+ 	while (n--)
+ 		if (opts[n].type == SELABEL_OPT_VALIDATE)
+ 			return !!opts[n].value;
+-
++#endif
+ 	return 0;
+ }
+ 
+@@ -238,7 +231,7 @@ int selabel_validate(struct selabel_handle *rec,
+ 		     struct selabel_lookup_rec *contexts)
+ {
+ 	int rc = 0;
+-
++#if !defined(__ANDROID__)
+ 	if (!rec->validating || contexts->validated)
+ 		goto out;
+ 
+@@ -248,6 +241,7 @@ int selabel_validate(struct selabel_handle *rec,
+ 
+ 	contexts->validated = 1;
+ out:
++#endif
+ 	return rc;
+ }
+ 
+@@ -357,6 +351,7 @@ struct selabel_handle *selabel_open(unsigned int backend,
+ {
+ 	struct selabel_handle *rec = NULL;
+ 
++#if !defined(__ANDROID__)
+ 	if (backend >= ARRAY_SIZE(initfuncs)) {
+ 		errno = EINVAL;
+ 		goto out;
+@@ -366,11 +361,13 @@ struct selabel_handle *selabel_open(unsigned int backend,
+ 		errno = ENOTSUP;
+ 		goto out;
+ 	}
++#endif
+ 
+ 	rec = (struct selabel_handle *)malloc(sizeof(*rec));
+ 	if (!rec)
+ 		goto out;
+ 
++#if !defined(__ANDROID__)
+ 	memset(rec, 0, sizeof(*rec));
+ 	rec->backend = backend;
+ 	rec->validating = selabel_is_validate_set(opts, nopts);
+@@ -383,6 +380,9 @@ struct selabel_handle *selabel_open(unsigned int backend,
+ 		selabel_close(rec);
+ 		rec = NULL;
+ 	}
++#else
++	memset(rec, 0xff, sizeof(*rec));
++#endif
+ out:
+ 	return rec;
+ }
+@@ -390,6 +390,7 @@ out:
+ int selabel_lookup(struct selabel_handle *rec, char **con,
+ 		   const char *key, int type)
+ {
++#if !defined(__ANDROID__)
+ 	struct selabel_lookup_rec *lr;
+ 
+ 	lr = selabel_lookup_common(rec, 1, key, type);
+@@ -398,11 +399,15 @@ int selabel_lookup(struct selabel_handle *rec, char **con,
+ 
+ 	*con = strdup(lr->ctx_trans);
+ 	return *con ? 0 : -1;
++#else
++	return 0;
++#endif
+ }
+ 
+ int selabel_lookup_raw(struct selabel_handle *rec, char **con,
+ 		       const char *key, int type)
+ {
++#if !defined(__ANDROID__)
+ 	struct selabel_lookup_rec *lr;
+ 
+ 	lr = selabel_lookup_common(rec, 0, key, type);
+@@ -411,10 +416,14 @@ int selabel_lookup_raw(struct selabel_handle *rec, char **con,
+ 
+ 	*con = strdup(lr->ctx_raw);
+ 	return *con ? 0 : -1;
++#else
++	return 0;
++#endif
+ }
+ 
+ bool selabel_partial_match(struct selabel_handle *rec, const char *key)
+ {
++#if !defined(__ANDROID__)
+ 	char *ptr;
+ 	bool ret;
+ 
+@@ -435,6 +444,9 @@ bool selabel_partial_match(struct selabel_handle *rec, const char *key)
+ 	}
+ 
+ 	return ret;
++#else
++	return 0;
++#endif
+ }
+ 
+ int selabel_lookup_best_match(struct selabel_handle *rec, char **con,
+@@ -458,6 +470,7 @@ int selabel_lookup_best_match(struct selabel_handle *rec, char **con,
+ int selabel_lookup_best_match_raw(struct selabel_handle *rec, char **con,
+ 			      const char *key, const char **aliases, int type)
+ {
++#if !defined(__ANDROID__)
+ 	struct selabel_lookup_rec *lr;
+ 
+ 	if (!rec->func_lookup_best_match) {
+@@ -471,21 +484,29 @@ int selabel_lookup_best_match_raw(struct selabel_handle *rec, char **con,
+ 
+ 	*con = strdup(lr->ctx_raw);
+ 	return *con ? 0 : -1;
++#else
++	return 0;
++#endif
+ }
+ 
+ enum selabel_cmp_result selabel_cmp(struct selabel_handle *h1,
+ 				    struct selabel_handle *h2)
+ {
++#if !defined(__ANDROID__)
+ 	if (!h1->func_cmp || h1->func_cmp != h2->func_cmp)
+ 		return SELABEL_INCOMPARABLE;
+ 
+ 	return h1->func_cmp(h1, h2);
++#else
++	return 0;
++#endif
+ }
+ 
+ int selabel_digest(struct selabel_handle *rec,
+ 				    unsigned char **digest, size_t *digest_len,
+ 				    char ***specfiles, size_t *num_specfiles)
+ {
++#if !defined(__ANDROID__)
+ 	if (!rec->digest) {
+ 		errno = EINVAL;
+ 		return -1;
+@@ -495,11 +516,13 @@ int selabel_digest(struct selabel_handle *rec,
+ 	*digest_len = DIGEST_SPECFILE_SIZE;
+ 	*specfiles = rec->digest->specfile_list;
+ 	*num_specfiles = rec->digest->specfile_cnt;
++#endif
+ 	return 0;
+ }
+ 
+ void selabel_close(struct selabel_handle *rec)
+ {
++#if !defined(__ANDROID__)
+ 	size_t i;
+ 	selabel_subs_fini(rec->subs);
+ 	selabel_subs_fini(rec->dist_subs);
+@@ -512,10 +535,13 @@ void selabel_close(struct selabel_handle *rec)
+ 		selabel_digest_fini(rec->digest);
+ 	if (rec->func_close)
+ 		rec->func_close(rec);
++#endif
+ 	free(rec);
+ }
+ 
+ void selabel_stats(struct selabel_handle *rec)
+ {
++#if !defined(__ANDROID__)
+ 	rec->func_stats(rec);
++#endif
+ }
+diff --git a/libselinux/src/label_backends_android.c b/libselinux/src/label_backends_android.c
+index f85ec6ff..6435df8c 100644
+--- a/libselinux/src/label_backends_android.c
++++ b/libselinux/src/label_backends_android.c
+@@ -149,7 +149,7 @@ static int process_file(struct selabel_handle *rec, const char *path)
+ 	spec_t *spec_arr;
+ 
+ 	/* Open the specification file. */
+-	if ((fp = fopen(path, "re")) == NULL)
++	if ((fp = fopen(path, "r")) == NULL)
+ 		return -1;
+ 
+ 	if (fstat(fileno(fp), &sb) < 0)
+diff --git a/libselinux/src/label_file.c b/libselinux/src/label_file.c
+index 70f68382..18e26fb4 100644
+--- a/libselinux/src/label_file.c
++++ b/libselinux/src/label_file.c
+@@ -520,7 +520,7 @@ static FILE *open_file(const char *path, const char *suffix,
+ 	}
+ 
+ 	memcpy(sb, &found->sb, sizeof(*sb));
+-	return fopen(save_path, "re");
++	return fopen(save_path, "r");
+ }
+ 
+ static int process_file(const char *path, const char *suffix,
+diff --git a/libselinux/src/label_media.c b/libselinux/src/label_media.c
+index d202e5d5..622741b2 100644
+--- a/libselinux/src/label_media.c
++++ b/libselinux/src/label_media.c
+@@ -90,7 +90,7 @@ static int init(struct selabel_handle *rec, const struct selinux_opt *opts,
+ 	/* Open the specification file. */
+ 	if (!path)
+ 		path = selinux_media_context_path();
+-	if ((fp = fopen(path, "re")) == NULL)
++	if ((fp = fopen(path, "r")) == NULL)
+ 		return -1;
+ 	__fsetlocking(fp, FSETLOCKING_BYCALLER);
+ 
+diff --git a/libselinux/src/label_x.c b/libselinux/src/label_x.c
+index 96745299..700def17 100644
+--- a/libselinux/src/label_x.c
++++ b/libselinux/src/label_x.c
+@@ -117,7 +117,7 @@ static int init(struct selabel_handle *rec, const struct selinux_opt *opts,
+ 	/* Open the specification file. */
+ 	if (!path)
+ 		path = selinux_x_context_path();
+-	if ((fp = fopen(path, "re")) == NULL)
++	if ((fp = fopen(path, "r")) == NULL)
+ 		return -1;
+ 	__fsetlocking(fp, FSETLOCKING_BYCALLER);
+ 
+diff --git a/libselinux/src/lgetfilecon.c b/libselinux/src/lgetfilecon.c
+index db67bc60..cf91538d 100644
+--- a/libselinux/src/lgetfilecon.c
++++ b/libselinux/src/lgetfilecon.c
+@@ -11,12 +11,13 @@ int lgetfilecon_raw(const char *path, char ** context)
+ {
+ 	char *buf;
+ 	ssize_t size;
+-	ssize_t ret;
++	ssize_t ret = 0;
+ 
+ 	size = INITCONTEXTLEN + 1;
+ 	buf = malloc(size);
+ 	if (!buf)
+ 		return -1;
++#if !defined(__ANDROID__)
+ 	memset(buf, 0, size);
+ 
+ 	ret = lgetxattr(path, XATTR_NAME_SELINUX, buf, size - 1);
+@@ -45,6 +46,9 @@ int lgetfilecon_raw(const char *path, char ** context)
+ 	if (ret < 0)
+ 		free(buf);
+ 	else
++#else
++	memset(buf, 0xff, size);
++#endif
+ 		*context = buf;
+ 	return ret;
+ }
+@@ -60,6 +64,7 @@ int lgetfilecon(const char *path, char ** context)
+ 
+ 	ret = lgetfilecon_raw(path, &rcontext);
+ 
++#if !defined(__ANDROID__)
+ 	if (ret > 0) {
+ 		ret = selinux_raw_to_trans_context(rcontext, context);
+ 		freecon(rcontext);
+@@ -67,5 +72,6 @@ int lgetfilecon(const char *path, char ** context)
+ 
+ 	if (ret >= 0 && *context)
+ 		return strlen(*context) + 1;
++#endif
+ 	return ret;
+ }
+diff --git a/libselinux/src/load_policy.c b/libselinux/src/load_policy.c
+index 7f083117..b7e1a6fa 100644
+--- a/libselinux/src/load_policy.c
++++ b/libselinux/src/load_policy.c
+@@ -34,7 +34,7 @@ int security_load_policy(void *data, size_t len)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/load", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+@@ -79,7 +79,7 @@ int selinux_mkload_policy(int preservebools)
+ 	int (*policydb_to_image)(sepol_handle_t *, sepol_policydb_t *, void **, size_t *) = NULL;
+ 	int (*genbools_array)(void *data, size_t len, char **names, int *values, int nel) = NULL;
+ 	int (*genusers)(void *data, size_t len, const char *usersdir, void **newdata, size_t * newlen) = NULL;
+-	int (*genbools)(void *data, size_t len, const char *boolpath) = NULL;
++	int (*genbools)(void *data, size_t len, char *boolpath) = NULL;
+ 
+ #ifdef SHARED
+ 	char *errormsg = NULL;
+@@ -173,13 +173,13 @@ checkbool:
+       search:
+ 	snprintf(path, sizeof(path), "%s.%d",
+ 		 selinux_binary_policy_path(), vers);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	while (fd < 0 && errno == ENOENT
+ 	       && --vers >= minvers) {
+ 		/* Check prior versions to see if old policy is available */
+ 		snprintf(path, sizeof(path), "%s.%d",
+ 			 selinux_binary_policy_path(), vers);
+-		fd = open(path, O_RDONLY | O_CLOEXEC);
++		fd = open(path, O_RDONLY);
+ 	}
+ 	if (fd < 0) {
+ 		fprintf(stderr,
+@@ -275,7 +275,8 @@ checkbool:
+ 				free(names);
+ 			}
+ 		} else if (setlocaldefs) {
+-			(void)genbools(data, size, selinux_booleans_path());
++			(void)genbools(data, size,
++				       (char *)selinux_booleans_path());
+ 		}
+ 	}
+ 
+@@ -334,7 +335,7 @@ int selinux_init_load_policy(int *enforce)
+ 
+ 	/* Check for an override of the mode via the kernel command line. */
+ 	rc = mount("proc", "/proc", "proc", 0, 0);
+-	cfg = fopen("/proc/cmdline", "re");
++	cfg = fopen("/proc/cmdline", "r");
+ 	if (cfg) {
+ 		char *tmp;
+ 		buf = malloc(selinux_page_size);
+diff --git a/libselinux/src/lsetfilecon.c b/libselinux/src/lsetfilecon.c
+index 1d3b28a1..b6871262 100644
+--- a/libselinux/src/lsetfilecon.c
++++ b/libselinux/src/lsetfilecon.c
+@@ -9,6 +9,7 @@
+ 
+ int lsetfilecon_raw(const char *path, const char * context)
+ {
++#if !defined(__ANDROID__)
+ 	int rc = lsetxattr(path, XATTR_NAME_SELINUX, context, strlen(context) + 1,
+ 			 0);
+ 	if (rc < 0 && errno == ENOTSUP) {
+@@ -23,6 +24,9 @@ int lsetfilecon_raw(const char *path, const char * context)
+ 		freecon(ccontext);
+ 	}
+ 	return rc;
++#else
++	return 0;
++#endif
+ }
+ 
+ hidden_def(lsetfilecon_raw)
+@@ -31,10 +35,10 @@ int lsetfilecon(const char *path, const char *context)
+ {
+ 	int ret;
+ 	char * rcontext;
+-
++#if !defined(__ANDROID__)
+ 	if (selinux_trans_to_raw_context(context, &rcontext))
+ 		return -1;
+-
++#endif
+ 	ret = lsetfilecon_raw(path, rcontext);
+ 
+ 	freecon(rcontext);
+diff --git a/libselinux/src/matchmediacon.c b/libselinux/src/matchmediacon.c
+index 23d01af4..50a956e0 100644
+--- a/libselinux/src/matchmediacon.c
++++ b/libselinux/src/matchmediacon.c
+@@ -13,12 +13,13 @@
+ 
+ int matchmediacon(const char *media, char ** con)
+ {
++#if !defined(__ANDROID__)
+ 	const char *path = selinux_media_context_path();
+ 	FILE *infile;
+ 	char *ptr, *ptr2 = NULL;
+ 	int found = 0;
+ 	char current_line[PATH_MAX];
+-	if ((infile = fopen(path, "re")) == NULL)
++	if ((infile = fopen(path, "r")) == NULL)
+ 		return -1;
+ 	while (!feof_unlocked(infile)) {
+ 		if (!fgets_unlocked(current_line, sizeof(current_line), infile)) {
+@@ -62,6 +63,6 @@ int matchmediacon(const char *media, char ** con)
+ 		*con = NULL;
+ 		return -1;
+ 	}
+-
++#endif
+ 	return 0;
+ }
+diff --git a/libselinux/src/matchpathcon.c b/libselinux/src/matchpathcon.c
+index 58b4144a..e77fa4b8 100644
+--- a/libselinux/src/matchpathcon.c
++++ b/libselinux/src/matchpathcon.c
+@@ -31,14 +31,17 @@ int myprintf_compat = 0;
+ 
+ void set_matchpathcon_printf(void (*f) (const char *fmt, ...))
+ {
++#if !defined(__ANDROID__)
+ 	myprintf = f ? f : &default_printf;
+ 	myprintf_compat = 1;
++#endif
+ }
+ 
+ int compat_validate(struct selabel_handle *rec,
+ 		    struct selabel_lookup_rec *contexts,
+ 		    const char *path, unsigned lineno)
+ {
++#if !defined(__ANDROID__)
+ 	int rc;
+ 	char **ctx = &contexts->ctx_raw;
+ 
+@@ -61,6 +64,9 @@ int compat_validate(struct selabel_handle *rec,
+ 	}
+ 
+ 	return rc ? -1 : 0;
++#else
++	return 0;
++#endif
+ }
+ 
+ #ifndef BUILD_HOST
+@@ -114,7 +120,9 @@ static void free_array_elts(void)
+ 
+ void set_matchpathcon_invalidcon(int (*f) (const char *p, unsigned l, char *c))
+ {
++#if !defined(__ANDROID__)
+ 	myinvalidcon = f;
++#endif
+ }
+ 
+ static int default_canoncon(const char *path, unsigned lineno, char **context)
+@@ -137,10 +145,12 @@ static int default_canoncon(const char *path, unsigned lineno, char **context)
+ 
+ void set_matchpathcon_canoncon(int (*f) (const char *p, unsigned l, char **c))
+ {
++#if !defined(__ANDROID__)
+ 	if (f)
+ 		mycanoncon = f;
+ 	else
+ 		mycanoncon = &default_canoncon;
++#endif
+ }
+ 
+ static __thread struct selinux_opt options[SELABEL_NOPT];
+@@ -148,6 +158,7 @@ static __thread int notrans;
+ 
+ void set_matchpathcon_flags(unsigned int flags)
+ {
++#if !defined(__ANDROID__)
+ 	int i;
+ 	memset(options, 0, sizeof(options));
+ 	i = SELABEL_OPT_BASEONLY;
+@@ -157,6 +168,7 @@ void set_matchpathcon_flags(unsigned int flags)
+ 	options[i].type = i;
+ 	options[i].value = (flags & MATCHPATHCON_VALIDATE) ? (char*)1 : NULL;
+ 	notrans = flags & MATCHPATHCON_NOTRANS;
++#endif
+ }
+ 
+ /*
+@@ -190,6 +202,7 @@ static file_spec_t *fl_head;
+  */
+ int matchpathcon_filespec_add(ino_t ino, int specind, const char *file)
+ {
++#if !defined(__ANDROID__)
+ 	file_spec_t *prevfl, *fl;
+ 	int h, ret;
+ 	struct stat sb;
+@@ -255,6 +268,9 @@ int matchpathcon_filespec_add(ino_t ino, int specind, const char *file)
+ 	myprintf("%s:  insufficient memory for file label entry for %s\n",
+ 		 __FUNCTION__, file);
+ 	return -1;
++#else
++	return 0;
++#endif
+ }
+ 
+ /*
+@@ -262,6 +278,7 @@ int matchpathcon_filespec_add(ino_t ino, int specind, const char *file)
+  */
+ void matchpathcon_filespec_eval(void)
+ {
++#if !defined(__ANDROID__)
+ 	file_spec_t *fl;
+ 	int h, used, nel, len, longest;
+ 
+@@ -286,6 +303,7 @@ void matchpathcon_filespec_eval(void)
+ 	myprintf
+ 	    ("%s:  hash table stats: %d elements, %d/%d buckets used, longest chain length %d\n",
+ 	     __FUNCTION__, nel, used, HASH_BUCKETS, longest);
++#endif
+ }
+ 
+ /*
+@@ -293,6 +311,7 @@ void matchpathcon_filespec_eval(void)
+  */
+ void matchpathcon_filespec_destroy(void)
+ {
++#if !defined(__ANDROID__)
+ 	file_spec_t *fl, *tmp;
+ 	int h;
+ 
+@@ -313,6 +332,7 @@ void matchpathcon_filespec_destroy(void)
+ 	}
+ 	free(fl_head);
+ 	fl_head = NULL;
++#endif
+ }
+ 
+ static void matchpathcon_thread_destructor(void __attribute__((unused)) *ptr)
+@@ -324,8 +344,10 @@ void __attribute__((destructor)) matchpathcon_lib_destructor(void);
+ 
+ void hidden __attribute__((destructor)) matchpathcon_lib_destructor(void)
+ {
++#if !defined(__ANDROID__)
+ 	if (destructor_key_initialized)
+ 		__selinux_key_delete(destructor_key);
++#endif
+ }
+ 
+ static void matchpathcon_init_once(void)
+@@ -336,6 +358,7 @@ static void matchpathcon_init_once(void)
+ 
+ int matchpathcon_init_prefix(const char *path, const char *subset)
+ {
++#if !defined(__ANDROID__)
+ 	if (!mycanoncon)
+ 		mycanoncon = default_canoncon;
+ 
+@@ -349,23 +372,32 @@ int matchpathcon_init_prefix(const char *path, const char *subset)
+ 
+ 	hnd = selabel_open(SELABEL_CTX_FILE, options, SELABEL_NOPT);
+ 	return hnd ? 0 : -1;
++#else
++	return 0;
++#endif
+ }
+ 
+ hidden_def(matchpathcon_init_prefix)
+ 
+ int matchpathcon_init(const char *path)
+ {
++#if !defined(__ANDROID__)
+ 	return matchpathcon_init_prefix(path, NULL);
++#else
++	return 0;
++#endif
+ }
+ 
+ void matchpathcon_fini(void)
+ {
++#if !defined(__ANDROID__)
+ 	free_array_elts();
+ 
+ 	if (hnd) {
+ 		selabel_close(hnd);
+ 		hnd = NULL;
+ 	}
++#endif
+ }
+ 
+ /*
+@@ -376,6 +408,7 @@ void matchpathcon_fini(void)
+  */
+ int realpath_not_final(const char *name, char *resolved_path)
+ {
++#if !defined(__ANDROID__)
+ 	char *last_component;
+ 	char *tmp_path, *p;
+ 	size_t len = 0;
+@@ -426,10 +459,14 @@ int realpath_not_final(const char *name, char *resolved_path)
+ out:
+ 	free(tmp_path);
+ 	return rc;
++#else
++	return 0;
++#endif
+ }
+ 
+ int matchpathcon(const char *path, mode_t mode, char ** con)
+ {
++#if !defined(__ANDROID__)
+ 	char stackpath[PATH_MAX + 1];
+ 	char *p = NULL;
+ 	if (!hnd && (matchpathcon_init_prefix(NULL, NULL) < 0))
+@@ -447,21 +484,29 @@ int matchpathcon(const char *path, mode_t mode, char ** con)
+ 	return notrans ?
+ 		selabel_lookup_raw(hnd, con, path, mode) :
+ 		selabel_lookup(hnd, con, path, mode);
++#else
++	return 0;
++#endif
+ }
+ 
+ int matchpathcon_index(const char *name, mode_t mode, char ** con)
+ {
++#if !defined(__ANDROID__)
+ 	int i = matchpathcon(name, mode, con);
+ 
+ 	if (i < 0)
+ 		return -1;
+ 
+ 	return add_array_elt(*con);
++#endif
++	return 0;
+ }
+ 
+ void matchpathcon_checkmatches(char *str __attribute__((unused)))
+ {
++#if !defined(__ANDROID__)
+ 	selabel_stats(hnd);
++#endif
+ }
+ 
+ /* Compare two contexts to see if their differences are "significant",
+@@ -469,6 +514,7 @@ void matchpathcon_checkmatches(char *str __attribute__((unused)))
+ int selinux_file_context_cmp(const char * a,
+ 			     const char * b)
+ {
++#if !defined(__ANDROID__)
+ 	char *rest_a, *rest_b;	/* Rest of the context after the user */
+ 	if (!a && !b)
+ 		return 0;
+@@ -485,10 +531,14 @@ int selinux_file_context_cmp(const char * a,
+ 	if (!rest_b)
+ 		return 1;
+ 	return strcmp(rest_a, rest_b);
++#else
++	return 0;
++#endif
+ }
+ 
+ int selinux_file_context_verify(const char *path, mode_t mode)
+ {
++#if !defined(__ANDROID__)
+ 	char * con = NULL;
+ 	char * fcontext = NULL;
+ 	int rc = 0;
+@@ -533,10 +583,14 @@ int selinux_file_context_verify(const char *path, mode_t mode)
+ 	freecon(con);
+ 	freecon(fcontext);
+ 	return rc;
++#else
++        return 0;
++#endif
+ }
+ 
+ int selinux_lsetfilecon_default(const char *path)
+ {
++#if !defined(__ANDROID__)
+ 	struct stat st;
+ 	int rc = -1;
+ 	char * scontext = NULL;
+@@ -556,6 +610,9 @@ int selinux_lsetfilecon_default(const char *path)
+ 		freecon(scontext);
+ 	}
+ 	return rc;
++#else
++        return 0;
++#endif
+ }
+ 
+ #endif
+diff --git a/libselinux/src/policyvers.c b/libselinux/src/policyvers.c
+index c97dd9df..284a7f7f 100644
+--- a/libselinux/src/policyvers.c
++++ b/libselinux/src/policyvers.c
+@@ -23,7 +23,7 @@ int security_policyvers(void)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/policyvers", selinux_mnt);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	if (fd < 0) {
+ 		if (errno == ENOENT)
+ 			return vers;
+diff --git a/libselinux/src/procattr.c b/libselinux/src/procattr.c
+index 48dd8aff..67dc7a20 100644
+--- a/libselinux/src/procattr.c
++++ b/libselinux/src/procattr.c
+@@ -22,8 +22,8 @@ static pthread_key_t destructor_key;
+ static int destructor_key_initialized = 0;
+ static __thread char destructor_initialized;
+ 
+-#ifndef __BIONIC__
+-/* Bionic declares this in unistd.h and has a definition for it */
++#ifndef __ANDROID__
++/* Android declares this in unistd.h and has a definition for it */
+ static pid_t gettid(void)
+ {
+ 	return syscall(__NR_gettid);
+@@ -32,6 +32,7 @@ static pid_t gettid(void)
+ 
+ static void procattr_thread_destructor(void __attribute__((unused)) *unused)
+ {
++#if !defined(__ANDROID__)
+ 	if (prev_current != UNSET)
+ 		free(prev_current);
+ 	if (prev_exec != UNSET)
+@@ -42,33 +43,41 @@ static void procattr_thread_destructor(void __attribute__((unused)) *unused)
+ 		free(prev_keycreate);
+ 	if (prev_sockcreate != UNSET)
+ 		free(prev_sockcreate);
++#endif
+ }
+ 
+ void __attribute__((destructor)) procattr_destructor(void);
+ 
+ void hidden __attribute__((destructor)) procattr_destructor(void)
+ {
++#if !defined(__ANDROID__)
+ 	if (destructor_key_initialized)
+ 		__selinux_key_delete(destructor_key);
++#endif
+ }
+ 
+ static inline void init_thread_destructor(void)
+ {
++#if !defined(__ANDROID__)
+ 	if (destructor_initialized == 0) {
+ 		__selinux_setspecific(destructor_key, (void *)1);
+ 		destructor_initialized = 1;
+ 	}
++#endif
+ }
+ 
+ static void init_procattr(void)
+ {
++#if !defined(__ANDROID__)
+ 	if (__selinux_key_create(&destructor_key, procattr_thread_destructor) == 0) {
+ 		destructor_key_initialized = 1;
+ 	}
++#endif
+ }
+ 
+ static int openattr(pid_t pid, const char *attr, int flags)
+ {
++#if !defined(__ANDROID__)
+ 	int fd, rc;
+ 	char *path;
+ 	pid_t tid;
+@@ -96,11 +105,15 @@ static int openattr(pid_t pid, const char *attr, int flags)
+ out:
+ 	free(path);
+ 	return fd;
++#else
++	return 0;
++#endif
+ }
+ 
+ static int getprocattrcon_raw(char ** context,
+ 			      pid_t pid, const char *attr)
+ {
++#if !defined(__ANDROID__)
+ 	char *buf;
+ 	size_t size;
+ 	int fd;
+@@ -143,7 +156,7 @@ static int getprocattrcon_raw(char ** context,
+ 		return 0;
+ 	}
+ 
+-	fd = openattr(pid, attr, O_RDONLY | O_CLOEXEC);
++	fd = openattr(pid, attr, O_RDONLY);
+ 	if (fd < 0)
+ 		return -1;
+ 
+@@ -179,11 +192,15 @@ static int getprocattrcon_raw(char ** context,
+ 	close(fd);
+ 	errno = errno_hold;
+ 	return ret;
++#else
++        return 0;
++#endif
+ }
+ 
+ static int getprocattrcon(char ** context,
+ 			  pid_t pid, const char *attr)
+ {
++#if !defined(__ANDROID__)
+ 	int ret;
+ 	char * rcontext;
+ 
+@@ -195,11 +212,15 @@ static int getprocattrcon(char ** context,
+ 	}
+ 
+ 	return ret;
++#else
++        return 0;
++#endif
+ }
+ 
+ static int setprocattrcon_raw(const char * context,
+ 			      pid_t pid, const char *attr)
+ {
++#if !defined(__ANDROID__)
+ 	int fd;
+ 	ssize_t ret;
+ 	int errno_hold;
+@@ -235,7 +256,7 @@ static int setprocattrcon_raw(const char * context,
+ 	    && !strcmp(context, *prev_context))
+ 		return 0;
+ 
+-	fd = openattr(pid, attr, O_RDWR | O_CLOEXEC);
++	fd = openattr(pid, attr, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 	if (context) {
+@@ -264,11 +285,15 @@ out:
+ 		*prev_context = context2;
+ 		return 0;
+ 	}
++#else
++        return 0;
++#endif
+ }
+ 
+ static int setprocattrcon(const char * context,
+ 			  pid_t pid, const char *attr)
+ {
++#if !defined(__ANDROID__)
+ 	int ret;
+ 	char * rcontext;
+ 
+@@ -280,6 +305,9 @@ static int setprocattrcon(const char * context,
+ 	freecon(rcontext);
+ 
+ 	return ret;
++#else
++        return 0;
++#endif
+ }
+ 
+ #define getselfattr_def(fn, attr) \
+diff --git a/libselinux/src/selinux_check_securetty_context.c b/libselinux/src/selinux_check_securetty_context.c
+index 55d4e039..24e5e2c0 100644
+--- a/libselinux/src/selinux_check_securetty_context.c
++++ b/libselinux/src/selinux_check_securetty_context.c
+@@ -14,7 +14,7 @@ int selinux_check_securetty_context(const char * tty_context)
+ 	ssize_t len;
+ 	int found = -1;
+ 	FILE *fp;
+-	fp = fopen(selinux_securetty_types_path(), "re");
++	fp = fopen(selinux_securetty_types_path(), "r");
+ 	if (fp) {
+ 		context_t con = context_new(tty_context);
+ 		if (con) {
+diff --git a/libselinux/src/selinux_config.c b/libselinux/src/selinux_config.c
+index 292728f3..88bcc856 100644
+--- a/libselinux/src/selinux_config.c
++++ b/libselinux/src/selinux_config.c
+@@ -88,7 +88,7 @@ static const uint16_t file_path_suffixes_idx[NEL] = {
+ int selinux_getenforcemode(int *enforce)
+ {
+ 	int ret = -1;
+-	FILE *cfg = fopen(SELINUXCONFIG, "re");
++	FILE *cfg = fopen(SELINUXCONFIG, "r");
+ 	if (cfg) {
+ 		char *buf;
+ 		int len = sizeof(SELINUXTAG) - 1;
+@@ -163,7 +163,7 @@ static void init_selinux_config(void)
+ 	if (selinux_policyroot)
+ 		return;
+ 
+-	fp = fopen(SELINUXCONFIG, "re");
++	fp = fopen(SELINUXCONFIG, "r");
+ 	if (fp) {
+ 		__fsetlocking(fp, FSETLOCKING_BYCALLER);
+ 		while ((len = getline(&line_buf, &line_len, fp)) > 0) {
+@@ -282,6 +282,7 @@ int selinux_set_policy_root(const char *path)
+ 	}
+ 	policy_type++;
+ 
++	fini_selinuxmnt();
+ 	fini_selinux_policyroot();
+ 
+ 	selinux_policyroot = strdup(path);
+diff --git a/libselinux/src/selinux_internal.h b/libselinux/src/selinux_internal.h
+index 54949c13..3d5c9fb4 100644
+--- a/libselinux/src/selinux_internal.h
++++ b/libselinux/src/selinux_internal.h
+@@ -59,7 +59,6 @@ hidden_proto(selinux_mkload_policy)
+     hidden_proto(security_getenforce)
+     hidden_proto(security_setenforce)
+     hidden_proto(security_deny_unknown)
+-    hidden_proto(security_get_checkreqprot)
+     hidden_proto(selinux_boolean_sub)
+     hidden_proto(selinux_current_policy_path)
+     hidden_proto(selinux_binary_policy_path)
+diff --git a/libselinux/src/selinux_restorecon.c b/libselinux/src/selinux_restorecon.c
+index ced41152..49e3e7b7 100644
+--- a/libselinux/src/selinux_restorecon.c
++++ b/libselinux/src/selinux_restorecon.c
+@@ -242,7 +242,7 @@ static int exclude_non_seclabel_mounts(void)
+ 	if (uname(&uts) == 0 && strverscmp(uts.release, "2.6.30") < 0)
+ 		return 0;
+ 
+-	fp = fopen("/proc/mounts", "re");
++	fp = fopen("/proc/mounts", "r");
+ 	if (!fp)
+ 		return 0;
+ 
+@@ -252,12 +252,12 @@ static int exclude_non_seclabel_mounts(void)
+ 		item = strtok(buf, " ");
+ 		while (item != NULL) {
+ 			mount_info[index] = item;
+-			index++;
+-			if (index == 4)
++			if (index == 3)
+ 				break;
++			index++;
+ 			item = strtok(NULL, " ");
+ 		}
+-		if (index < 4) {
++		if (index < 3) {
+ 			selinux_log(SELINUX_ERROR,
+ 				    "/proc/mounts record \"%s\" has incorrect format.\n",
+ 				    buf);
+@@ -664,7 +664,7 @@ static int restorecon_sb(const char *pathname, const struct stat *sb,
+ 		curcon = NULL;
+ 	}
+ 
+-	if (curcon == NULL || strcmp(curcon, newcon) != 0) {
++	if (strcmp(curcon, newcon) != 0) {
+ 		if (!flags->set_specctx && curcon &&
+ 				    (is_context_customizable(curcon) > 0)) {
+ 			if (flags->verbose) {
+@@ -734,6 +734,7 @@ err:
+ int selinux_restorecon(const char *pathname_orig,
+ 				    unsigned int restorecon_flags)
+ {
++#if !defined(__ANDROID__)
+ 	struct rest_flags flags;
+ 
+ 	flags.ignore_digest = (restorecon_flags &
+@@ -1033,11 +1034,15 @@ fts_err:
+ 		    paths[0], strerror(errno));
+ 	error = -1;
+ 	goto cleanup;
++#else
++        return 0;
++#endif
+ }
+ 
+ /* selinux_restorecon_set_sehandle(3) is called to set the global fc handle */
+ void selinux_restorecon_set_sehandle(struct selabel_handle *hndl)
+ {
++#if !defined(__ANDROID__)
+ 	char **specfiles;
+ 	size_t num_specfiles;
+ 
+@@ -1051,6 +1056,7 @@ void selinux_restorecon_set_sehandle(struct selabel_handle *hndl)
+ 		fc_digest = NULL;
+ 		fc_digest_len = 0;
+ 	}
++#endif
+ }
+ 
+ /*
+@@ -1059,6 +1065,7 @@ void selinux_restorecon_set_sehandle(struct selabel_handle *hndl)
+  */
+ struct selabel_handle *selinux_restorecon_default_handle(void)
+ {
++#if !defined(__ANDROID__)
+ 	struct selabel_handle *sehandle;
+ 
+ 	struct selinux_opt fc_opts[] = {
+@@ -1075,6 +1082,9 @@ struct selabel_handle *selinux_restorecon_default_handle(void)
+ 	}
+ 
+ 	return sehandle;
++#else
++        return NULL;
++#endif
+ }
+ 
+ /*
+@@ -1083,6 +1093,7 @@ struct selabel_handle *selinux_restorecon_default_handle(void)
+  */
+ void selinux_restorecon_set_exclude_list(const char **exclude_list)
+ {
++#if !defined(__ANDROID__)
+ 	int i;
+ 	struct stat sb;
+ 
+@@ -1097,11 +1108,14 @@ void selinux_restorecon_set_exclude_list(const char **exclude_list)
+ 		    errno == ENOMEM)
+ 			assert(0);
+ 	}
++#endif
++
+ }
+ 
+ /* selinux_restorecon_set_alt_rootpath(3) sets an alternate rootpath. */
+ int selinux_restorecon_set_alt_rootpath(const char *alt_rootpath)
+ {
++#if !defined(__ANDROID__)
+ 	int len;
+ 
+ 	/* This should be NULL on first use */
+@@ -1119,6 +1133,7 @@ int selinux_restorecon_set_alt_rootpath(const char *alt_rootpath)
+ 	while (len && (rootpath[len - 1] == '/'))
+ 		rootpath[--len] = '\0';
+ 	rootpathlen = len;
++#endif
+ 
+ 	return 0;
+ }
+@@ -1127,6 +1142,8 @@ int selinux_restorecon_set_alt_rootpath(const char *alt_rootpath)
+ int selinux_restorecon_xattr(const char *pathname, unsigned int xattr_flags,
+ 					    struct dir_xattr ***xattr_list)
+ {
++#if !defined(__ANDROID__)
++
+ 	bool recurse = (xattr_flags &
+ 	    SELINUX_RESTORECON_XATTR_RECURSE) ? true : false;
+ 	bool delete_nonmatch = (xattr_flags &
+@@ -1240,4 +1257,7 @@ cleanup:
+ 		}
+ 	}
+ 	return -1;
++#else
++        return 0;
++#endif
+ }
+diff --git a/libselinux/src/selinuxswig.i b/libselinux/src/selinuxswig.i
+index dbdb4c3d..687c43bc 100644
+--- a/libselinux/src/selinuxswig.i
++++ b/libselinux/src/selinuxswig.i
+@@ -18,7 +18,7 @@
+ %typedef unsigned mode_t;
+ %typedef unsigned pid_t;
+ 
+-%typemap(in, numinputs=0) (char ***names, int *len) (char **temp1=NULL, int temp2) {
++%typemap(in, numinputs=0) (char ***names, int *len) (char **temp1, int temp2) {
+ 	$1 = &temp1;
+ 	$2 = &temp2;
+ }
+@@ -33,7 +33,7 @@
+ 	}
+ }
+ 
+-%typemap(in, numinputs=0) (char ***) (char **temp=NULL) {
++%typemap(in, numinputs=0) (char ***) (char **temp) {
+ 	$1 = &temp;
+ }
+ 
+diff --git a/libselinux/src/setenforce.c b/libselinux/src/setenforce.c
+index 09cad3ce..e5e7612f 100644
+--- a/libselinux/src/setenforce.c
++++ b/libselinux/src/setenforce.c
+@@ -21,7 +21,7 @@ int security_setenforce(int value)
+ 	}
+ 
+ 	snprintf(path, sizeof path, "%s/enforce", selinux_mnt);
+-	fd = open(path, O_RDWR | O_CLOEXEC);
++	fd = open(path, O_RDWR);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libselinux/src/setexecfilecon.c b/libselinux/src/setexecfilecon.c
+index e72ba0d9..c95ce902 100644
+--- a/libselinux/src/setexecfilecon.c
++++ b/libselinux/src/setexecfilecon.c
+@@ -6,6 +6,7 @@
+ 
+ int setexecfilecon(const char *filename, const char *fallback_type)
+ {
++#if !defined(__ANDROID__)
+ 	char * mycon = NULL, *fcon = NULL, *newcon = NULL;
+ 	context_t con = NULL;
+ 	int rc = 0;
+@@ -53,12 +54,17 @@ int setexecfilecon(const char *filename, const char *fallback_type)
+ 	freecon(fcon);
+ 	freecon(mycon);
+ 	return rc < 0 ? rc : 0;
++#else
++        return 0;
++#endif
++
+ }
+ 
+ #ifndef DISABLE_RPM
+ int rpm_execcon(unsigned int verified __attribute__ ((unused)),
+ 		const char *filename, char *const argv[], char *const envp[])
+ {
++#if !defined(__ANDROID__)
+ 	int rc;
+ 
+ 	rc = setexecfilecon(filename, "rpm_script_t");
+@@ -66,5 +72,8 @@ int rpm_execcon(unsigned int verified __attribute__ ((unused)),
+ 		return rc;
+ 
+ 	return execve(filename, argv, envp);
++#else
++        return 0;
++#endif
+ }
+ #endif
+diff --git a/libselinux/src/setfilecon.c b/libselinux/src/setfilecon.c
+index d05969c6..6c437cc8 100644
+--- a/libselinux/src/setfilecon.c
++++ b/libselinux/src/setfilecon.c
+@@ -9,6 +9,7 @@
+ 
+ int setfilecon_raw(const char *path, const char * context)
+ {
++#if !defined(__ANDROID__)
+ 	int rc = setxattr(path, XATTR_NAME_SELINUX, context, strlen(context) + 1,
+ 			0);
+ 	if (rc < 0 && errno == ENOTSUP) {
+@@ -23,6 +24,9 @@ int setfilecon_raw(const char *path, const char * context)
+ 		freecon(ccontext);
+ 	}
+ 	return rc;
++#else
++        return 0;
++#endif
+ }
+ 
+ hidden_def(setfilecon_raw)
+@@ -32,9 +36,10 @@ int setfilecon(const char *path, const char *context)
+ 	int ret;
+ 	char * rcontext;
+ 
++#if !defined(__ANDROID__)
+ 	if (selinux_trans_to_raw_context(context, &rcontext))
+ 		return -1;
+-
++#endif
+ 	ret = setfilecon_raw(path, rcontext);
+ 
+ 	freecon(rcontext);
+diff --git a/libselinux/src/seusers.c b/libselinux/src/seusers.c
+index 572a7b01..09e704be 100644
+--- a/libselinux/src/seusers.c
++++ b/libselinux/src/seusers.c
+@@ -185,7 +185,7 @@ int getseuserbyname(const char *name, char **r_seuser, char **r_level)
+ 
+ 	gid_t gid = get_default_gid(name);
+ 
+-	cfg = fopen(selinux_usersconf_path(), "re");
++	cfg = fopen(selinux_usersconf_path(), "r");
+ 	if (!cfg)
+ 		goto nomatch;
+ 
+@@ -278,7 +278,7 @@ int getseuser(const char *username, const char *service,
+ 	FILE *fp = NULL;
+ 	if (asprintf(&path,"%s/logins/%s", selinux_policy_root(), username) <  0)
+ 		goto err;
+-	fp = fopen(path, "re");
++	fp = fopen(path, "r");
+ 	free(path);
+ 	if (fp == NULL) goto err;
+ 	__fsetlocking(fp, FSETLOCKING_BYCALLER);
+diff --git a/libselinux/src/stringrep.c b/libselinux/src/stringrep.c
+index 2d83f960..2dbec2bf 100644
+--- a/libselinux/src/stringrep.c
++++ b/libselinux/src/stringrep.c
+@@ -80,7 +80,7 @@ static struct discover_class_node * discover_class(const char *s)
+ 
+ 	/* load up class index */
+ 	snprintf(path, sizeof path, "%s/class/%s/index", selinux_mnt,s);
+-	fd = open(path, O_RDONLY | O_CLOEXEC);
++	fd = open(path, O_RDONLY);
+ 	if (fd < 0)
+ 		goto err3;
+ 
+diff --git a/libselinux/utils/.gitignore b/libselinux/utils/.gitignore
+index 5cd01025..ed3bf0bb 100644
+--- a/libselinux/utils/.gitignore
++++ b/libselinux/utils/.gitignore
+@@ -19,9 +19,9 @@ selabel_lookup
+ selabel_lookup_best_match
+ selabel_partial_match
+ selinux_check_securetty_context
++selinux_restorecon
+ selinuxenabled
+ selinuxexeccon
+ setenforce
+ setfilecon
+ togglesebool
+-selinux_check_access
+diff --git a/libselinux/utils/Makefile b/libselinux/utils/Makefile
+index 14f94bde..954da450 100644
+--- a/libselinux/utils/Makefile
++++ b/libselinux/utils/Makefile
+@@ -12,13 +12,6 @@ else
+ COMPILER ?= clang
+ endif
+ 
+-ifeq ($(COMPILER), gcc)
+-EXTRA_CFLAGS = -fipa-pure-const -Wpacked-bitfield-compat -Wsync-nand -Wcoverage-mismatch \
+-	-Wcpp -Wformat-contains-nul -Wnormalized=nfc -Wsuggest-attribute=const \
+-	-Wsuggest-attribute=noreturn -Wsuggest-attribute=pure -Wtrampolines -Wjump-misses-init \
+-	-Wno-suggest-attribute=pure -Wno-suggest-attribute=const
+-endif
+-
+ MAX_STACK_SIZE=8192
+ CFLAGS ?= -O -Wall -W -Wundef -Wformat-y2k -Wformat-security -Winit-self -Wmissing-include-dirs \
+           -Wunused -Wunknown-pragmas -Wstrict-aliasing -Wshadow -Wpointer-arith \
+@@ -35,20 +28,25 @@ CFLAGS ?= -O -Wall -W -Wundef -Wformat-y2k -Wformat-security -Winit-self -Wmissi
+           -Wno-format-nonliteral -Wframe-larger-than=$(MAX_STACK_SIZE) -Wp,-D_FORTIFY_SOURCE=2 \
+           -fstack-protector-all --param=ssp-buffer-size=4 -fexceptions \
+           -fasynchronous-unwind-tables -fdiagnostics-show-option -funit-at-a-time \
+-          -Werror -Wno-aggregate-return -Wno-redundant-decls \
+-          $(EXTRA_CFLAGS)
++          -Werror -Wno-aggregate-return -Wno-redundant-decls
+ 
+ LD_SONAME_FLAGS=-soname,$(LIBSO),-z,defs,-z,relro
+ 
++ifeq ($(COMPILER), gcc)
++CFLAGS += -fipa-pure-const -Wpacked-bitfield-compat -Wsync-nand -Wcoverage-mismatch \
++	-Wcpp -Wformat-contains-nul -Wnormalized=nfc -Wsuggest-attribute=const \
++	-Wsuggest-attribute=noreturn -Wsuggest-attribute=pure -Wtrampolines -Wjump-misses-init \
++	-Wno-suggest-attribute=pure -Wno-suggest-attribute=const
++endif
++
+ ifeq ($(OS), Darwin)
+ override CFLAGS += -I/opt/local/include -I../../libsepol/include
+ override LDFLAGS += -L../../libsepol/src -undefined dynamic_lookup
+ endif
+ 
+-override CFLAGS += -I../include -D_GNU_SOURCE $(DISABLE_FLAGS) $(PCRE_CFLAGS)
+-LDFLAGS += -L../src
+-LDLIBS += -lselinux
+-PCRE_LDLIBS ?= -lpcre
++override CFLAGS += -I../include -I$(INCLUDEDIR) -D_GNU_SOURCE $(DISABLE_FLAGS) $(PCRE_CFLAGS)
++LDLIBS += -L../src -lselinux -L$(LIBDIR)
++PCRE_LDFLAGS ?= -lpcre
+ 
+ ifeq ($(ANDROID_HOST),y)
+ TARGETS=sefcontext_compile
+@@ -56,10 +54,12 @@ else
+ TARGETS=$(patsubst %.c,%,$(wildcard *.c))
+ endif
+ 
+-sefcontext_compile: LDLIBS += $(PCRE_LDLIBS) ../src/libselinux.a -lsepol
++sefcontext_compile: LDLIBS += $(PCRE_LDFLAGS) ../src/libselinux.a -lsepol
+ 
+ sefcontext_compile: sefcontext_compile.o ../src/regex.o
+ 
++selinux_restorecon: LDLIBS += -lsepol
++
+ all: $(TARGETS)
+ 
+ install: all
+diff --git a/libselinux/utils/getsebool.c b/libselinux/utils/getsebool.c
+index 36994536..3c6eba55 100644
+--- a/libselinux/utils/getsebool.c
++++ b/libselinux/utils/getsebool.c
+@@ -15,7 +15,7 @@ static __attribute__ ((__noreturn__)) void usage(const char *progname)
+ int main(int argc, char **argv)
+ {
+ 	int i, get_all = 0, rc = 0, active, pending, len = 0, opt;
+-	char **names = NULL;
++	char **names;
+ 
+ 	while ((opt = getopt(argc, argv, "a")) > 0) {
+ 		switch (opt) {
+@@ -55,7 +55,7 @@ int main(int argc, char **argv)
+ 		if (argc < 2)
+ 			usage(argv[0]);
+ 		len = argc - 1;
+-		names = calloc(len, sizeof(char *));
++		names = malloc(sizeof(char *) * len);
+ 		if (!names) {
+ 			fprintf(stderr, "%s:  out of memory\n", argv[0]);
+ 			return 2;
+@@ -65,8 +65,7 @@ int main(int argc, char **argv)
+ 			if (!names[i]) {
+ 				fprintf(stderr, "%s:  out of memory\n",
+ 					argv[0]);
+-				rc = 2;
+-				goto out;
++				return 2;
+ 			}
+ 		}
+ 	}
+diff --git a/libselinux/utils/selinux_restorecon.c b/libselinux/utils/selinux_restorecon.c
+new file mode 100644
+index 00000000..4d2b08f8
+--- /dev/null
++++ b/libselinux/utils/selinux_restorecon.c
+@@ -0,0 +1,299 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <getopt.h>
++#include <errno.h>
++#include <stdbool.h>
++#include <sepol/sepol.h>
++#include <selinux/label.h>
++#include <selinux/restorecon.h>
++
++static char *policyfile;
++
++static char **exclude_list;
++static int exclude_count;
++
++static int validate_context(char **contextp)
++{
++	char *context = *contextp, *tmpcon;
++
++	if (policyfile) {
++		if (sepol_check_context(context) < 0) {
++			fprintf(stderr, "Invalid context %s\n", context);
++			exit(-1);
++		}
++	} else if (security_canonicalize_context_raw(context, &tmpcon) == 0) {
++		free(context);
++		*contextp = tmpcon;
++	} else if (errno != ENOENT) {
++		fprintf(stderr, "Validate context error: %s\n",
++						    strerror(errno));
++		exit(-1);
++	}
++
++	return 0;
++}
++
++static __attribute__ ((__noreturn__)) void usage(const char *progname)
++{
++	fprintf(stderr,
++		"\nusage: %s [-FCnRrdmiIaAsl] [-e dir] [-v|-P]\n"
++		"[-x alt_rootpath] [-p policy] [-f specfile] pathname ...\n"
++		"\nWhere:\n\t"
++		"-F  Set the label to that in specfile.\n\t"
++		"    If not set then reset the \"type\" component of the "
++		"label to that\n\t    in the specfile.\n\t"
++		"-C  Check labels even if the stored SHA1 digest matches\n\t"
++		"    the specfiles SHA1 digest.\n\t"
++		"-n  Don't change any file labels (passive check).\n\t"
++		"-R  Recursively change file and directory labels.\n\t"
++		"-v  Show changes in file labels (-v and -P are mutually "
++		" exclusive).\n\t"
++		"-P  Show progress by printing \"*\" to stdout every 1000 files"
++		",\n\t    unless relabeling entire OS, then show percentage complete.\n\t"
++		"-r  Use realpath(3) to convert pathnames to canonical form.\n\t"
++		"-d  Prevent descending into directories that have a "
++		"different\n\t    device number than the pathname from  which "
++		"the descent began.\n\t"
++		"-m  Do not automatically read /proc/mounts to determine what\n\t"
++		"    non-seclabel mounts to exclude from relabeling.\n\t"
++		"-e  Exclude this directory (add multiple -e entries).\n\t"
++		"-i  Do not set SELABEL_OPT_DIGEST option when calling "
++		" selabel_open(3).\n\t"
++		"-I  Ignore files that do not exist.\n\t"
++		"-a  Add an association between an inode and a context.\n\t"
++		"    If there is a different context that matched the inode,\n\t"
++		"    then use the first context that matched.\n\t"
++		"-A  Abort on errors during the file tree walk.\n\t"
++		"-s  Log any label changes to syslog(3).\n\t"
++		"-l  Log what specfile context matched each file.\n\t"
++		"-x  Set alternate rootpath.\n\t"
++		"-p  Optional binary policy file (also sets validate context "
++		"option).\n\t"
++		"-f  Optional file contexts file.\n\t"
++		"pathname  One or more paths to relabel.\n\n",
++		progname);
++	exit(-1);
++}
++
++static void add_exclude(const char *directory)
++{
++	char **tmp_list;
++
++	if (directory == NULL || directory[0] != '/') {
++		fprintf(stderr, "Full path required for exclude: %s.\n",
++			directory);
++		exit(-1);
++	}
++
++	/* Add another two entries, one for directory, and the other to
++	 * terminate the list */
++	tmp_list = realloc(exclude_list, sizeof(char *) * (exclude_count + 2));
++	if (!tmp_list) {
++		fprintf(stderr, "ERROR: realloc failed.\n");
++		exit(-1);
++	}
++	exclude_list = tmp_list;
++
++	exclude_list[exclude_count] = strdup(directory);
++	if (!exclude_list[exclude_count]) {
++		fprintf(stderr, "ERROR: strdup failed.\n");
++		exit(-1);
++	}
++	exclude_count++;
++	exclude_list[exclude_count] = NULL;
++}
++
++int main(int argc, char **argv)
++{
++	int opt, i;
++	unsigned int restorecon_flags = 0;
++	char *path = NULL, *digest = NULL, *validate = NULL;
++	char *alt_rootpath = NULL;
++	FILE *policystream;
++	bool ignore_digest = false, require_selinux = true;
++	bool verbose = false, progress = false;
++
++	struct selabel_handle *hnd = NULL;
++	struct selinux_opt selabel_option[] = {
++		{ SELABEL_OPT_PATH, path },
++		{ SELABEL_OPT_DIGEST, digest },
++		{ SELABEL_OPT_VALIDATE, validate }
++	};
++
++	if (argc < 2)
++		usage(argv[0]);
++
++	exclude_list = NULL;
++	exclude_count = 0;
++
++	while ((opt = getopt(argc, argv, "iIFCnRvPrdaAslme:f:p:x:")) > 0) {
++		switch (opt) {
++		case 'F':
++			restorecon_flags |=
++					SELINUX_RESTORECON_SET_SPECFILE_CTX;
++			break;
++		case 'C':
++			restorecon_flags |=
++					SELINUX_RESTORECON_IGNORE_DIGEST;
++			break;
++		case 'n':
++			restorecon_flags |= SELINUX_RESTORECON_NOCHANGE;
++			break;
++		case 'R':
++			restorecon_flags |= SELINUX_RESTORECON_RECURSE;
++			break;
++		case 'v':
++			if (progress) {
++				fprintf(stderr,
++					"Progress and Verbose are mutually exclusive\n");
++				exit(-1);
++			}
++			verbose = true;
++			restorecon_flags |=  SELINUX_RESTORECON_VERBOSE;
++			break;
++		case 'P':
++			if (verbose) {
++				fprintf(stderr,
++					"Progress and Verbose are mutually exclusive\n");
++				exit(-1);
++			}
++			progress = true;
++			restorecon_flags |=  SELINUX_RESTORECON_PROGRESS;
++			break;
++		case 'r':
++			restorecon_flags |= SELINUX_RESTORECON_REALPATH;
++			break;
++		case 'd':
++			restorecon_flags |= SELINUX_RESTORECON_XDEV;
++			break;
++		case 'm':
++			restorecon_flags |= SELINUX_RESTORECON_IGNORE_MOUNTS;
++			break;
++		case 'e':
++			add_exclude(optarg);
++			break;
++		case 'p':
++			policyfile = optarg;
++
++			policystream = fopen(policyfile, "r");
++			if (!policystream) {
++				fprintf(stderr,
++					"ERROR: opening %s: %s\n",
++					policyfile, strerror(errno));
++				exit(-1);
++			}
++
++			if (sepol_set_policydb_from_file(policystream) < 0) {
++				fprintf(stderr,
++					"ERROR: reading policy %s: %s\n",
++					policyfile, strerror(errno));
++				exit(-1);
++			}
++			fclose(policystream);
++
++			selinux_set_callback(SELINUX_CB_VALIDATE,
++				    (union selinux_callback)&validate_context);
++			require_selinux = false;
++			break;
++		case 'f':
++			path = optarg;
++			break;
++		case 'i':
++			ignore_digest = true;
++			break;
++		case 'I':
++			restorecon_flags |= SELINUX_RESTORECON_IGNORE_NOENTRY;
++			break;
++		case 'a':
++			restorecon_flags |= SELINUX_RESTORECON_ADD_ASSOC;
++			break;
++		case 'A':
++			restorecon_flags |= SELINUX_RESTORECON_ABORT_ON_ERROR;
++			break;
++		case 's':
++			restorecon_flags |= SELINUX_RESTORECON_SYSLOG_CHANGES;
++			break;
++		case 'l':
++			restorecon_flags |= SELINUX_RESTORECON_LOG_MATCHES;
++			break;
++		case 'x':
++			alt_rootpath = optarg;
++			break;
++		default:
++			usage(argv[0]);
++		}
++	}
++
++	if (require_selinux && (is_selinux_enabled() <= 0)) {
++		fprintf(stderr,
++		    "SELinux must be enabled to perform this operation.\n");
++		exit(-1);
++	}
++
++	if (optind >= argc) {
++		fprintf(stderr, "No pathname specified\n");
++		exit(-1);
++	}
++
++	/* If any of these set then do our own selabel_open and pass
++	 * handle to selinux_restorecon */
++	if (ignore_digest || path || policyfile) {
++		if (path)
++			selabel_option[0].value = path;
++		else
++			selabel_option[0].value = NULL;
++
++		if (ignore_digest)
++			selabel_option[1].value = NULL;
++		else
++			selabel_option[1].value = (char *)1;
++
++		if (policyfile) /* Validate */
++			selabel_option[2].value = (char *)1;
++		else
++			selabel_option[2].value = NULL;
++
++		hnd = selabel_open(SELABEL_CTX_FILE, selabel_option, 3);
++		if (!hnd) {
++			switch (errno) {
++			case EOVERFLOW:
++				fprintf(stderr, "ERROR: Number of specfiles or"
++				    " specfile buffer caused an overflow.\n");
++				break;
++			default:
++				fprintf(stderr, "ERROR: selabel_open: %s\n",
++							    strerror(errno));
++			}
++			exit(-1);
++		}
++		selinux_restorecon_set_sehandle(hnd);
++	}
++
++	if (exclude_list)
++		selinux_restorecon_set_exclude_list
++						 ((const char **)exclude_list);
++
++	if (alt_rootpath)
++		selinux_restorecon_set_alt_rootpath(alt_rootpath);
++
++	/* Call restorecon for each path in list */
++	for (i = optind; i < argc; i++) {
++		if (selinux_restorecon(argv[i], restorecon_flags) < 0) {
++			fprintf(stderr, "ERROR: selinux_restorecon: %s\n",
++					    strerror(errno));
++			exit(-1);
++		}
++	}
++
++	if (exclude_list) {
++		for (i = 0; exclude_list[i]; i++)
++			free(exclude_list[i]);
++		free(exclude_list);
++	}
++
++	if (hnd)
++		selabel_close(hnd);
++
++	return 0;
++}
+-- 
+2.11.0
+

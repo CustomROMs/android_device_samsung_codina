@@ -1,7 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
- Singelton: Make sLock and sInstance public to keep compatibility with chagall klimt gpsd blob
+Subject: [PATCH] Singelton: Make sLock and sInstance public to keep compatibility with chagall klimt gpsd blob
 
 diff --git a/libutils/include/utils/Singleton.h b/libutils/include/utils/Singleton.h
 index 04a25f0..a039780 100644

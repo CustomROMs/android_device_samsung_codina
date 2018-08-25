@@ -1,6 +1,5 @@
 From 8ec6bfdfb9b416ab8fd47326496660ddf999d50e Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?tiansiming=20=5B=E7=94=B0=E6=80=9D=E6=98=8E=5D?=
- <tiansiming@xiaomi.com>
+From: =?UTF-8?q?tiansiming=20=5B=E7=94=B0=E6=80=9D=E6=98=8E=5D?= <tiansiming@xiaomi.com>
 Date: Sun, 4 Feb 2018 20:45:42 +0800
 Subject: [PATCH] Fix NPE in AutoSyncWorkDataPreferenceController
 

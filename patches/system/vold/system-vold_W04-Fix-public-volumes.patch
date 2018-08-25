@@ -1,7 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
- Make public volumes publicly writable based on WRITE_EXTERNAL_STORAGE 
+Subject: [PATCH] Make public volumes publicly writable based on WRITE_EXTERNAL_STORAGE 
 
 diff --git a/PublicVolume.cpp b/PublicVolume.cpp
 index 00550c3..6a687e1 100644

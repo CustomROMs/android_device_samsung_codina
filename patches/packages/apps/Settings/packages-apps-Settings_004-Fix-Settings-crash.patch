@@ -1,7 +1,7 @@
 From eac17166e3808a0412e79dd801b024dc978388a7 Mon Sep 17 00:00:00 2001
 From: Gianmarco Reverberi <gianmarco.reverberi@gmail.com>
 Date: Sun, 1 Nov 2015 12:23:17 +0100
- Fix NPE in SettingsPreferenceFragment 
+Subject: [PATCH] Fix NPE in SettingsPreferenceFragment 
 
 diff --git a/src/com/android/settings/SettingsPreferenceFragment.java b/src/com/android/settings/SettingsPreferenceFragment.java
 index 125939c..0cd83d5 100644

@@ -1,0 +1,50 @@
+From 20e71d2687a5134bc12063dbe1f09b2571a54b53 Mon Sep 17 00:00:00 2001
+From: Dohyun Lee <dohyun.lee@lge.com>
+Date: Tue, 27 Dec 2016 16:16:00 +0900
+Subject: [PATCH 23/43] correct the graphic buffer size allocated when rotating
+ the device
+
+allocateBuffers() is called with H x W when a device is rotated
+to landscape orientation. However, the EGL implementation
+requests buffers with pre-rotated size, W x H as it is reacting
+to the transform hint.
+So if transform hint is set, we need to swap the requested
+width and height to avoid the buffers being freed and
+reallocated when dequeueBuffers() gets called later.
+
+Test: perform systrace during rotating a marlin device.
+---
+ libs/gui/BufferQueueProducer.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 0af7e1afd..87698f978 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -1350,6 +1350,13 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
+             allocFormat = format != 0 ? format : mCore->mDefaultBufferFormat;
+             allocUsage = usage | mCore->mConsumerUsageBits;
+ 
++            // If mTransformHint is set, the EGL implementation will request buffers
++            // with pre-rotated size. So here we need to swap the width and height
++            // to avoid the buffers being freed and reallocated when dequeueBuffer()
++            // gets called later.
++            if (mCore->mTransformHint != 0) {
++                std::swap(allocWidth, allocHeight);
++            }
+             mCore->mIsAllocating = true;
+         } // Autolock scope
+ 
+@@ -1376,6 +1383,9 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
+             Mutex::Autolock lock(mCore->mMutex);
+             uint32_t checkWidth = width > 0 ? width : mCore->mDefaultWidth;
+             uint32_t checkHeight = height > 0 ? height : mCore->mDefaultHeight;
++            if (mCore->mTransformHint != 0) {
++                std::swap(checkWidth, checkHeight);
++            }
+             PixelFormat checkFormat = format != 0 ?
+                     format : mCore->mDefaultBufferFormat;
+             uint64_t checkUsage = usage | mCore->mConsumerUsageBits;
+-- 
+2.11.0
+

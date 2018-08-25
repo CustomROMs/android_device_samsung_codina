@@ -1,7 +1,7 @@
 From 72e8ea4966edd8fc6571d7e63b2d70d719bc8a0e Mon Sep 17 00:00:00 2001
-From: sub77 <sub77@ymail.com>
+From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 11 Aug 2015 13:11:29 +0200
-Bring back UMS support [1/3]
+Subject: [PATCH] Bring back UMS support [1/3]
 
 diff --git a/src/com/android/settings/deviceinfo/UsbBackend.java b/src/com/android/settings/deviceinfo/UsbBackend.java
 index 1110072..2889014 100644

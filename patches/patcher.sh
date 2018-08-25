@@ -15,6 +15,7 @@ external/boringssl \
 external/busybox \
 external/libpng \
 external/minijail \
+external/selinux \
 external/zlib \
 frameworks/av \
 frameworks/base \
@@ -72,6 +73,11 @@ pre_clean() {
     out=$( repo sync -fl $1 )
 }
 
+clean()
+{
+    find . -name "*.rej" -o -name "*.orig" | xargs -L1 rm
+}
+
 commit_quiet()
 {
   git commit -am "$1" 1>.tmp 2>&1;
@@ -124,8 +130,11 @@ apply_all() {
         #fi
         git am $i
         if [ $? -eq 128 ] ; then
+          mod=$(parse_patch_modified "$i")
+          git checkout HEAD $mod
           patch -p1 -i "$i"
-          git add $(parse_patch_modified "$i")
+          clean
+          git add $mod
           git am --continue
         fi
         echo ""

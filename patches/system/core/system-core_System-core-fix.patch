@@ -1,7 +1,7 @@
 From 16c1404fea54c15fc025ae3da8e396505ad0a317 Mon Sep 17 00:00:00 2001
-From: trec-core <trec.core.track@gmail.com>
+From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 25 Jun 2018 19:54:01 +0200
-Subject: [PATCH] core patch
+Subject: [PATCH] system/core STE fix
 
 diff --git a/libutils/include/utils/Flattenable.h b/libutils/include/utils/Flattenable.h
 index 882a8b2..495b90d 100644

@@ -1,7 +1,7 @@
 From 1113756358653517929a8c2ff763d9330c9552e3 Mon Sep 17 00:00:00 2001
 From: Lars Karbo <mail@larskarbo.no>
 Date: Tue, 13 Feb 2018 20:19:23 +0100
- Add Animation scale 0.6 , 0.7 and 0.8
+Subject: [PATCH] Add Animation scale 0.6 , 0.7 and 0.8
 
 diff --git a/res/values/cr_arrays.xml b/res/values/cr_arrays.xml
 index 7900070..2889014 100644

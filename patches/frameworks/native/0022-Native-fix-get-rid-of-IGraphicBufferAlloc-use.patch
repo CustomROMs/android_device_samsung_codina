@@ -1,0 +1,98 @@
+From 37e107fec7287ed2b23778e5eaf6bca6cdebdd2f Mon Sep 17 00:00:00 2001
+From: Romain Guy <romainguy@google.com>
+Date: Thu, 16 Mar 2017 18:39:20 +0000
+Subject: [PATCH 22/43] Native fix: get rid of IGraphicBufferAlloc use
+
+---
+ libs/gui/GLConsumer.cpp           | 28 ++++++++--------------------
+ libs/gui/include/gui/GLConsumer.h |  5 -----
+ 2 files changed, 8 insertions(+), 25 deletions(-)
+
+diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
+index b84f901b2..394421bc5 100644
+--- a/libs/gui/GLConsumer.cpp
++++ b/libs/gui/GLConsumer.cpp
+@@ -188,10 +188,6 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
+     ALOGE_IF(!mBlitEngine, "\nCannot open copybit mBlitEngine=%p", mBlitEngine);
+ 
+     sp<ISurfaceComposer> composer(ComposerService::getComposerService());
+-          mGraphicBufferAlloc = composer->createGraphicBufferAlloc();
+-    if (mGraphicBufferAlloc == 0) {
+-        GLC_LOGE("createGraphicBufferAlloc() failed in SurfaceTexture()");
+-    }
+ #endif
+ 
+     mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
+@@ -235,10 +231,6 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
+     ALOGE_IF(!mBlitEngine, "\nCannot open copybit mBlitEngine=%p", mBlitEngine);
+ 
+     sp<ISurfaceComposer> composer(ComposerService::getComposerService());
+-          mGraphicBufferAlloc = composer->createGraphicBufferAlloc();
+-    if (mGraphicBufferAlloc == 0) {
+-        GLC_LOGE("createGraphicBufferAlloc() failed in SurfaceTexture()");
+-    }
+ #endif
+ 
+     mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
+@@ -514,27 +506,23 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferItem& item,
+         }
+         /* allocate convert buffer if needed */
+         if (mBlitSlots[mNextBlitSlot] == NULL) {
+-            if (mGraphicBufferAlloc == NULL) {
+-
+-                /* For some reason this is not being initialized in the constructor.
+-                       So, we will create it here if it's null. */
+-                sp<ISurfaceComposer> composer(ComposerService::getComposerService());
+-                mGraphicBufferAlloc = composer->createGraphicBufferAlloc();
+-            }
+             status_t res;
+             sp<GraphicBuffer> srcBuf = mSlots[slot].mGraphicBuffer;
+-            sp<GraphicBuffer> dstBuf(mGraphicBufferAlloc->createGraphicBuffer(srcBuf->getWidth(),
+-                                                                              srcBuf->getHeight(),
+-                                                                              PIXEL_FORMAT_RGBA_8888,
+-                                                                              srcBuf->getUsage(),
+-                                                                              &res));
++            sp<GraphicBuffer> dstBuf = new GraphicBuffer(srcBuf->getWidth(),
++                                                         srcBuf->getHeight(),
++                                                         PIXEL_FORMAT_RGBA_8888,
++                                                         srcBuf->getUsage());
+             if (dstBuf == 0) {
+                 GLC_LOGE("updateAndRelease: createGraphicBuffer failed");
+                 return NO_MEMORY;
+             }
++
++            res = dstBuf->initCheck();
++
+             if (res != NO_ERROR) {
+                 GLC_LOGW("updateAndRelease: createGraphicBuffer error=%#04x", res);
+             }
++
+             mBlitSlots[mNextBlitSlot] = dstBuf;
+         }
+ 
+diff --git a/libs/gui/include/gui/GLConsumer.h b/libs/gui/include/gui/GLConsumer.h
+index 6ddb979a0..daa2ad16c 100644
+--- a/libs/gui/include/gui/GLConsumer.h
++++ b/libs/gui/include/gui/GLConsumer.h
+@@ -33,7 +33,6 @@
+ 
+ #ifdef STE_HARDWARE
+ #include <hardware/copybit.h>
+-#include <gui/IGraphicBufferAlloc.h>
+ #endif
+ 
+ namespace android {
+@@ -527,10 +526,6 @@ private:
+     // case color transform is needed before the EGL image is created.
+     copybit_device_t* mBlitEngine;
+ 
+-    // mGraphicBufferAlloc is the connection to SurfaceFlinger that is used to
+-    // allocate new GraphicBuffer objects.
+-    sp<IGraphicBufferAlloc> mGraphicBufferAlloc;
+-
+     // mBlitSlots stores the buffers that have been allocated int the case
+     // of color transform. It is initialised to null pointer,s and gets
+     // filled in with the result of GLConsumer::updateAndReleaseLocked
+-- 
+2.11.0
+

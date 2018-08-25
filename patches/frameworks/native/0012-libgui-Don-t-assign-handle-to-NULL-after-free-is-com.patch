@@ -1,0 +1,30 @@
+From 1ca5aa3e6006d81cd3b79c62583689eb8f896e62 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 12/43] libgui: Don't assign handle to NULL after free is
+ common
+
+Reportedly Mali and PowerVR GPUs are crashing when setting handle to NULL
+So we will set a flag for the devices that might need this aswell
+---
+ libs/ui/GraphicBuffer.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 17722d6ed..6aa8fc3ab 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -108,7 +108,10 @@ void GraphicBuffer::free_handle()
+         GraphicBufferAllocator& allocator(GraphicBufferAllocator::get());
+         allocator.free(handle);
+     }
++
++#ifndef EGL_NEEDS_HANDLE
+     handle = NULL;
++#endif
+ }
+ 
+ status_t GraphicBuffer::initCheck() const {
+-- 
+2.11.0
+

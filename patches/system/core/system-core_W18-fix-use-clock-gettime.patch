@@ -1,7 +1,7 @@
 From 315bd1df3749b94f11cac098cce7510f5bf828ca Mon Sep 17 00:00:00 2001
 From: Greg Hackmann <ghackmann@google.com>
 Date: Mon, 25 Apr 2016 10:39:55 -0700
- Revert "SystemClock: elapsedRealtimeNano() should use clock_gettime() on Linux"
+Subject: [PATCH] Revert "SystemClock: elapsedRealtimeNano() should use clock_gettime() on Linux"
 
 diff --git a/libutils/SystemClock.cpp b/libutils/SystemClock.cpp
 index b4a25f2..a0397a0 100644

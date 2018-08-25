@@ -1,0 +1,31 @@
+From 5f8ded5a7c5c378c3881e9ae1cf20a09303745ba Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 38/43] EGL: call vendor eglCreateWindowSurface with NULL
+ attrib_list
+
+Old adreno (200) gpu EGL libraries fail to create window surface
+when non-empty attrib list is passed, which cause fatal error
+in system ui process. Passing NULL prevents the crash.
+
+This change is intended only for compatibility with the old gpu libraries.
+---
+ opengl/libs/EGL/eglApi.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
+index a67f330f1..59bb53645 100644
+--- a/opengl/libs/EGL/eglApi.cpp
++++ b/opengl/libs/EGL/eglApi.cpp
+@@ -738,7 +738,7 @@ EGLSurface eglCreateWindowSurface(  EGLDisplay dpy, EGLConfig config,
+         anw->setSwapInterval(anw, 1);
+ 
+         EGLSurface surface = cnx->egl.eglCreateWindowSurface(
+-                iDpy, config, window, attrib_list);
++                iDpy, config, window, NULL);
+         if (surface != EGL_NO_SURFACE) {
+             egl_surface_t* s =
+                     new egl_surface_t(dp.get(), config, window, surface, colorSpace, cnx);
+-- 
+2.11.0
+

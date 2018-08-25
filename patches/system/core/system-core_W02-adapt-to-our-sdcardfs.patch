@@ -1,7 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-sdcard: adapt to our sdcardfs implementation 
+Subject: [PATCH] sdcard: adapt to our sdcardfs implementation
 
 diff --git a/sdcard/Android.mk b/sdcard/Android.mk
 index 09a25f0..a0397a0 100644

@@ -2,6 +2,7 @@ From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 1/2] Telephony: HACK: enable WCDMA only setting
+
  Samsung stock allows WCDMA only
 
 diff --git a/res/values/strings.xml b/res/values/strings.xml

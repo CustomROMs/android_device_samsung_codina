@@ -1,7 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-MTP Dirty Hack (use mtp as default after connect to usb) (2/3) 
+Subject: [PATCH] MTP Dirty Hack (use mtp as default after connect to usb) (2/3)
 
 diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
 new file mode 100644

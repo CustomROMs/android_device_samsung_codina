@@ -1,7 +1,7 @@
 From 465f6fd6565ea20fdccfa1fad251e160de2a8756 Mon Sep 17 00:00:00 2001
 From: Matt Mower <mowerm@gmail.com>
 Date: Sun, 9 Jul 2017 20:44:17 +0530
-Keyguard: Forward port lockscreen quick unlock (2/2) 
+Subject: [PATCH] Keyguard: Forward port lockscreen quick unlock (2/2) 
 
 diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
 index 090f220..1189093 100644

@@ -1,7 +1,7 @@
 From 426d5c5df0a2a156d4948c9178ba25a7bb2e300b Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 17 Sep 2016 07:11:54 +0700
-Fix wifi autoconnection [3/3]
+Subject: [PATCH] Fix wifi autoconnection [3/3]
 
 diff --git a/service/java/com/android/server/wifi/Clock.java b/service/java/com/android/server/wifi/Clock.java
 index 00ff02e..201b84c 100644

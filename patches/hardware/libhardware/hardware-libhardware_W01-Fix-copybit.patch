@@ -1,6 +1,7 @@
 From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
+Fix copybit
 diff --git a/include/hardware/gralloc1.h b/include/hardware/gralloc1.h
 index 4845010..67adcca 100644
 --- a/include/hardware/gralloc1.h

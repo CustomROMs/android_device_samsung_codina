@@ -1,7 +1,8 @@
-From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Mon, 20 Aug 2018 22:57:43 +0300
- libril: Add legacy support for getDataRegistrationStateResponse
+From 7bfdb1b5c552e98271d386a24f299776ef8ba575 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Wed, 27 Dec 2017 17:06:50 +0100
+Subject: [PATCH] libril: Add legacy support for getDataRegistrationStateResponse
+
  libril: Add legacy support for getVoiceRegistrationStateResponse
   Legacy rils don't provide the following properties:
  * readonDataDenied * maxDataCalls

@@ -1,7 +1,7 @@
 From 48d81b791b4ad9006114d4758f6b22d36c55851f Mon Sep 17 00:00:00 2001
 From: Bjorn Mork <bjorn@mork.no>
 Date: Sun, 4 Jan 2015 21:21:42 +0100
-libril: Add Samsung proprietary
+Subject: [PATCH] libril: Add Samsung proprietary requests
 
 diff --git a/include/telephony/ril.h b/include/telephony/ril.h
 index 0c99596..d49d5dd 100644

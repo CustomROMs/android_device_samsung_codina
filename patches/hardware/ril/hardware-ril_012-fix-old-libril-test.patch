@@ -2,6 +2,7 @@ From e4e7beb3285d402da96c96a9b86263259873693b Mon Sep 17 00:00:00 2001
 From: djeman <djemouli@gmail.com>
 Date: Tue, 24 Oct 2017 02:11:37 +0200
 Subject: [PATCH] libril: fix old libril test
+
  Fix invalid response NULL old ril
 
 diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp

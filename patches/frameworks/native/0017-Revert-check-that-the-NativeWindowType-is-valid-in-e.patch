@@ -1,0 +1,50 @@
+From aa96ea1a51e1b4145055eb07ef359de0e5db5467 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 17/43] Revert "check that the NativeWindowType is valid in
+ eglCreateWindowSurface"
+
+---
+ libs/gui/Surface.cpp       |  4 ----
+ opengl/libs/EGL/eglApi.cpp | 10 ----------
+ 2 files changed, 14 deletions(-)
+
+diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
+index 5b1c599a1..ba09355aa 100644
+--- a/libs/gui/Surface.cpp
++++ b/libs/gui/Surface.cpp
+@@ -871,10 +871,6 @@ int Surface::query(int what, int* value) const {
+                 *value = mFrameTimestampsSupportsPresent ? 1 : 0;
+                 return NO_ERROR;
+             }
+-            case NATIVE_WINDOW_IS_VALID: {
+-                *value = mGraphicBufferProducer != nullptr ? 1 : 0;
+-                return NO_ERROR;
+-            }
+         }
+     }
+     return mGraphicBufferProducer->query(what, value);
+diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
+index d2d072e85..a67f330f1 100644
+--- a/opengl/libs/EGL/eglApi.cpp
++++ b/opengl/libs/EGL/eglApi.cpp
+@@ -686,16 +686,6 @@ EGLSurface eglCreateWindowSurface(  EGLDisplay dpy, EGLConfig config,
+     if (dp) {
+         EGLDisplay iDpy = dp->disp.dpy;
+ 
+-        if (!window) {
+-            return setError(EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
+-        }
+-
+-        int value = 0;
+-        window->query(window, NATIVE_WINDOW_IS_VALID, &value);
+-        if (!value) {
+-            return setError(EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
+-        }
+-
+         int result = native_window_api_connect(window, NATIVE_WINDOW_API_EGL);
+         if (result < 0) {
+             ALOGE("eglCreateWindowSurface: native_window_api_connect (win=%p) "
+-- 
+2.11.0
+
