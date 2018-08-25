@@ -1,0 +1,26 @@
+From caecf94b368250e5c7255b645149fe1e4e5b6909 Mon Sep 17 00:00:00 2001
+From: LuK1337 <priv.luk@gmail.com>
+Date: Tue, 20 Sep 2016 14:52:58 +0200
+Subject: [PATCH] Handle IllegalArgumentException
+
+In some cases startInputInnerLocked() throws
+IllegalArgumentException which needs to be handle
+
+diff --git a/services/core/java/com/android/server/InputMethodManagerService.java b/services/core/java/com/android/server/InputMethodManagerService.java
+index a16fcd2..2741152 100644
+--- a/services/core/java/com/android/server/InputMethodManagerService.java
++++ b/services/core/java/com/android/server/InputMethodManagerService.java
+@@ -1865,7 +1865,12 @@ InputBindResult startInputUncheckedLocked(@NonNull ClientState cs, IInputContext
+             }
+         }
+ 
+-        return startInputInnerLocked();
++        try {
++            return startInputInnerLocked();
++        } catch (RuntimeException e) {
++            Slog.w(TAG, "Unexpected exception", e);
++            return null;
++        }
+     }
+ 
+     InputBindResult startInputInnerLocked() {

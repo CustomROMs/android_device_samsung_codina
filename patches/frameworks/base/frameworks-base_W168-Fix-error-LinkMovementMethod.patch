@@ -1,0 +1,47 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] A logical error LinkMovementMethod.
+
+Layout.getLineForVertical will return the bottom line.
+So, this will cause an issue, if the bottom line has a link, then you
+touch area under the text and under the link(but still in textview),
+links[0].onClick will be call.
+
+diff --git a/core/java/android/text/method/LinkMovementMethod.java b/core/java/android/text/method/LinkMovementMethod.java
+index 31ed549..30f2715 100644
+--- a/core/java/android/text/method/LinkMovementMethod.java
++++ b/core/java/android/text/method/LinkMovementMethod.java
+@@ -206,8 +206,11 @@
+             y += widget.getScrollY();
+ 
+             Layout layout = widget.getLayout();
+-            int line = layout.getLineForVertical(y);
+-            int off = layout.getOffsetForHorizontal(line, x);
++            int line = getLineForVertical(layout, y);
++            int off = -1;
++            if (line >= 0) {
++                off = layout.getOffsetForHorizontal(line, x);
++            }
+ 
+             ClickableSpan[] links = buffer.getSpans(off, off, ClickableSpan.class);
+ 
+@@ -228,6 +231,18 @@
+         return super.onTouchEvent(widget, buffer, event);
+     }
+ 
++    private int getLineForVertical(Layout layout, int vertical) {
++        int lineCount = layout.getLineCount() - 1;
++        if (lineCount < 0) return -1;
++        int bottom = layout.getLineBottom(lineCount);
++        int top = layout.getLineTop(0);
++        if (bottom < vertical || top > vertical) {
++            return -1;
++        }
++
++       return layout.getLineForVertical(vertical);
++    }
++
+     @Override
+     public void initialize(TextView widget, Spannable text) {
+         Selection.removeSelection(text);

@@ -1,8 +1,13 @@
-diff --git a/prebuilt/common/etc/init.local.rc b/prebuilt/common/etc/init.local.rc
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+diff --git a/prebuilt/common/etc/init/lineage-iosched.rc b/prebuilt/common/etc/init/lineage-iosched.rc
 index de3067a..1391772 100644
---- a/prebuilt/common/etc/init.local.rc
-+++ b/prebuilt/common/etc/init.local.rc
-@@ -105,4 +105,7 @@
+--- a/prebuilt/common/etc/init/lineage-iosched.rc
++++ b/prebuilt/common/etc/init/lineage-iosched.rc
+@@ -15,8 +15,11 @@
+ 
+ on boot
      chown system system /sys/block/mmcblk0/queue/scheduler
 -    chmod 0664 /sys/block/mmcblk0/queue/scheduler
 -    restorecon /sys/block/mmcblk0/queue/scheduler
@@ -12,3 +17,5 @@ index de3067a..1391772 100644
 +    restorecon /sys/block/mmcblk0/queue/scheduler
 +    restorecon /sys/block/mmcblk1/queue/scheduler
  
+     chown system system /sys/block/sda/queue/scheduler
+     chmod 0664 /sys/block/sda/queue/scheduler

@@ -1,0 +1,58 @@
+From 2a361eb017087bae3b5a5364400bb759c187a274 Mon Sep 17 00:00:00 2001
+From: l10n daemon script <scripty@kde.org>
+Date: Sat, 6 Jan 2018 06:11:04 +0100
+Subject: [PATCH] Fix sorting Applications
+Subject: [PATCH] Enable fast scroll for all app list views Why? - Why not?
+
+diff --git a/src/com/android/settings/applications/ManageApplications.java b/src/com/android/settings/applications/ManageApplications.java
+index 398d697..c3aaf95 100644
+--- a/src/com/android/settings/applications/ManageApplications.java
++++ b/src/com/android/settings/applications/ManageApplications.java
+@@ -683,10 +683,10 @@
+         }
+         mOptionsMenu.findItem(R.id.advanced).setVisible(false);
+ 
+-        mOptionsMenu.findItem(R.id.sort_order_alpha).setVisible( 
++        mOptionsMenu.findItem(R.id.sort_order_alpha).setVisible(
+                 (mListType == LIST_TYPE_STORAGE || mListType == LIST_TYPE_MAIN)
+                 && mSortOrder != R.id.sort_order_alpha);
+-        mOptionsMenu.findItem(R.id.sort_order_size).setVisible( 
++        mOptionsMenu.findItem(R.id.sort_order_size).setVisible(
+                 (mListType == LIST_TYPE_STORAGE || mListType == LIST_TYPE_MAIN)
+                 && mSortOrder != R.id.sort_order_size);
+ 
+diff --git a/res/layout/manage_applications_apps.xml b/res/layout/manage_applications_apps.xml
+index e4ec871..d52671d 100644
+--- a/res/layout/manage_applications_apps.xml
++++ b/res/layout/manage_applications_apps.xml
+@@ -51,7 +51,7 @@
+                         android:layout_height="match_parent"
+                         android:gravity="center"
+                         android:text="@string/no_applications"
+-                        android:textAppearance="?android:attr/textAppearanceLarge" />
++                        android:textAppearance="?android:attr/textAppearanceMedium" />
+ 
+             </FrameLayout>
+ 
+diff --git a/src/com/android/settings/applications/ManageApplications.java b/src/com/android/settings/applications/ManageApplications.java
+index 76129b7..b52dbc2 100644
+--- a/src/com/android/settings/applications/ManageApplications.java
++++ b/src/com/android/settings/applications/ManageApplications.java
+@@ -506,7 +506,7 @@
+             case LIST_TYPE_PHOTOGRAPHY:
+                 return mSortOrder == R.id.sort_order_alpha;
+             default:
+-                return false;
++                return true;
+         }
+     }
+ 
+@@ -1159,7 +1159,7 @@
+         }
+ 
+         private void rebuildSections() {
+-            if (mEntries != null && mManageApplications.mListView.isFastScrollEnabled()) {
++            if (mEntries != null && mManageApplications.isFastScrollEnabled()) {
+                 // Rebuild sections
+                 if (mIndex == null) {
+                     LocaleList locales = mContext.getResources().getConfiguration().getLocales();

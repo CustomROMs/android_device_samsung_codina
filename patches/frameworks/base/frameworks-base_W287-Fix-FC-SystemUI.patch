@@ -1,0 +1,21 @@
+From ee6d64772ec9c52a9b52b7b66aae3498ba78c002 Mon Sep 17 00:00:00 2001
+From: Weijie Wang <weijiew@codeaurora.org>
+Date: Sun, 11 Feb 2018 16:35:22 +0800
+Subject: [PATCH] SystemUI: Fix FC issue
+
+Root case:Sometime during stress test,the PendingIntent of next alarm is null
+Solution: avoid referring null PendingIntent
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/QSFooterImpl.java b/packages/SystemUI/src/com/android/systemui/qs/QSFooterImpl.java
+index ffc30ce61d9f..dca08126d36b 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/QSFooterImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/QSFooterImpl.java
+@@ -374,7 +374,7 @@ public void onClick(View v) {
+         } else if (v == mDateTimeGroup) {
+             Dependency.get(MetricsLogger.class).action(ACTION_QS_DATE,
+                     mNextAlarm != null);
+-            if (mNextAlarm != null) {
++            if (mNextAlarm != null && mNextAlarm.getShowIntent() != null) {
+                 PendingIntent showIntent = mNextAlarm.getShowIntent();
+                 mActivityStarter.startPendingIntentDismissingKeyguard(showIntent);
+             } else {

@@ -1,14 +1,15 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
 diff --git a/rootdir/init.rc b/rootdir/init.rc
 index b4a25fe..a0397a0 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -10,6 +10,9 @@
+@@ -10,6 +10,7 @@
  import /vendor/etc/init/hw/init.${ro.hardware}.rc
  import /init.usb.configfs.rc
  import /init.${ro.zygote}.rc
 +import /init.kernel.rc
-+# Include lineage extra init file
-+import /init.lineage.rc
  
  on early-init
      # Set init and its forked children's oom_adj.

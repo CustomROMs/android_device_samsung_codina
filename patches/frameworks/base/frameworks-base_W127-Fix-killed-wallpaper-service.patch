@@ -1,0 +1,68 @@
+From aed29984c795bfd2cec3f0fd0d983a85da8eaf80 Mon Sep 17 00:00:00 2001
+From: Weijie Wang <weijiew@codeaurora.org>
+Date: Tue, 3 Apr 2018 17:17:24 +0800
+Subject: [PATCH] Explicitly restart the killed wallpaper service
+
+Symptom:
+Live wallpaper setting was reset when a wallpaper service was killed
+by Lmk. The wallpaper fell back to the default image wallpaper. It's
+a black bitmap.
+
+Root cause:
+When restarting wallpaper service takes more than 10 seconds, it's
+treated as a bad wallpaper. The wallpaper setting is reset to remove
+the bad wallpaper.
+
+This is not a suitable solution under the low memory situation.
+Multiple processes are killed by Lmk at one time. Killed services are
+automatically restarted by AMS with a few seconds interval.
+The restart interval is increased by a factor of the number of killed
+services. Sometimes, it takes more than 1 minute.
+
+Solution:
+When a wallpaper service is killed, WallpaperManagerService requests
+restarting the service immediately. It can ignore the restart interval.
+
+diff --git a/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java b/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
+index c6a7c45ea54..1c6baef2bc0 100644
+--- a/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
++++ b/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
+@@ -847,6 +847,17 @@
+             }
+         }
+ 
++        public void scheduleTimeoutLocked() {
++            // If we didn't reset it right away, do so after we couldn't connect to
++            // it for an extended amount of time to avoid having a black wallpaper.
++            final Handler fgHandler = FgThread.getHandler();
++            fgHandler.removeCallbacks(mResetRunnable);
++            fgHandler.postDelayed(mResetRunnable, WALLPAPER_RECONNECT_TIMEOUT_MS);
++            if (DEBUG_LIVE) {
++                Slog.i(TAG, "Started wallpaper reconnect timeout for " + mWallpaper.wallpaperComponent);
++            }
++        }
++
+         private void processDisconnect(final ServiceConnection connection) {
+             synchronized (mLock) {
+                 // The wallpaper disappeared.  If this isn't a system-default one, track
+@@ -871,13 +882,13 @@
+                         } else {
+                             mWallpaper.lastDiedTime = SystemClock.uptimeMillis();
+ 
+-                            // If we didn't reset it right away, do so after we couldn't connect to
+-                            // it for an extended amount of time to avoid having a black wallpaper.
+-                            final Handler fgHandler = FgThread.getHandler();
+-                            fgHandler.removeCallbacks(mResetRunnable);
+-                            fgHandler.postDelayed(mResetRunnable, WALLPAPER_RECONNECT_TIMEOUT_MS);
+-                            if (DEBUG_LIVE) {
+-                                Slog.i(TAG, "Started wallpaper reconnect timeout for " + wpService);
++                            clearWallpaperComponentLocked(mWallpaper);
++                            if (bindWallpaperComponentLocked(
++                                    wpService, false, false, mWallpaper, null)) {
++                                mWallpaper.connection.scheduleTimeoutLocked();
++                            } else {
++                                Slog.w(TAG, "Reverting to built-in wallpaper!");
++                                clearWallpaperLocked(true, FLAG_SYSTEM, mWallpaper.userId, null);
+                             }
+                         }
+                         final String flattened = wpService.flattenToString();

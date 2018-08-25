@@ -1,0 +1,112 @@
+From dbbb65bd61bcbb8c3297207a2e7011e48a9484fa Mon Sep 17 00:00:00 2001
+From: maxwen <max.weninger@gmail.com>
+Date: Wed, 21 Feb 2018 02:01:50 +0100
+Subject: [PATCH] [1/2] base: add USB default config
+ reuse the dev settings USB setting to define a connect default USB mode
+Subject: [PATCH] base: fix charging only USB config notification handling
+ even if it looks wrong this is needed else there will
+ be no notification when charging only
+
+ google treats the charging only state as a bastard
+ mtp without really enabled to make sure the notification stays
+ 
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 31b667d..bbad2d2 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -10321,6 +10321,11 @@
+                 "location_settings_link_to_permissions_enabled";
+ 
+         /**
++         * @hide
++         */
++        public static final String USB_DEFAULT_CONFIGURATION = "usb_default_configuration";
++
++        /**
+          * Flag to enable use of RefactoredBackupManagerService.
+          *
+          * @hide
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index 7437332..e99ea90 100644
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -171,6 +171,7 @@
+     private Intent mBroadcastedIntent;
+     private boolean mPendingBootBroadcast;
+     private static Set<Integer> sBlackListedInterfaces;
++    private boolean mManualModeChange;
+ 
+     static {
+         sBlackListedInterfaces = new HashSet<>();
+@@ -992,7 +993,9 @@
+                     break;
+                 case MSG_SET_CURRENT_FUNCTIONS:
+                     String functions = (String) msg.obj;
++                    mManualModeChange = true;
+                     setEnabledFunctions(functions, false, msg.arg1 == 1);
++                    mManualModeChange = false;
+                     break;
+                 case MSG_UPDATE_USER_RESTRICTIONS:
+                     // Restart the USB stack if USB transfer is enabled but no longer allowed.
+@@ -1278,18 +1281,33 @@
+             }
+         }
+ 
+-        private String getDefaultFunctions() {
++        private String getDefaultFunctionsSystem() {
+             String func = SystemProperties.get(getPersistProp(true),
+                     UsbManager.USB_FUNCTION_NONE);
+             // if ADB is enabled, reset functions to ADB
+-            // else enable MTP as usual.
+             if (UsbManager.containsFunction(func, UsbManager.USB_FUNCTION_ADB)) {
+                 return UsbManager.USB_FUNCTION_ADB;
+             } else {
+-                return UsbManager.USB_FUNCTION_MTP;
++                return UsbManager.USB_FUNCTION_NONE;
+             }
+         }
+ 
++        private String getDefaultFunctions() {
++            if (mManualModeChange) {
++                return getDefaultFunctionsSystem();
++            }
++            String func = Settings.Global.getString(mContentResolver,
++                    Settings.Global.USB_DEFAULT_CONFIGURATION);
++            if (func == null) {
++                return getDefaultFunctionsSystem();
++            }
++            if (DEBUG) Slog.i(TAG, "getDefaultFunctions settings = " + func);
++            if (!func.equals(UsbManager.USB_FUNCTION_NONE)) {
++                mUsbDataUnlocked = true;
++            }
++            return func;
++        }
++
+         public void dump(IndentingPrintWriter pw) {
+             pw.println("USB Device State:");
+             pw.println("  mCurrentFunctions: " + mCurrentFunctions);
+diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+index e99ea90..7091f7c 100644
+--- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
++++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
+@@ -1288,7 +1288,7 @@
+             if (UsbManager.containsFunction(func, UsbManager.USB_FUNCTION_ADB)) {
+                 return UsbManager.USB_FUNCTION_ADB;
+             } else {
+-                return UsbManager.USB_FUNCTION_NONE;
++                return UsbManager.USB_FUNCTION_MTP;
+             }
+         }
+ 
+@@ -1302,7 +1302,10 @@
+                 return getDefaultFunctionsSystem();
+             }
+             if (DEBUG) Slog.i(TAG, "getDefaultFunctions settings = " + func);
+-            if (!func.equals(UsbManager.USB_FUNCTION_NONE)) {
++            if (func.equals(UsbManager.USB_FUNCTION_NONE)) {
++                mUsbDataUnlocked = false;
++                func = UsbManager.USB_FUNCTION_MTP;
++            } else {
+                 mUsbDataUnlocked = true;
+             }
+             return func;

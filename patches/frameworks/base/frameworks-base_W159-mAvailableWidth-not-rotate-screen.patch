@@ -1,0 +1,22 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Google issue: 64372366 the mAvailableWidth is not right when rotate screen.
+
+Referring to 64372366 for detailed information. After rotating the 
+screen to vertical, the mAvailiableWidth still is the value of 
+landscape. But the actual value is roght. So we use metrics.widthPixels.
+
+diff --git a/core/java/com/android/internal/policy/DecorView.java b/core/java/com/android/internal/policy/DecorView.java
+index 8dfdc6a..6685c5f 100644
+--- a/core/java/com/android/internal/policy/DecorView.java
++++ b/core/java/com/android/internal/policy/DecorView.java
+@@ -735,7 +735,7 @@
+                 if (tv.type == TypedValue.TYPE_DIMENSION) {
+                     min = (int)tv.getDimension(metrics);
+                 } else if (tv.type == TypedValue.TYPE_FRACTION) {
+-                    min = (int)tv.getFraction(mAvailableWidth, mAvailableWidth);
++                    min = (int)tv.getFraction(metrics.widthPixels, metrics.widthPixels);
+                 } else {
+                     min = 0;
+                 }

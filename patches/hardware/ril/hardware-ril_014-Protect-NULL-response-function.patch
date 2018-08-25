@@ -1,0 +1,31 @@
+From 524fe6a785bbbf75452c1088143fafb43e4bbe2a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?D=2E=20Andrei=20M=C4=83ce=C8=99?= <dmaces@nd.edu>
+Date: Sat, 7 Oct 2017 18:07:00 +0300
+Subject: [PATCH] libril: Protect against NULL unsolicited response function
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RIL_UNSOL_DC_RT_INFO_CHANGED's responseFunction() NULL, without
+protecting against it in RIL_onUnsolicitedResponse(), thus crash-
+ing at least hammerhead's RIL stack upon mobile data connection.
+
+diff --git a/libril/ril.cpp b/libril/ril.cpp
+index 6d375ca..23595d9 100644
+--- a/libril/ril.cpp
++++ b/libril/ril.cpp
+@@ -843,9 +843,11 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
+     int rwlockRet = pthread_rwlock_rdlock(radioServiceRwlockPtr);
+     assert(rwlockRet == 0);
+ 
+-    ret = pRI->responseFunction(
+-            (int) soc_id, responseType, 0, RIL_E_SUCCESS, const_cast<void*>(data),
+-            datalen);
++    if (pRI->responseFunction) {
++        ret = pRI->responseFunction(
++                (int) soc_id, responseType, 0, RIL_E_SUCCESS, const_cast<void*>(data),
++                datalen);
++    }
+ 
+     rwlockRet = pthread_rwlock_unlock(radioServiceRwlockPtr);
+     assert(rwlockRet == 0);

@@ -1,0 +1,22 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] PublicVolume: don't override mFsLabel
+
+diff --git a/PublicVolume.cpp b/PublicVolume.cpp
+index 8faf00d..f6caf63 100644
+--- a/PublicVolume.cpp
++++ b/PublicVolume.cpp
+@@ -65,10 +65,10 @@ PublicVolume::~PublicVolume() {
+ }
+ 
+ status_t PublicVolume::readMetadata() {
+-    status_t res = ReadMetadataUntrusted(mDevPath, mFsType, mFsUuid, mFsLabel);
++    std::string unused;
++    status_t res = ReadMetadataUntrusted(mDevPath, mFsType, mFsUuid, unused);
+     notifyEvent(ResponseCode::VolumeFsTypeChanged, mFsType);
+     notifyEvent(ResponseCode::VolumeFsUuidChanged, mFsUuid);
+-    notifyEvent(ResponseCode::VolumeFsLabelChanged, mFsLabel);
+     return res;
+ }
+ 

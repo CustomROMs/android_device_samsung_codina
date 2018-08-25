@@ -1,0 +1,18 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] STE AV Fix [2]
+diff --git a/media/ndk/NdkImageReader.cpp b/media/ndk/NdkImageReader.cpp
+index 85ba920..e347910 100644
+--- a/media/ndk/NdkImageReader.cpp
++++ b/media/ndk/NdkImageReader.cpp
+@@ -149,7 +149,9 @@
+     msg->setPointer(
+         AImageReader::kCallbackFpKey, (void*) mListener.onBufferRemoved);
+     msg->setPointer(AImageReader::kContextKey, mListener.context);
++#ifndef STE_HARDWARE
+     msg->setObject(AImageReader::kGraphicBufferKey, gBuffer);
++#endif
+     msg->post();
+ }
+ 

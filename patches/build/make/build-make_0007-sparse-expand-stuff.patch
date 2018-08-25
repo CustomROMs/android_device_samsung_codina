@@ -1,0 +1,23 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] build: get rid of the sparse expand stuff
+
+* i don't see a reason why we are doing this because we never deal
+with flashing system img rawly
+* This will put useless write on ssd..
+* we don't have space on ssd
+
+diff --git a/tools/releasetools/build_image.py b/tools/releasetools/build_image.py
+index 94a9fda..358d718 100755
+--- a/tools/releasetools/build_image.py
++++ b/tools/releasetools/build_image.py
+@@ -444,7 +444,7 @@
+     build_command = [prop_dict["ext_mkuserimg"]]
+     if "extfs_sparse_flag" in prop_dict:
+       build_command.append(prop_dict["extfs_sparse_flag"])
+-      run_fsck = True
++      #run_fsck = True
+     build_command.extend([in_dir, out_file, fs_type,
+                           prop_dict["mount_point"]])
+     build_command.append(prop_dict["partition_size"])

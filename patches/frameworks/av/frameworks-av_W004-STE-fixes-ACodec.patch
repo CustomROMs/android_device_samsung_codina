@@ -1,0 +1,106 @@
+From 8d2c0d36d6826ddc3114801c599619d3f2932f0a Mon Sep 17 00:00:00 2001
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Sun, 25 Sep 2016 13:32:46 -0700
+Subject: [PATCH] STE AV Fix [3]
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 8909bda..15ab2df 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1032,11 +1032,11 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
+             nativeWindow,
+             def.format.video.nFrameWidth,
+             def.format.video.nFrameHeight,
+-//#ifdef STE_HARDWARE
+-            //OMXCodec::OmxToHALFormat(def.format.video.eColorFormat),
+-//#else
++#ifdef STE_HARDWARE
++            ACodec::OmxToHALFormat(def.format.video.eColorFormat),
++#else
+             def.format.video.eColorFormat,
+-//#endif
++#endif
+             mRotationDegrees,
+             usage,
+             reconnect);
+@@ -1136,19 +1136,17 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+ }
+ 
+ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+-    // This method only handles the non-metadata mode (or simulating legacy
+-    // mode with metadata, which is transparent to ACodec).
+-    CHECK(!storingMetadataInDecodedBuffers());
+-
+     OMX_U32 bufferCount, bufferSize, minUndequeuedBuffers;
+     status_t err = configureOutputBuffersFromNativeWindow(
+             &bufferCount, &bufferSize, &minUndequeuedBuffers, true /* preregister */);
+     if (err != 0)
+         return err;
+     mNumUndequeuedBuffers = minUndequeuedBuffers;
+ 
+-    static_cast<Surface*>(mNativeWindow.get())
+-            ->getIGraphicBufferProducer()->allowAllocation(true);
++    if (!storingMetadataInDecodedBuffers()) {
++        static_cast<Surface*>(mNativeWindow.get())
++                ->getIGraphicBufferProducer()->allowAllocation(true);
++    }
+ 
+     ALOGV("[%s] Allocating %u buffers from a native window of size %u on "
+          "output port",
+@@ -1220,8 +1218,10 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+         }
+     }
+ 
+-    static_cast<Surface*>(mNativeWindow.get())
+-            ->getIGraphicBufferProducer()->allowAllocation(false);
++    if (!storingMetadataInDecodedBuffers()) {
++        static_cast<Surface*>(mNativeWindow.get())
++                ->getIGraphicBufferProducer()->allowAllocation(false);
++    }
+ 
+     return err;
+ }
+@@ -1227,8 +1227,9 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+ }
+ 
+ status_t ACodec::allocateOutputMetadataBuffers() {
++#ifndef STE_HARDWARE
+     CHECK(storingMetadataInDecodedBuffers());
+-
++#endif
+     OMX_U32 bufferCount, bufferSize, minUndequeuedBuffers;
+     status_t err = configureOutputBuffersFromNativeWindow(
+             &bufferCount, &bufferSize, &minUndequeuedBuffers,
+@@ -7060,6 +7065,20 @@ bool ACodec::ExecutingState::onMessageReceived(const sp<AMessage> &msg) {
+     return handled;
+ }
+ 
++#ifdef STE_HARDWARE
++uint32_t ACodec::OmxToHALFormat(OMX_COLOR_FORMATTYPE omxValue) {
++    switch (omxValue) {
++        case OMX_STE_COLOR_FormatYUV420PackedSemiPlanarMB:
++            return HAL_PIXEL_FORMAT_YCBCR42XMBN;
++        case OMX_COLOR_FormatYUV420Planar:
++            return HAL_PIXEL_FORMAT_YCbCr_420_P;
++        default:
++            ALOGI("Unknown OMX pixel format (0x%X), passing it on unchanged", omxValue);
++            return omxValue;
++    }
++}
++#endif
++
+ status_t ACodec::setParameters(const sp<AMessage> &params) {
+     int32_t videoBitrate;
+     if (params->findInt32("video-bitrate", &videoBitrate)) {
+diff --git a/media/libstagefright/include/media/stagefright/ACodec.h b/media/libstagefright/include/media/stagefright/ACodec.h
+index 22b8657..e448b04 100644
+--- a/media/libstagefright/include/media/stagefright/ACodec.h
++++ b/media/libstagefright/include/media/stagefright/ACodec.h
+@@ -552,6 +552,7 @@ private:
+ 
+     status_t requestIDRFrame();
+     status_t setParameters(const sp<AMessage> &params);
++    uint32_t OmxToHALFormat(OMX_COLOR_FORMATTYPE omxValue);
+ 
+     // set vendor extension parameters specified in params that are supported by the codec
+     status_t setVendorParameters(const sp<AMessage> &params);

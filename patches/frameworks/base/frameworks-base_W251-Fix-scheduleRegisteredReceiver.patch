@@ -1,0 +1,37 @@
+From 6370ecb9d3e1e0ebb88952defee899b4d6b2d0a5 Mon Sep 17 00:00:00 2001
+From: riddle_hsu <riddle_hsu@htc.com>
+Date: Sat, 24 Oct 2015 01:49:50 +0800
+Subject: [PATCH] Fix scheduleRegisteredReceiver
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 890b754..61d3687 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -1021,16 +1021,24 @@ public void dumpService(FileDescriptor fd, IBinder servicetoken, String[] args)
+         public void scheduleRegisteredReceiver(IIntentReceiver receiver, Intent intent,
+                 int resultCode, String dataStr, Bundle extras, boolean ordered,
+                 boolean sticky, int sendingUser, int processState) throws RemoteException {
++            RemoteException remoteException = null;
+             if (!Binder.isProxy(receiver)) {
+                 updateProcessState(processState, false);
+-                receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
+-                        sticky, sendingUser);
+-                return;
++                try {
++                    receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
++                            sticky, sendingUser);
++                    return;
++                } catch (RemoteException e) {
++                    remoteException = e;
++                }
+             }
+             if (ordered) {
+                 Slog.w(TAG, receiver + " is no longer alive");
+                 ActivityManagerNative.getDefault().finishReceiver(receiver.asBinder(),
+                         resultCode, dataStr, extras, true, intent.getFlags());
++                if (remoteException != null) {
++                    throw remoteException;
++                }
+             }
+         }
+ 

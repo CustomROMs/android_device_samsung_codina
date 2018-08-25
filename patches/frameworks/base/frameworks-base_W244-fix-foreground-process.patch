@@ -1,0 +1,24 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] fix foreground process will be mistakenly killed when it uses content provider.
+
+process hosting ContentProvider is normally to be killed by AMS when empty processes over limit.
+foregroup processs send ContentProvider request to the process before system server received  binderDied(),
+then set up a connection with the killByAm process.
+at this time, system server execute binderDied(), then will kill foregroup process, depends on provider.
+in getContentProviderImpl(), need add condition whether process is killedByAm.
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 0e677d8..ba72920 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -11636,7 +11636,7 @@
+                 // pending on the process even though we managed to update its
+                 // adj level.  Not sure what to do about this, but at least
+                 // the race is now smaller.
+-                if (!success) {
++                if (!success || cpr.proc.killedByAm) {
+                     // Uh oh...  it looks like the provider's process
+                     // has been killed on us.  We need to wait for a new
+                     // process to be started, and make sure its death

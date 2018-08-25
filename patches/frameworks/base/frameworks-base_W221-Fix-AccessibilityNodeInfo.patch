@@ -1,0 +1,23 @@
+From b90cf220dbb71a4686da6427e73d4fc8f28c5d18 Mon Sep 17 00:00:00 2001
+From: Christian Williams <christianw@google.com>
+Date: Tue, 7 Aug 2018 11:42:29 -0700
+Subject: [PATCH] Fix AccessibilityNodeInfo memory leak
+
+The memory leak will always occur in AccessibilityNodeInfo
+when do monkey test with TalkBack opened.
+
+Test: Open the TalkBack in Settings, then do monkey test.
+Pull the memory hprof when test done.
+
+diff --git a/core/java/android/view/accessibility/AccessibilityNodeInfo.java b/core/java/android/view/accessibility/AccessibilityNodeInfo.java
+index 53efe18..afb3dab 100644
+--- a/core/java/android/view/accessibility/AccessibilityNodeInfo.java
++++ b/core/java/android/view/accessibility/AccessibilityNodeInfo.java
+@@ -3299,6 +3299,7 @@
+         mBoundsInScreen.set(other.mBoundsInScreen);
+         mPackageName = other.mPackageName;
+         mClassName = other.mClassName;
++        mOriginalText = other.mOriginalText;
+         mText = other.mText;
+         mHintText = other.mHintText;
+         mError = other.mError;

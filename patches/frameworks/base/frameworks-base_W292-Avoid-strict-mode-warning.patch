@@ -1,0 +1,52 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Avoid strict mode warning when persisting sync state
+
+We need to be sure that the write of the SyncManager state is complete
+when broadcast of ACTION_SHUTDOWN is complete, so doing it
+asynchronously is not an alternative.
+
+This will remove the strict mode warning.
+
+diff --git a/services/core/java/com/android/server/content/SyncManager.java b/services/core/java/com/android/server/content/SyncManager.java
+index 205e828..9298c75 100644
+--- a/services/core/java/com/android/server/content/SyncManager.java
++++ b/services/core/java/com/android/server/content/SyncManager.java
+@@ -70,6 +70,7 @@
+ import android.os.RemoteCallback;
+ import android.os.RemoteException;
+ import android.os.ServiceManager;
++import android.os.StrictMode;
+ import android.os.SystemClock;
+ import android.os.SystemProperties;
+ import android.os.UserHandle;
+@@ -414,15 +415,19 @@
+ 
+     private BroadcastReceiver mShutdownIntentReceiver =
+             new BroadcastReceiver() {
+-                @Override
+-                public void onReceive(Context context, Intent intent) {
+-                    Log.w(TAG, "Writing sync state before shutdown...");
+-                    getSyncStorageEngine().writeAllState();
+-
+-                    mLogger.log(getJobStats());
+-                    mLogger.log("Shutting down.");
+-                }
+-            };
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            final StrictMode.ThreadPolicy savedPolicy = StrictMode.allowThreadDiskWrites();
++            try {
++                Log.w(TAG, "Writing sync state before shutdown...");
++                getSyncStorageEngine().writeAllState();
++                mLogger.log(getJobStats());
++                mLogger.log("Shutting down.");
++            } finally {
++                StrictMode.setThreadPolicy(savedPolicy);
++            }
++        }
++    };
+ 
+     private BroadcastReceiver mUserIntentReceiver = new BroadcastReceiver() {
+         @Override

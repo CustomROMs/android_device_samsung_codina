@@ -1,0 +1,30 @@
+From 455e27f44a136ff9a5fdd7f7a1b87e3712ced14d Mon Sep 17 00:00:00 2001
+From: maxwen <max.weninger@gmail.com>
+Date: Mon, 12 Mar 2018 14:41:43 +0100
+Subject: [PATCH] Contacts: fix handling non-google accounts in customize view
+
+non google people with only device accounts will else crash whenever customize view is used
+
+diff --git a/src/com/android/contacts/list/CustomContactListFilterActivity.java b/src/com/android/contacts/list/CustomContactListFilterActivity.java
+index 92087b3..0e5eb42 100644
+--- a/src/com/android/contacts/list/CustomContactListFilterActivity.java
++++ b/src/com/android/contacts/list/CustomContactListFilterActivity.java
+@@ -41,6 +41,7 @@
+ import android.provider.ContactsContract;
+ import android.provider.ContactsContract.Groups;
+ import android.provider.ContactsContract.Settings;
++import android.text.TextUtils;
+ import android.util.Log;
+ import android.view.ContextMenu;
+ import android.view.LayoutInflater;
+@@ -163,6 +164,10 @@
+             // ContactsContract.Settings
+             for (AccountInfo info : sourceAccounts) {
+                 final AccountWithDataSet account = info.getAccount();
++                if (TextUtils.isEmpty(account.name)) {
++                    Log.d(TAG, "skip account  " + account);
++                    continue;
++                }
+                 final AccountDisplay accountDisplay = new AccountDisplay(resolver, info);
+ 
+                 final Uri.Builder groupsUri = Groups.CONTENT_URI.buildUpon()

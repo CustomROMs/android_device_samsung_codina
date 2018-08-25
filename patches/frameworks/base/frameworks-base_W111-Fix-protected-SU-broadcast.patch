@@ -1,0 +1,17 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] res: add protected SU_SESSION_CHANGED-broadcast to default  AndroidManifest.xml
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 9ebd541caaf..d03f71bf579 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -3908,4 +3908,7 @@
+         </service>
+     </application>
+ 
++    <!-- Used to notify when SU is used. -->
++    <protected-broadcast android:name="android.intent.action.SU_SESSION_CHANGED" />
++
+ </manifest>

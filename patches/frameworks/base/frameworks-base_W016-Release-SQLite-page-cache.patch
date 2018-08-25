@@ -1,0 +1,25 @@
+From dee329ec14f14577a62c6776865455f61ff516fc Mon Sep 17 00:00:00 2001
+From: "yi.jang" <yi.jang@lge.com>
+Date: Wed, 5 Mar 2014 10:57:17 +0900
+Subject: [PATCH] Release SQLite page cache as much as it can
+
+Call sqlite3_release_memory() until it returns 0
+
+diff --git a/core/jni/android_database_SQLiteGlobal.cpp b/core/jni/android_database_SQLiteGlobal.cpp
+index 03e2387..e0c101e 100644
+--- a/core/jni/android_database_SQLiteGlobal.cpp
++++ b/core/jni/android_database_SQLiteGlobal.cpp
+@@ -72,7 +72,12 @@
+ }
+ 
+ static jint nativeReleaseMemory(JNIEnv* env, jclass clazz) {
+-    return sqlite3_release_memory(SOFT_HEAP_LIMIT);
++    jint rsize = 0, ret = 0;
++    do {
++        ret = sqlite3_release_memory(SOFT_HEAP_LIMIT);
++        rsize += ret;
++    } while (ret > 0);
++    return rsize;
+ }
+ 
+ static const JNINativeMethod sMethods[] =

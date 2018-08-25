@@ -1,0 +1,25 @@
+From ffacda09ee76928878385fbf815aa6ba4af8080f Mon Sep 17 00:00:00 2001
+From: WisniaPL <19wisnia89@gmail.com>
+Date: Mon, 10 Apr 2017 02:21:28 +0200
+Subject: [PATCH] Fix service cannot start when service removed from restartList
+
+At 'realStartServiceLocked', 'app.thread.scheduleCreateService' throws 
+another remote exception, then calls the 'scheduleServiceRestartLocked'.
+This time, the process was killed and calls 'killServicesLocked'. The
+service can not bringDown, and if parameter 'allowRestart' is 'false',
+the service will be removed from restartList. If 'resetRestartCounter'
+is not called, the next start service will be returned at 
+'if (!whileRestarting && r.restartDelay > 0)' every time.
+
+diff --git a/services/core/java/com/android/server/am/ActiveServices.java b/services/core/java/com/android/server/am/ActiveServices.java
+index ae1aef6..37ea035 100755
+--- a/services/core/java/com/android/server/am/ActiveServices.java
++++ b/services/core/java/com/android/server/am/ActiveServices.java
+@@ -3183,6 +3183,7 @@ final void killServicesLocked(ProcessRecord app, boolean allowRestart) {
+                 if (r.processName.equals(app.processName) &&
+                         r.serviceInfo.applicationInfo.uid == app.info.uid) {
+                     mRestartingServices.remove(i);
++                    r.resetRestartCounter();
+                     clearRestartingIfNeededLocked(r);
+                 }
+             }

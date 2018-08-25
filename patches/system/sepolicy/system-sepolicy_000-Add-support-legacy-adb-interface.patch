@@ -1,0 +1,75 @@
+From 694d9627a6cdce9be16e7784a6382644b8cdbd4d Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Wed, 28 Feb 2018 20:32:30 -0600
+Subject: [PATCH] sepolicy: Conditionally restore support for legacy f_adb interface"
+
+diff --git a/definitions.mk b/definitions.mk
+index ab577cc..1af4c14 100644
+--- a/definitions.mk
++++ b/definitions.mk
+@@ -11,6 +11,7 @@
+ 	-D target_full_treble=$(PRIVATE_FULL_TREBLE) \
+ 	-D target_has_legacy_camera_hal1=$(TARGET_HAS_LEGACY_CAMERA_HAL1) \
+ 	-D target_needs_platform_text_relocations=$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS) \
++	-D target_uses_legacy_adb_interface=$(TARGET_USES_LEGACY_ADB_INTERFACE) \
+ 	$(PRIVATE_TGT_RECOVERY) \
+ 	-s $^ > $@
+ endef
+diff --git a/private/adbd.te b/private/adbd.te
+index 1f417f6..47a6cbd 100644
+--- a/private/adbd.te
++++ b/private/adbd.te
+@@ -25,7 +25,11 @@
+ # Create and use network sockets.
+ net_domain(adbd)
+ 
+-# Access /dev/usb-ffs/adb/ep0
++# Access /dev/android_adb or /dev/usb-ffs/adb/ep0
++ifelse(target_uses_legacy_adb_interface, `true',
++  allow adbd adb_device:chr_file rw_file_perms;
++,
++)
+ allow adbd functionfs:dir search;
+ allow adbd functionfs:file rw_file_perms;
+ 
+diff --git a/private/file_contexts b/private/file_contexts
+index b59a1ed..c50994f 100644
+--- a/private/file_contexts
++++ b/private/file_contexts
+@@ -65,6 +65,7 @@
+ /dev/adf-interface[0-9]*\.[0-9]*	u:object_r:graphics_device:s0
+ /dev/adf-overlay-engine[0-9]*\.[0-9]*	u:object_r:graphics_device:s0
+ /dev/alarm		u:object_r:alarm_device:s0
++/dev/android_adb.*	u:object_r:adb_device:s0
+ /dev/ashmem		u:object_r:ashmem_device:s0
+ /dev/audio.*		u:object_r:audio_device:s0
+ /dev/binder		u:object_r:binder_device:s0
+diff --git a/public/device.te b/public/device.te
+index c921a20..475948d 100644
+--- a/public/device.te
++++ b/public/device.te
+@@ -1,6 +1,7 @@
+ # Device types
+ type device, dev_type, fs_type;
+ type alarm_device, dev_type, mlstrustedobject;
++type adb_device, dev_type;
+ type ashmem_device, dev_type, mlstrustedobject;
+ type audio_device, dev_type;
+ type audio_timer_device, dev_type;
+diff --git a/public/recovery.te b/public/recovery.te
+index 3f277c3..fe0b20e 100644
+--- a/public/recovery.te
++++ b/public/recovery.te
+@@ -73,7 +73,11 @@
+ 
+   allow recovery kernel:system syslog_read;
+ 
+-  # Access /dev/usb-ffs/adb/ep0
++  # Access /dev/android_adb or /dev/usb-ffs/adb/ep0
++  ifelse(target_uses_legacy_adb_interface, `true',
++    allow recovery adb_device:chr_file rw_file_perms;
++  ,
++  )
+   allow recovery functionfs:dir search;
+   allow recovery functionfs:file rw_file_perms;
+ 

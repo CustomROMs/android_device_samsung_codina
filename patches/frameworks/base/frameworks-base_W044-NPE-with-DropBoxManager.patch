@@ -1,0 +1,38 @@
+From ee6f9653c51bd553eeb847cd7f97c5f8d487e282 Mon Sep 17 00:00:00 2001
+From: AdrianDC <radian.dc@gmail.com>
+Date: Wed, 18 Nov 2015 19:15:29 +0100
+Subject: [PATCH] MountService: Prevent NPE with DropBoxManager
+
+ * "java.lang.NullPointerException: Attempt to invoke virtual
+    method 'void android.os.DropBoxManager.addText(java.lang.String,
+    java.lang.String)' on a null object reference"
+
+diff --git a/services/core/java/com/android/server/StorageManagerService.java b/services/core/java/com/android/server/StorageManagerService.java
+index 35b452a..32cd081 100644
+--- a/services/core/java/com/android/server/StorageManagerService.java
++++ b/services/core/java/com/android/server/StorageManagerService.java
+@@ -1218,8 +1218,10 @@
+                 final long destroy = Long.parseLong(cooked[6]);
+ 
+                 final DropBoxManager dropBox = mContext.getSystemService(DropBoxManager.class);
+-                dropBox.addText(TAG_STORAGE_BENCHMARK, scrubPath(path)
+-                        + " " + ident + " " + create + " " + run + " " + destroy);
++                if (dropBox != null) {
++                    dropBox.addText(TAG_STORAGE_BENCHMARK, scrubPath(path)
++                            + " " + ident + " " + create + " " + run + " " + destroy);
++                }
+ 
+                 final VolumeRecord rec = findRecordForPath(path);
+                 if (rec != null) {
+@@ -1236,8 +1238,10 @@
+                 final long time = Long.parseLong(cooked[3]);
+ 
+                 final DropBoxManager dropBox = mContext.getSystemService(DropBoxManager.class);
+-                dropBox.addText(TAG_STORAGE_TRIM, scrubPath(path)
++                if (dropBox != null) {
++                    dropBox.addText(TAG_STORAGE_TRIM, scrubPath(path)
+                         + " " + bytes + " " + time);
++                }
+ 
+                 final VolumeRecord rec = findRecordForPath(path);
+                 if (rec != null) {

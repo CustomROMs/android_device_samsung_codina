@@ -1,0 +1,21 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Fix NotificationListenerService monkey null pointer issues
+
+Monkey test will causes null pointer for array.
+
+Add a null pointer protection.
+
+diff --git a/core/java/android/service/notification/NotificationListenerService.java b/core/java/android/service/notification/NotificationListenerService.java
+index 76c96bd..9e0e4fb 100644
+--- a/core/java/android/service/notification/NotificationListenerService.java
++++ b/core/java/android/service/notification/NotificationListenerService.java
+@@ -857,6 +857,7 @@
+ 
+     private StatusBarNotification[] cleanUpNotificationList(
+             ParceledListSlice<StatusBarNotification> parceledList) {
++        if (parceledList == null) return null;
+         List<StatusBarNotification> list = parceledList.getList();
+         ArrayList<StatusBarNotification> corruptNotifications = null;
+         int N = list.size();

@@ -1,0 +1,195 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Revert Synchronous resource recover mechanism for ISensorEventConnection
+
+Add synchronous destroy() function to recover resource used by
+remote ISensorEventConnection object.
+
+diff --git a/libs/sensor/ISensorEventConnection.cpp b/libs/sensor/ISensorEventConnection.cpp
+index 04d0c1f..c0919a8 100644
+--- a/libs/sensor/ISensorEventConnection.cpp
++++ b/libs/sensor/ISensorEventConnection.cpp
+@@ -36,8 +36,7 @@ enum {
+     ENABLE_DISABLE,
+     SET_EVENT_RATE,
+     FLUSH_SENSOR,
+-    CONFIGURE_CHANNEL,
+-    DESTROY,
++    CONFIGURE_CHANNEL
+ };
+ 
+ class BpSensorEventConnection : public BpInterface<ISensorEventConnection>
+@@ -97,22 +96,11 @@ class BpSensorEventConnection : public BpInterface<ISensorEventConnection>
+         remote()->transact(CONFIGURE_CHANNEL, data, &reply);
+         return reply.readInt32();
+     }
+-
+-    virtual void onLastStrongRef(const void* id) {
+-        destroy();
+-        BpInterface<ISensorEventConnection>::onLastStrongRef(id);
+-    }
+-
+-protected:
+-    virtual void destroy() {
+-        Parcel data, reply;
+-        remote()->transact(DESTROY, data, &reply);
+-    }
+ };
+ 
+ // Out-of-line virtual method definition to trigger vtable emission in this
+ // translation unit (see clang warning -Wweak-vtables)
+-BpSensorEventConnection::~BpSensorEventConnection() { }
++BpSensorEventConnection::~BpSensorEventConnection() {}
+ 
+ IMPLEMENT_META_INTERFACE(SensorEventConnection, "android.gui.SensorEventConnection");
+ 
+@@ -162,10 +150,6 @@ status_t BnSensorEventConnection::onTransact(
+             reply->writeInt32(result);
+             return NO_ERROR;
+         }
+-        case DESTROY: {
+-            destroy();
+-            return NO_ERROR;
+-        }
+ 
+     }
+     return BBinder::onTransact(code, data, reply, flags);
+diff --git a/libs/sensor/include/sensor/ISensorEventConnection.h b/libs/sensor/include/sensor/ISensorEventConnection.h
+index 103de45..20f5aa6 100644
+--- a/libs/sensor/include/sensor/ISensorEventConnection.h
++++ b/libs/sensor/include/sensor/ISensorEventConnection.h
+@@ -42,8 +42,6 @@ class ISensorEventConnection : public IInterface
+     virtual status_t setEventRate(int handle, nsecs_t ns) = 0;
+     virtual status_t flush() = 0;
+     virtual int32_t configureChannel(int32_t handle, int32_t rateLevel) = 0;
+-protected:
+-    virtual void destroy() = 0; // synchronously release resource hold by remote object
+ };
+ 
+ // ----------------------------------------------------------------------------
+diff --git a/services/sensorservice/SensorDirectConnection.cpp b/services/sensorservice/SensorDirectConnection.cpp
+index 203de45..20f5aa6 100644
+--- a/services/sensorservice/SensorDirectConnection.cpp
++++ b/services/sensorservice/SensorDirectConnection.cpp
+@@ -27,29 +27,19 @@ SensorService::SensorDirectConnection::SensorDirectConnection(const sp<SensorSer
+         const String16& opPackageName)
+         : mService(service), mUid(uid), mMem(*mem),
+         mHalChannelHandle(halChannelHandle),
+-        mOpPackageName(opPackageName), mDestroyed(false) {
++        mOpPackageName(opPackageName) {
+     ALOGD_IF(DEBUG_CONNECTIONS, "Created SensorDirectConnection");
+ }
+ 
+ SensorService::SensorDirectConnection::~SensorDirectConnection() {
+     ALOGD_IF(DEBUG_CONNECTIONS, "~SensorDirectConnection %p", this);
+-    destroy();
+-}
+-
+-void SensorService::SensorDirectConnection::destroy() {
+-    Mutex::Autolock _l(mDestroyLock);
+-    // destroy once only
+-    if (mDestroyed) {
+-        return;
+-    }
+ 
+     stopAll();
+     mService->cleanupConnection(this);
+     if (mMem.handle != nullptr) {
+         native_handle_close(mMem.handle);
+         native_handle_delete(const_cast<struct native_handle*>(mMem.handle));
+     }
+-    mDestroyed = true;
+ }
+ 
+ void SensorService::SensorDirectConnection::onFirstRef() {
+diff --git a/services/sensorservice/SensorDirectConnection.h b/services/sensorservice/SensorDirectConnection.h
+index 303de45..20f5aa6 100644
+--- a/services/sensorservice/SensorDirectConnection.h
++++ b/services/sensorservice/SensorDirectConnection.h
+@@ -47,7 +47,7 @@ class SensorService::SensorDirectConnection: public BnSensorEventConnection {
+     // stop all active sensor report. if backupRecord is set to false,
+     // those report can be recovered by recoverAll
+     // called by SensorService when enter restricted mode
+-    void stopAll(bool backupRecord = false);
++    void stopAll(bool clearRecord = false);
+ 
+     // recover sensor reports previously stopped by stopAll(true)
+     // called by SensorService when return to NORMAL mode.
+@@ -63,7 +63,7 @@ class SensorService::SensorDirectConnection: public BnSensorEventConnection {
+     virtual status_t setEventRate(int handle, nsecs_t samplingPeriodNs);
+     virtual status_t flush();
+     virtual int32_t configureChannel(int handle, int rateLevel);
+-    virtual void destroy();
++
+ private:
+     const sp<SensorService> mService;
+     const uid_t mUid;
+@@ -74,9 +74,6 @@ class SensorService::SensorDirectConnection: public BnSensorEventConnection {
+     mutable Mutex mConnectionLock;
+     std::unordered_map<int, int> mActivated;
+     std::unordered_map<int, int> mActivatedBackup;
+-
+-    mutable Mutex mDestroyLock;
+-    bool mDestroyed;
+ };
+ 
+ } // namepsace android
+diff --git a/services/sensorservice/SensorEventConnection.cpp b/services/sensorservice/SensorEventConnection.cpp
+index 403de45..20f5aa6 100644
+--- a/services/sensorservice/SensorEventConnection.cpp
++++ b/services/sensorservice/SensorEventConnection.cpp
+@@ -32,8 +32,7 @@ SensorService::SensorEventConnection::SensorEventConnection(
+         const String16& opPackageName)
+     : mService(service), mUid(uid), mWakeLockRefCount(0), mHasLooperCallbacks(false),
+       mDead(false), mDataInjectionMode(isDataInjectionMode), mEventCache(NULL),
+-      mCacheSize(0), mMaxCacheSize(0), mPackageName(packageName), mOpPackageName(opPackageName),
+-      mDestroyed(false) {
++      mCacheSize(0), mMaxCacheSize(0), mPackageName(packageName), mOpPackageName(opPackageName) {
+     mChannel = new BitTube(mService->mSocketBufferSize);
+ #if DEBUG_CONNECTIONS
+     mEventsReceived = mEventsSentFromCache = mEventsSent = 0;
+@@ -43,22 +42,10 @@ SensorService::SensorEventConnection::SensorEventConnection(
+ 
+ SensorService::SensorEventConnection::~SensorEventConnection() {
+     ALOGD_IF(DEBUG_CONNECTIONS, "~SensorEventConnection(%p)", this);
+-    destroy();
+-}
+-
+-void SensorService::SensorEventConnection::destroy() {
+-    Mutex::Autolock _l(mDestroyLock);
+-
+-    // destroy once only
+-    if (mDestroyed) {
+-        return;
+-    }
+-
+     mService->cleanupConnection(this);
+     if (mEventCache != NULL) {
+         delete mEventCache;
+     }
+-    mDestroyed = true;
+ }
+ 
+ void SensorService::SensorEventConnection::onFirstRef() {
+diff --git a/services/sensorservice/SensorEventConnection.h b/services/sensorservice/SensorEventConnection.h
+index 503de45..20f5aa6 100644
+--- a/services/sensorservice/SensorEventConnection.h
++++ b/services/sensorservice/SensorEventConnection.h
+@@ -75,7 +75,6 @@ class SensorService::SensorEventConnection:
+     virtual status_t setEventRate(int handle, nsecs_t samplingPeriodNs);
+     virtual status_t flush();
+     virtual int32_t configureChannel(int handle, int rateLevel);
+-    virtual void destroy();
+ 
+     // Count the number of flush complete events which are about to be dropped in the buffer.
+     // Increment mPendingFlushEventsToSend in mSensorInfo. These flush complete events will be sent
+@@ -165,8 +164,6 @@ class SensorService::SensorEventConnection:
+     int mTotalAcksNeeded, mTotalAcksReceived;
+ #endif
+ 
+-    mutable Mutex mDestroyLock;
+-    bool mDestroyed;
+ };
+ 
+ } // namepsace android

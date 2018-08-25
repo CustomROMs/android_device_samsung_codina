@@ -1,0 +1,81 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Fix low probability deadlock
+
+Low probability deadlock in com.android.phone and system_server.
+
+diff --git a/services/core/java/com/android/server/TelephonyRegistry.java b/services/core/java/com/android/server/TelephonyRegistry.java
+index e609bd7..7014ec6 100644
+--- a/services/core/java/com/android/server/TelephonyRegistry.java
++++ b/services/core/java/com/android/server/TelephonyRegistry.java
+@@ -498,6 +498,7 @@
+                 }
+             }
+ 
++            int phoneId = SubscriptionManager.getPhoneId(subId);
+             synchronized (mRecords) {
+                 // register
+                 Record r;
+@@ -529,9 +530,7 @@
+                  } else {//APP specify subID
+                     r.subId = subId;
+                 }
+-                r.phoneId = SubscriptionManager.getPhoneId(r.subId);
+-
+-                int phoneId = r.phoneId;
++                r.phoneId = phoneId;
+                 r.events = events;
+                 if (DBG) {
+                     log("listen:  Register r=" + r + " r.subId=" + r.subId + " phoneId=" + phoneId);
+@@ -969,9 +968,8 @@
+             log("notifyCellInfoForSubscriber: subId=" + subId
+                 + " cellInfo=" + cellInfo);
+         }
+-
++        int phoneId = SubscriptionManager.getPhoneId(subId);
+         synchronized (mRecords) {
+-            int phoneId = SubscriptionManager.getPhoneId(subId);
+             if (validatePhoneId(phoneId)) {
+                 mCellInfo.set(phoneId, cellInfo);
+                 for (Record r : mRecords) {
+@@ -1032,8 +1030,8 @@
+             log("notifyCallForwardingChangedForSubscriber: subId=" + subId
+                 + " cfi=" + cfi);
+         }
++        int phoneId = SubscriptionManager.getPhoneId(subId);
+         synchronized (mRecords) {
+-            int phoneId = SubscriptionManager.getPhoneId(subId);
+             if (validatePhoneId(phoneId)) {
+                 mCallForwarding[phoneId] = cfi;
+                 for (Record r : mRecords) {
+@@ -1060,8 +1058,8 @@
+         if (!checkNotifyPermission("notifyDataActivity()" )) {
+             return;
+         }
++        int phoneId = SubscriptionManager.getPhoneId(subId);
+         synchronized (mRecords) {
+-            int phoneId = SubscriptionManager.getPhoneId(subId);
+             if (validatePhoneId(phoneId)) {
+                 mDataActivity[phoneId] = state;
+                 for (Record r : mRecords) {
+@@ -1102,8 +1100,8 @@
+                 + "' apn='" + apn + "' apnType=" + apnType + " networkType=" + networkType
+                 + " mRecords.size()=" + mRecords.size());
+         }
++        int phoneId = SubscriptionManager.getPhoneId(subId);
+         synchronized (mRecords) {
+-            int phoneId = SubscriptionManager.getPhoneId(subId);
+             if (validatePhoneId(phoneId)) {
+                 boolean modified = false;
+                 if (state == TelephonyManager.DATA_CONNECTED) {
+@@ -1228,8 +1226,8 @@
+             log("notifyCellLocationForSubscriber: subId=" + subId
+                 + " cellLocation=" + cellLocation);
+         }
++        int phoneId = SubscriptionManager.getPhoneId(subId);
+         synchronized (mRecords) {
+-            int phoneId = SubscriptionManager.getPhoneId(subId);
+             if (validatePhoneId(phoneId)) {
+                 mCellLocation[phoneId] = cellLocation;
+                 for (Record r : mRecords) {

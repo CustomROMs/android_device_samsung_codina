@@ -1,0 +1,21 @@
+From 430fd68485bac4e8857116c0e60604691ef6a2f3 Mon Sep 17 00:00:00 2001
+From: Wei Wang <wangw@codeaurora.org>
+Date: Mon, 23 Mar 2015 18:22:29 -0700
+Subject: [PATCH] binder: adjust GC interval for binder ops
+
+The current value is too conservative, and causes
+janks in certain use cases due to frequent explict GC.
+
+diff --git a/core/jni/android_util_Binder.cpp b/core/jni/android_util_Binder.cpp
+index 66fa06f..0114644 100644
+--- a/core/jni/android_util_Binder.cpp
++++ b/core/jni/android_util_Binder.cpp
+@@ -153,7 +153,7 @@ static volatile int32_t gNumDeathRefs = 0;
+ static void incRefsCreated(JNIEnv* env)
+ {
+     int old = android_atomic_inc(&gNumRefsCreated);
+-    if (old == 200) {
++    if (old == 2000) {
+         android_atomic_and(0, &gNumRefsCreated);
+         env->CallStaticVoidMethod(gBinderInternalOffsets.mClass,
+                 gBinderInternalOffsets.mForceGc);

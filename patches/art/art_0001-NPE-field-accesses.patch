@@ -1,0 +1,161 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Don't check the offset of a NPE for field accesses.
+
+The compiler might remove or reorder field accesses.
+
+diff --git a/runtime/common_throws.cc b/runtime/common_throws.cc
+index cd52bb6..de71edb 100644
+--- a/runtime/common_throws.cc
++++ b/runtime/common_throws.cc
+@@ -439,7 +439,7 @@
+   return addr == monitor_offset;
+ }
+ 
+-static bool IsValidImplicitCheck(uintptr_t addr, ArtMethod* method, const Instruction& instr)
++static bool IsValidImplicitCheck(uintptr_t addr, const Instruction& instr)
+     REQUIRES_SHARED(Locks::mutator_lock_) {
+   if (!CanDoImplicitNullCheckOn(addr)) {
+     return false;
+@@ -481,9 +481,10 @@
+     case Instruction::IPUT_BYTE:
+     case Instruction::IPUT_CHAR:
+     case Instruction::IPUT_SHORT: {
+-      ArtField* field =
+-          Runtime::Current()->GetClassLinker()->ResolveField(instr.VRegC_22c(), method, false);
+-      return (addr == 0) || (addr == field->GetOffset().Uint32Value());
++      // We might be doing an implicit null check with an offset that doesn't correspond
++      // to the instruction, for example with two field accesses and the first one being
++      // eliminated or re-ordered.
++      return true;
+     }
+ 
+     case Instruction::IGET_OBJECT_QUICK:
+@@ -504,7 +505,10 @@
+     case Instruction::IPUT_SHORT_QUICK:
+     case Instruction::IPUT_WIDE_QUICK:
+     case Instruction::IPUT_OBJECT_QUICK: {
+-      return (addr == 0u) || (addr == instr.VRegC_22c());
++      // We might be doing an implicit null check with an offset that doesn't correspond
++      // to the instruction, for example with two field accesses and the first one being
++      // eliminated or re-ordered.
++      return true;
+     }
+ 
+     case Instruction::AGET_OBJECT:
+@@ -548,7 +552,7 @@
+   const DexFile::CodeItem* code = method->GetCodeItem();
+   CHECK_LT(throw_dex_pc, code->insns_size_in_code_units_);
+   const Instruction* instr = Instruction::At(&code->insns_[throw_dex_pc]);
+-  if (check_address && !IsValidImplicitCheck(addr, method, *instr)) {
++  if (check_address && !IsValidImplicitCheck(addr, *instr)) {
+     const DexFile* dex_file = method->GetDeclaringClass()->GetDexCache()->GetDexFile();
+     LOG(FATAL) << "Invalid address for an implicit NullPointerException check: "
+                << "0x" << std::hex << addr << std::dec
+diff --git a/test/671-npe-field-opts/expected.txt b/test/671-npe-field-opts/expected.txt
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/test/671-npe-field-opts/expected.txt
+diff --git a/test/671-npe-field-opts/info.txt b/test/671-npe-field-opts/info.txt
+new file mode 100644
+index 0000000..f1e5846
+--- /dev/null
++++ b/test/671-npe-field-opts/info.txt
+@@ -0,0 +1,3 @@
++Regression test for the compiler, which used to
++re-order or remove field access in a way that would confuse the runtime
++when validating a NPE.
+diff --git a/test/671-npe-field-opts/src/Main.java b/test/671-npe-field-opts/src/Main.java
+new file mode 100644
+index 0000000..a5e81ce
+--- /dev/null
++++ b/test/671-npe-field-opts/src/Main.java
+@@ -0,0 +1,86 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++public class Main {
++  static Main obj;
++  // Make 'doCheck' volatile to prevent optimizations
++  // in $noinline$bar like LICM that could hoist the null check
++  // out of the loop.
++  static volatile boolean doCheck = true;
++
++  float floatField;
++  int intField;
++
++  public static void main(String[] args) {
++    try {
++      $noinline$bar();
++      throw new Error("Expected NPE");
++    } catch (NullPointerException e) {
++      check(e, 29, 52, "$noinline$bar");
++    }
++
++    try {
++      $noinline$foo();
++      throw new Error("Expected NPE");
++    } catch (NullPointerException e) {
++      check(e, 36, 44, "$noinline$foo");
++    }
++  }
++
++  public static float $noinline$foo() {
++    int v1 = obj.intField;
++    float v2 = obj.floatField;
++    return v2;
++  }
++
++  public static float $noinline$bar() {
++    float a = 0;
++    while (doCheck) {
++      float f = obj.floatField;
++      int i = obj.intField;
++      a = (float)i + f;
++    }
++    return a;
++  }
++
++  static void check(NullPointerException npe, int mainLine, int methodLine, String methodName) {
++    StackTraceElement[] trace = npe.getStackTrace();
++    checkElement(trace[0], "Main", methodName, "Main.java", methodLine);
++    checkElement(trace[1], "Main", "main", "Main.java", mainLine);
++  }
++
++  static void checkElement(StackTraceElement element,
++                           String declaringClass, String methodName,
++                           String fileName, int lineNumber) {
++    assertEquals(declaringClass, element.getClassName());
++    assertEquals(methodName, element.getMethodName());
++    assertEquals(fileName, element.getFileName());
++    assertEquals(lineNumber, element.getLineNumber());
++  }
++
++  static void assertEquals(Object expected, Object actual) {
++    if (!expected.equals(actual)) {
++      String msg = "Expected \"" + expected + "\" but got \"" + actual + "\"";
++      throw new AssertionError(msg);
++    }
++  }
++
++  static void assertEquals(int expected, int actual) {
++    if (expected != actual) {
++      throw new AssertionError("Expected " + expected + " got " + actual);
++    }
++  }
++}

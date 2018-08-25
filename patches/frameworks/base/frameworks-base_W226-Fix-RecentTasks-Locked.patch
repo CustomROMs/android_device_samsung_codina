@@ -1,0 +1,17 @@
+From b6b56d5756de0c3c01b7869f46e4b541506e84e3 Mon Sep 17 00:00:00 2001
+From: Shibin George <shibing@codeaurora.org>
+Date: Thu, 7 Dec 2017 13:12:34 +0530
+Subject: [PATCH] RecentTasks: Check task for null and return if yes
+
+diff --git a/services/core/java/com/android/server/am/RecentTasks.java b/services/core/java/com/android/server/am/RecentTasks.java
+index a6ebac44062..28f85c0d20b 100644
+--- a/services/core/java/com/android/server/am/RecentTasks.java
++++ b/services/core/java/com/android/server/am/RecentTasks.java
+@@ -504,6 +504,7 @@ private final boolean moveAffiliatedTasksToFront(TaskRecord task, int taskIndex)
+     }
+ 
+     final void addLocked(TaskRecord task) {
++        if (task == null) return;
+         final boolean isAffiliated = task.mAffiliatedTaskId != task.taskId
+                 || task.mNextAffiliateTaskId != INVALID_TASK_ID
+                 || task.mPrevAffiliateTaskId != INVALID_TASK_ID;

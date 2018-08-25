@@ -6,29 +6,49 @@ KERNEL_PATCH="kernel/codina/chrono"
 
 if [ "$PATCHES" == "" ] ; then
 	PATCHES="\
-	art \
-	bionic \
-	build/make \
-	build/soong \
-	frameworks/av \
-	frameworks/base \
-	frameworks/opt/telephony \
-	frameworks/native \
-	bootable/recovery \
-	external/minijail \
-	external/boringssl \
-	external/selinux
-	hardware/libhardware \
-	hardware/interfaces \
-	system/core \
-	system/extras \
-	system/keymaster \
-	system/media \
-	system/netd \
-	system/vold \
-	system/security \
-	system/sepolicy \
-	vendor/lineage"
+art \
+bionic \
+bootable/recovery \
+build/make \
+build/soong \
+external/boringssl \
+external/busybox \
+external/libpng \
+external/minijail \
+external/zlib \
+frameworks/av \
+frameworks/base \
+frameworks/native \
+frameworks/opt/net/wifi \
+frameworks/opt/telephony \
+frameworks/rs \
+frameworks/support \
+hardware/interfaces \
+hardware/libhardware \
+hardware/ril \
+libcore \
+packages/apps/Contacts \
+packages/apps/Dialer \
+packages/apps/DocumentsUI \
+packages/apps/Email \
+packages/apps/MusicFX \
+packages/apps/PackageInstaller \
+packages/apps/Settings \
+packages/apps/Snap \
+packages/apps/StorageManager \
+packages/inputmethods/LatinIME \
+packages/providers/MediaProvider \
+packages/services/Telecomm \
+packages/services/Telephony \
+system/connectivity/wificond \
+system/core \
+system/extras \
+system/extras/su \
+system/media \
+system/netd \
+system/sepolicy \
+system/vold \
+vendor/lineage"
 fi
 
 export CL_RED="\033[31m"
@@ -63,6 +83,11 @@ commit_quiet()
   rm .tmp
 }
 
+parse_patch_modified()
+{
+   grep "diff --git " "$1"  | cut -d " " -f3 | sed "s,a/,," | xargs
+}
+
 apply() {
     out=$( patch -p1 -i $1 )
     fail=$( echo $out | grep -ic "FAILED" )
@@ -92,10 +117,16 @@ apply_all() {
     for i in $( ls *.patch )
     do
         echo "applying "$i
-        if [ "$1" != "$KERNEL_PATCH" ] ; then
-            apply $i
-        else
-            git am $i
+        #if [ "$1" != "$KERNEL_PATCH" ] ; then
+        #    apply $i
+        #else
+        #    git am $i
+        #fi
+        git am $i
+        if [ $? -eq 128 ] ; then
+          patch -p1 -i "$i"
+          git add $(parse_patch_modified "$i")
+          git am --continue
         fi
         echo ""
     done

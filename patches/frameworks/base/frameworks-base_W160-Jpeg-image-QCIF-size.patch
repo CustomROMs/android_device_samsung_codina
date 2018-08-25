@@ -1,0 +1,46 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Can not get a thumbnail of Jpeg image of QCIF size.
+
+Bug Details:
+Can not get a thumbnail of Jpeg image of QCIF (176 x 144) size.
+
+Cause:
+handleThumbnailFromJfif() has received the stream of content at ByteOrderedDataInputStream in, but since the read pointer is advanced in preprocessing,
+the in.available() method can not acquire the expected value and calculates the wrong thumbnail Length.
+
+When acquiring a thumbnail image of the content, in the case of a small size photograph such as QCIF,
+the range check process of the content malfunctions and it becomes impossible to acquire the correct thumbnail size.
+
+Modification:
+Process of returning the pointer of the stream of the content to the head was added to normalize the range check processing.
+
+diff --git a/media/java/android/media/ExifInterface.java b/media/java/android/media/ExifInterface.java
+old mode 100644
+new mode 100755
+index bf3a3b9..c8725e9
+--- a/media/java/android/media/ExifInterface.java
++++ b/media/java/android/media/ExifInterface.java
+@@ -3166,6 +3166,8 @@
+                 (ExifAttribute) thumbnailData.get(TAG_JPEG_INTERCHANGE_FORMAT_LENGTH);
+         if (jpegInterchangeFormatAttribute != null
+                 && jpegInterchangeFormatLengthAttribute != null) {
++            in.rewind();
++
+             int thumbnailOffset = jpegInterchangeFormatAttribute.getIntValue(mExifByteOrder);
+             int thumbnailLength = jpegInterchangeFormatLengthAttribute.getIntValue(mExifByteOrder);
+ 
+@@ -3699,6 +3701,12 @@
+             }
+         }
+ 
++        public void rewind() throws IOException {
++            mPosition = 0;
++            mDataInputStream.reset();
++            mDataInputStream.mark(mLength);
++        }
++
+         public int peek() {
+             return mPosition;
+         }

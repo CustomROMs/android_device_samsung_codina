@@ -1,0 +1,26 @@
+From d3a55ecb69d59ba8232b0d943f506d92cd516a2b Mon Sep 17 00:00:00 2001
+From: Tobias Tefke <tobias.tefke@gmail.com>
+Date: Sat, 3 Mar 2018 13:57:36 +0100
+Subject: [PATCH] Fix config Android Go
+
+diff --git a/target/product/go_defaults_common.mk b/target/product/go_defaults_common.mk
+index 0e59930..03154f2 100644
+--- a/target/product/go_defaults_common.mk
++++ b/target/product/go_defaults_common.mk
+@@ -18,7 +18,6 @@
+ 
+ # Set lowram options
+ PRODUCT_PROPERTY_OVERRIDES += \
+-     ro.config.low_ram=true \
+      ro.lmk.critical_upgrade=true \
+      ro.lmk.upgrade_pressure=40
+ 
+@@ -50,8 +49,3 @@
+ PRODUCT_PROPERTY_OVERRIDES += \
+      pm.dexopt.shared=quicken
+ 
+-# Default heap sizes. Allow up to 256m for large heaps to make sure a single app
+-# doesn't take all of the RAM.
+-PRODUCT_PROPERTY_OVERRIDES += dalvik.vm.heapgrowthlimit=128m
+-PRODUCT_PROPERTY_OVERRIDES += dalvik.vm.heapsize=256m
+-

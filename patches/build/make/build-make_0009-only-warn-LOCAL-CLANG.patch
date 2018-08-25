@@ -1,0 +1,20 @@
+From 3ef16e5f04a3bbeceb872c1eeeaa710dbfb1fa75 Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Thu, 24 Aug 2017 13:30:23 -0500
+Subject: [PATCH] build: only warn on LOCAL_CLANG set to false
+
+* Some blobs require this
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 589c462..a4ae802 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -388,7 +388,7 @@
+ # in the exception project list.
+ ifeq ($(my_clang),false)
+     ifeq ($(call find_in_local_clang_exception_projects,$(LOCAL_MODULE_MAKEFILE))$(LOCAL_IS_AUX_MODULE),)
+-        $(error $(LOCAL_MODULE_MAKEFILE): $(LOCAL_MODULE): LOCAL_CLANG is set to false)
++        $(warning $(LOCAL_MODULE_MAKEFILE): $(LOCAL_MODULE): LOCAL_CLANG is set to false)
+     endif
+ endif
+ 

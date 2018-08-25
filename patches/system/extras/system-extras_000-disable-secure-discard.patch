@@ -1,0 +1,34 @@
+From 545665d01215051c54b5b3c9152df8ff175876ee Mon Sep 17 00:00:00 2001
+From: Jake Weinstein <xboxlover360@gmail.com>
+Date: Mon, 22 Dec 2014 18:29:03 -0600
+Subject: [PATCH]  ext4_utils: disable secure discard
+
+diff --git a/ext4_utils/wipe.c b/ext4_utils/wipe.c
+index 3bd33e5..c3d213f 100644
+--- a/ext4_utils/wipe.c
++++ b/ext4_utils/wipe.c
+@@ -45,18 +45,13 @@ int wipe_block_device(int fd, s64 len)
+ 
+ 	range[0] = 0;
+ 	range[1] = len;
+-	ret = ioctl(fd, BLKSECDISCARD, &range);
++	ret = ioctl(fd, BLKDISCARD, &range);
+ 	if (ret < 0) {
+-		range[0] = 0;
+-		range[1] = len;
+-		ret = ioctl(fd, BLKDISCARD, &range);
+-		if (ret < 0) {
+-			warn("Discard failed\n");
+-			return 1;
+-		} else {
+-			warn("Wipe via secure discard failed, used discard instead\n");
+-			return 0;
+-		}
++		warn("Discard failed\n");
++		return 1;
++	} else {
++		warn("Wipe via secure discard failed, used discard instead\n");
++		return 0;
+ 	}
+ 
+ 	return 0;

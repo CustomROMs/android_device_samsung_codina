@@ -1,0 +1,27 @@
+From 8bfb1857f101d417a82d3be8ed29bf0aacc96521 Mon Sep 17 00:00:00 2001
+From: yuanhuihui <yuanhuihui@xiaomi.com>
+Date: Thu, 6 Apr 2017 15:41:08 +0800
+Subject: [PATCH] fix incorrect context classloader initialization in system_server
+
+not only mPackageName.equals("android") run in system_server,
+but also contains the following package:
+ - com.android.providers.settings,
+ - com.android.server.telecom,
+ - com.android.location.fused.
+
+when make application for these package will modify
+system_server classloader which is not we want.
+
+diff --git a/core/java/android/app/LoadedApk.java b/core/java/android/app/LoadedApk.java
+index f6d9710..e3f8d71 100644
+--- a/core/java/android/app/LoadedApk.java
++++ b/core/java/android/app/LoadedApk.java
+@@ -973,7 +973,7 @@
+ 
+         try {
+             java.lang.ClassLoader cl = getClassLoader();
+-            if (!mPackageName.equals("android")) {
++            if (!ActivityThread.isSystem()) {
+                 Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER,
+                         "initializeJavaContextClassLoader");
+                 initializeJavaContextClassLoader();

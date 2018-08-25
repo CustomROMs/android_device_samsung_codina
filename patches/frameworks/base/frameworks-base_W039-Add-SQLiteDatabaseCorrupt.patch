@@ -1,0 +1,26 @@
+From 28fc6d778ea7ac58da319cebf2324ba4ea6b96cf Mon Sep 17 00:00:00 2001
+From: "muzbit.kim" <muzbit.kim@lge.com>
+Date: Tue, 6 May 2014 10:20:12 +0900
+Subject: [PATCH] Add handling SQLiteDatabaseCorruptException.
+
+When SQLiteDatabaseCorruptException occurred on execute() or executeForString(),
+DefaultDatabaseErrorHandler.onCorrupt() is not to be called.
+So, Malformed DB file can't be deleted.
+Because, Instead SQLiteDatabaseCorruptException, code is throwing SQLiteException.
+On boot time, system can't open DB file and it throws RuntimeException.
+This causes infinite reset.
+So, I modified to throw SQLiteDatabaseCorruptException.
+
+diff --git a/core/java/android/database/sqlite/SQLiteConnection.java b/core/java/android/database/sqlite/SQLiteConnection.java
+index 24a7d33..20889f5 100644
+--- a/core/java/android/database/sqlite/SQLiteConnection.java
++++ b/core/java/android/database/sqlite/SQLiteConnection.java
+@@ -390,6 +390,8 @@ private void setLocaleFromConfiguration() {
+             } finally {
+                 execute(success ? "COMMIT" : "ROLLBACK", null, null);
+             }
++        } catch (SQLiteDatabaseCorruptException ex) {
++            throw ex;
+         } catch (RuntimeException ex) {
+             throw new SQLiteException("Failed to change locale for db '" + mConfiguration.label
+                     + "' to '" + newLocale + "'.", ex);

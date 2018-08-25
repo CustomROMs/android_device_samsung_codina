@@ -1,0 +1,26 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Fix SecurityException: MODE_WORLD_READABLE no longer supported
+
+diff --git a/core/java/android/app/ContextImpl.java b/core/java/android/app/ContextImpl.java
+index 006d91a..5691740 100644
+--- a/core/java/android/app/ContextImpl.java
++++ b/core/java/android/app/ContextImpl.java
+@@ -2417,10 +2417,14 @@
+     private void checkMode(int mode) {
+         if (getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.N) {
+             if ((mode & MODE_WORLD_READABLE) != 0) {
+-                throw new SecurityException("MODE_WORLD_READABLE no longer supported");
++                if (mode == 0) {
++                    throw new SecurityException("MODE_WORLD_READABLE no longer supported");
++                }
+             }
+             if ((mode & MODE_WORLD_WRITEABLE) != 0) {
+-                throw new SecurityException("MODE_WORLD_WRITEABLE no longer supported");
++                if (mode == 0) {
++                    throw new SecurityException("MODE_WORLD_WRITEABLE no longer supported");
++                }
+             }
+         }
+     }

@@ -1,0 +1,34 @@
+From 9f4a74c787de41a0a2dbf23e91fdc643a87e8298 Mon Sep 17 00:00:00 2001
+From: Diogo Ferreira <diogo@underdev.org>
+Date: Tue, 22 Dec 2015 10:22:49 +0000
+ reference-ril: Return success for RIL_REQUEST_ALLOW_DATA
+Add a dummy implementation of the ALLOW_DATA request to play nice
+with telephony expectations.
+
+diff --git a/reference-ril/reference-ril.c b/reference-ril/reference-ril.c
+index 8aae88d..b470350 100644
+--- a/reference-ril/reference-ril.c
++++ b/reference-ril/reference-ril.c
+@@ -1864,6 +1864,11 @@ static void requestSetupDataCall(void *data, size_t datalen, RIL_Token t)
+             pdp_type = "IP";
+         }
+ 
++        if (!strcmp("IPV6", pdp_type)) {
++            RLOGW("IPV6 pdp requested, but reference ril only supports IPV4, downgrading.");
++            pdp_type = "IP";
++        }
++
+         asprintf(&cmd, "AT+CGDCONT=1,\"%s\",\"%s\",,0,0", pdp_type, apn);
+         //FIXME check for error here
+         err = at_send_command(cmd, NULL);
+@@ -2240,6 +2245,10 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
+                it will call GET_CURRENT_CALLS and determine success that way */
+             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+             break;
++        case RIL_REQUEST_ALLOW_DATA:
++            /* Just return success. */
++            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
++            break;
+ 
+         case RIL_REQUEST_SEPARATE_CONNECTION:
+             {

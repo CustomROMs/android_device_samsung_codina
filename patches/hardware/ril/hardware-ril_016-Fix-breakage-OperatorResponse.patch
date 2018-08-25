@@ -1,0 +1,37 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] ril: service: Fix breakage introduced OperatorResponse
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index f4f06d5..87b1a4a 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -3990,10 +3990,6 @@
+ #if VDBG
+     RLOGD("getOperatorResponse: serial %d", serial);
+ #endif
+-    int mqanelements;
+-    char value[PROPERTY_VALUE_MAX];
+-    property_get("ro.ril.telephony.mqanelements", value, "5");
+-    mqanelements = atoi(value);
+ 
+     if (radioService[slotId]->mRadioResponse != NULL) {
+         RadioResponseInfo responseInfo = {};
+@@ -4002,14 +3998,14 @@
+         hidl_string shortName;
+         hidl_string numeric;
+         int numStrings = responseLen / sizeof(char *);
+-        if (response == NULL || numStrings != mqanelements - 2) {
++        if (response == NULL || numStrings < 3) {
+             RLOGE("getOperatorResponse Invalid response: NULL");
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+ 
+         } else {
+             char **resp = (char **) response;
+             longName = convertCharPtrToHidlString(resp[0]);
+-            shortName = convertCharPtrToHidlString(resp[0]);
++            shortName = convertCharPtrToHidlString(resp[1]);
+             numeric = convertCharPtrToHidlString(resp[2]);
+         }
+         Return<void> retStatus = radioService[slotId]->mRadioResponse->getOperatorResponse(

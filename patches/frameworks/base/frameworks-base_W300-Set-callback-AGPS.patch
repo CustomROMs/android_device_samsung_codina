@@ -1,0 +1,23 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] GnssLocationProvider: Set callback for AGPS/AGNSS
+
+diff --git a/services/core/jni/com_android_server_location_GnssLocationProvider.cpp b/services/core/jni/com_android_server_location_GnssLocationProvider.cpp
+index 4fb2ae368ae2b..0c8f752c46b98 100644
+--- a/services/core/jni/com_android_server_location_GnssLocationProvider.cpp
++++ b/services/core/jni/com_android_server_location_GnssLocationProvider.cpp
+@@ -1207,6 +1207,13 @@ static jboolean android_location_GnssLocationProvider_init(JNIEnv* env, jobject
+         ALOGE("Unable to initialize GNSS NI interface\n");
+     }
+ 
++    sp<IAGnssRilCallback> agnssRilCbIface = new AGnssRilCallback();
++    if (agnssRilIface != nullptr) {
++        agnssRilIface->setCallback(agnssRilCbIface);
++    } else {
++        ALOGE("Unable to initialize AGNSS RIL interface\n");
++    }
++
+     return JNI_TRUE;
+ }
+ 

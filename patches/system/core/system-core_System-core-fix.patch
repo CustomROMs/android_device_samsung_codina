@@ -1,3 +1,6 @@
+From 16c1404fea54c15fc025ae3da8e396505ad0a317 Mon Sep 17 00:00:00 2001
+From: trec-core <trec.core.track@gmail.com>
+Date: Mon, 25 Jun 2018 19:54:01 +0200
 Subject: [PATCH] core patch
 
 diff --git a/libutils/include/utils/Flattenable.h b/libutils/include/utils/Flattenable.h
@@ -40,7 +43,7 @@ index 882a8b2..495b90d 100644
  
      // unflattens the object from buffer.
      // size should be equal to the value of getFlattenedSize() when the
-@@ -109,6 +123,13 @@ public:
+@@ -109,6 +137,13 @@ class Flattenable {
      // don't need to be dupped(). ie: the caller of unflatten doesn't
      // keep ownership. If a fd is not retained by unflatten() it must be
      // explicitly closed.
@@ -66,7 +69,7 @@ diff --git a/libutils/Android.bp b/libutils/Android.bp
 index b1dc1f8..44f69c1 100644
 --- a/libutils/Android.bp
 +++ b/libutils/Android.bp
-@@ -62,9 +62,10 @@ cc_library {
+@@ -73,9 +73,10 @@ cc_library {
          "Unicode.cpp",
          "VectorImpl.cpp",
          "misc.cpp",
@@ -74,12 +77,12 @@ index b1dc1f8..44f69c1 100644
      ],
  
 -    cflags: ["-Werror"],
-+    cflags: ["-DSTE_HARDWARE"],
++    cflags: ["-DSTE_HARDWARE", "-DSTE_SAMSUNG_HARDWARE"],
      include_dirs: ["external/safe-iop/include"],
      header_libs: [
          "libutils_headers",
-@@ -96,7 +97,6 @@ cc_library {
-                 "liblog",
+@@ -110,7 +111,6 @@ cc_library {
+                 "libdl",
                  "libvndksupport",
              ],
 -

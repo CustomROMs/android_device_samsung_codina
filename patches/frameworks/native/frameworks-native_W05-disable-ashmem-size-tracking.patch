@@ -1,0 +1,118 @@
+From 3d7ad63bf6a8d08854e6d742946a328bbc1fbbfe Mon Sep 17 00:00:00 2001
+From: Simon Shields <keepcalm444@gmail.com>
+Date: Thu, 3 Dec 2015 20:34:15 +1100
+Subject: [PATCH] libbinder: allow devices to disable ashmem size tracking
+
+The addition of ashmem size tracking has resulted in a broken ABI
+for old blobs.
+
+diff --git a/libs/binder/include/binder/Parcel.h b/libs/binder/include/binder/Parcel.h
+index 1c355c4..bd23069 100644
+--- a/libs/binder/include/binder/Parcel.h
++++ b/libs/binder/include/binder/Parcel.h
+@@ -576,8 +576,10 @@
+         inline void* data() { return mData; }
+     };
+ 
++#ifndef DISABLE_ASHMEM_TRACKING
+ private:
+     size_t mOpenAshmemSize;
++#endif
+ 
+ public:
+     // TODO: Remove once ABI can be changed.
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index c7e8ff2..52e24f4 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -541,7 +541,11 @@
+ 
+             flat_binder_object* flat
+                 = reinterpret_cast<flat_binder_object*>(mData + off);
++#ifndef DISABLE_ASHMEM_TRACKING
+             acquire_object(proc, *flat, this, &mOpenAshmemSize);
++#else
++            acquire_object(proc, *flat, this);
++#endif
+ 
+             if (flat->type == BINDER_TYPE_FD) {
+                 // If this is a file descriptor, we need to dup it so the
+@@ -1328,7 +1332,11 @@
+         // Need to write meta-data?
+         if (nullMetaData || val.binder != 0) {
+             mObjects[mObjectsSize] = mDataPos;
++#ifndef DISABLE_ASHMEM_TRACKING
+             acquire_object(ProcessState::self(), val, this, &mOpenAshmemSize);
++#else
++            acquire_object(ProcessState::self(), val, this);
++#endif
+             mObjectsSize++;
+         }
+ 
+@@ -2431,7 +2439,11 @@
+         i--;
+         const flat_binder_object* flat
+             = reinterpret_cast<flat_binder_object*>(data+objects[i]);
++#ifndef DISABLE_ASHMEM_TRACKING
+         release_object(proc, *flat, this, &mOpenAshmemSize);
++#else
++        release_object(proc, *flat, this);
++#endif
+     }
+ }
+ 
+@@ -2445,7 +2457,11 @@
+         i--;
+         const flat_binder_object* flat
+             = reinterpret_cast<flat_binder_object*>(data+objects[i]);
++#ifndef DISABLE_ASHMEM_TRACKING
+         acquire_object(proc, *flat, this, &mOpenAshmemSize);
++#else
++        acquire_object(proc, *flat, this);
++#endif
+     }
+ }
+ 
+@@ -2636,7 +2652,11 @@
+                     // will need to rescan because we may have lopped off the only FDs
+                     mFdsKnown = false;
+                 }
++#ifndef DISABLE_ASHMEM_TRACKING
+                 release_object(proc, *flat, this, &mOpenAshmemSize);
++#else
++                release_object(proc, *flat, this);
++#endif
+             }
+             binder_size_t* objects =
+                 (binder_size_t*)realloc(mObjects, objectsSize*sizeof(binder_size_t));
+@@ -2721,7 +2741,9 @@
+     mFdsKnown = true;
+     mAllowFds = true;
+     mOwner = NULL;
++#ifndef DISABLE_ASHMEM_TRACKING
+     mOpenAshmemSize = 0;
++#endif
+ 
+     // racing multiple init leads only to multiple identical write
+     if (gMaxFds == 0) {
+@@ -2756,12 +2778,20 @@
+     // This used to return the size of all blobs that were written to ashmem, now we're returning
+     // the ashmem currently referenced by this Parcel, which should be equivalent.
+     // TODO: Remove method once ABI can be changed.
++#ifndef DISABLE_ASHMEM_TRACKING
+     return mOpenAshmemSize;
++#else
++    return 0;
++#endif
+ }
+ 
+ size_t Parcel::getOpenAshmemSize() const
+ {
++#ifndef DISABLE_ASHMEM_TRACKING
+     return mOpenAshmemSize;
++#else
++    return 0;
++#endif
+ }
+ 
+ // --- Parcel::Blob ---

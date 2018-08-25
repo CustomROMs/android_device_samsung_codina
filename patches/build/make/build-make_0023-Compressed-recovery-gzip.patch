@@ -1,0 +1,18 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Compressed recovery gzip
+
+diff --git a/core/Makefile b/core/Makefile
+index 1539900..0227310 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1346,6 +1346,8 @@
+ 		$(hide) $(MKBOOTFS) $(TARGET_RECOVERY_ROOT_OUT) > $@
+ 		@echo ----- Copy uncompressed recovery ------
+ 		$(hide) cp $(PRODUCT_OUT)/ramdisk-recovery.cpio $(PRODUCT_OUT)/install/bin/recovery.cpio
++		@echo ----- Compressed recovery gzip ------
++		$(hide) gzip $(PRODUCT_OUT)/install/bin/recovery.cpio
+ 
+ $(recovery_ramdisk): $(MINIGZIP) \
+ 		$(recovery_uncompressed_ramdisk)

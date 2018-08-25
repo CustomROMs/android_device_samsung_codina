@@ -1,0 +1,113 @@
+From 3612ba10d119005a5f21cd272f8fa6582e7db0a5 Mon Sep 17 00:00:00 2001
+From: xyyx <xyyx@mail.ru>
+Date: Tue, 24 Nov 2015 23:31:56 +0800
+Subject: [PATCH] Reset battery stats [1/2]
+
+diff --git a/data/etc/privapp-permissions-platform.xml b/data/etc/privapp-permissions-platform.xml
+index 4687f3ce45..4cdc1bdc11 100644
+--- a/data/etc/privapp-permissions-platform.xml
++++ b/data/etc/privapp-permissions-platform.xml
+@@ -239,6 +239,7 @@ applications that come with the platform
+         <permission name="android.permission.PACKAGE_USAGE_STATS"/>
+         <permission name="android.permission.READ_SEARCH_INDEXABLES"/>
+         <permission name="android.permission.REBOOT"/>
++        <permission name="android.permission.RESET_BATTERY_STATS"/>
+         <permission name="android.permission.SET_TIME"/>
+         <permission name="android.permission.STATUS_BAR"/>
+         <permission name="android.permission.TETHER_PRIVILEGED"/>
+diff --git a/api/system-current.txt b/api/system-current.txt
+index 0110022..0840501 100644
+--- a/api/system-current.txt
++++ b/api/system-current.txt
+@@ -224,6 +224,7 @@ package android {
+     field public static final java.lang.String REQUEST_DELETE_PACKAGES = "android.permission.REQUEST_DELETE_PACKAGES";
+     field public static final java.lang.String REQUEST_IGNORE_BATTERY_OPTIMIZATIONS = "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS";
+     field public static final java.lang.String REQUEST_INSTALL_PACKAGES = "android.permission.REQUEST_INSTALL_PACKAGES";
++    field public static final java.lang.String RESET_BATTERY_STATS = "android.permission.RESET_BATTERY_STATS";
+     field public static final deprecated java.lang.String RESTART_PACKAGES = "android.permission.RESTART_PACKAGES";
+     field public static final java.lang.String RESTRICTED_VR_ACCESS = "android.permission.RESTRICTED_VR_ACCESS";
+     field public static final java.lang.String RETRIEVE_WINDOW_CONTENT = "android.permission.RETRIEVE_WINDOW_CONTENT";
+diff --git a/core/java/com/android/internal/app/IBatteryStats.aidl b/core/java/com/android/internal/app/IBatteryStats.aidl
+index 4275e0b43a4..4a1e4aadf96 100644
+--- a/core/java/com/android/internal/app/IBatteryStats.aidl
++++ b/core/java/com/android/internal/app/IBatteryStats.aidl
+@@ -140,4 +140,7 @@ interface IBatteryStats {
+     oneway void noteBluetoothControllerActivity(in BluetoothActivityEnergyInfo info);
+     oneway void noteModemControllerActivity(in ModemActivityInfo info);
+     oneway void noteWifiControllerActivity(in WifiActivityEnergyInfo info);
++
++    /** @hide **/
++    void resetStatistics();
+ }
+diff --git a/core/java/com/android/internal/os/BatteryStatsHelper.java b/core/java/com/android/internal/os/BatteryStatsHelper.java
+index f085e290222..ddcd6c77800 100644
+--- a/core/java/com/android/internal/os/BatteryStatsHelper.java
++++ b/core/java/com/android/internal/os/BatteryStatsHelper.java
+@@ -249,6 +249,16 @@ public void clearStats() {
+         mStats = null;
+     }
+ 
++    private void clearAllStats() {
++        clearStats();
++        sStatsXfer = null;
++        sBatteryBroadcastXfer = null;
++        for (File f : sFileXfer.keySet()) {
++            f.delete();
++        }
++        sFileXfer.clear();
++     }
++
+     public BatteryStats getStats() {
+         if (mStats == null) {
+             load();
+@@ -1003,6 +1013,15 @@ private void load() {
+         }
+     }
+ 
++    public void resetStatistics() {
++        try {
++            clearAllStats();
++            mBatteryInfo.resetStatistics();
++        } catch (RemoteException e) {
++            Log.e(TAG, "RemoteException:", e);
++        }
++    }
++
+     private static BatteryStatsImpl getStats(IBatteryStats service) {
+         try {
+             ParcelFileDescriptor pfd = service.getStatisticsStream();
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 18fce35c63a..b3d438e5ac4 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -3072,6 +3072,11 @@
+     <permission android:name="android.permission.BATTERY_STATS"
+         android:protectionLevel="signature|privileged|development" />
+ 
++    <!-- @hide Allows an application to reset the device battery statistics -->
++    <permission android:name="android.permission.RESET_BATTERY_STATS"
++        android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
++        android:protectionLevel="signature|system|development" />
++
+     <!-- @SystemApi Allows an application to control the backup and restore process.
+     <p>Not for use by third-party applications.
+          @hide pending API council -->
+diff --git a/services/core/java/com/android/server/am/BatteryStatsService.java b/services/core/java/com/android/server/am/BatteryStatsService.java
+index fae215f45c1..b510aa70348 100644
+--- a/services/core/java/com/android/server/am/BatteryStatsService.java
++++ b/services/core/java/com/android/server/am/BatteryStatsService.java
+@@ -366,6 +366,14 @@ public boolean isCharging() {
+         }
+     }
+ 
++    public void resetStatistics() {
++        mContext.enforceCallingPermission(
++                android.Manifest.permission.RESET_BATTERY_STATS, null);
++        synchronized (mStats) {
++            mStats.resetAllStatsCmdLocked();
++        }
++    }
++
+     public long computeBatteryTimeRemaining() {
+         synchronized (mStats) {
+             long time = mStats.computeBatteryTimeRemaining(SystemClock.elapsedRealtime());

@@ -1,0 +1,53 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Remove -Werror
+diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
+index fb87de0..fbc4048 100644
+--- a/media/libstagefright/Android.bp
++++ b/media/libstagefright/Android.bp
+@@ -136,7 +136,6 @@
+ 
+     cflags: [
+         "-Wno-multichar",
+-        "-Werror",
+         "-Wno-error=deprecated-declarations",
+         "-Wall",
+     ],
+diff --git a/media/libmediaplayerservice/Android.mk b/media/libmediaplayerservice/Android.mk
+index fb87de0..fbc4049 100644
+--- a/media/libmediaplayerservice/Android.mk
++++ b/media/libmediaplayerservice/Android.mk
+@@ -59,7 +59,7 @@
+     frameworks/native/include/media/hardware                 \
+     external/tremolo/Tremolo                                 \
+ 
+-LOCAL_CFLAGS += -Werror -Wno-error=deprecated-declarations -Wall
++LOCAL_CFLAGS += -Wno-error=deprecated-declarations -Wall
+ 
+ LOCAL_MODULE:= libmediaplayerservice
+ 
+diff --git a/media/mediaserver/Android.mk b/media/mediaserver/Android.mk
+index 0b87de0..fbc4048 100644
+--- a/media/mediaserver/Android.mk
++++ b/media/mediaserver/Android.mk
+@@ -18,6 +18,7 @@ LOCAL_SHARED_LIBRARIES := \
+         libresourcemanagerservice \
+         liblog \
+         libmediaplayerservice \
++        libnativewindow \
+         libutils \
+         libbinder \
+         libicuuc \
+diff --git a/services/camera/libcameraservice/Android.mk b/services/camera/libcameraservice/Android.mk
+index 0187de0..fbc4048 100644
+--- a/services/camera/libcameraservice/Android.mk
++++ b/services/camera/libcameraservice/Android.mk
+@@ -74,6 +74,7 @@ LOCAL_SHARED_LIBRARIES:= \
+     libhidltransport \
+     libjpeg \
+     libmemunreachable \
++    libnativewindow \
+     android.hardware.camera.common@1.0 \
+     android.hardware.camera.provider@2.4 \
+     android.hardware.camera.device@1.0 \

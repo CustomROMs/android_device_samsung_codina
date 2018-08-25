@@ -1,0 +1,31 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] STE Flattenable fix
+
+diff --git a/libutils/include/utils/Flattenable.h b/libutils/include/utils/Flattenable.h
+index 070c710..058ba6f 100644
+--- a/libutils/include/utils/Flattenable.h
++++ b/libutils/include/utils/Flattenable.h
+@@ -63,17 +63,21 @@ class FlattenableUtils {
+     // write a POD structure
+     template<typename T>
+     static void write(void*& buffer, size_t& size, const T& value) {
++/*
+         static_assert(std::is_trivially_copyable<T>::value,
+                       "Cannot flatten a non-trivially-copyable type");
++*/
+         memcpy(buffer, &value, sizeof(T));
+         advance(buffer, size, sizeof(T));
+     }
+ 
+     // read a POD structure
+     template<typename T>
+     static void read(void const*& buffer, size_t& size, T& value) {
++/*
+         static_assert(std::is_trivially_copyable<T>::value,
+                       "Cannot unflatten a non-trivially-copyable type");
++*/
+         memcpy(&value, buffer, sizeof(T));
+         advance(buffer, size, sizeof(T));
+     }

@@ -1,0 +1,27 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+diff --git a/config/common.mk b/config/common.mk
+index 2fed3dd..448cec7 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -136,7 +136,6 @@
+     Jelly \
+     LockClock \
+     Trebuchet \
+-    Updater \
+     WallpaperPicker \
+     WeatherProvider
+ 
+diff --git a/config/common.mk b/config/common.mk
+index 2fed3d0..448cec0 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -128,7 +128,6 @@
+ 
+ # Custom Lineage packages
+ PRODUCT_PACKAGES += \
+-    AudioFX \
+     LineageSettingsProvider \
+     LineageSetupWizard \
+     Eleven \

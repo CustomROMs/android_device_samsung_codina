@@ -1,0 +1,23 @@
+From 707f8dba7c1bced3034f1066c3b8d759c8826422 Mon Sep 17 00:00:00 2001
+From: Lorenzo Colitti <lorenzo@google.com>
+Date: Tue, 8 Sep 2015 16:49:43 +0900
+Subject: [PATCH] Fix PacketKeepalive.stop() crash
+
+If the keepalive stop() function is called when the mSlot number is
+not yet setup, the conversion from null to integer will crash.
+This patch fixes it by adding the error checking.
+
+diff --git a/core/java/android/net/ConnectivityManager.java b/core/java/android/net/ConnectivityManager.java
+index 627d495..aa6d429 100644
+--- a/core/java/android/net/ConnectivityManager.java
++++ b/core/java/android/net/ConnectivityManager.java
+@@ -1581,6 +1581,9 @@
+         }
+ 
+         public void stop() {
++            if (mSlot == null) {
++                return;
++            }
+             try {
+                 mService.stopKeepalive(mNetwork, mSlot);
+             } catch (RemoteException e) {

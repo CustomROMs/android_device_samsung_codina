@@ -1,0 +1,42 @@
+From ba6d0cc61dfd51e57753b02ba64bca1c21f8ee81 Mon Sep 17 00:00:00 2001
+From: Luca Stefani <luca020400@lineageos.org>
+Date: Sat, 26 Aug 2017 16:17:34 +0200
+Subject: [PATCH] soong: Default kati jobs to NumCPU()
+
+* Current logic kills kernel build
+
+diff --git a/cmd/multiproduct_kati/main.go b/cmd/multiproduct_kati/main.go
+index d52c169..348dd61 100644
+--- a/cmd/multiproduct_kati/main.go
++++ b/cmd/multiproduct_kati/main.go
+@@ -32,15 +32,9 @@
+ 	"android/soong/ui/tracer"
+ )
+ 
+-// We default to number of cpus / 4, which seems to be the sweet spot for my
+-// system. I suspect this is mostly due to memory or disk bandwidth though, and
+-// may depend on the size ofthe source tree, so this probably isn't a great
+-// default.
++// We default to number of cpus.
+ func detectNumJobs() int {
+-	if runtime.NumCPU() < 4 {
+-		return 1
+-	}
+-	return runtime.NumCPU() / 4
++	return runtime.NumCPU()
+ }
+ 
+ var numJobs = flag.Int("j", detectNumJobs(), "number of parallel kati jobs")
+diff --git a/cmd/multiproduct_kati/main.go b/cmd/multiproduct_kati/main.go
+index d52c169..348dd62 100644
+--- a/cmd/multiproduct_kati/main.go
++++ b/cmd/multiproduct_kati/main.go
+@@ -34,7 +34,7 @@ import (
+ 
+ // We default to number of cpus.
+ func detectNumJobs() int {
+-	return runtime.NumCPU()
++	return (runtime.NumCPU() - 1)
+ }
+ 
+ var numJobs = flag.Int("j", detectNumJobs(), "number of parallel kati jobs")

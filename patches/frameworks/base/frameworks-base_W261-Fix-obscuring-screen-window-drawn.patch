@@ -1,0 +1,25 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] If child window is not obscuring screen, wait for main window drawn
+
+When PopupWindow is showing, this child window may
+be drawn earlier than it's main window, causing
+starting-window to remove early.
+
+diff --git a/services/core/java/com/android/server/wm/AppWindowToken.java b/services/core/java/com/android/server/wm/AppWindowToken.java
+index 0a7d1c1..a1430b2 100644
+--- a/services/core/java/com/android/server/wm/AppWindowToken.java
++++ b/services/core/java/com/android/server/wm/AppWindowToken.java
+@@ -255,6 +255,11 @@
+     }
+ 
+     void onFirstWindowDrawn(WindowState win, WindowStateAnimator winAnimator) {
++        // Child window may cause removing starting window early
++        if (win.isChildWindow() && !win.fillsDisplay()) {
++            return;
++        }
++
+         firstWindowDrawn = true;
+ 
+         // We now have a good window to show, remove dead placeholders

@@ -1,0 +1,62 @@
+From 661471316194fa333d1a76ac473f226ebf643bfb Mon Sep 17 00:00:00 2001
+From: ZeNiXxX <vitjahermann@gmail.com>
+Date: Sun, 17 Jun 2018 15:25:31 +0200
+Subject: [PATCH] MediaProvider: Fix scan on boot notification
+
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 3672f52..59c7a61 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -20,4 +20,6 @@
+     <string name="ask_scan_title">Scan for new media?</string>
+     <string name="ask_scan_text">Click to manually trigger media scan</string>
+ 
++    <string name="notification_media_scanner_name">Media Scanner</string>
++
+ </resources>
+diff --git a/src/com/android/providers/media/MediaScannerReceiver.java b/src/com/android/providers/media/MediaScannerReceiver.java
+index e1778da..4f91d72 100644
+--- a/src/com/android/providers/media/MediaScannerReceiver.java
++++ b/src/com/android/providers/media/MediaScannerReceiver.java
+@@ -19,6 +19,7 @@
+ 
+ import android.app.Notification;
+ import android.app.NotificationManager;
++import android.app.NotificationChannel;
+ import android.app.PendingIntent;
+ import android.content.BroadcastReceiver;
+ import android.content.Context;
+@@ -48,6 +49,8 @@
+     private final static String SCAN_ALL = "com.android.providers.media.SCAN_ALL";
+     private final static String DISMISS_SCAN = "com.android.providers.media.DISMISS_SCAN";
+ 
++    private static final String CHANNEL_ID = "notification_media_scanner";
++
+     private Handler mDelayScan = new Handler();
+ 
+     @Override
+@@ -142,11 +145,14 @@ public void askToScan(Context context, boolean startNotify) {
+             return;
+         }
+ 
+-        Notification.Builder mBuilder = new Notification.Builder(context)
++        NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID,
++                context.getString(R.string.notification_media_scanner_name),
++                NotificationManager.IMPORTANCE_LOW);
++
++        Notification.Builder mBuilder = new Notification.Builder(context, CHANNEL_ID)
+             .setContentTitle(context.getString(R.string.ask_scan_title))
+             .setContentText(context.getString(R.string.ask_scan_text))
+             .setSmallIcon(R.drawable.ask_scan);
+-
+         mBuilder.setContentIntent(pendingIntent);
+ 
+         intent = new Intent(DISMISS_SCAN);
+@@ -156,6 +162,7 @@ public void askToScan(Context context, boolean startNotify) {
+ 
+         NotificationManager notificationManager =
+             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
++        notificationManager.createNotificationChannel(notificationChannel);
+         Notification notif = mBuilder.build();
+         notif.flags    |= Notification.FLAG_AUTO_CANCEL;
+         notif.priority  = Notification.PRIORITY_HIGH;

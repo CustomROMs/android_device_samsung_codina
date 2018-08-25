@@ -1,0 +1,18 @@
+From a7d4fe636a6fc504171d2242e5af9c45771642c5 Mon Sep 17 00:00:00 2001
+From: Danny Baumann <dannybaumann@web.de>
+Date: Wed, 11 Dec 2013 10:07:20 +0100
+Subject: [PATCH] Properly handle null URIs.
+
+diff --git a/services/core/java/com/android/server/content/ContentService.java b/services/core/java/com/android/server/content/ContentService.java
+index 6e1c21e..3a855d7 100644
+--- a/services/core/java/com/android/server/content/ContentService.java
++++ b/services/core/java/com/android/server/content/ContentService.java
+@@ -450,7 +450,7 @@
+                 SyncManager syncManager = getSyncManager();
+                 if (syncManager != null) {
+                     syncManager.scheduleLocalSync(null /* all accounts */, callingUserHandle, uid,
+-                            uri.getAuthority());
++                            uri != null ? uri.getAuthority() : null);
+                 }
+             }
+ 

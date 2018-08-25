@@ -1,0 +1,25 @@
+From 9a73fe1d5e46b5cfef57e2614d02b3b11c97b7ae Mon Sep 17 00:00:00 2001
+From: Bolun Shan <bolun.xa.shan@sony.com>
+Date: Thu, 12 Oct 2017 15:17:08 +0800
+Subject: [PATCH] Keep access point list updated once in short time.
+
+The function onAccessPointsChanged will be called many times and
+access points will be updated many times in 300ms.
+Remove the old runnable to keep access points updating only once
+in 300ms.
+
+diff --git a/src/com/android/settings/wifi/WifiSettings.java b/src/com/android/settings/wifi/WifiSettings.java
+index 190af4d2e4..9a77de4135 100644
+--- a/src/com/android/settings/wifi/WifiSettings.java
++++ b/src/com/android/settings/wifi/WifiSettings.java
+@@ -703,6 +703,10 @@ public void onAccessPointsChanged() {
+     private void updateAccessPointsDelayed() {
+         // Safeguard from some delayed event handling
+         if (getActivity() != null && !mIsRestricted && mWifiManager.isWifiEnabled()) {
++            // The function onAccessPointsChanged will be called many times and access points
++            // will be updated many times in 300ms.
++            // Remove the old runnable to keep access points updating only once in 300ms.
++            getView().removeCallbacks(mUpdateAccessPointsRunnable);
+             setProgressBarVisible(true);
+             getView().postDelayed(mUpdateAccessPointsRunnable, 300 /* delay milliseconds */);
+         }

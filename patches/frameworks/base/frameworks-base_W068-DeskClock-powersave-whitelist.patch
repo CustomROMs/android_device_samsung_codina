@@ -1,0 +1,20 @@
+From 6a0ea533f16d03133e3434f132e99bc2c6a74a5d Mon Sep 17 00:00:00 2001
+From: xyyx <xyyx@mail.ru>
+Date: Thu, 6 Oct 2016 21:38:22 +0800
+Subject: [PATCH] Add DeskClock in powersave whitelist
+
+diff --git a/data/etc/platform.xml b/data/etc/platform.xml
+index 7c79010..dd9330d 100644
+--- a/data/etc/platform.xml
++++ b/data/etc/platform.xml
+@@ -176,6 +176,10 @@
+          access while in power save mode, even if they aren't in the foreground. -->
+     <allow-in-power-save package="com.android.providers.downloads" />
+ 
++    <!-- These are the standard packages that are white-listed to always have internet
++         access while in power save mode, even if they aren't in the foreground. -->
++    <allow-in-power-save package="com.android.deskclock" />
++
+     <!-- These are the standard packages that are white-listed to always have internet
+          access while in data mode, even if they aren't in the foreground. -->
+     <allow-in-data-usage-save package="com.android.providers.downloads" />

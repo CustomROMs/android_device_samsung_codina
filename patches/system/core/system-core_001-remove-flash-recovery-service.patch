@@ -1,8 +1,11 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
 diff --git a/rootdir/init.rc b/rootdir/init.rc
 index b4a25fe..a0397a0 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -703,12 +703,3 @@
+@@ -728,12 +728,3 @@
      chmod 0773 /data/misc/trace
      start console
  

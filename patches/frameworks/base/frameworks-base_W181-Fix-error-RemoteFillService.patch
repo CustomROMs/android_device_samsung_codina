@@ -1,0 +1,30 @@
+From 1c29de259168ac81fe82ba883e6930aff13736d0 Mon Sep 17 00:00:00 2001
+From: Tetsutoki Shiozawa <tetsutoki.shiozawa@sony.com>
+Date: Fri, 23 Feb 2018 13:16:56 +0900
+Subject: [PATCH] Fix: Double-free error on RemoteFillService
+
+Symptom:
+RemoteFillService was crashed due to IllegalArgumentException
+"Service not registered:" at onServiceConnected.
+
+Root cause:
+RemoteFillService#onServiceConnected tries to unbind the connection
+if mDestroyed is flagged or mBinding is not flagged. It always fails
+with IllegalArgumentException.
+Both mDestroyed and !mBinding mean the connection was unbound.
+You can't unbind the unbound connection. It's not allowed.
+
+diff --git a/services/autofill/java/com/android/server/autofill/RemoteFillService.java b/services/autofill/java/com/android/server/autofill/RemoteFillService.java
+index af55807..93df507 100644
+--- a/services/autofill/java/com/android/server/autofill/RemoteFillService.java
++++ b/services/autofill/java/com/android/server/autofill/RemoteFillService.java
+@@ -342,7 +342,8 @@
+         @Override
+         public void onServiceConnected(ComponentName name, IBinder service) {
+             if (mDestroyed || !mBinding) {
+-                mContext.unbindService(mServiceConnection);
++                // This is abnormal. Unbinding the connection has been requested already.
++                Slog.wtf(LOG_TAG, "onServiceConnected was dispatched after unbindService.");
+                 return;
+             }
+             mBinding = false;

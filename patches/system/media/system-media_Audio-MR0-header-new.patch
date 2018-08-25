@@ -1,8 +1,11 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
 diff --git a/audio/include/system/audio-base.h b/audio/include/system/audio-base.h
 index 1a000fc..e280cce 100644
 --- a/audio/include/system/audio-base.h
 +++ b/audio/include/system/audio-base.h
-@@ -246,7 +246,11 @@ typedef enum {
+@@ -242,7 +242,11 @@ typedef enum {
  
  enum {
      AUDIO_DEVICE_NONE = 0u, // 0x0
@@ -14,7 +17,7 @@ index 1a000fc..e280cce 100644
      AUDIO_DEVICE_BIT_DEFAULT = 1073741824u, // 0x40000000
      AUDIO_DEVICE_OUT_EARPIECE = 1u, // 0x1
      AUDIO_DEVICE_OUT_SPEAKER = 2u, // 0x2
-@@ -281,23 +285,43 @@ enum {
+@@ -277,23 +281,43 @@ enum {
      AUDIO_DEVICE_OUT_ALL_A2DP = 896u, // ((OUT_BLUETOOTH_A2DP | OUT_BLUETOOTH_A2DP_HEADPHONES) | OUT_BLUETOOTH_A2DP_SPEAKER)
      AUDIO_DEVICE_OUT_ALL_SCO = 112u, // ((OUT_BLUETOOTH_SCO | OUT_BLUETOOTH_SCO_HEADSET) | OUT_BLUETOOTH_SCO_CARKIT)
      AUDIO_DEVICE_OUT_ALL_USB = 67133440u, // ((OUT_USB_ACCESSORY | OUT_USB_DEVICE) | OUT_USB_HEADSET)
@@ -58,7 +61,7 @@ index 1a000fc..e280cce 100644
      AUDIO_DEVICE_IN_LINE = 2147516416u, // (BIT_IN | 0x8000)
      AUDIO_DEVICE_IN_SPDIF = 2147549184u, // (BIT_IN | 0x10000)
      AUDIO_DEVICE_IN_BLUETOOTH_A2DP = 2147614720u, // (BIT_IN | 0x20000)
-@@ -306,7 +330,11 @@ enum {
+@@ -302,7 +326,11 @@ enum {
      AUDIO_DEVICE_IN_BUS = 2148532224u, // (BIT_IN | 0x100000)
      AUDIO_DEVICE_IN_PROXY = 2164260864u, // (BIT_IN | 0x1000000)
      AUDIO_DEVICE_IN_USB_HEADSET = 2181038080u, // (BIT_IN | 0x2000000)

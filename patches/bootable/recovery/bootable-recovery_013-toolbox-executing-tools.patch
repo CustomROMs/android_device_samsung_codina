@@ -1,0 +1,36 @@
+From 8ba8f8451a283e058f69a159e5d1838369dbb7e0 Mon Sep 17 00:00:00 2001
+From: Ivan Kutepov <its.kutepov@gmail.com>
+Date: Wed, 21 Mar 2018 23:05:39 +0300
+Subject: [PATCH] toolbox: prevent executing tools
+
+diff --git a/toolbox/Android.mk b/toolbox/Android.mk
+index b8f4d2e..bf77ba2 100644
+--- a/toolbox/Android.mk
++++ b/toolbox/Android.mk
+@@ -47,14 +47,18 @@
+             $(if $(filter $(PLATFORM_SDK_VERSION), 23 24), du)
+ 
+         OUR_TOOLS := \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; iftop),) \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; ioctl),) \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; nandread),) \
+-            newfs_msdos \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; prlimit),) \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; sendevent),) \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; start),) \
+-            $(if $(shell test $(PLATFORM_SDK_VERSION) -lt 26; stop),) \
++            newfs_msdos
++
++        ifeq ($(shell test $(PLATFORM_SDK_VERSION) -lt 26; echo $$?),0)
++            OUR_TOOLS += \
++                iftop \
++                ioctl \
++                nandread \
++                prlimit \
++                sendevent \
++                start \
++                stop
++        endif
+ 
+         ifneq (,$(filter $(PLATFORM_SDK_VERSION), 23))
+             BSD_TOOLS += \

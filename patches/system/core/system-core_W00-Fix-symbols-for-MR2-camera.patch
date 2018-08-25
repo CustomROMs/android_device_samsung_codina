@@ -1,3 +1,6 @@
+From 04075569b565c949a6db8b4e8a9f10d281de4d9c Mon Sep 17 00:00:00 2001
+From: Dave Burke <daveburke@google.com>
+Date: Wed, 24 Oct 2012 17:30:31 -0700
 Subject: [PATCH] Revert "Revert "put back the unused virtuals in Vector<>""
 
 Conditionally Revert "put back the unused virtuals in Vector<>"
@@ -6,19 +9,6 @@ These symbols are needed for MR2 camera.tegra and other blobs,
 but they conflict with KK blobs so define it for devices that
 need it by setting COMMON_GLOBAL_CFLAGS += -DNEEDS_VECTORIMPL_SYMBOLS
 
-diff --git a/libutils/Android.bp b/libutils/Android.bp
-index b1dc1f8..44f69c1 100644
---- a/libutils/Android.bp
-+++ b/libutils/Android.bp
-@@ -65,7 +65,7 @@ cc_library {
-         "Flattenable.cpp",
-     ],
- 
--    cflags: ["-DSTE_HARDWARE"],
-+    cflags: ["-DSTE_HARDWARE" , "-DNEEDS_VECTORIMPL_SYMBOLS"],
-     include_dirs: ["external/safe-iop/include"],
-     header_libs: [
-         "libutils_headers",
 diff --git a/libutils/include/utils/VectorImpl.h b/libutils/include/utils/VectorImpl.h
 index 21ad71c..cab95be 100644
 --- a/libutils/include/utils/VectorImpl.h
@@ -29,7 +19,7 @@ index 21ad71c..cab95be 100644
      virtual void            do_move_backward(void* dest, const void* from, size_t num) const = 0;
 -    
 +
-+#ifdef NEEDS_VECTORIMPL_SYMBOLS
++//#ifdef NEEDS_VECTORIMPL_SYMBOLS
 +    // take care of FBC...
 +    virtual void            reservedVectorImpl1();
 +    virtual void            reservedVectorImpl2();
@@ -39,7 +29,7 @@ index 21ad71c..cab95be 100644
 +    virtual void            reservedVectorImpl6();
 +    virtual void            reservedVectorImpl7();
 +    virtual void            reservedVectorImpl8();
-+#endif
++//#endif
 +
  private:
          void* _grow(size_t where, size_t amount);
@@ -48,7 +38,7 @@ index 21ad71c..cab95be 100644
  protected:
      virtual int             do_compare(const void* lhs, const void* rhs) const = 0;
  
-+#ifdef NEEDS_VECTORIMPL_SYMBOLS
++//#ifdef NEEDS_VECTORIMPL_SYMBOLS
 +    // take care of FBC...
 +    virtual void            reservedSortedVectorImpl1();
 +    virtual void            reservedSortedVectorImpl2();
@@ -58,7 +48,7 @@ index 21ad71c..cab95be 100644
 +    virtual void            reservedSortedVectorImpl6();
 +    virtual void            reservedSortedVectorImpl7();
 +    virtual void            reservedSortedVectorImpl8();
-+#endif
++//#endif
 +
  private:
              ssize_t         _indexOrderOf(const void* item, size_t* order = 0) const;
@@ -71,7 +61,7 @@ index 30ca663..0bfc1f0 100644
      do_move_backward(dest, from, num);
  }
  
-+#ifdef NEEDS_VECTORIMPL_SYMBOLS
++//#ifdef NEEDS_VECTORIMPL_SYMBOLS
 +void VectorImpl::reservedVectorImpl1() { }
 +void VectorImpl::reservedVectorImpl2() { }
 +void VectorImpl::reservedVectorImpl3() { }
@@ -80,7 +70,7 @@ index 30ca663..0bfc1f0 100644
 +void VectorImpl::reservedVectorImpl6() { }
 +void VectorImpl::reservedVectorImpl7() { }
 +void VectorImpl::reservedVectorImpl8() { }
-+#endif
++//#endif
 +
  /*****************************************************************************/
  
@@ -89,7 +79,7 @@ index 30ca663..0bfc1f0 100644
      return i;
  }
  
-+#ifdef NEEDS_VECTORIMPL_SYMBOLS
++//#ifdef NEEDS_VECTORIMPL_SYMBOLS
 +void SortedVectorImpl::reservedSortedVectorImpl1() { };
 +void SortedVectorImpl::reservedSortedVectorImpl2() { };
 +void SortedVectorImpl::reservedSortedVectorImpl3() { };
@@ -98,7 +88,7 @@ index 30ca663..0bfc1f0 100644
 +void SortedVectorImpl::reservedSortedVectorImpl6() { };
 +void SortedVectorImpl::reservedSortedVectorImpl7() { };
 +void SortedVectorImpl::reservedSortedVectorImpl8() { };
-+#endif
++//#endif
 +
  /*****************************************************************************/
  

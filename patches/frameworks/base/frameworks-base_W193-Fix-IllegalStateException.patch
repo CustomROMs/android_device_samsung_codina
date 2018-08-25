@@ -1,0 +1,26 @@
+From 8d3676048d89bd75ee5f5c23058c68c767457bac Mon Sep 17 00:00:00 2001
+From: kenzyun_chen <kenzyun_chen@htc.com>
+Date: Fri, 17 Oct 2014 15:26:13 +0800
+Subject: [PATCH] Handle IllegalStateException from Surface.lockCanvas
+
+Symptom: SystemServer crash because of this exception on startingWindow
+Root Cause: IllegalStateException from Surface.lockCanvas
+Solution: handle IllegalStateException from Surface.lockCanvas
+
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 4726ae7..48c18be 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -3074,6 +3074,12 @@ private boolean drawSoftware(Surface surface, AttachInfo attachInfo, int xoff, i
+             // kill stuff (or ourself) for no reason.
+             mLayoutRequested = true;    // ask wm for a new surface next time.
+             return false;
++        } catch (IllegalStateException e) {
++            // After queueBuffer has been abandoned, Surface.unlockCanvasAndPost throws IllegalArgumentException.
++            // However, mLockedObject is not clear in Surface.
++            // This will lead to IllegalStateException while calling Surface.lockCanvas.
++            Log.e(TAG, "Could not lock surface after unlockCanvasAndPost failed", e);
++            return false;
+         }
+ 
+         try {

@@ -1,0 +1,30 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] ManagedServices: Catch double unbind of dead service
+
+If a service receives onBindingDied after it has successfully connected
+once, unbindService would be called once from the onBindingDied and then
+again from registerServiceLocked when the service was rebound.  This
+second attempt would typically crash.
+
+The first unbindService call has a try/catch, add one around the second
+call as well.
+
+diff --git a/services/core/java/com/android/server/notification/ManagedServices.java b/services/core/java/com/android/server/notification/ManagedServices.java
+index cb703642864..0026afad4bb 100644
+--- a/services/core/java/com/android/server/notification/ManagedServices.java
++++ b/services/core/java/com/android/server/notification/ManagedServices.java
+@@ -844,7 +844,11 @@ private void registerServiceLocked(final ComponentName name, final int userid,
+                 Slog.v(TAG, "    disconnecting old " + getCaption() + ": " + info.service);
+                 removeServiceLocked(i);
+                 if (info.connection != null) {
+-                    mContext.unbindService(info.connection);
++                    try {
++                        mContext.unbindService(info.connection);
++                    } catch (IllegalArgumentException e) {
++                        Slog.e(TAG, "failed to unbind " + name, e);
++                    }
+                 }
+             }
+         }

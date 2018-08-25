@@ -1,0 +1,21 @@
+From 777430d908f22e240a1ce29de453ed88d9263b78 Mon Sep 17 00:00:00 2001
+From: c_jyuan <yuanjiao@codeaurora.org>
+Date: Mon, 11 Jul 2016 14:37:24 +0800
+Subject: [PATCH] Add missing STORAGE_INTERNAL permission for BackupRestoreConfirmation
+
+BackupRestoreConfirmation acitivity does not show 'allow' button, because
+'getPasswordType' func check "Manifest.permission.STORAGE_INTERNAL",
+so add missing STORAGE_INTERNAL permission.
+
+diff --git a/packages/BackupRestoreConfirmation/AndroidManifest.xml b/packages/BackupRestoreConfirmation/AndroidManifest.xml
+index 8141fa72e56..db8ebc190be 100644
+--- a/packages/BackupRestoreConfirmation/AndroidManifest.xml
++++ b/packages/BackupRestoreConfirmation/AndroidManifest.xml
+@@ -21,6 +21,7 @@
+ 
+     <uses-permission android:name="android.permission.BACKUP" />
+     <uses-permission android:name="android.permission.CRYPT_KEEPER" />
++    <uses-permission android:name="android.permission.STORAGE_INTERNAL"/>
+ 
+     <application android:allowClearUserData="false"
+                  android:allowBackup="false"

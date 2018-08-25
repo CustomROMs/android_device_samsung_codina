@@ -1,0 +1,46 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Handle IAE in deletePackageAsUser
+
+Root cause:
+If user click free up button twice continully, the frist
+clear data thread is running at background. When second clear data
+thread is running, it will delete the same package that was deleted
+by first thread. So StorageManager throw the IllegalArgumentException
+and crash.
+
+diff --git a/src/com/android/storagemanager/deletionhelper/PackageDeletionTask.java b/src/com/android/storagemanager/deletionhelper/PackageDeletionTask.java
+index 32fc09f..07e73b7 100644
+--- a/src/com/android/storagemanager/deletionhelper/PackageDeletionTask.java
++++ b/src/com/android/storagemanager/deletionhelper/PackageDeletionTask.java
+@@ -19,6 +19,7 @@
+ import android.content.pm.IPackageDeleteObserver;
+ import android.content.pm.PackageManager;
+ import android.os.UserHandle;
++import android.util.Log;
+ 
+ import java.util.Set;
+ import java.util.concurrent.atomic.AtomicInteger;
+@@ -27,6 +28,7 @@
+  * Deletes a specified set of apps as a specified user and calls back once done.
+  */
+ public class PackageDeletionTask {
++    private static final String TAG = "PackageDeletionTask";
+     private Set<String> mPackages;
+     private Callback mCallback;
+     private PackageManager mPm;
+@@ -46,7 +48,12 @@
+     public void run() {
+         PackageDeletionObserver observer = new PackageDeletionObserver(mPackages.size());
+         for (String packageName : mPackages) {
+-            mPm.deletePackageAsUser(packageName, observer, 0, mUser.getIdentifier());
++            try {
++                mPm.deletePackageAsUser(packageName, observer, 0, mUser.getIdentifier());
++            } catch (IllegalArgumentException e) {
++                // Couldn't find the package, no need to delete.
++                Log.w(TAG, "Could not find package, not deleting " + packageName, e);
++            }
+         }
+     }
+ 

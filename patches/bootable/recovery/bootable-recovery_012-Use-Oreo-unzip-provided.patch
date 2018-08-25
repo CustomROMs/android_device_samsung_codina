@@ -1,0 +1,36 @@
+From fea23dbbbb910ecdd635490c053a7044ba1b9d21 Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Sun, 21 Jan 2018 18:53:07 +0100
+Subject: [PATCH] Use Oreo unzip provided by system/core/libziparchive
+
+diff --git a/prebuilt/Android.mk b/prebuilt/Android.mk
+index b54dda2..90edc90 100644
+--- a/prebuilt/Android.mk
++++ b/prebuilt/Android.mk
+@@ -21,13 +21,19 @@
+ 	RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/sh
+ 	RELINK_SOURCE_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/libcrypto.so
+ 	ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 23; echo $$?),0)
+-	    RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
+-	    ifneq ($(wildcard external/zip/Android.mk),)
+-                RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
+-	    endif
+-	    ifneq ($(wildcard external/unzip/Android.mk),)
+-                RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
+-	    endif
++		RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/toybox
++
++		ifneq ($(wildcard external/zip/Android.mk),)
++			RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/zip
++		endif
++		ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 27; echo $$?),0)
++			# system/core/libziparchive provides unzip
++			RELINK_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/unzip
++		else
++			ifneq ($(wildcard external/unzip/Android.mk),)
++				RELINK_SOURCE_FILES += $(TARGET_OUT_OPTIONAL_EXECUTABLES)/unzip
++			endif
++		endif
+ 	endif
+ endif
+ RELINK_SOURCE_FILES += $(TARGET_RECOVERY_ROOT_OUT)/sbin/pigz

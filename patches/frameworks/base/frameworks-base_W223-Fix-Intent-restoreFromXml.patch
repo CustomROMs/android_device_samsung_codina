@@ -1,0 +1,28 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Fix ix Intent restoreFromXml missing type.
+
+Intent#restoreFromXml always missing Intent type when Intent#restoreFromXml
+excute Intent#setData, because if Intent#setData executed after
+Intent#setType, the Intent type must be reset to null! And we attepmt
+to use setDataAndType to make sure Intent type never missing.
+
+diff --git a/core/java/android/content/Intent.java b/core/java/android/content/Intent.java
+index c865dd7..ee8bc50 100644
+--- a/core/java/android/content/Intent.java
++++ b/core/java/android/content/Intent.java
+@@ -9757,7 +9757,12 @@
+             if (ATTR_ACTION.equals(attrName)) {
+                 intent.setAction(attrValue);
+             } else if (ATTR_DATA.equals(attrName)) {
+-                intent.setData(Uri.parse(attrValue));
++                //Ensure Intent Type can be restored if it is not empty
++                if (intent.getType() != null) {
++                    intent.setDataAndType(Uri.parse(attrValue), intent.getType());
++                } else {
++                    intent.setData(Uri.parse(attrValue));
++                }
+             } else if (ATTR_TYPE.equals(attrName)) {
+                 intent.setType(attrValue);
+             } else if (ATTR_COMPONENT.equals(attrName)) {

@@ -1,0 +1,22 @@
+From 83bb853a1fe9d643a07902574ead2cb3428fc372 Mon Sep 17 00:00:00 2001
+From: xyyx <xyyx@mail.ru>
+Date: Tue, 7 Aug 2018 08:38:17 +0800
+Subject: [PATCH] Allow run services without selinux domain
+
+diff --git a/init/service.cpp b/init/service.cpp
+index ef59d7e..af8791d 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -83,12 +83,6 @@ static std::string ComputeContextFromExecutable(std::string& service_name,
+         computed_context = new_con;
+         free(new_con);
+     }
+-    if (rc == 0 && computed_context == mycon.get()) {
+-        LOG(ERROR) << "service " << service_name << " does not have a SELinux domain defined";
+-        if (selinux_status_getenforce() > 0) {
+-            return "";
+-        }
+-    }
+     if (rc < 0) {
+         LOG(ERROR) << "could not get context while starting '" << service_name << "'";
+         return "";

@@ -1,0 +1,298 @@
+From 3e52d83048a7bff762adff642c71b41fc38361ef Mon Sep 17 00:00:00 2001
+From: Lars Greiss <kufikugel@googlemail.com>
+Date: Wed, 14 Feb 2018 19:51:09 +0100
+Subject: [PATCH] Add Listanimation Views and Interpolator [2/2]
+
+diff --git a/res/drawable/rr_list_animation.xml b/res/drawable/rr_list_animation.xml
+new file mode 100644
+index 00000000000..9dad84cb816
+--- /dev/null
++++ b/res/drawable/rr_list_animation.xml
+@@ -0,0 +1,8 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="?android:attr/colorControlNormal"
++          android:pathData="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z" />
++</vector>
+diff --git a/res/values/cr_arrays.xml b/res/values/cr_arrays.xml
+index b4d459155fc..b62b2576e8d 100644
+--- a/res/values/cr_arrays.xml
++++ b/res/values/cr_arrays.xml
+@@ -137,4 +137,56 @@
+         <item>1.5</item>
+     </string-array>
+ 
++    <!-- Listview animation -->
++    <string-array name="listview_animation_entries">
++       <item>@string/listview_off</item>
++       <item>@string/listview_wave_left</item>
++       <item>@string/listview_wave_right</item>
++       <item>@string/listview_scale</item>
++       <item>@string/listview_alpha</item>
++       <item>@string/listview_stack_top</item>
++       <item>@string/listview_stack_bottom</item>
++       <item>@string/listview_unfold</item>
++       <item>@string/listview_fold</item>
++       <item>@string/listview_translate_left</item>
++       <item>@string/listview_translate_right</item>
++    </string-array>
++
++    <string-array name="listview_animation_values">
++       <item>0</item>
++       <item>1</item>
++       <item>2</item>
++       <item>3</item>
++       <item>4</item>
++       <item>5</item>
++       <item>6</item>
++       <item>7</item>
++       <item>8</item>
++       <item>9</item>
++       <item>10</item>
++    </string-array>
++
++    <!-- Listview Interpolator -->
++    <string-array name="listview_interpolator_entries">
++       <item>@string/listview_off</item>
++       <item>@string/listview_accelerate_interpolator</item>
++       <item>@string/listview_decelerate_interpolator</item>
++       <item>@string/listview_accelerate_decelerate_interpolator</item>
++       <item>@string/listview_anticipate_interpolator</item>
++       <item>@string/listview_overshoot_interpolator</item>
++       <item>@string/listview_anticipate_overshoot_interpolator</item>
++       <item>@string/listview_bounce_interpolator</item>
++    </string-array>
++
++    <string-array name="listview_interpolator_values">
++       <item>0</item>
++       <item>1</item>
++       <item>2</item>
++       <item>3</item>
++       <item>4</item>
++       <item>5</item>
++       <item>6</item>
++       <item>7</item>
++    </string-array>
++
+ </resources>
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 31cb57d34bf..b222df514fc 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -61,4 +61,30 @@
+ 
+     <string name="device_info_title">Phone info</string>
+ 
++    <!-- ListView animation -->
++    <string name="listview_animation_title">ListView animation</string>
++    <string name="listview_off">Default</string>
++    <string name="listview_wave_left">Wave (left)</string>
++    <string name="listview_wave_right">Wave (right)</string>
++    <string name="listview_alpha">Alpha</string>
++    <string name="listview_scale">Scale</string>
++    <string name="listview_stack_top">Stack (top)</string>
++    <string name="listview_stack_bottom">Stack (bottom)</string>
++    <string name="listview_unfold">Unfold</string>
++    <string name="listview_fold">Fold</string>
++    <string name="listview_translate_left">Translate (left)</string>
++    <string name="listview_translate_right">Translate (right)</string>
++    <string name="listview_title">List Animation</string>
++    <string name="listview_summary">Set Listview animation and interpolator</string>
++
++    <!-- ListView interpolator -->
++    <string name="listview_interpolator_title">ListView interpolator</string>
++    <string name="listview_accelerate_interpolator">Accelerate</string>
++    <string name="listview_decelerate_interpolator">Decelerate</string>
++    <string name="listview_accelerate_decelerate_interpolator">Accelerate and decelerate</string>
++    <string name="listview_anticipate_interpolator">Anticipate</string>
++    <string name="listview_overshoot_interpolator">Overshoot</string>
++    <string name="listview_anticipate_overshoot_interpolator">Anticipate and overshoot</string>
++    <string name="listview_bounce_interpolator">Bounce</string>
++
+ </resources>
+diff --git a/res/xml/animation_settings.xml b/res/xml/animation_settings.xml
+index 3d1709cd24a..aeda772d434 100644
+--- a/res/xml/animation_settings.xml
++++ b/res/xml/animation_settings.xml
+@@ -35,4 +35,12 @@
+         android:summary="%s"
+         android:defaultValue="0" />
+  
++    <PreferenceScreen
++        android:key="listview_animation"
++        android:fragment="com.android.settings.display.ListViewAnimation"
++        android:title="@string/listview_title"
++        android:summary="@string/listview_summary"
++        android:icon="@drawable/rr_list_animation"
++        />
++
+ </PreferenceScreen>
+diff --git a/res/xml/rr_list_animation.xml b/res/xml/rr_list_animation.xml
+new file mode 100644
+index 00000000000..b27bd749ad8
+--- /dev/null
++++ b/res/xml/rr_list_animation.xml
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2015 The Resurrection Remix Project
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++          http://www.apache.org/licenses/LICENSE-2.0
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<PreferenceScreen
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:settings="http://schemas.android.com/apk/res/com.android.settings" >
++
++ <ListPreference
++       android:key="listview_animation"
++       android:dialogTitle="@string/listview_animation_title"
++       android:title="@string/listview_animation_title"
++       android:entries="@array/listview_animation_entries"
++       android:entryValues="@array/listview_animation_values"
++       android:defaultValue="0" />
++
++   <ListPreference
++       android:key="listview_interpolator"
++       android:dialogTitle="@string/listview_interpolator_title"
++       android:title="@string/listview_interpolator_title"
++       android:entries="@array/listview_interpolator_entries"
++       android:entryValues="@array/listview_interpolator_values"
++       android:defaultValue="0" />
++
++</PreferenceScreen>
+diff --git a/src/com/android/settings/display/ListViewAnimation.java b/src/com/android/settings/display/ListViewAnimation.java
+new file mode 100644
+index 00000000000..b06dd7ee36f
+--- /dev/null
++++ b/src/com/android/settings/display/ListViewAnimation.java
+@@ -0,0 +1,120 @@
++/*
++ * Copyright (C) 2017 AICP
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++
++package com.android.settings.display;
++
++import android.app.AlertDialog;
++import android.app.Dialog;
++import android.content.Context;
++import android.content.DialogInterface;
++import android.content.Intent;
++import android.content.pm.PackageManager;
++import android.content.pm.ResolveInfo;
++import android.content.res.Resources;
++import android.support.v7.preference.Preference;
++import android.support.v14.preference.SwitchPreference;
++import android.graphics.drawable.Drawable;
++import android.os.Bundle;
++import android.os.Handler;
++import android.os.UserHandle;
++import android.support.v7.preference.ListPreference;
++import android.support.v14.preference.SwitchPreference;
++import android.support.v7.preference.Preference;
++import android.support.v7.preference.PreferenceCategory;
++import android.support.v7.preference.PreferenceScreen;
++
++import com.android.settings.SettingsPreferenceFragment;
++import com.android.settings.R;
++import android.provider.Settings;
++import android.view.Gravity;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.AdapterView;
++import android.widget.BaseAdapter;
++import android.widget.ImageView;
++import android.widget.ListView;
++import android.widget.RadioButton;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.Comparator;
++import java.util.HashMap;
++import java.util.Map;
++
++import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
++
++public class ListViewAnimation extends SettingsPreferenceFragment
++        implements Preference.OnPreferenceChangeListener {
++
++    private static final String KEY_LISTVIEW_ANIMATION = "listview_animation";
++    private static final String KEY_LISTVIEW_INTERPOLATOR = "listview_interpolator";
++
++    private ListPreference mListViewAnimation;
++    private ListPreference mListViewInterpolator;
++
++
++    @Override
++    public void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        addPreferencesFromResource(R.xml.rr_list_animation);
++        PreferenceScreen prefSet = getPreferenceScreen();
++
++        mListViewAnimation = (ListPreference) prefSet.findPreference(KEY_LISTVIEW_ANIMATION);
++              int listviewanimation = Settings.System.getInt(getContentResolver(),
++                      Settings.System.LISTVIEW_ANIMATION, 0);
++              mListViewAnimation.setValue(String.valueOf(listviewanimation));
++              mListViewAnimation.setSummary(mListViewAnimation.getEntry());
++              mListViewAnimation.setOnPreferenceChangeListener(this);
++
++              mListViewInterpolator = (ListPreference) prefSet.findPreference(KEY_LISTVIEW_INTERPOLATOR);
++              int listviewinterpolator = Settings.System.getInt(getContentResolver(),
++                      Settings.System.LISTVIEW_INTERPOLATOR, 0);
++              mListViewInterpolator.setValue(String.valueOf(listviewinterpolator));
++              mListViewInterpolator.setSummary(mListViewInterpolator.getEntry());
++              mListViewInterpolator.setOnPreferenceChangeListener(this);
++              mListViewInterpolator.setEnabled(listviewanimation > 0);
++    }
++
++    public boolean onPreferenceChange(Preference preference, Object objValue) {
++        if (preference == mListViewAnimation) {
++             int value = Integer.parseInt((String) objValue);
++             int index = mListViewAnimation.findIndexOfValue((String) objValue);
++             Settings.System.putInt(getContentResolver(),
++                     Settings.System.LISTVIEW_ANIMATION, value);
++             mListViewAnimation.setSummary(mListViewAnimation.getEntries()[index]);
++             mListViewInterpolator.setEnabled(value > 0);
++             return true;
++         } else if (preference == mListViewInterpolator) {
++             int value = Integer.parseInt((String) objValue);
++             int index = mListViewInterpolator.findIndexOfValue((String) objValue);
++             Settings.System.putInt(getContentResolver(),
++                     Settings.System.LISTVIEW_INTERPOLATOR, value);
++             mListViewInterpolator.setSummary(mListViewInterpolator.getEntries()[index]);
++             return true;
++      }
++        return false;
++    }
++
++    @Override
++    public int getMetricsCategory() {
++        return MetricsEvent.NEW_SETTINGS;
++    }
++
++}

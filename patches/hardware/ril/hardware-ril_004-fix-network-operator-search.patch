@@ -1,0 +1,79 @@
+From f7c75aa4e0f637ea009517c53c82d792a4dcfe60 Mon Sep 17 00:00:00 2001
+From: Martin Bouchet <tincho5588@gmail.com>
+Date: Sun, 24 Sep 2017 04:51:55 -0300
+Subject: [PATCH] libril: fix network operator search
+
+The number of mQANElements should be defined in the system
+prop ro.ril.telephony.mqanelements
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index 92f91d2..7da0638 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -29,6 +29,7 @@
+ #include <hidl/HidlTransportSupport.h>
+ #include <utils/SystemClock.h>
+ #include <inttypes.h>
++#include <cutils/properties.h>
+ 
+ #define INVALID_HEX_CHAR 16
+ 
+@@ -3914,6 +3915,10 @@
+ #if VDBG
+     RLOGD("getOperatorResponse: serial %d", serial);
+ #endif
++    int mqanelements;
++    char value[PROPERTY_VALUE_MAX];
++    property_get("ro.ril.telephony.mqanelements", value, "5");
++    mqanelements = atoi(value);
+ 
+     if (radioService[slotId]->mRadioResponse != NULL) {
+         RadioResponseInfo responseInfo = {};
+@@ -3922,14 +3927,14 @@
+         hidl_string shortName;
+         hidl_string numeric;
+         int numStrings = responseLen / sizeof(char *);
+-        if (response == NULL || numStrings != 3) {
++        if (response == NULL || numStrings != mqanelements - 2) {
+             RLOGE("getOperatorResponse Invalid response: NULL");
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+ 
+         } else {
+             char **resp = (char **) response;
+             longName = convertCharPtrToHidlString(resp[0]);
+-            shortName = convertCharPtrToHidlString(resp[1]);
++            shortName = convertCharPtrToHidlString(resp[0]);
+             numeric = convertCharPtrToHidlString(resp[2]);
+         }
+         Return<void> retStatus = radioService[slotId]->mRadioResponse->getOperatorResponse(
+@@ -4557,22 +4562,26 @@
+ #if VDBG
+     RLOGD("getAvailableNetworksResponse: serial %d", serial);
+ #endif
++    int mqanelements;
++    char value[PROPERTY_VALUE_MAX];
++    property_get("ro.ril.telephony.mqanelements", value, "5");
++	mqanelements = atoi(value);
+ 
+     if (radioService[slotId]->mRadioResponse != NULL) {
+         RadioResponseInfo responseInfo = {};
+         populateResponseInfo(responseInfo, serial, responseType, e);
+         hidl_vec<OperatorInfo> networks;
+         if ((response == NULL && responseLen != 0)
+-                || responseLen % (4 * sizeof(char *))!= 0) {
++                || responseLen % (mqanelements * sizeof(char *))!= 0) {
+             RLOGE("getAvailableNetworksResponse Invalid response: NULL");
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+         } else {
+             char **resp = (char **) response;
+             int numStrings = responseLen / sizeof(char *);
+-            networks.resize(numStrings/4);
+-            for (int i = 0, j = 0; i < numStrings; i = i + 4, j++) {
++            networks.resize(numStrings/mqanelements);
++            for (int i = 0, j = 0; i < numStrings; i = i + mqanelements, j++) {
+                 networks[j].alphaLong = convertCharPtrToHidlString(resp[i]);
+-                networks[j].alphaShort = convertCharPtrToHidlString(resp[i + 1]);
++                networks[j].alphaShort = convertCharPtrToHidlString(resp[i]);
+                 networks[j].operatorNumeric = convertCharPtrToHidlString(resp[i + 2]);
+                 int status = convertOperatorStatusToInt(resp[i + 3]);
+                 if (status == -1) {

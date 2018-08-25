@@ -1,0 +1,18 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Add NewSettings proto
+
+diff --git a/proto/src/metrics_constants.proto b/proto/src/metrics_constants.proto
+index 81a23f0afa3..6de16e95a93 100644
+--- a/proto/src/metrics_constants.proto
++++ b/proto/src/metrics_constants.proto
+@@ -4604,5 +4604,8 @@ message MetricsEvent {
+ 
+     // Add new aosp constants above this line.
+     // END OF AOSP CONSTANTS
++
++    // NewSettings constant
++    NEW_SETTINGS = 1500;
+   }
+ }

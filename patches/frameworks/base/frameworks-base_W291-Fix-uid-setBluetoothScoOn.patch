@@ -1,0 +1,28 @@
+From c3bb48ccfdea4c732fd49e3f10cfef37b424f934 Mon Sep 17 00:00:00 2001
+From: Vitor Albuquerque <vitoralb@motorola.com>
+Date: Wed, 7 Mar 2018 10:39:59 -0300
+Subject: [PATCH] AudioService: fix uid check in setBluetoothScoOn
+
+Calling UID is now checked in setBluetoothScoOn and only allow
+route to change if request comes from a system component.
+
+The check was not taking into account secondary users, hence
+causing failure to route audio to SCO when secondary users
+were active.
+
+This change makes sure we are checking the correct app id,
+without taking into account the user id.
+
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index 9e37c78..7a17bdd 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -2959,7 +2959,7 @@
+         }
+ 
+         // Only enable calls from system components
+-        if (Binder.getCallingUid() >= FIRST_APPLICATION_UID) {
++        if (UserHandle.getCallingAppId() >= FIRST_APPLICATION_UID) {
+             mForcedUseForCommExt = on ? AudioSystem.FORCE_BT_SCO : AudioSystem.FORCE_NONE;
+             return;
+         }

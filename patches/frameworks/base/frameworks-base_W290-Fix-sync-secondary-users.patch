@@ -1,0 +1,18 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] Fix sync initialization on secondary users
+
+diff --git a/services/core/java/com/android/server/content/SyncManager.java b/services/core/java/com/android/server/content/SyncManager.java
+index 205e828..581e8c7 100644
+--- a/services/core/java/com/android/server/content/SyncManager.java
++++ b/services/core/java/com/android/server/content/SyncManager.java
+@@ -323,7 +323,7 @@
+     private final BroadcastReceiver mAccountsUpdatedReceiver = new BroadcastReceiver() {
+         @Override
+         public void onReceive(Context context, Intent intent) {
+-            EndPoint target = new EndPoint(null, null, context.getUserId());
++            EndPoint target = new EndPoint(null, null, getSendingUserId());
+             updateRunningAccounts(target /* sync targets for user */);
+         }
+     };

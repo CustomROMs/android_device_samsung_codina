@@ -1,0 +1,52 @@
+From e01ef86b8450db27fbb111ca0ad5390b07edbaca Mon Sep 17 00:00:00 2001
+From: Luca Stefani <luca020400@lineageos.org>
+Date: Wed, 16 Aug 2017 19:43:35 +0200
+Subject: [PATCH] Add support for Cortex-A9
+
+diff --git a/cc/config/arm_device.go b/cc/config/arm_device.go
+index 1b60eae..c921fd3 100644
+--- a/cc/config/arm_device.go
++++ b/cc/config/arm_device.go
+@@ -119,6 +153,9 @@ var (
+ 		"cortex-a8": []string{
+ 			"-mcpu=cortex-a8",
+ 		},
++		"cortex-a9": []string{
++			"-mcpu=cortex-a9",
++		},
+ 		"cortex-a15": []string{
+ 			"-mcpu=cortex-a15",
+ 			"-mfpu=neon-vfpv4",
+@@ -217,6 +254,7 @@ func init() {
+ 	pctx.StaticVariable("ArmGenericCflags", strings.Join(armCpuVariantCflags[""], " "))
+ 	pctx.StaticVariable("ArmCortexA7Cflags", strings.Join(armCpuVariantCflags["cortex-a7"], " "))
+ 	pctx.StaticVariable("ArmCortexA8Cflags", strings.Join(armCpuVariantCflags["cortex-a8"], " "))
++	pctx.StaticVariable("ArmCortexA9Cflags", strings.Join(armCpuVariantCflags["cortex-a9"], " "))
+ 	pctx.StaticVariable("ArmCortexA15Cflags", strings.Join(armCpuVariantCflags["cortex-a15"], " "))
+ 	pctx.StaticVariable("ArmCortexA53Cflags", strings.Join(armCpuVariantCflags["cortex-a53"], " "))
+ 	pctx.StaticVariable("ArmKraitCflags", strings.Join(armCpuVariantCflags["krait"], " "))
+@@ -247,6 +285,8 @@ func init() {
+ 		strings.Join(armClangCpuVariantCflags["cortex-a7"], " "))
+ 	pctx.StaticVariable("ArmClangCortexA8Cflags",
+ 		strings.Join(armClangCpuVariantCflags["cortex-a8"], " "))
++	pctx.StaticVariable("ArmClangCortexA9Cflags",
++		strings.Join(armClangCpuVariantCflags["cortex-a9"], " "))
+ 	pctx.StaticVariable("ArmClangCortexA15Cflags",
+ 		strings.Join(armClangCpuVariantCflags["cortex-a15"], " "))
+ 	pctx.StaticVariable("ArmClangCortexA53Cflags",
+@@ -268,6 +308,7 @@ var (
+ 		"":               "${config.ArmGenericCflags}",
+ 		"cortex-a7":      "${config.ArmCortexA7Cflags}",
+ 		"cortex-a8":      "${config.ArmCortexA8Cflags}",
++		"cortex-a9":      "${config.ArmCortexA9Cflags}",
+ 		"cortex-a15":     "${config.ArmCortexA15Cflags}",
+ 		"cortex-a53":     "${config.ArmCortexA53Cflags}",
+ 		"cortex-a53.a57": "${config.ArmCortexA53Cflags}",
+@@ -287,6 +328,7 @@ var (
+ 		"":               "${config.ArmClangGenericCflags}",
+ 		"cortex-a7":      "${config.ArmClangCortexA7Cflags}",
+ 		"cortex-a8":      "${config.ArmClangCortexA8Cflags}",
++		"cortex-a9":      "${config.ArmClangCortexA9Cflags}",
+ 		"cortex-a15":     "${config.ArmClangCortexA15Cflags}",
+ 		"cortex-a53":     "${config.ArmClangCortexA53Cflags}",
+ 		"cortex-a53.a57": "${config.ArmClangCortexA53Cflags}",

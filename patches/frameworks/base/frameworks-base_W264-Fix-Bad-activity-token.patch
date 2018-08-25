@@ -1,0 +1,24 @@
+From 633a6e14cbc77e6eb0b150425cfbf3ab747fa208 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=BB=B4=E6=9C=AF?= <weishu.tws@alipay.com>
+Date: Mon, 15 Jan 2018 16:30:02 +0800
+Subject: [PATCH]  Fix Bad activity token
+
+ ActivityManager: Bad activity token: android.os.BinderProxy@9fa357
+ ActivityManager: java.lang.ClassCastException: android.os.BinderProxy cannot be cast to com.android.server.am.ActivityRecord$Token
+ ActivityManager: 	at com.android.server.am.ActivityRecord.forTokenLocked(ActivityRecord.java:597)
+ ActivityManager: 	at com.android.server.am.ActivityRecord.isInStackLocked(ActivityRecord.java:1373)
+
+diff --git a/services/core/java/com/android/server/am/ActivityRecord.java b/services/core/java/com/android/server/am/ActivityRecord.java
+index 1a0e45e..4dc5764 100755
+--- a/services/core/java/com/android/server/am/ActivityRecord.java
++++ b/services/core/java/com/android/server/am/ActivityRecord.java
+@@ -779,6 +779,9 @@
+     }
+ 
+     static ActivityRecord forTokenLocked(IBinder token) {
++        if (token == null) {
++            return null;
++        }
+         try {
+             return Token.tokenToActivityRecordLocked((Token)token);
+         } catch (ClassCastException e) {

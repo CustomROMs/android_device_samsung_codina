@@ -1,3 +1,6 @@
+From d8a8cc582ff363499c101013a0985ad91f1c2b6b Mon Sep 17 00:00:00 2001
+From: Schischu <schischu65@gmail.com>
+Date: Sun, 18 Oct 2015 15:33:55 +0200
 Adding legacy CRYPTO_malloc call for blob gpsd 
 
 diff --git a/src/crypto/mem.c b/src/crypto/mem.c

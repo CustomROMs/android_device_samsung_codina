@@ -1,0 +1,99 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] pm: do not verify system apps signatures
+
+Hack for Gapps stubs
+
+diff --git a/core/java/android/content/pm/PackageParser.java b/core/java/android/content/pm/PackageParser.java
+index 4da77f4..6fda563 100644
+--- a/core/java/android/content/pm/PackageParser.java
++++ b/core/java/android/content/pm/PackageParser.java
+@@ -107,6 +107,7 @@
+ import java.io.InputStream;
+ import java.io.PrintWriter;
+ import java.lang.reflect.Constructor;
++import java.security.GeneralSecurityException;
+ import java.security.KeyFactory;
+ import java.security.NoSuchAlgorithmException;
+ import java.security.PublicKey;
+@@ -1625,6 +1626,34 @@ public class PackageParser {
+         }
+ 
+         StrictJarFile jarFile = null;
++
++        final String systemDir = android.os.Environment.getRootDirectory().getPath();
++        final boolean isSystemApk = apkPath.startsWith(systemDir);
++
++        if (isSystemApk) {
++            try {
++                final Certificate[][] entryCerts = StrictJarFile.loadSignature(apkPath);
++                if (!ArrayUtils.isEmpty(entryCerts)) {
++                    final Signature[] entrySignatures = convertToSignatures(entryCerts);
++
++                    pkg.mCertificates = entryCerts;
++                    pkg.mSignatures = entrySignatures;
++                    pkg.mSigningKeys = new ArraySet<PublicKey>();
++                    for (int i=0; i < entryCerts.length; i++) {
++                        pkg.mSigningKeys.add(entryCerts[i][0].getPublicKey());
++                    }
++                    Slog.w(TAG, "extract public cert hack performed successful for " + apkPath );
++                    return;
++                } else {
++                    Slog.w(TAG, "No certification in " + apkPath);
++                }
++            } catch (GeneralSecurityException e) {
++                Slog.w(TAG, "extract public cert hack is failed", e);
++            } catch (RuntimeException e) {
++                Slog.w(TAG, "extract public cert hack is failed", e);
++            }
++        }
++
+         try {
+             Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "strictJarFileCtor");
+             // Ignore signature stripping protections when verifying APKs from system partition.
+diff --git a/core/java/android/util/jar/StrictJarFile.java b/core/java/android/util/jar/StrictJarFile.java
+index 5d94b06..22bb344 100644
+--- a/core/java/android/util/jar/StrictJarFile.java
++++ b/core/java/android/util/jar/StrictJarFile.java
+@@ -491,4 +491,40 @@ public final class StrictJarFile {
+     private static native ZipEntry nativeNextEntry(long iterationHandle);
+     private static native ZipEntry nativeFindEntry(long nativeHandle, String entryName);
+     private static native void nativeClose(long nativeHandle);
++
++    /**
++     * @hide
++     */
++    public static Certificate[][] loadSignature(String fileName) {
++        boolean signatureSchemeRollbackProtectionsEnforced = false;
++        StrictJarFile jf = null;
++        Object obj = null;
++        try {
++            jf = new StrictJarFile(fileName, false,
++                    signatureSchemeRollbackProtectionsEnforced);
++            HashMap<String, byte[]> metaEntries = jf.getMetaEntries();
++            final String certFile = "META-INF/CERT.RSA";
++            byte[] sBlockBytes = metaEntries.get(certFile);
++            if (sBlockBytes == null) return null;
++
++            obj = sun.security.jca.Providers.startJarVerification();
++            sun.security.pkcs.PKCS7 block = new sun.security.pkcs.PKCS7(sBlockBytes);
++
++            Certificate[][] entryCerts = {
++                    block.getCertificates(),
++            };
++            return entryCerts;
++        } catch (IOException ex) {
++        } finally {
++            if (obj != null) {
++                sun.security.jca.Providers.stopJarVerification(obj);
++            }
++            if (jf != null) {
++                try {
++                    jf.close();
++                } catch (Exception ignored) {}
++            }
++        }
++        return null;
++    }
+ }

@@ -1,0 +1,25 @@
+From 1b42cb7cdb329a17769480524ed7fd6c05d1919d Mon Sep 17 00:00:00 2001
+From: tiansiming <tiansiming@xiaomi.com>
+Date: Sun, 5 Nov 2017 21:18:32 +0800
+Subject: [PATCH] Avoid clearing default browser setting when unnecessary
+
+If the priority parameter of a browser app's intent-filter in Manifest
+is less than 0, it can not be selected by user. So it shoult not clear
+default browser settings.
+
+Bug: Install more than one browser apps, and pick one as default,
+then install com.taobao.taobao. Default settings will be cleared.
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 7a449b61697..f8ce74ca8e5 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -3823,7 +3823,7 @@ private boolean packageIsBrowser(String packageName, int userId) {
+         final int N = list.size();
+         for (int i = 0; i < N; i++) {
+             ResolveInfo info = list.get(i);
+-            if (packageName.equals(info.activityInfo.packageName)) {
++            if (info.priority >= 0 && packageName.equals(info.activityInfo.packageName)) {
+                 return true;
+             }
+         }

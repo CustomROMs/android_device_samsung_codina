@@ -1,0 +1,20 @@
+From 426d5c5df0a2a156d4948c9178ba25a7bb2e300b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 17 Sep 2016 07:11:54 +0700
+Subject: [PATCH] Wi-Fi : Wifi Autoconnection
+
+ The results given to Wifi QNS when scanning after deep sleep is empty thus Wifi Autoconnection fails. Hack this thing.
+
+diff --git a/service/java/com/android/server/wifi/scanner/WificondScannerImpl.java b/service/java/com/android/server/wifi/scanner/WificondScannerImpl.java
+index ac5db5a..e8faaba 100644
+--- a/service/java/com/android/server/wifi/scanner/WificondScannerImpl.java
++++ b/service/java/com/android/server/wifi/scanner/WificondScannerImpl.java
+@@ -554,7 +554,7 @@
+             for (int i = 0; i < mNativeScanResults.size(); ++i) {
+                 ScanResult result = mNativeScanResults.get(i).getScanResult();
+                 long timestamp_ms = result.timestamp / 1000; // convert us -> ms
+-                if (timestamp_ms > mLastScanSettings.startTime) {
++                if (timestamp_ms > mLastScanSettings.startTime || true) {
+                     if (mLastScanSettings.hwPnoScanActive) {
+                         hwPnoScanResults.add(result);
+                     }

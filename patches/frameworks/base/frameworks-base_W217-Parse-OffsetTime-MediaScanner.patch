@@ -1,0 +1,203 @@
+From a0943bd277ed9b5ecaf1c7c1ace7590b1b6da37d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH] media: Parse Exif OffsetTime in MediaScanner
+
+MediaScanner parses Exif OffsetTime value to use UTC time for DATE_TAKEN value.
+
+diff --git a/api/current.txt b/api/current.txt
+index 25e998c2946..fbfe9042cb1 100644
+--- a/api/current.txt
++++ b/api/current.txt
+@@ -21716,6 +21716,9 @@ package android.media {
+     field public static final java.lang.String TAG_MODEL = "Model";
+     field public static final java.lang.String TAG_NEW_SUBFILE_TYPE = "NewSubfileType";
+     field public static final java.lang.String TAG_OECF = "OECF";
++    field public static final java.lang.String TAG_OFFSET_TIME = "OffsetTime";
++    field public static final java.lang.String TAG_OFFSET_TIME_DIGITIZED = "OffsetTimeDigitized";
++    field public static final java.lang.String TAG_OFFSET_TIME_ORIGINAL = "OffsetTimeOriginal";
+     field public static final java.lang.String TAG_ORF_ASPECT_FRAME = "AspectFrame";
+     field public static final java.lang.String TAG_ORF_PREVIEW_IMAGE_LENGTH = "PreviewImageLength";
+     field public static final java.lang.String TAG_ORF_PREVIEW_IMAGE_START = "PreviewImageStart";
+diff --git a/api/system-current.txt b/api/system-current.txt
+index 2bc8a929cf4..82b30fe3356 100644
+--- a/api/system-current.txt
++++ b/api/system-current.txt
+@@ -23593,6 +23593,9 @@ package android.media {
+     field public static final java.lang.String TAG_MODEL = "Model";
+     field public static final java.lang.String TAG_NEW_SUBFILE_TYPE = "NewSubfileType";
+     field public static final java.lang.String TAG_OECF = "OECF";
++    field public static final java.lang.String TAG_OFFSET_TIME = "OffsetTime";
++    field public static final java.lang.String TAG_OFFSET_TIME_DIGITIZED = "OffsetTimeDigitized";
++    field public static final java.lang.String TAG_OFFSET_TIME_ORIGINAL = "OffsetTimeOriginal";
+     field public static final java.lang.String TAG_ORF_ASPECT_FRAME = "AspectFrame";
+     field public static final java.lang.String TAG_ORF_PREVIEW_IMAGE_LENGTH = "PreviewImageLength";
+     field public static final java.lang.String TAG_ORF_PREVIEW_IMAGE_START = "PreviewImageStart";
+diff --git a/api/test-current.txt b/api/test-current.txt
+index bbaf021c530..246e3122478 100644
+--- a/api/test-current.txt
++++ b/api/test-current.txt
+@@ -21872,6 +21872,9 @@ package android.media {
+     field public static final java.lang.String TAG_MODEL = "Model";
+     field public static final java.lang.String TAG_NEW_SUBFILE_TYPE = "NewSubfileType";
+     field public static final java.lang.String TAG_OECF = "OECF";
++    field public static final java.lang.String TAG_OFFSET_TIME = "OffsetTime";
++    field public static final java.lang.String TAG_OFFSET_TIME_DIGITIZED = "OffsetTimeDigitized";
++    field public static final java.lang.String TAG_OFFSET_TIME_ORIGINAL = "OffsetTimeOriginal";
+     field public static final java.lang.String TAG_ORF_ASPECT_FRAME = "AspectFrame";
+     field public static final java.lang.String TAG_ORF_PREVIEW_IMAGE_LENGTH = "PreviewImageLength";
+     field public static final java.lang.String TAG_ORF_PREVIEW_IMAGE_START = "PreviewImageStart";
+diff --git a/media/java/android/media/ExifInterface.java b/media/java/android/media/ExifInterface.java
+index 6e73f74102a..77d71f9d8e9 100644
+--- a/media/java/android/media/ExifInterface.java
++++ b/media/java/android/media/ExifInterface.java
+@@ -223,6 +223,12 @@
+     public static final String TAG_NEW_SUBFILE_TYPE = "NewSubfileType";
+     /** Type is String. */
+     public static final String TAG_OECF = "OECF";
++    /** Type is String. */
++    public static final String TAG_OFFSET_TIME = "OffsetTime";
++    /** Type is String. */
++    public static final String TAG_OFFSET_TIME_ORIGINAL = "OffsetTimeOriginal";
++    /** Type is String. */
++    public static final String TAG_OFFSET_TIME_DIGITIZED = "OffsetTimeDigitized";
+     /** Type is int. */
+     public static final String TAG_PIXEL_X_DIMENSION = "PixelXDimension";
+     /** Type is int. */
+@@ -469,6 +475,7 @@
+     private static final int PEF_MAKER_NOTE_SKIP_SIZE = 6;
+ 
+     private static SimpleDateFormat sFormatter;
++    private static SimpleDateFormat sFormatterTz;
+ 
+     // See Exchangeable image file format for digital still cameras: Exif version 2.2.
+     // The following values are for parsing EXIF data area. There are tag groups in EXIF data area.
+@@ -1015,6 +1022,9 @@ private ExifTag(String name, int number, int primaryFormat, int secondaryFormat)
+             new ExifTag(TAG_EXIF_VERSION, 36864, IFD_FORMAT_STRING),
+             new ExifTag(TAG_DATETIME_ORIGINAL, 36867, IFD_FORMAT_STRING),
+             new ExifTag(TAG_DATETIME_DIGITIZED, 36868, IFD_FORMAT_STRING),
++            new ExifTag(TAG_OFFSET_TIME, 36880, IFD_FORMAT_STRING),
++            new ExifTag(TAG_OFFSET_TIME_ORIGINAL, 36881, IFD_FORMAT_STRING),
++            new ExifTag(TAG_OFFSET_TIME_DIGITIZED, 36882, IFD_FORMAT_STRING),
+             new ExifTag(TAG_COMPONENTS_CONFIGURATION, 37121, IFD_FORMAT_UNDEFINED),
+             new ExifTag(TAG_COMPRESSED_BITS_PER_PIXEL, 37122, IFD_FORMAT_URATIONAL),
+             new ExifTag(TAG_SHUTTER_SPEED_VALUE, 37377, IFD_FORMAT_SRATIONAL),
+@@ -1273,6 +1283,8 @@ private ExifTag(String name, int number, int primaryFormat, int secondaryFormat)
+     static {
+         sFormatter = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+         sFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
++        sFormatterTz = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss XXX");
++        sFormatterTz.setTimeZone(TimeZone.getTimeZone("UTC"));
+ 
+         // Build up the hash tables to look up Exif tags for reading Exif tags.
+         for (int ifdType = 0; ifdType < EXIF_TAGS.length; ++ifdType) {
+@@ -2017,22 +2029,29 @@ public double getAltitude(double defaultValue) {
+     }
+ 
+     /**
+-     * Returns number of milliseconds since Jan. 1, 1970, midnight local time.
+-     * Returns -1 if the date time information if not available.
++     * Returns number of milliseconds since Jan. 1, 1970, midnight local time and
++     * number of milliseconds since Jan. 1, 1970, midnight UTC in a long array.
++     * The first element is a local time and the second elemenet is the UTC time.
++     * -1 is set if the date time information is not available.
++     *
+      * @hide
+      */
+-    public long getDateTime() {
++    public long[] getDateTime() {
++        long[] output = new long[2];
++        output[0] = -1;
++        output[1] = -1;
++
+         String dateTimeString = getAttribute(TAG_DATETIME);
+         if (dateTimeString == null
+-                || !sNonZeroTimePattern.matcher(dateTimeString).matches()) return -1;
++                || !sNonZeroTimePattern.matcher(dateTimeString).matches()) return output;
+ 
+         ParsePosition pos = new ParsePosition(0);
+         try {
+-            // The exif field is in local time. Parsing it as if it is UTC will yield time
+-            // since 1/1/1970 local time
+-            Date datetime = sFormatter.parse(dateTimeString, pos);
+-            if (datetime == null) return -1;
+-            long msecs = datetime.getTime();
++            // The exif date time field is in local time. Parsing it as if it is UTC will yield
++            // time since 1/1/1970 local time
++            Date localtime = sFormatter.parse(dateTimeString, pos);
++            if (localtime == null) return output;
++            long localtimeMsecs = localtime.getTime();
+ 
+             String subSecs = getAttribute(TAG_SUBSEC_TIME);
+             if (subSecs != null) {
+@@ -2041,15 +2060,27 @@ public long getDateTime() {
+                     while (sub > 1000) {
+                         sub /= 10;
+                     }
+-                    msecs += sub;
++                    localtimeMsecs += sub;
+                 } catch (NumberFormatException e) {
+                     // Ignored
+                 }
+             }
+-            return msecs;
++            output[0] = localtimeMsecs;
++
++            String tzString = getAttribute(TAG_OFFSET_TIME);
++            if (tzString != null) {
++                dateTimeString = dateTimeString + " " + tzString;
++                ParsePosition position = new ParsePosition(0);
++                Date utctime = sFormatterTz.parse(dateTimeString, position);
++                if (utctime != null) {
++                    long offsetMsecs = utctime.getTime() - localtime.getTime();
++                    output[1] = localtimeMsecs + offsetMsecs;
++                }
++            }
+         } catch (IllegalArgumentException e) {
+-            return -1;
++            // Ignored
+         }
++        return output;
+     }
+ 
+     /**
+diff --git a/media/java/android/media/MediaScanner.java b/media/java/android/media/MediaScanner.java
+index f5c1e79a468..0bffa9e2ee9 100644
+--- a/media/java/android/media/MediaScanner.java
++++ b/media/java/android/media/MediaScanner.java
+@@ -961,17 +961,25 @@ private Uri endFile(FileEntry entry, boolean ringtones, boolean notifications,
+                         values.put(Images.Media.LONGITUDE, latlng[1]);
+                     }
+ 
+-                    long time = exif.getGpsDateTime();
+-                    if (time != -1) {
+-                        values.put(Images.Media.DATE_TAKEN, time);
++                    long[] datetime = exif.getDateTime();
++
++                    long localtime = datetime[0];
++                    long utctime = datetime[1];
++                    if (utctime != -1) {
++                        values.put(Images.Media.DATE_TAKEN, utctime);
+                     } else {
+-                        // If no time zone information is available, we should consider using
+-                        // EXIF local time as taken time if the difference between file time
+-                        // and EXIF local time is not less than 1 Day, otherwise MediaProvider
+-                        // will use file time as taken time.
+-                        time = exif.getDateTime();
+-                        if (time != -1 && Math.abs(mLastModified * 1000 - time) >= 86400000) {
+-                            values.put(Images.Media.DATE_TAKEN, time);
++                        utctime = exif.getGpsDateTime();
++                        if (utctime != -1) {
++                            values.put(Images.Media.DATE_TAKEN, utctime);
++                        } else {
++                            // If no time zone information is available, we should consider using
++                            // EXIF local time as taken time if the difference between file time
++                            // and EXIF local time is not less than 1 Day, otherwise MediaProvider
++                            // will use file time as taken time.
++                            if (localtime != -1
++                                    && Math.abs(mLastModified * 1000 - localtime) >= 86400000) {
++                                values.put(Images.Media.DATE_TAKEN, localtime);
++                            }
+                         }
+                     }
+ 
