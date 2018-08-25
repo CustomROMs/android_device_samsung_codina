@@ -3,7 +3,7 @@
 import sys, os
 import glob
 import xml.etree.ElementTree as ET
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, CalledProcessError
 
 PROJECTS="""art
 bionic
@@ -50,32 +50,16 @@ system/sepolicy
 system/vold
 vendor/lineage""".split("\n")
 
-#in_files = sys.argv[1:]
-
-#for file in in_files:
-#	et_parser = ET.XMLParser(encoding="utf-8")
-#	tree = ET.parse(file, parser = et_parser)
-#	projects = tree.findall("project")
-#
-#	print("# %s" % file)
-#
-
 class Remote:
 	def __init__(self, tag_remote, tag_default):
 		self.name = tag_remote.get("name")
 		self.revision = tag_remote.get("revision")
-		#print(self.name)
-		#print(tag_default.get("remote") == self.name)
 		if tag_default.get("remote") == self.name:
 			default_revision = tag_default.get("revision")
-			#print(default_revision)
 			if default_revision:
 				self.revision = default_revision
-		#print(self.revision.startswith("refs/heads/"))
 		if self.revision and self.revision.startswith("refs/heads/"):
 			self.revision = self.revision.replace("refs/heads", self.name)
-			#print(self.revision.replace("refs/heads", self.name))
-			#print(self.name)
 
 	def get(self, what):
 		if what == "name":
@@ -187,8 +171,7 @@ class Projects:
 		del self._projects[idx]
 		#raise KeyError("key %s not found" % path)
 
-def main(dry_run = False):
-	global ANDROID_BUILD_TOP, MANIFEST
+def setup_env():
 	ANDROID_BUILD_TOP = os.getenv("ANDROID_BUILD_TOP")
 	if not ANDROID_BUILD_TOP:
 		print("please set ANDROID_BUILD_TOP environment variable and retry")
@@ -200,6 +183,10 @@ def main(dry_run = False):
 		sys.exit(1)
 
 	ROOT = os.path.realpath("")
+	return ANDROID_BUILD_TOP, MANIFEST, ROOT
+
+def parse_manifests():
+	ANDROID_BUILD_TOP, MANIFEST, ROOT = setup_env()
 
 	et_parser = ET.XMLParser(encoding = "utf-8")
 	tree = ET.parse(MANIFEST, parser = et_parser)
@@ -207,7 +194,6 @@ def main(dry_run = False):
 	remotes = [Remote(tag, default) for tag in tree.findall("remote")]
 	remotes = dict([(r.name, r) for r in remotes])
 	remotes["default"] = remotes[default.get("remote")]
-	#projects = tree.findall("project")
 	projects = [Project(p) for p in tree.findall("project")]
 
 	custom_manifests = [os.path.join(ANDROID_BUILD_TOP, ".repo/manifests", m.get("name")) for m in tree.findall("include")]
@@ -221,40 +207,18 @@ def main(dry_run = False):
 		tree = ET.parse(m, parser = et_parser)
 		removes += [r.get("name") for r in tree.findall("remove-project")]
 
-	#print(custom_manifests)
-	#if not custom_manifests:
-	#return
 	for m in custom_manifests:
 		et_parser = ET.XMLParser(encoding = "utf-8")
 		tree = ET.parse(m, parser = et_parser)
 		tmp_remotes = [Remote(tag, default) for tag in tree.findall("remote")]
 		for r in tmp_remotes:
 			remotes[r.name] = r
-		#projects += tree.findall("project")
 		projects += [Project(p) for p in tree.findall("project")]
-		#tmp = [Project(p) for p in tree.findall("project")]
-		#print("\n".join([p.name for p in tmp]))
-		#projects.add_projects([Project(p) for p in tree.findall("project")])
 
-	#for p in projects:
-	#	if p.name == "LineageOS/ansible":
-	#		print("LineageOS/ansible")
-	#	if p.path == "lineage/ansible":
-	#		print("lineage/ansible")
-	#return
-
-	#projects = dict([(p.get("path"), p) for p in projects])
 	projects = Projects(projects)
 
-	#print(projects.get_by_name("LineageOS/ansible"))
-	#projects.delete("LineageOS/ansible")
-	#return
 	for r_name in removes:
-		#try:
 		projects.delete(r_name)
-		#except:
-		#print("\n".join([p.name for p in projects._projects]))
-		#raise
 
 	for m in local_manifests:
 		et_parser = ET.XMLParser(encoding = "utf-8")
@@ -263,55 +227,16 @@ def main(dry_run = False):
 		for r in tmp_remotes:
 			remotes[r.name] = r
 		for p in tree.findall("project"):
-			#projects[p.get("path")] = p
 			p = Project(p)
 			projects.set_by_name(p.name, p)
 
-	if (dry_run):
-		return projects, remotes
+	return projects, remotes, default
 
-	for p in projects:
-		#try:
-		#	p = projects._projects[p_path]
-		#except:
-		#	print(type(p_path))
-		#	print(dir(p_path))
-		#	raise
-		path = p.get("path")
-		if (not path in PROJECTS) or path.startswith("#"):
-			continue
-		remote = p.get("remote") or remotes["default"].name
-		if p.get("revision"):
-			revision = "%s/%s" % (remote, p.get("revision"))
-		else:
-			revision = remotes["default"].revision
-		#print(path)
-		#print(revision)
-		#print(remotes[remote])
-		repo_realpath = os.path.join(ANDROID_BUILD_TOP, path)
-		out_path = os.path.join(ROOT, path)
-		p = Popen("git -C %s rev-parse %s" % (repo_realpath, revision), shell=True, stdin=PIPE,
-						stderr = PIPE, stdout = PIPE, close_fds=True)
-		revision = p.stdout.read().split("\n")[0]
-		if not os.path.exists(path):
-			os.makedirs(path)
-
-		if revision:
-			if (not "--dry-run" in sys.argv) and not dry_run:
-				for i in os.listdir(path):
-					subfile = os.path.join(path, i)
-					if os.path.isfile(subfile):
-						os.remove(os.path.join(path, i))
-				p = Popen("git -C %s format-patch %s -o %s" % (repo_realpath, revision, out_path), shell=True, stdin=PIPE,
-                                	                stderr = PIPE, stdout = PIPE, close_fds=True)
-			print("git -C %s format-patch %s -o %s" % (repo_realpath, revision, out_path))
-			if (not "--dry-run" in sys.argv) and not dry_run:
-				print(p.stdout.read())
-			#print("git -C %s checkout %s" % (path, out))
-		else:
-			err_msg = "error: %s is not a git tree or broken\n" % path
-			sys.stderr.write(err_msg)
-			print("# %s" % err_msg)
+def main(dry_run = False):
+	projects, remotes, default = parse_manifests()
+	if "--dry-run" in sys.argv:
+		dry_run = True
+	update_repos(projects, remotes, dry_run)
 
 
 if __name__ == "__main__":
