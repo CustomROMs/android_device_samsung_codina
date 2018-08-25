@@ -1,18 +1,17 @@
-From e01965861f6171da5e5104c8c44010581f9fa462 Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 17 Sep 2017 12:42:00 +0300
-Subject: [PATCH] Use volume label for mount path, if available.
+From 08909780fade66ac35536c73f00f4e8ff4560bbc Mon Sep 17 00:00:00 2001
+From: morckx <morckx@gmail.com>
+Date: Tue, 10 Nov 2015 09:12:42 +0100
+Subject: [PATCH 01/10] Use volume label for mount path, if available.
 
-Change-Id: I3c579eb645fb62cdb4f0345c49d60b39049801bf
 ---
  PublicVolume.cpp | 6 ++++--
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/PublicVolume.cpp b/PublicVolume.cpp
-index 58fea0c..c9fab18 100644
+index 1a0a538..b191aea 100644
 --- a/PublicVolume.cpp
 +++ b/PublicVolume.cpp
-@@ -105,9 +105,11 @@ status_t PublicVolume::doMount() {
+@@ -116,9 +116,11 @@ status_t PublicVolume::doMount() {
          return -EIO;
      }
  
@@ -27,5 +26,5 @@ index 58fea0c..c9fab18 100644
      }
  
 -- 
-2.7.4
+2.11.0
 

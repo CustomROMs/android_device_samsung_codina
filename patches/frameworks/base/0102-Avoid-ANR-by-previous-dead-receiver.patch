@@ -1,0 +1,60 @@
+From d5a4233f0a589c61712510888c71baf2b69aa621 Mon Sep 17 00:00:00 2001
+From: riddle_hsu <riddle_hsu@htc.com>
+Date: Sat, 24 Oct 2015 01:49:50 +0800
+Subject: [PATCH 102/296] Avoid ANR by previous dead receiver.
+
+Assume a process has a registered receiver for ordered
+broadcast B. And there is a B enqueued. Before deliver
+B, the process process is died and restart with the same
+ProcessRecord (it will happen when the process is persistent
+process or start by "Exception when sending broadcast").
+
+Now it is the turn to deliver B. Because the ProcessRecord
+is reuse, it will not meet "app.thread must not be null".
+Then the previous will still deliver to the new process.
+And there will have DeadObjectException in the new process
+but does not call finishReceiver that results ANR.
+
+android.os.DeadObjectException
+at android.os.BinderProxy.transactNative
+at android.os.BinderProxy.transact
+at android.content.IIntentReceiver$Stub$Proxy.performReceive
+at android.app.ActivityThread$ApplicationThread.scheduleRegisteredReceiver
+
+Because the IIntentReceiver is not belong to the new process,
+it will be BinderProxy so we can use Binder.isProxy to check.
+
+Another way is to clean related record in broadcast queue
+when process died but it should have more cost.
+---
+ core/java/android/app/ActivityThread.java | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index d8b569436cc..08d7e2a4bfa 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -997,9 +997,17 @@ public final class ActivityThread {
+         public void scheduleRegisteredReceiver(IIntentReceiver receiver, Intent intent,
+                 int resultCode, String dataStr, Bundle extras, boolean ordered,
+                 boolean sticky, int sendingUser, int processState) throws RemoteException {
+-            updateProcessState(processState, false);
+-            receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
+-                    sticky, sendingUser);
++            if (!Binder.isProxy(receiver)) {
++                updateProcessState(processState, false);
++                receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
++                        sticky, sendingUser);
++                return;
++            }
++            if (ordered) {
++                Slog.w(TAG, receiver + " is no longer alive");
++                ActivityManagerNative.getDefault().finishReceiver(receiver.asBinder(),
++                        resultCode, dataStr, extras, true, intent.getFlags());
++            }
+         }
+ 
+         @Override
+-- 
+2.11.0
+

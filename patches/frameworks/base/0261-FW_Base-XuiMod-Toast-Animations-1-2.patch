@@ -1,0 +1,318 @@
+From 5088096c7fbb55b34fe8e1ed185ca52e7d495ae1 Mon Sep 17 00:00:00 2001
+From: CallMeAldy <aldrin.holmes20@gmail.com>
+Date: Sun, 17 May 2015 20:14:13 +0200
+Subject: [PATCH 261/296] FW_Base - XuiMod: Toast Animations [1/2]
+
+---
+ core/java/android/provider/Settings.java           |  7 +++
+ core/res/res/anim/honami_toast_enter.xml           |  8 +++
+ core/res/res/anim/honami_toast_exit.xml            |  8 +++
+ core/res/res/anim/tn_toast_enter.xml               |  6 ++
+ core/res/res/anim/tn_toast_exit.xml                |  6 ++
+ core/res/res/anim/toko_toast_enter.xml             |  5 ++
+ core/res/res/anim/toko_toast_exit.xml              |  5 ++
+ core/res/res/anim/xylon_toast_enter.xml            |  6 ++
+ core/res/res/anim/xylon_toast_exit.xml             |  4 ++
+ core/res/res/values/styles.xml                     | 70 ++++++++++++++++++++++
+ core/res/res/values/symbols.xml                    | 17 ++++++
+ .../android/server/policy/PhoneWindowManager.java  | 54 ++++++++++++++++-
+ 12 files changed, 194 insertions(+), 2 deletions(-)
+ create mode 100644 core/res/res/anim/honami_toast_enter.xml
+ create mode 100644 core/res/res/anim/honami_toast_exit.xml
+ create mode 100644 core/res/res/anim/tn_toast_enter.xml
+ create mode 100644 core/res/res/anim/tn_toast_exit.xml
+ create mode 100644 core/res/res/anim/toko_toast_enter.xml
+ create mode 100644 core/res/res/anim/toko_toast_exit.xml
+ create mode 100644 core/res/res/anim/xylon_toast_enter.xml
+ create mode 100644 core/res/res/anim/xylon_toast_exit.xml
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 1cfe93ae215..6cf73ff02ec 100755
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -4017,6 +4017,13 @@ public final class Settings {
+         public static final String LISTVIEW_INTERPOLATOR = "listview_interpolator";
+ 
+         /**
++         * Toast animations
++         *
++         * @hide
++         */
++        public static final String TOAST_ANIMATION = "toast_animation";
++
++        /**
+          * Settings to backup. This is here so that it's in the same place as the settings
+          * keys and easy to update.
+          *
+diff --git a/core/res/res/anim/honami_toast_enter.xml b/core/res/res/anim/honami_toast_enter.xml
+new file mode 100644
+index 00000000000..e79d5e1c9a3
+--- /dev/null
++++ b/core/res/res/anim/honami_toast_enter.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <alpha android:interpolator="@android:interpolator/accelerate_decelerate" android:duration="350" android:fromAlpha="0.0" android:toAlpha="1.0" />
++    <rotate android:interpolator="@android:interpolator/accelerate_decelerate" android:duration="350" android:fromDegrees="-3.0" android:toDegrees="0.0" android:pivotX="50.0%" android:pivotY="50.0%" />
++    <scale android:interpolator="@android:interpolator/accelerate_decelerate" android:duration="350" android:pivotX="50.0%" android:pivotY="50.0%" android:fromXScale="1.0" android:toXScale="1.0" android:fromYScale="0.7" android:toYScale="1.0" />
++    <translate android:interpolator="@android:interpolator/accelerate_decelerate" android:duration="350" android:fromXDelta="0.0" android:toXDelta="0.0" android:fromYDelta="-5.9999943%p" android:toYDelta="0.0" />
++</set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/honami_toast_exit.xml b/core/res/res/anim/honami_toast_exit.xml
+new file mode 100644
+index 00000000000..a5f4c097a74
+--- /dev/null
++++ b/core/res/res/anim/honami_toast_exit.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <alpha android:interpolator="@android:interpolator/accelerate_quad" android:duration="450" android:fromAlpha="1.0" android:toAlpha="0.0" />
++    <rotate android:interpolator="@android:interpolator/accelerate_quad" android:duration="450" android:fromDegrees="0.0" android:toDegrees="1.0" android:pivotX="50.0%" android:pivotY="50.0%" />
++    <scale android:interpolator="@android:interpolator/accelerate_quad" android:duration="450" android:pivotX="50.0%" android:pivotY="50.0%" android:fromXScale="1.0" android:toXScale="1.0" android:fromYScale="1.0" android:toYScale="0.7" />
++    <translate android:interpolator="@android:interpolator/accelerate_quad" android:duration="450" android:fromXDelta="0.0" android:toXDelta="0.0" android:fromYDelta="0.0" android:toYDelta="4.4999957%p" />
++</set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/tn_toast_enter.xml b/core/res/res/anim/tn_toast_enter.xml
+new file mode 100644
+index 00000000000..cf2337f94f7
+--- /dev/null
++++ b/core/res/res/anim/tn_toast_enter.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set android:interpolator="@android:anim/decelerate_interpolator"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <scale android:interpolator="@android:anim/linear_interpolator" android:duration="200" android:fillAfter="false" android:startOffset="200" android:fromXScale="0.0" android:toXScale="1.0" android:fromYScale="1.0" android:toYScale="1.0" />
++    <translate android:duration="200" android:startOffset="200" android:fromXDelta="50.0%" android:toXDelta="0.0" />
++</set>
+diff --git a/core/res/res/anim/tn_toast_exit.xml b/core/res/res/anim/tn_toast_exit.xml
+new file mode 100644
+index 00000000000..31bfad82212
+--- /dev/null
++++ b/core/res/res/anim/tn_toast_exit.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set android:interpolator="@android:anim/accelerate_interpolator"
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <scale android:interpolator="@android:anim/linear_interpolator" android:duration="200" android:fromXScale="1.0" android:toXScale="0.0" android:fromYScale="1.0" android:toYScale="1.0" />
++    <translate android:duration="200" android:fromXDelta="0.0" android:toXDelta="50.0%" />
++</set>
+diff --git a/core/res/res/anim/toko_toast_enter.xml b/core/res/res/anim/toko_toast_enter.xml
+new file mode 100644
+index 00000000000..d198a8f6790
+--- /dev/null
++++ b/core/res/res/anim/toko_toast_enter.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<alpha  android:interpolator="@android:anim/decelerate_interpolator"
++	android:duration="@android:integer/config_longAnimTime"
++	android:fromAlpha="0.0" android:toAlpha="1.0"
++	xmlns:android="http://schemas.android.com/apk/res/android" />
+diff --git a/core/res/res/anim/toko_toast_exit.xml b/core/res/res/anim/toko_toast_exit.xml
+new file mode 100644
+index 00000000000..b053c298ffe
+--- /dev/null
++++ b/core/res/res/anim/toko_toast_exit.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<alpha  android:interpolator="@android:anim/accelerate_interpolator"
++	android:duration="@android:integer/config_longAnimTime"
++	android:fromAlpha="1.0" android:toAlpha="0.0"
++ 	xmlns:android="http://schemas.android.com/apk/res/android" />
+diff --git a/core/res/res/anim/xylon_toast_enter.xml b/core/res/res/anim/xylon_toast_enter.xml
+new file mode 100644
+index 00000000000..94167f5bc8d
+--- /dev/null
++++ b/core/res/res/anim/xylon_toast_enter.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set
++  xmlns:android="http://schemas.android.com/apk/res/android">
++    <translate android:duration="@android:integer/config_mediumAnimTime" android:fromXDelta="-50.0%p" android:toXDelta="0.0" />
++    <alpha android:duration="@android:integer/config_mediumAnimTime" android:fromAlpha="0.0" android:toAlpha="1.0" />
++</set>
+\ No newline at end of file
+diff --git a/core/res/res/anim/xylon_toast_exit.xml b/core/res/res/anim/xylon_toast_exit.xml
+new file mode 100644
+index 00000000000..37b861a9cec
+--- /dev/null
++++ b/core/res/res/anim/xylon_toast_exit.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<translate android:duration="@android:integer/config_longAnimTime"
++	android:fromYDelta="0.0" android:toYDelta="100.0%p"
++	xmlns:android="http://schemas.android.com/apk/res/android" />
+diff --git a/core/res/res/values/styles.xml b/core/res/res/values/styles.xml
+index e14aa149b1c..1a1c7c632ed 100644
+--- a/core/res/res/values/styles.xml
++++ b/core/res/res/values/styles.xml
+@@ -1510,4 +1510,74 @@ please see styles_device_defaults.xml.
+         <item name="gravity">top</item>
+     </style>
+ 
++    <style name="Animation.Toast.Fade">
++        <item name="windowEnterAnimation">@anim/fade_in</item>
++        <item name="windowExitAnimation">@anim/fade_out</item>
++    </style>
++
++    <style name="Animation.Toast.SlideRight">
++        <item name="windowEnterAnimation">@anim/slide_in_right</item>
++        <item name="windowExitAnimation">@anim/slide_out_right</item>
++    </style>
++
++    <style name="Animation.Toast.SlideLeft">
++        <item name="windowEnterAnimation">@anim/slide_in_left</item>
++        <item name="windowExitAnimation">@anim/slide_out_left</item>
++    </style>
++
++    <style name="Animation.Toast.SlideRightLeft">
++        <item name="windowEnterAnimation">@anim/slide_in_right</item>
++        <item name="windowExitAnimation">@anim/slide_out_left</item>
++    </style>
++
++    <style name="Animation.Toast.SlideLeftRight">
++        <item name="windowEnterAnimation">@anim/slide_in_left</item>
++        <item name="windowExitAnimation">@anim/slide_out_right</item>
++    </style>
++
++    <style name="Animation.Toast.Xylon">
++        <item name="windowEnterAnimation">@anim/xylon_toast_enter</item>
++        <item name="windowExitAnimation">@anim/xylon_toast_exit</item>
++    </style>
++
++    <style name="Animation.Toast.Toko">
++        <item name="windowEnterAnimation">@anim/toko_toast_enter</item>
++        <item name="windowExitAnimation">@anim/toko_toast_exit</item>
++    </style>
++
++    <style name="Animation.Toast.Tn">
++        <item name="windowEnterAnimation">@anim/tn_toast_enter</item>
++        <item name="windowExitAnimation">@anim/tn_toast_exit</item>
++    </style>
++
++    <style name="Animation.Toast.Honami">
++        <item name="windowEnterAnimation">@anim/honami_toast_enter</item>
++        <item name="windowExitAnimation">@anim/honami_toast_exit</item>
++    </style>
++
++    <style name="Animation.Toast.FastFade">
++        <item name="windowEnterAnimation">@anim/fast_fade_in</item>
++        <item name="windowExitAnimation">@anim/fast_fade_out</item>
++    </style>
++
++    <style name="Animation.Toast.GrowFade">
++        <item name="windowEnterAnimation">@anim/grow_fade_in</item>
++        <item name="windowExitAnimation">@anim/fast_fade_out</item>
++    </style>
++
++    <style name="Animation.Toast.GrowFadeCenter">
++        <item name="windowEnterAnimation">@anim/grow_fade_in_center</item>
++        <item name="windowExitAnimation">@anim/fast_fade_out</item>
++    </style>
++
++    <style name="Animation.Toast.GrowFadeBottom">
++        <item name="windowEnterAnimation">@anim/grow_fade_in_from_bottom</item>
++        <item name="windowExitAnimation">@anim/fast_fade_out</item>
++    </style>
++
++    <style name="Animation.Toast.Translucent">
++        <item name="windowEnterAnimation">@anim/translucent_enter</item>
++        <item name="windowExitAnimation">@anim/translucent_exit</item>
++    </style>
++
+ </resources>
+diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index 15a353ba2b0..802e1c748b5 100644
+--- a/core/res/res/values/symbols.xml
++++ b/core/res/res/values/symbols.xml
+@@ -3078,4 +3078,21 @@
+ 
+   <java-symbol type="integer" name="config_stableDeviceDisplayWidth" />
+   <java-symbol type="integer" name="config_stableDeviceDisplayHeight" />
++
++  <!-- Toast Animation -->
++  <java-symbol type="style" name="Animation.Toast.Fade" />
++  <java-symbol type="style" name="Animation.Toast.SlideRight" />
++  <java-symbol type="style" name="Animation.Toast.SlideLeft" />
++  <java-symbol type="style" name="Animation.Toast.Xylon" />
++  <java-symbol type="style" name="Animation.Toast.Toko" />
++  <java-symbol type="style" name="Animation.Toast.Tn" />
++  <java-symbol type="style" name="Animation.Toast.Honami" />
++  <java-symbol type="style" name="Animation.Toast.FastFade" />
++  <java-symbol type="style" name="Animation.Toast.GrowFade" />
++  <java-symbol type="style" name="Animation.Toast.GrowFadeCenter" />
++  <java-symbol type="style" name="Animation.Toast.GrowFadeBottom" />
++  <java-symbol type="style" name="Animation.Toast.Translucent" />
++  <java-symbol type="style" name="Animation.Toast.SlideRightLeft" />
++  <java-symbol type="style" name="Animation.Toast.SlideLeftRight" />
++
+ </resources>
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index d5b97d637ea..3fb5c8d2538 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -3015,8 +3015,58 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                         || attrs.hideTimeoutMilliseconds > TOAST_WINDOW_TIMEOUT) {
+                     attrs.hideTimeoutMilliseconds = TOAST_WINDOW_TIMEOUT;
+                 }
+-                attrs.windowAnimations = com.android.internal.R.style.Animation_Toast;
+-                break;
++
++                switch(Settings.System.getIntForUser(mContext.getContentResolver(),
++                        Settings.System.TOAST_ANIMATION, 1, UserHandle.USER_CURRENT)) {
++                    case 0:
++                        attrs.windowAnimations = -1;
++                        break;
++                    case 1:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast;
++                        break;
++                    case 2:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_Fade;
++                        break;
++                    case 3:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideRight;
++                        break;
++                    case 4:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideLeft;
++                        break;
++                    case 5:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_Xylon;
++                        break;
++                    case 6:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_Toko;
++                        break;
++                    case 7:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_Tn;
++                        break;
++                    case 8:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_Honami;
++                        break;
++                    case 9:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_FastFade;
++                        break;
++                    case 10:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_GrowFade;
++                        break;
++                    case 11:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_GrowFadeCenter;
++                        break;
++                    case 12:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_GrowFadeBottom;
++                        break;
++                    case 13:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_Translucent;
++                        break;
++                    case 14:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideLeftRight;
++                        break;
++                    case 15:
++                        attrs.windowAnimations = com.android.internal.R.style.Animation_Toast_SlideRightLeft;
++                        break;
++                }
+         }
+ 
+         if (attrs.type != TYPE_STATUS_BAR) {
+-- 
+2.11.0
+

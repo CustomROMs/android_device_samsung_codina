@@ -1,0 +1,120 @@
+From cc9b6635d51f3b2afa1a5e83e728cd8fe25b892d Mon Sep 17 00:00:00 2001
+From: Jorge Ruesga <jorge@ruesga.com>
+Date: Wed, 14 Sep 2016 14:47:00 +0800
+Subject: [PATCH 26/30] Reset battery stats [2/2]
+
+---
+ AndroidManifest.xml                                |  1 +
+ res/values/cr_strings.xml                          |  5 ++++
+ .../settings/fuelgauge/PowerUsageSummary.java      | 35 +++++++++++++++++++---
+ 3 files changed, 37 insertions(+), 4 deletions(-)
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 353b37124c..ec3a3fce0b 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -47,6 +47,7 @@
+     <uses-permission android:name="android.permission.FORCE_STOP_PACKAGES"/>
+     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+     <uses-permission android:name="android.permission.BATTERY_STATS"/>
++    <uses-permission android:name="android.permission.RESET_BATTERY_STATS"/>
+     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+     <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
+     <uses-permission android:name="android.permission.MOVE_PACKAGE" />
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index da2ddfbd58..fe4569b6d1 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -91,4 +91,9 @@
+     <string name="unlock_quick_unlock_control_title">Quick unlock</string>
+     <string name="unlock_quick_unlock_control_summary">Unlock automatically when the correct PIN/password is entered</string>
+ 
++    <!-- Battery stats reset -->
++    <string name="battery_stats_reset">Reset stats</string>
++    <string name="battery_stats_message">Battery history stats are going to be reset</string>
++    <string name="ok_string">Ok</string>
++
+ </resources>
+diff --git a/src/com/android/settings/fuelgauge/PowerUsageSummary.java b/src/com/android/settings/fuelgauge/PowerUsageSummary.java
+index 3ff40ad169..8d9ec78416 100644
+--- a/src/com/android/settings/fuelgauge/PowerUsageSummary.java
++++ b/src/com/android/settings/fuelgauge/PowerUsageSummary.java
+@@ -17,9 +17,11 @@
+ package com.android.settings.fuelgauge;
+ 
+ import android.app.Activity;
++import android.app.AlertDialog;
+ import android.app.LoaderManager;
+ import android.app.LoaderManager.LoaderCallbacks;
+ import android.content.Context;
++import android.content.DialogInterface;
+ import android.content.Loader;
+ import android.content.res.TypedArray;
+ import android.graphics.drawable.Drawable;
+@@ -108,13 +110,14 @@ public class PowerUsageSummary extends PowerUsageBase implements
+     @VisibleForTesting
+     static final int BATTERY_INFO_LOADER = 2;
+     private static final int MENU_STATS_TYPE = Menu.FIRST;
++    private static final int MENU_STATS_RESET = Menu.FIRST + 3;
+     @VisibleForTesting
+-    static final int MENU_HIGH_POWER_APPS = Menu.FIRST + 3;
++    static final int MENU_HIGH_POWER_APPS = Menu.FIRST + 4;
+     @VisibleForTesting
+-    static final int MENU_ADDITIONAL_BATTERY_INFO = Menu.FIRST + 4;
++    static final int MENU_ADDITIONAL_BATTERY_INFO = Menu.FIRST + 5;
+     @VisibleForTesting
+-    static final int MENU_TOGGLE_APPS = Menu.FIRST + 5;
+-    private static final int MENU_HELP = Menu.FIRST + 6;
++    static final int MENU_TOGGLE_APPS = Menu.FIRST + 6;
++    private static final int MENU_HELP = Menu.FIRST + 7;
+     public static final int DEBUG_INFO_LOADER = 3;
+ 
+     @VisibleForTesting
+@@ -332,6 +335,11 @@ public class PowerUsageSummary extends PowerUsageBase implements
+                     .setAlphabeticShortcut('t');
+         }
+ 
++        MenuItem reset = menu.add(0, MENU_STATS_RESET, 0, R.string.battery_stats_reset)
++                .setIcon(R.drawable.ic_delete)
++                .setAlphabeticShortcut('d');
++        reset.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
++
+         menu.add(Menu.NONE, MENU_HIGH_POWER_APPS, Menu.NONE, R.string.high_power_apps);
+ 
+         if (mPowerFeatureProvider.isAdditionalBatteryInfoEnabled()) {
+@@ -346,6 +354,22 @@ public class PowerUsageSummary extends PowerUsageBase implements
+         super.onCreateOptionsMenu(menu, inflater);
+     }
+ 
++    private void resetStats() {
++        AlertDialog dialog = new AlertDialog.Builder(getActivity())
++            .setTitle(R.string.battery_stats_reset)
++            .setMessage(R.string.battery_stats_message)
++            .setPositiveButton(R.string.ok_string, new DialogInterface.OnClickListener() {
++                @Override
++                public void onClick(DialogInterface dialog, int which) {
++                    mStatsHelper.resetStatistics();
++                    refreshUi();
++                }
++            })
++            .setNegativeButton(R.string.cancel, null)
++            .create();
++        dialog.show();
++    }
++
+     @Override
+     protected int getHelpResource() {
+         return R.string.help_url_battery;
+@@ -359,6 +383,9 @@ public class PowerUsageSummary extends PowerUsageBase implements
+                 FeatureFactory.getFactory(context).getMetricsFeatureProvider();
+ 
+         switch (item.getItemId()) {
++            case MENU_STATS_RESET:
++                resetStats();
++                return true;
+             case MENU_STATS_TYPE:
+                 if (mStatsType == BatteryStats.STATS_SINCE_CHARGED) {
+                     mStatsType = BatteryStats.STATS_SINCE_UNPLUGGED;
+-- 
+2.11.0
+

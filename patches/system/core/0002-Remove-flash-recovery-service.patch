@@ -1,0 +1,29 @@
+From 09812d549466a2a4c4f94363d97035f73ea4ed2d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 02/40] Remove flash recovery service
+
+---
+ rootdir/init.rc | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 96f102587..fe6915e6c 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -728,12 +728,3 @@ on property:ro.debuggable=1
+     chmod 0773 /data/misc/trace
+     start console
+ 
+-service flash_recovery /system/bin/install-recovery.sh
+-    class main
+-    oneshot
+-    disabled
+-
+-# update recovery if enabled
+-on property:persist.sys.recovery_update=true
+-    start flash_recovery
+-
+-- 
+2.11.0
+

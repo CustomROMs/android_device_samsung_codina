@@ -1,0 +1,42 @@
+From 2a26adc09e208b86e9785407a364db8f88d75b9b Mon Sep 17 00:00:00 2001
+From: ezio84 <brabus84@gmail.com>
+Date: Thu, 12 Oct 2017 10:37:34 +0200
+Subject: [PATCH 058/296] Silence camera policy keyguard check logspam
+
+This warning is just annoying for us when fixing SystemUI FCs
+or when checking logcat during boot
+---
+ .../src/com/android/systemui/statusbar/phone/StatusBar.java    | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
+index ef645a53f0f..bb74e9566c4 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java
+@@ -5791,7 +5791,9 @@ public class StatusBar extends SystemUI implements DemoMode,
+ 
+     public boolean isKeyguardShowing() {
+         if (mStatusBarKeyguardViewManager == null) {
+-            Slog.i(TAG, "isKeyguardShowing() called before startKeyguard(), returning true");
++            if (DEBUG) {
++                Slog.i(TAG, "isKeyguardShowing() called before startKeyguard(), returning true");
++            }
+             return true;
+         }
+         return mStatusBarKeyguardViewManager.isShowing();
+@@ -7866,8 +7868,10 @@ public class StatusBar extends SystemUI implements DemoMode,
+             // startKeyguard() hasn't been called yet, so we don't know.
+             // Make sure anything that needs to know isKeyguardSecure() checks and re-checks this
+             // value onVisibilityChanged().
+-            Slog.w(TAG, "isKeyguardSecure() called before startKeyguard(), returning false",
+-                    new Throwable());
++            if (DEBUG) {
++                Slog.w(TAG, "isKeyguardSecure() called before startKeyguard(), returning false",
++                        new Throwable());
++            }
+             return false;
+         }
+         return mStatusBarKeyguardViewManager.isSecure();
+-- 
+2.11.0
+

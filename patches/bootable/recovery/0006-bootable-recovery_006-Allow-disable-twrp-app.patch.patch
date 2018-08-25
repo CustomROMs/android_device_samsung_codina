@@ -1,0 +1,113 @@
+From 67e8da8e14ee9d2057493745c577a3fb3425d4a3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 17:11:49 +0300
+Subject: [PATCH 06/15] bootable-recovery_006-Allow-disable-twrp-app.patch
+
+Change-Id: I0affeaf0ecfe6ca8f826319f5a6afb27ea37dd44
+---
+ Android.mk                     |  3 +++
+ data.cpp                       |  4 ++++
+ gui/theme/common/landscape.xml |  1 +
+ gui/theme/common/portrait.xml  |  1 +
+ gui/theme/common/watch.xml     |  1 +
+ prebuilt/Android.mk            | 18 ++++++++++--------
+ 6 files changed, 20 insertions(+), 8 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index f42f8911..f6564a1a 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -366,6 +366,9 @@ ifneq ($(TW_DEFAULT_LANGUAGE),)
+ else
+     LOCAL_CFLAGS += -DTW_DEFAULT_LANGUAGE=en
+ endif
++ifeq ($(TW_DISABLE_APK_INSTALL),true)
++    LOCAL_CFLAGS += -DTW_DISABLE_APK_INSTALL
++endif
+ 
+ LOCAL_ADDITIONAL_DEPENDENCIES += \
+     dump_image \
+diff --git a/data.cpp b/data.cpp
+index 8611c83c..18b31f61 100644
+--- a/data.cpp
++++ b/data.cpp
+@@ -890,10 +890,14 @@ void DataManager::SetDefaultValues()
+ 	mConst.SetValue("tw_oem_build", "1");
+ #else
+ 	mConst.SetValue("tw_oem_build", "0");
++#ifdef TW_DISABLE_APK_INSTALL
++	mConst.SetValue("tw_app_prompt", "-1");
++#else
+ 	mPersist.SetValue("tw_app_prompt", "0");
+ 	mPersist.SetValue("tw_app_install_system", "0");
+ 	mData.SetValue("tw_app_install_status", "0"); // 0 = no status, 1 = not installed, 2 = already installed
+ #endif
++#endif
+ 
+         mData.SetValue("tw_enable_adb_backup", "0");
+ 
+diff --git a/gui/theme/common/landscape.xml b/gui/theme/common/landscape.xml
+index f460e6fe..6f0faac8 100644
+--- a/gui/theme/common/landscape.xml
++++ b/gui/theme/common/landscape.xml
+@@ -2878,6 +2878,7 @@
+ 					<data variable="tw_military_time"/>
+ 				</listitem>
+ 				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
++					<condition var1="tw_app_prompt" op="!=" var2="-1"/>
+ 					<data variable="tw_app_prompt"/>
+ 				</listitem>
+ 				<listitem name="{@simact_chk=Simulate actions for theme testing}">
+diff --git a/gui/theme/common/portrait.xml b/gui/theme/common/portrait.xml
+index 0d1d6d8a..c9961c12 100644
+--- a/gui/theme/common/portrait.xml
++++ b/gui/theme/common/portrait.xml
+@@ -3091,6 +3091,7 @@
+ 					<data variable="tw_samsung_navbar"/>
+ 				</listitem>
+ 				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
++					<condition var1="tw_app_prompt" op="!=" var2="-1"/>
+ 					<data variable="tw_app_prompt"/>
+ 				</listitem>
+ 				<listitem name="{@simact_chk=Simulate actions for theme testing}">
+diff --git a/gui/theme/common/watch.xml b/gui/theme/common/watch.xml
+index 152818e7..de520623 100644
+--- a/gui/theme/common/watch.xml
++++ b/gui/theme/common/watch.xml
+@@ -3596,6 +3596,7 @@
+ 					<data variable="tw_military_time"/>
+ 				</listitem>
+ 				<listitem name="{@reboot_install_app_prompt_install=Prompt to install TWRP app on every reboot}">
++					<condition var1="tw_app_prompt" op="!=" var2="-1"/>
+ 					<data variable="tw_app_prompt"/>
+ 				</listitem>
+ 				<listitem name="{@simact_chk=Simulate actions for theme testing}">
+diff --git a/prebuilt/Android.mk b/prebuilt/Android.mk
+index b54dda28..6d032e98 100644
+--- a/prebuilt/Android.mk
++++ b/prebuilt/Android.mk
+@@ -557,11 +557,13 @@ ifneq ($(TW_EXCLUDE_SUPERSU), true)
+ 	include $(BUILD_PREBUILT)
+ endif
+ 
+-#TWRP App "placeholder"
+-include $(CLEAR_VARS)
+-LOCAL_MODULE := me.twrp.twrpapp.apk
+-LOCAL_MODULE_TAGS := eng
+-LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+-LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+-LOCAL_SRC_FILES := $(LOCAL_MODULE)
+-include $(BUILD_PREBUILT)
++ifneq ($(TW_DISABLE_APK_INSTALL),true)
++	#TWRP App "placeholder"
++	include $(CLEAR_VARS)
++	LOCAL_MODULE := me.twrp.twrpapp.apk
++	LOCAL_MODULE_TAGS := eng
++	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
++	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
++	LOCAL_SRC_FILES := $(LOCAL_MODULE)
++	include $(BUILD_PREBUILT)
++endif
+-- 
+2.11.0
+

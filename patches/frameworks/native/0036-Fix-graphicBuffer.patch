@@ -1,7 +1,7 @@
-From b9a2df54c8b2697517e25a97fe94ebdcaf1f2afc Mon Sep 17 00:00:00 2001
+From 375d48ddfc20adbdb904055e41f93077167be16e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 36/43] Fix graphicBuffer
+Subject: [PATCH 36/44] Fix graphicBuffer
 
 ---
  libs/gui/BufferQueueProducer.cpp | 4 ++--

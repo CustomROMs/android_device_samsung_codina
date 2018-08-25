@@ -1,0 +1,184 @@
+From 850bab1493826f6f8527068b7954a12cbcf71a01 Mon Sep 17 00:00:00 2001
+From: Gant Laborde <GantMan@gmail.com>
+Date: Fri, 20 Oct 2017 11:42:12 -0500
+Subject: [PATCH 11/30] Add changelog to device info.
+
+---
+ AndroidManifest.xml                                |   2 +
+ res/values/cr_strings.xml                          |   5 +
+ res/xml/device_info_settings.xml                   |   7 ++
+ src/com/android/settings/Settings.java             |   1 +
+ src/com/android/settings/deviceinfo/Changelog.java | 104 +++++++++++++++++++++
+ 5 files changed, 119 insertions(+)
+ create mode 100644 src/com/android/settings/deviceinfo/Changelog.java
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index a2afa54ea7..353b37124c 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -3318,6 +3318,8 @@
+             </intent-filter>
+         </activity>
+ 
++        <activity android:name=".deviceinfo.Changelog" />
++
+         <!-- This is the longest AndroidManifest.xml ever. -->
+     </application>
+ </manifest>
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 7231710052..91f806b7d7 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -33,4 +33,9 @@
+     <string name="default_usb_configuration" translatable="false" >default</string>
+     <string name="select_usb_default_confguration_warning">WARNING: Default USB configuration is enabled also when device is locked!\n\nDo you really want to enable this configuration?</string>
+ 
++    <!-- Changelog -->
++    <string name="changelog_title">Changelog</string>
++    <string name="changelog_summary">See some of the recent commits.</string>
++    <string name="changelog_error">Unable to load changelog</string>
++
+ </resources>
+diff --git a/res/xml/device_info_settings.xml b/res/xml/device_info_settings.xml
+index 52de82d70a..ad82ef3c0b 100644
+--- a/res/xml/device_info_settings.xml
++++ b/res/xml/device_info_settings.xml
+@@ -32,6 +32,13 @@
+                 lineage:requiresOwner="true"
+                 lineage:requiresPackage="org.lineageos.updater" />
+ 
++        <!-- Changelog -->
++        <Preference
++                android:key="changelog"
++                android:title="@string/changelog_title"
++                android:summary="@string/changelog_summary"
++                android:fragment="com.android.settings.deviceinfo.Changelog" />
++
+         <!-- Device status - launches activity -->
+         <Preference android:key="status_info"
+                 android:title="@string/device_status"
+diff --git a/src/com/android/settings/Settings.java b/src/com/android/settings/Settings.java
+index ee041e823c..612abf9823 100644
+--- a/src/com/android/settings/Settings.java
++++ b/src/com/android/settings/Settings.java
+@@ -47,6 +47,7 @@ public class Settings extends SettingsActivity {
+     public static class PhysicalKeyboardActivity extends SettingsActivity { /* empty */ }
+     public static class InputMethodAndSubtypeEnablerActivity extends SettingsActivity { /* empty */ }
+     public static class SpellCheckersSettingsActivity extends SettingsActivity { /* empty */ }
++    public static class ChangeLog extends SettingsActivity { /* empty */ }
+     public static class LocalePickerActivity extends SettingsActivity { /* empty */ }
+     public static class LanguageAndInputSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class UserDictionarySettingsActivity extends SettingsActivity { /* empty */ }
+diff --git a/src/com/android/settings/deviceinfo/Changelog.java b/src/com/android/settings/deviceinfo/Changelog.java
+new file mode 100644
+index 0000000000..3435ca42e4
+--- /dev/null
++++ b/src/com/android/settings/deviceinfo/Changelog.java
+@@ -0,0 +1,104 @@
++/*
++ * Copyright (C) 2017 Benzo Rom
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package com.android.settings.deviceinfo;
++
++import android.app.Fragment;
++import android.os.Bundle;
++import android.graphics.Color;
++import android.graphics.Typeface;
++import android.text.Spannable;
++import android.text.SpannableStringBuilder;
++import android.text.style.ForegroundColorSpan;
++import android.text.style.StyleSpan;
++import android.util.Log;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.ScrollView;
++import android.widget.TextView;
++
++import com.android.settings.R;
++import com.android.settings.SettingsPreferenceFragment;
++import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
++
++import java.io.FileReader;
++import java.io.IOException;
++import java.io.InputStreamReader;
++import java.util.regex.Pattern;
++import java.util.regex.Matcher;
++
++public class Changelog extends SettingsPreferenceFragment {
++
++    private static final String CHANGELOG_PATH = "/system/etc/Changelog.txt";
++
++    @Override
++    public View onCreateView(LayoutInflater inflater, ViewGroup container,
++                Bundle savedInstanceState) {
++        InputStreamReader inputReader = null;
++        String text = null;
++        StringBuilder data = new StringBuilder();
++        Pattern p = Pattern.compile("([a-f0-9]{7})\\s\\s(.*)\\s\\s\\[(.*)\\]"); //(?dms)
++        Pattern p2 = Pattern.compile("\\s+\\*\\s(([\\w_\\-]+/)+)");
++        Pattern p3 = Pattern.compile("(\\d\\d\\-\\d\\d\\-\\d{4})");
++        try {
++            char tmp[] = new char[2048];
++            int numRead;
++
++            inputReader = new FileReader(CHANGELOG_PATH);
++            while ((numRead = inputReader.read(tmp)) >= 0) {
++                data.append(tmp, 0, numRead);
++            }
++        } catch (IOException e) {
++            // removed
++        } finally {
++            try {
++                if (inputReader != null) {
++                    inputReader.close();
++                }
++            } catch (IOException e) {
++            }
++        }
++
++	SpannableStringBuilder sb = new SpannableStringBuilder(data);
++        Matcher m = p.matcher(data);
++        while (m.find()){
++          sb.setSpan(new ForegroundColorSpan(Color.rgb(96,125,139)),m.start(1), m.end(1), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
++          sb.setSpan(new StyleSpan(Typeface.BOLD),m.start(1),m.end(1),Spannable.SPAN_INCLUSIVE_INCLUSIVE);
++          sb.setSpan(new ForegroundColorSpan(Color.rgb(69,90,100)),m.start(3), m.end(3), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
++        }
++        m = p2.matcher(data);
++        while (m.find()){
++          sb.setSpan(new StyleSpan(Typeface.BOLD),m.start(1), m.end(1), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
++          sb.setSpan(new ForegroundColorSpan(Color.rgb(33,39,43)),m.start(1),m.end(1),Spannable.SPAN_INCLUSIVE_INCLUSIVE);
++        }
++        m = p3.matcher(data);
++        while (m.find()){
++          sb.setSpan(new StyleSpan(Typeface.BOLD+Typeface.ITALIC),m.start(1), m.end(1), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
++        }
++        final TextView textView = new TextView(getActivity());
++        textView.setText(sb);
++
++        final ScrollView scrollView = new ScrollView(getActivity());
++        scrollView.addView(textView);
++
++        return scrollView;
++    }
++
++    @Override
++    public int getMetricsCategory() {
++        return MetricsEvent.NEW_SETTINGS;
++    }
++}
+-- 
+2.11.0
+

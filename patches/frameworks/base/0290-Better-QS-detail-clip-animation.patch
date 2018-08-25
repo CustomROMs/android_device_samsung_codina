@@ -1,0 +1,32 @@
+From c8402d36a65d9b696760bd091b52bae300d80c70 Mon Sep 17 00:00:00 2001
+From: Akhil Narang <akhilnarang.1999@gmail.com>
+Date: Tue, 26 Jun 2018 16:55:14 +0530
+Subject: [PATCH 290/296] Better QS detail clip animation
+
+Clip animation could be started with panel expanding.
+Animation's target height should be expanded panel height.
+
+Test: Click QQS which has detail view (ex. Battery tile)
+ > Check animation while panel is expanding
+---
+ packages/SystemUI/src/com/android/systemui/qs/QSDetailClipper.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/QSDetailClipper.java b/packages/SystemUI/src/com/android/systemui/qs/QSDetailClipper.java
+index c454048d064..2ca1e621009 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/QSDetailClipper.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/QSDetailClipper.java
+@@ -40,8 +40,8 @@ public class QSDetailClipper {
+         if (mAnimator != null) {
+             mAnimator.cancel();
+         }
+-        final int w = mDetail.getWidth() - x;
+-        final int h = mDetail.getHeight() - y;
++        final int w = mDetail.getMeasuredWidth() - x;
++        final int h = mDetail.getMeasuredHeight() - y;
+         int innerR = 0;
+         if (x < 0 || w < 0 || y < 0 || h < 0) {
+             innerR = Math.abs(x);
+-- 
+2.11.0
+

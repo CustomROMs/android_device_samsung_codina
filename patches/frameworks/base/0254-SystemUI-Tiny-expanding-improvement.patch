@@ -1,0 +1,32 @@
+From c1de03fc88e479b0b0afc5e2fdc60a9d4fcbdc14 Mon Sep 17 00:00:00 2001
+From: BigBrother1984 <carlosavignano@aospa.co>
+Date: Thu, 13 Nov 2014 22:46:12 +0100
+Subject: [PATCH 254/296] SystemUI: Tiny expanding improvement
+
+---
+ packages/SystemUI/src/com/android/systemui/ExpandHelper.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/ExpandHelper.java b/packages/SystemUI/src/com/android/systemui/ExpandHelper.java
+index 377fab549a7..a8af0b65dab 100644
+--- a/packages/SystemUI/src/com/android/systemui/ExpandHelper.java
++++ b/packages/SystemUI/src/com/android/systemui/ExpandHelper.java
+@@ -519,7 +519,6 @@ public class ExpandHelper implements Gefingerpoken {
+         mExpanding = true;
+         mCallback.expansionStateChanged(true);
+         if (DEBUG) Log.d(TAG, "scale type " + expandType + " beginning on view: " + v);
+-        mCallback.setUserLockedChild(v, true);
+         mScaler.setView(v);
+         mOldHeight = mScaler.getHeight();
+         mCurrentHeight = mOldHeight;
+@@ -532,6 +531,7 @@ public class ExpandHelper implements Gefingerpoken {
+             if (DEBUG) Log.d(TAG, "working on a non-expandable child");
+             mNaturalHeight = mOldHeight;
+         }
++        mCallback.setUserLockedChild(v, true);
+         if (DEBUG) Log.d(TAG, "got mOldHeight: " + mOldHeight +
+                     " mNaturalHeight: " + mNaturalHeight);
+         return true;
+-- 
+2.11.0
+

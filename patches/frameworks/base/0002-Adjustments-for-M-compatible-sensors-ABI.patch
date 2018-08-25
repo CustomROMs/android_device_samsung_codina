@@ -1,0 +1,28 @@
+From 97b324b6280172c8b81b10b71823a32cb7c6490c Mon Sep 17 00:00:00 2001
+From: Michael Bestas <mikeioannina@cyanogenmod.org>
+Date: Sat, 15 Oct 2016 18:57:38 +0300
+Subject: [PATCH 002/296] Adjustments for M-compatible sensors ABI
+
+---
+ core/jni/android_hardware_SensorManager.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/jni/android_hardware_SensorManager.cpp b/core/jni/android_hardware_SensorManager.cpp
+index 5b327d40ac6..dae96523f88 100644
+--- a/core/jni/android_hardware_SensorManager.cpp
++++ b/core/jni/android_hardware_SensorManager.cpp
+@@ -201,7 +201,11 @@ nativeGetSensorAtIndex(JNIEnv *env, jclass clazz, jlong sensorManager, jobject s
+     SensorManager* mgr = reinterpret_cast<SensorManager*>(sensorManager);
+ 
+     Sensor const* const* sensorList;
++#ifdef COMPAT_SENSORS_M
++    const ssize_t count = mgr->getSensorList(&sensorList);
++#else
+     ssize_t count = mgr->getSensorList(&sensorList);
++#endif
+     if (ssize_t(index) >= count) {
+         return false;
+     }
+-- 
+2.11.0
+

@@ -1,7 +1,7 @@
-From 14bb5fd3e69d630b9cfab568334964beef7a5126 Mon Sep 17 00:00:00 2001
+From 3b0b952ef8041f3d1d8799afa755a9e07f3c4582 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 34/43] Fix Sensors
+Subject: [PATCH 34/44] Fix Sensors
 
 ---
  libs/sensor/ISensorEventConnection.cpp             | 21 +-------

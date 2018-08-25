@@ -1,0 +1,29 @@
+From 5573ed4e5cf471b035290da4b988f6421f0094bd Mon Sep 17 00:00:00 2001
+From: Christian Williams <christianw@google.com>
+Date: Tue, 7 Aug 2018 11:42:29 -0700
+Subject: [PATCH 210/296] Fix AccessibilityNodeInfo memory leak
+
+The memory leak will always occur in AccessibilityNodeInfo
+when do monkey test with TalkBack opened.
+
+Test: Open the TalkBack in Settings, then do monkey test.
+Pull the memory hprof when test done.
+---
+ core/java/android/view/accessibility/AccessibilityNodeInfo.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/java/android/view/accessibility/AccessibilityNodeInfo.java b/core/java/android/view/accessibility/AccessibilityNodeInfo.java
+index 53efe1833db..afb3dab3854 100644
+--- a/core/java/android/view/accessibility/AccessibilityNodeInfo.java
++++ b/core/java/android/view/accessibility/AccessibilityNodeInfo.java
+@@ -3299,6 +3299,7 @@ public class AccessibilityNodeInfo implements Parcelable {
+         mBoundsInScreen.set(other.mBoundsInScreen);
+         mPackageName = other.mPackageName;
+         mClassName = other.mClassName;
++        mOriginalText = other.mOriginalText;
+         mText = other.mText;
+         mHintText = other.mHintText;
+         mError = other.mError;
+-- 
+2.11.0
+

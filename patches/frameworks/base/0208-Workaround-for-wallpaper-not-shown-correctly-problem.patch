@@ -1,0 +1,44 @@
+From 9b6a41301e16fa31be58503c3cb498df8da36890 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 208/296] Workaround for wallpaper not shown correctly problem
+
+By changing to unbindService and remove window token first,
+and then do the service binding and new window token adding,
+we could make the wallpaper displayed correctly for the 2nd
+and later boot.
+Also fixed the BOOT TIMEOUT problem
+---
+ .../com/android/server/wallpaper/WallpaperManagerService.java    | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java b/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
+index f6e863b0aaf..0cd35cb1627 100644
+--- a/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
++++ b/services/core/java/com/android/server/wallpaper/WallpaperManagerService.java
+@@ -2077,7 +2077,10 @@ public class WallpaperManagerService extends IWallpaperManager.Stub {
+                     return false;
+                 }
+             }
+-
++            // remove window token and unbind first, then bind and add window token
++            if (wallpaper.userId == mCurrentUserId && mLastWallpaper != null) {
++                detachWallpaperLocked(mLastWallpaper);
++            }
+             // Bind the service!
+             if (DEBUG) Slog.v(TAG, "Binding to:" + componentName);
+             WallpaperConnection newConn = new WallpaperConnection(wi, wallpaper);
+@@ -2101,9 +2104,7 @@ public class WallpaperManagerService extends IWallpaperManager.Stub {
+                 Slog.w(TAG, msg);
+                 return false;
+             }
+-            if (wallpaper.userId == mCurrentUserId && mLastWallpaper != null) {
+-                detachWallpaperLocked(mLastWallpaper);
+-            }
++            // Adding window token
+             wallpaper.wallpaperComponent = componentName;
+             wallpaper.connection = newConn;
+             newConn.mReply = reply;
+-- 
+2.11.0
+

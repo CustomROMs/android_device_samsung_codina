@@ -1,0 +1,297 @@
+From 59acdd3f0c64e6c6af376825850041e02d52ef74 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 138/296] Improve ActivityManagerInternal.startIsolatedProcess.
+
+The processes created by ActivityManagerInternal.startIsolatedProcess
+were not being tracked by ActivityManager after creation (other than to
+handle crashes), but they still had ProcessRecords created for them.
+This meant that if a second process was started with the same name, a
+WTF would be triggered due to the old ProcessRecord still existing.
+
+To resolve this, we change the way that these special isolated processes
+start up: instead of directly executing the main() of the requested
+class after forking, the process first runs ActivityThread as with
+ordinary processes. When the process attaches to ActivityManagerService,
+it is given the name and parameters of the entry point class to execute
+instead of being given an ApplicationInfo to bind. We also reinstate the
+previously-disabled process start timeout, since the process is now
+expected to attach as normal.
+
+This means that ActivityManagerService can observe the process's death
+via Binder as usual and clean up the ProcessRecord, as well as making
+this process less of a special case. To ensure the process is still
+treated as important, we set a minimum OOM adjustment of
+PERSISTENT_SERVICE_ADJ (which is accurate as the system server is
+depending on the process even though it does not directly bind to it as
+a service), and exclude processes of this type from being killed due to
+being empty isolated processes. The process will exit voluntarily after
+the entry point function returns instead.
+---
+ core/java/android/app/ActivityThread.java          | 25 +++++++++++
+ core/java/android/app/IApplicationThread.aidl      |  1 +
+ .../android/server/am/ActivityManagerService.java  | 52 ++++++++++++----------
+ .../java/com/android/server/am/ProcessRecord.java  |  9 ++++
+ 4 files changed, 64 insertions(+), 23 deletions(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index d053d864748..a92f54e31da 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -149,6 +149,7 @@ import java.io.IOException;
+ import java.io.PrintWriter;
+ import java.lang.ref.WeakReference;
+ import java.lang.reflect.Field;
++import java.lang.reflect.Method;
+ import java.net.InetAddress;
+ import java.text.DateFormat;
+ import java.util.ArrayList;
+@@ -948,6 +949,13 @@ public final class ActivityThread {
+             sendMessage(H.BIND_APPLICATION, data);
+         }
+ 
++        public final void runIsolatedEntryPoint(String entryPoint, String[] entryPointArgs) {
++            SomeArgs args = SomeArgs.obtain();
++            args.arg1 = entryPoint;
++            args.arg2 = entryPointArgs;
++            sendMessage(H.RUN_ISOLATED_ENTRY_POINT, args);
++        }
++
+         public final void scheduleExit() {
+             sendMessage(H.EXIT_APPLICATION, null);
+         }
+@@ -1539,6 +1547,7 @@ public final class ActivityThread {
+         public static final int ATTACH_AGENT = 155;
+         public static final int APPLICATION_INFO_CHANGED = 156;
+         public static final int ACTIVITY_MOVED_TO_DISPLAY = 157;
++        public static final int RUN_ISOLATED_ENTRY_POINT = 158;
+ 
+         String codeToString(int code) {
+             if (DEBUG_MESSAGES) {
+@@ -1596,6 +1605,7 @@ public final class ActivityThread {
+                     case LOCAL_VOICE_INTERACTION_STARTED: return "LOCAL_VOICE_INTERACTION_STARTED";
+                     case ATTACH_AGENT: return "ATTACH_AGENT";
+                     case APPLICATION_INFO_CHANGED: return "APPLICATION_INFO_CHANGED";
++                    case RUN_ISOLATED_ENTRY_POINT: return "RUN_ISOLATED_ENTRY_POINT";
+                 }
+             }
+             return Integer.toString(code);
+@@ -1866,6 +1876,10 @@ public final class ActivityThread {
+                         mUpdatingSystemConfig = false;
+                     }
+                     break;
++                case RUN_ISOLATED_ENTRY_POINT:
++                    handleRunIsolatedEntryPoint((String) ((SomeArgs) msg.obj).arg1,
++                            (String[]) ((SomeArgs) msg.obj).arg2);
++                    break;
+             }
+             Object obj = msg.obj;
+             if (obj instanceof SomeArgs) {
+@@ -6345,6 +6359,17 @@ public final class ActivityThread {
+         return retHolder;
+     }
+ 
++    private void handleRunIsolatedEntryPoint(String entryPoint, String[] entryPointArgs) {
++        try {
++            Method main = Class.forName(entryPoint).getMethod("main", String[].class);
++            main.invoke(null, new Object[]{entryPointArgs});
++        } catch (ReflectiveOperationException e) {
++            throw new AndroidRuntimeException("runIsolatedEntryPoint failed", e);
++        }
++        // The process will be empty after this method returns; exit the VM now.
++        System.exit(0);
++    }
++
+     private void attach(boolean system) {
+         sCurrentActivityThread = this;
+         mSystemThread = system;
+diff --git a/core/java/android/app/IApplicationThread.aidl b/core/java/android/app/IApplicationThread.aidl
+index aeed7e1287d..487a94a05f7 100644
+--- a/core/java/android/app/IApplicationThread.aidl
++++ b/core/java/android/app/IApplicationThread.aidl
+@@ -85,6 +85,7 @@ oneway interface IApplicationThread {
+             boolean restrictedBackupMode, boolean persistent, in Configuration config,
+             in CompatibilityInfo compatInfo, in Map services,
+             in Bundle coreSettings, in String buildSerial);
++    void runIsolatedEntryPoint(in String entryPoint, in String[] entryPointArgs);
+     void scheduleExit();
+     void scheduleConfigurationChanged(in Configuration config);
+     void scheduleServiceArgs(IBinder token, in ParceledListSlice args);
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index b9323bb49b0..da285489d04 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -3811,6 +3811,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+                 return null;
+             }
+             app.crashHandler = crashHandler;
++            app.isolatedEntryPoint = entryPoint;
++            app.isolatedEntryPointArgs = entryPointArgs;
+             checkTime(startTime, "startProcess: done creating new process record");
+         } else {
+             // If this is a new package in the process, add the package to the list
+@@ -3833,8 +3835,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+         }
+ 
+         checkTime(startTime, "startProcess: stepping in to startProcess");
+-        startProcessLocked(
+-                app, hostingType, hostingNameStr, abiOverride, entryPoint, entryPointArgs);
++        startProcessLocked(app, hostingType, hostingNameStr, abiOverride);
+         checkTime(startTime, "startProcess: done starting proc!");
+         return (app.pid != 0) ? app : null;
+     }
+@@ -3845,12 +3846,11 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+     private final void startProcessLocked(ProcessRecord app,
+             String hostingType, String hostingNameStr) {
+-        startProcessLocked(app, hostingType, hostingNameStr, null /* abiOverride */,
+-                null /* entryPoint */, null /* entryPointArgs */);
++        startProcessLocked(app, hostingType, hostingNameStr, null /* abiOverride */);
+     }
+ 
+     private final void startProcessLocked(ProcessRecord app, String hostingType,
+-            String hostingNameStr, String abiOverride, String entryPoint, String[] entryPointArgs) {
++            String hostingNameStr, String abiOverride) {
+         long startTime = SystemClock.elapsedRealtime();
+         if (app.pid > 0 && app.pid != MY_PID) {
+             checkTime(startTime, "startProcess: removing from pids map");
+@@ -3995,8 +3995,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     + (TextUtils.isEmpty(app.info.seInfoUser) ? "" : app.info.seInfoUser);
+             // Start the process.  It will either succeed and return a result containing
+             // the PID of the new process, or else throw a RuntimeException.
+-            boolean isActivityProcess = (entryPoint == null);
+-            if (entryPoint == null) entryPoint = "android.app.ActivityThread";
++            final String entryPoint = "android.app.ActivityThread";
+             Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "Start proc: " +
+                     app.processName);
+             checkTime(startTime, "startProcess: asking zygote to start proc");
+@@ -4005,12 +4004,12 @@ public class ActivityManagerService extends IActivityManager.Stub
+                 startResult = startWebView(entryPoint,
+                         app.processName, uid, uid, gids, debugFlags, mountExternal,
+                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
+-                        app.info.dataDir, null, entryPointArgs);
++                        app.info.dataDir, null, null);
+             } else {
+                 startResult = Process.start(entryPoint,
+                         app.processName, uid, uid, gids, debugFlags, mountExternal,
+                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
+-                        app.info.dataDir, invokeWith, entryPointArgs);
++                        app.info.dataDir, invokeWith, null);
+             }
+             checkTime(startTime, "startProcess: returned from zygote!");
+             Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+@@ -4043,9 +4042,9 @@ public class ActivityManagerService extends IActivityManager.Stub
+             buf.append(app.processName);
+             buf.append('/');
+             UserHandle.formatUid(buf, uid);
+-            if (!isActivityProcess) {
++            if (app.isolatedEntryPoint != null) {
+                 buf.append(" [");
+-                buf.append(entryPoint);
++                buf.append(app.isolatedEntryPoint);
+                 buf.append("]");
+             }
+             buf.append(" for ");
+@@ -4075,12 +4074,10 @@ public class ActivityManagerService extends IActivityManager.Stub
+             }
+             synchronized (mPidsSelfLocked) {
+                 this.mPidsSelfLocked.put(startResult.pid, app);
+-                if (isActivityProcess) {
+-                    Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
+-                    msg.obj = app;
+-                    mHandler.sendMessageDelayed(msg, startResult.usingWrapper
+-                            ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);
+-                }
++                Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
++                msg.obj = app;
++                mHandler.sendMessageDelayed(msg, startResult.usingWrapper
++                        ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);
+             }
+             checkTime(startTime, "startProcess: done updating pids map");
+         } catch (RuntimeException e) {
+@@ -7173,7 +7170,11 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+             checkTime(startTime, "attachApplicationLocked: immediately before bindApplication");
+             mStackSupervisor.mActivityMetricsLogger.notifyBindApplication(app);
+-            if (app.instr != null) {
++            if (app.isolatedEntryPoint != null) {
++                // This is an isolated process which should just call an entry point instead of
++                // being bound to an application.
++                thread.runIsolatedEntryPoint(app.isolatedEntryPoint, app.isolatedEntryPointArgs);
++            } else if (app.instr != null) {
+                 thread.bindApplication(processName, appInfo, providers,
+                         app.instr.mClass,
+                         profilerInfo, app.instr.mArguments,
+@@ -12417,6 +12418,11 @@ public class ActivityManagerService extends IActivityManager.Stub
+             r.persistent = true;
+             r.maxAdj = ProcessList.PERSISTENT_PROC_ADJ;
+         }
++        if (isolated && isolatedUid != 0) {
++            // Special case for startIsolatedProcess (internal only) - assume the process
++            // is required by the system server to prevent it being killed.
++            r.maxAdj = ProcessList.PERSISTENT_SERVICE_ADJ;
++        }
+         addProcessNameLocked(r);
+         return r;
+     }
+@@ -12484,8 +12490,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+         if (app.thread == null && mPersistentStartingProcesses.indexOf(app) < 0) {
+             mPersistentStartingProcesses.add(app);
+             startProcessLocked(app, "added application",
+-                    customProcess != null ? customProcess : app.processName, abiOverride,
+-                    null /* entryPoint */, null /* entryPointArgs */);
++                    customProcess != null ? customProcess : app.processName, abiOverride);
+         }
+ 
+         return app;
+@@ -22785,9 +22790,10 @@ public class ActivityManagerService extends IActivityManager.Stub
+                         break;
+                 }
+ 
+-                if (app.isolated && app.services.size() <= 0) {
+-                    // If this is an isolated process, and there are no
+-                    // services running in it, then the process is no longer
++                if (app.isolated && app.services.size() <= 0 && app.isolatedEntryPoint == null) {
++                    // If this is an isolated process, there are no services
++                    // running in it, and it's not a special process with a
++                    // custom entry point, then the process is no longer
+                     // needed.  We agressively kill these because we can by
+                     // definition not re-use the same process again, and it is
+                     // good to avoid having whatever code was running in them
+diff --git a/services/core/java/com/android/server/am/ProcessRecord.java b/services/core/java/com/android/server/am/ProcessRecord.java
+index 411e973de03..0e318d9c502 100644
+--- a/services/core/java/com/android/server/am/ProcessRecord.java
++++ b/services/core/java/com/android/server/am/ProcessRecord.java
+@@ -47,6 +47,7 @@ import android.util.TimeUtils;
+ 
+ import java.io.PrintWriter;
+ import java.util.ArrayList;
++import java.util.Arrays;
+ 
+ /**
+  * Full information about a particular process that
+@@ -174,6 +175,9 @@ final class ProcessRecord {
+     // All ContentProviderRecord process is using
+     final ArrayList<ContentProviderConnection> conProviders = new ArrayList<>();
+ 
++    String isolatedEntryPoint;  // Class to run on start if this is a special isolated process.
++    String[] isolatedEntryPointArgs; // Arguments to pass to isolatedEntryPoint's main().
++
+     boolean execServicesFg;     // do we need to be executing services in the foreground?
+     boolean persistent;         // always keep this application running?
+     boolean crashing;           // are we in the process of crashing?
+@@ -379,6 +383,11 @@ final class ProcessRecord {
+         if (whitelistManager) {
+             pw.print(prefix); pw.print("whitelistManager="); pw.println(whitelistManager);
+         }
++        if (isolatedEntryPoint != null || isolatedEntryPointArgs != null) {
++            pw.print(prefix); pw.print("isolatedEntryPoint="); pw.println(isolatedEntryPoint);
++            pw.print(prefix); pw.print("isolatedEntryPointArgs=");
++            pw.println(Arrays.toString(isolatedEntryPointArgs));
++        }
+         if (activities.size() > 0) {
+             pw.print(prefix); pw.println("Activities:");
+             for (int i=0; i<activities.size(); i++) {
+-- 
+2.11.0
+

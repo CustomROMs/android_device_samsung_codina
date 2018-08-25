@@ -1,0 +1,25 @@
+From bd0afd074bdb458d0ba41276f56730099a5d614b Mon Sep 17 00:00:00 2001
+From: Ezio Lacandia Bijelkic <brabus84@gmail.com>
+Date: Thu, 31 May 2018 12:32:06 -0400
+Subject: [PATCH 236/296] fwb: Fix proximity check on power key
+
+---
+ services/core/java/com/android/server/policy/PhoneWindowManager.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index 6b14632d5b7..d5b97d637ea 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -7437,7 +7437,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+     }
+ 
+     private void wakeUpFromPowerKey(long eventTime) {
+-        wakeUp(eventTime, mAllowTheaterModeWakeFromPowerKey, "android.policy:POWER");
++        wakeUp(eventTime, mAllowTheaterModeWakeFromPowerKey, "android.policy:POWER", true);
+     }
+ 
+     private boolean wakeUp(long wakeTime, boolean wakeInTheaterMode, String reason) {
+-- 
+2.11.0
+

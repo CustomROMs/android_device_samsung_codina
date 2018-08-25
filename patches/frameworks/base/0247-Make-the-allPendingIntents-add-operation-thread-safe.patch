@@ -1,0 +1,38 @@
+From 6199d9aad7ea88ab96311c7983c1025234071d60 Mon Sep 17 00:00:00 2001
+From: "xiaomei.li" <xiaomei.li@spreadtrum.com>
+Date: Fri, 31 Mar 2017 15:03:36 +0800
+Subject: [PATCH 247/296] Make the allPendingIntents add operation thread-safe.
+
+The allPendingIntents container ArraySet is not thread-safe, its array
+cache may be broken by multi-thread do the same arrayset instance
+freeArray twice, it will occur ArrayIndexOutOfBoundsException or
+ClassCastException after the cache broken to lead the system_server
+crash.
+---
+ core/java/android/app/Notification.java | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/core/java/android/app/Notification.java b/core/java/android/app/Notification.java
+index 7caeca3da6f..730bd74870f 100644
+--- a/core/java/android/app/Notification.java
++++ b/core/java/android/app/Notification.java
+@@ -2189,10 +2189,13 @@ public class Notification implements Parcelable
+             PendingIntent.setOnMarshaledListener(
+                     (PendingIntent intent, Parcel out, int outFlags) -> {
+                 if (parcel == out) {
+-                    if (allPendingIntents == null) {
+-                        allPendingIntents = new ArraySet<>();
++                    // make the allPendingIntents add operation thread-safe.
++                    synchronized (Notification.this) {
++                        if (allPendingIntents == null) {
++                            allPendingIntents = new ArraySet<>();
++                        }
++                        allPendingIntents.add(intent);
+                     }
+-                    allPendingIntents.add(intent);
+                 }
+             });
+         }
+-- 
+2.11.0
+

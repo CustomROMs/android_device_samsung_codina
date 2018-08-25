@@ -1,0 +1,26 @@
+From 2bcd14012dfe6fb6b3e8ddff7392f201b740bbea Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 1/7] AGPS USE PSC
+
+---
+ include/hardware/gps.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/hardware/gps.h b/include/hardware/gps.h
+index 4e108b3f..ff704202 100644
+--- a/include/hardware/gps.h
++++ b/include/hardware/gps.h
+@@ -481,6 +481,9 @@ typedef struct {
+      * might rely in the old (wrong) behavior.
+      */
+     uint16_t lac;
++#ifdef AGPS_USE_PSC
++    uint16_t psc;
++#endif
+     /** Cell id in 2G. Utran Cell id in 3G. Cell Global Id EUTRA in LTE. */
+     uint32_t cid;
+     /** Tracking Area Code in LTE. */
+-- 
+2.11.0
+

@@ -1,0 +1,911 @@
+From 0da284150ae2f046523d5b6da0b852d9d8e42e46 Mon Sep 17 00:00:00 2001
+From: Christian Oder <myself5@carbonrom.org>
+Date: Thu, 7 Jan 2016 19:59:10 +0100
+Subject: [PATCH 30/30] Settings: Add ability to permanently hide apps from
+ recents [2/2]
+
+---
+ AndroidManifest.xml                                |   2 +
+ res/layout/dialog_app_chooser_list.xml             |  48 +++++
+ res/layout/view_app_list.xml                       |  61 ++++++
+ res/layout/view_package_list.xml                   |  66 +++++++
+ res/values/cr_strings.xml                          |   5 +
+ res/xml/app_default_settings.xml                   |   9 +
+ .../development/HAFRAppChooserAdapter.java         | 182 ++++++++++++++++++
+ .../settings/development/HAFRAppChooserDialog.java |  80 ++++++++
+ .../settings/development/HAFRAppListActivity.java  | 206 +++++++++++++++++++++
+ .../settings/development/HAFRAppListAdapter.java   | 152 +++++++++++++++
+ 10 files changed, 811 insertions(+)
+ create mode 100644 res/layout/dialog_app_chooser_list.xml
+ create mode 100644 res/layout/view_app_list.xml
+ create mode 100644 res/layout/view_package_list.xml
+ create mode 100644 src/com/android/settings/development/HAFRAppChooserAdapter.java
+ create mode 100644 src/com/android/settings/development/HAFRAppChooserDialog.java
+ create mode 100644 src/com/android/settings/development/HAFRAppListActivity.java
+ create mode 100644 src/com/android/settings/development/HAFRAppListAdapter.java
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index ec3a3fce0b..68cdf8ab67 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -3321,6 +3321,8 @@
+ 
+         <activity android:name=".deviceinfo.Changelog" />
+ 
++        <activity android:name=".development.HAFRAppListActivity" />
++
+         <!-- This is the longest AndroidManifest.xml ever. -->
+     </application>
+ </manifest>
+diff --git a/res/layout/dialog_app_chooser_list.xml b/res/layout/dialog_app_chooser_list.xml
+new file mode 100644
+index 0000000000..db269c9bc2
+--- /dev/null
++++ b/res/layout/dialog_app_chooser_list.xml
+@@ -0,0 +1,48 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:orientation="vertical" >
++
++    <RelativeLayout
++        android:layout_width="fill_parent"
++        android:layout_height="48dp" >
++
++        <EditText
++            android:id="@+id/searchText"
++            android:layout_width="fill_parent"
++            android:layout_height="fill_parent"
++            android:layout_toLeftOf="@+id/searchButton"
++            android:ems="10"
++            android:hint="@android:string/search_go" >
++
++        </EditText>
++
++        <ImageButton
++            android:id="@+id/searchButton"
++            style="@android:style/Widget.Holo.Button.Borderless"
++            android:layout_width="40dp"
++            android:layout_height="match_parent"
++            android:layout_alignParentBottom="true"
++            android:layout_alignParentRight="true"
++            android:layout_alignParentTop="true"
++            android:scaleType="fitCenter"
++            android:src="@drawable/ic_search" />
++
++    </RelativeLayout>
++
++    <ProgressBar
++        android:id="@+id/progressBar1"
++        style="?android:attr/progressBarStyleHorizontal"
++        android:layout_width="fill_parent"
++        android:layout_height="wrap_content"
++        android:indeterminate="true" />
++
++    <ListView
++        android:id="@+id/listView1"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_weight="0" >
++    </ListView>
++
++</LinearLayout>
+diff --git a/res/layout/view_app_list.xml b/res/layout/view_app_list.xml
+new file mode 100644
+index 0000000000..5f25155acc
+--- /dev/null
++++ b/res/layout/view_app_list.xml
+@@ -0,0 +1,61 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2016 crDroid Android Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+android:id/widget_frame"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:gravity="center_vertical"
++    android:minHeight="48dp" >
++
++    <ImageView
++        android:id="@+android:id/icon"
++        android:layout_width="45dp"
++        android:layout_height="45dp"
++        android:layout_marginLeft="6dip"
++        android:layout_marginRight="6dip"
++        android:scaleType="fitCenter" />
++
++    <LinearLayout
++        android:id="@+id/LinearLayout1"
++        android:layout_width="0dip"
++        android:layout_height="wrap_content"
++        android:layout_marginBottom="6dip"
++        android:layout_marginLeft="2dip"
++        android:layout_marginRight="6dip"
++        android:layout_marginTop="6dip"
++        android:layout_weight="1"
++        android:orientation="vertical" >
++
++        <TextView
++            android:id="@+android:id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:singleLine="true"
++            android:textAppearance="?android:attr/textAppearanceMedium" />
++
++        <TextView
++            android:id="@+android:id/message"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:singleLine="true"
++            android:textAppearance="?android:attr/textAppearanceSmall" />
++    </LinearLayout>
++
++</LinearLayout>
+diff --git a/res/layout/view_package_list.xml b/res/layout/view_package_list.xml
+new file mode 100644
+index 0000000000..c68ad4fa16
+--- /dev/null
++++ b/res/layout/view_package_list.xml
+@@ -0,0 +1,66 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2016 crDroid Android Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:id="@+android:id/widget_frame"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:gravity="center_vertical"
++    android:minHeight="48dp" >
++
++    <ImageView
++        android:id="@+android:id/icon"
++        android:layout_width="50dp"
++        android:layout_height="50dp"
++        android:padding="6dp"
++        android:scaleType="fitCenter" />
++
++    <LinearLayout
++        android:layout_width="0dip"
++        android:layout_height="wrap_content"
++        android:layout_marginBottom="6dip"
++        android:layout_marginLeft="2dip"
++        android:layout_marginRight="6dip"
++        android:layout_marginTop="6dip"
++        android:layout_weight="1"
++        android:orientation="vertical" >
++
++        <TextView
++            android:id="@+android:id/title"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:ellipsize="none"
++            android:textAppearance="?android:attr/textAppearanceMedium" />
++
++        <TextView
++            android:id="@+android:id/message"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:ellipsize="end"
++            android:maxLines="2"
++            android:textAppearance="?android:attr/textAppearanceSmall" />
++
++    </LinearLayout>
++
++    <ImageButton
++        android:id="@+id/removeButton"
++        style="@android:style/Widget.Holo.Button.Borderless"
++        android:layout_width="40dp"
++        android:layout_height="match_parent"
++        android:scaleType="fitCenter"
++        android:src="@drawable/ic_cancel" />
++
++</LinearLayout>
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index 4de67d9021..359243d406 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -119,4 +119,9 @@
+     <string name="toast_SlideLeftRight_animation">Slide left to right</string>
+     <string name="toast_SlideRightLeft_animation">Slide right to left</string>
+ 
++    <!-- Hide Apps from Recents -->
++    <string name="hide_apps_from_recents_title">Hidden apps</string>
++    <string name="hide_from_recents_add_app">Add App</string>
++    <string name="hide_apps_from_recents_summary">Pick which apps to exclude from the recents panel</string>
++
+ </resources>
+diff --git a/res/xml/app_default_settings.xml b/res/xml/app_default_settings.xml
+index 7f2b04e6f9..622fd6c5f3 100644
+--- a/res/xml/app_default_settings.xml
++++ b/res/xml/app_default_settings.xml
+@@ -99,4 +99,13 @@
+ 
+     </com.android.settings.WorkOnlyCategory>
+ 
++    <PreferenceScreen
++        android:key="hide_app_from_recents"
++        android:title="@string/hide_apps_from_recents_title"
++        android:summary="@string/hide_apps_from_recents_summary" >
++        <intent android:action="android.intent.action.MAIN"
++            android:targetPackage="com.android.settings"
++            android:targetClass="com.android.settings.development.HAFRAppListActivity" />
++    </PreferenceScreen>
++
+ </PreferenceScreen>
+diff --git a/src/com/android/settings/development/HAFRAppChooserAdapter.java b/src/com/android/settings/development/HAFRAppChooserAdapter.java
+new file mode 100644
+index 0000000000..15dfd80313
+--- /dev/null
++++ b/src/com/android/settings/development/HAFRAppChooserAdapter.java
+@@ -0,0 +1,182 @@
++package com.android.settings.development;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.LinkedList;
++import java.util.List;
++import java.util.Locale;
++
++import android.content.Context;
++import android.content.pm.PackageInfo;
++import android.content.pm.PackageManager;
++import android.graphics.drawable.Drawable;
++import android.os.Handler;
++import android.text.TextUtils;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.BaseAdapter;
++import android.widget.Filter;
++import android.widget.Filterable;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import com.android.settings.R;
++
++public abstract class HAFRAppChooserAdapter extends BaseAdapter implements Filterable {
++
++    final Context mContext;
++    final Handler mHandler;
++    final PackageManager mPackageManager;
++    final LayoutInflater mLayoutInflater;
++
++    protected List<PackageInfo> mInstalledAppInfo;
++    protected List<AppItem> mInstalledApps = new LinkedList<AppItem>();
++    protected List<PackageInfo> mTemporarylist;
++
++    boolean isUpdating;
++
++    public HAFRAppChooserAdapter(Context context) {
++        mContext = context;
++        mHandler = new Handler();
++        mPackageManager = mContext.getPackageManager();
++        mLayoutInflater = (LayoutInflater) mContext
++                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
++        mInstalledAppInfo = mPackageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS);
++        mTemporarylist = mInstalledAppInfo;
++    }
++
++    public synchronized void update() {
++        onStartUpdate();
++
++        new Thread(new Runnable() {
++            @Override
++            public void run() {
++                isUpdating = true;
++                final List<AppItem> temp = new LinkedList<AppItem>();
++                for (PackageInfo info : mTemporarylist) {
++                    final AppItem item = new AppItem();
++                    item.title = info.applicationInfo.loadLabel(mPackageManager);
++                    item.icon = info.applicationInfo.loadIcon(mPackageManager);
++                    item.packageName = info.packageName;
++                    final int index = Collections.binarySearch(temp, item);
++                    if (index < 0) {
++                        temp.add((-index - 1), item);
++                    } else {
++                        temp.add((index + 1), item);
++                    }
++                }
++                mHandler.post(new Runnable() {
++                    @Override
++                    public void run() {
++                        mInstalledApps = temp;
++                        notifyDataSetChanged();
++                        isUpdating = false;
++                        onFinishUpdate();
++                    }
++                });
++            }
++        }).start();
++    }
++
++    public abstract void onStartUpdate();
++
++    public abstract void onFinishUpdate();
++
++    @Override
++    public int getCount() {
++        return mInstalledApps.size();
++    }
++
++    @Override
++    public AppItem getItem(int position) {
++        if (position >= mInstalledApps.size()) {
++            return mInstalledApps.get(mInstalledApps.size());
++        } else if (position < 0) {
++            return mInstalledApps.get(0);
++        }
++
++        return mInstalledApps.get(position);
++    }
++
++    @Override
++    public long getItemId(int position) {
++        if (position < 0 || position >= mInstalledApps.size()) {
++            return -1;
++        }
++
++        return getItem(position).hashCode();
++    }
++
++    @Override
++    public View getView(int position, View convertView, ViewGroup parent) {
++        ViewHolder holder;
++        if (convertView != null) {
++            holder = (ViewHolder) convertView.getTag();
++        } else {
++            convertView = mLayoutInflater.inflate(R.layout.view_app_list, parent, false);
++            holder = new ViewHolder();
++            holder.name = (TextView) convertView.findViewById(android.R.id.title);
++            holder.icon = (ImageView) convertView.findViewById(android.R.id.icon);
++            holder.pkg = (TextView) convertView.findViewById(android.R.id.message);
++            convertView.setTag(holder);
++        }
++        AppItem appInfo = getItem(position);
++
++        holder.name.setText(appInfo.title);
++        holder.pkg.setText(appInfo.packageName);
++        holder.icon.setImageDrawable(appInfo.icon);
++        return convertView;
++    }
++
++    @Override
++    public Filter getFilter() {
++        return new Filter() {
++            @Override
++            protected void publishResults(CharSequence constraint, FilterResults results) {
++            }
++
++            @Override
++            protected FilterResults performFiltering(CharSequence constraint) {
++                if (TextUtils.isEmpty(constraint)) {
++                    // No filter implemented we return all the list
++                    mTemporarylist = mInstalledAppInfo;
++                    return new FilterResults();
++                }
++
++                ArrayList<PackageInfo> FilteredList = new ArrayList<PackageInfo>();
++                for (PackageInfo data : mInstalledAppInfo) {
++                    final String filterText = constraint.toString().toLowerCase(Locale.ENGLISH);
++                    try {
++                        if (data.applicationInfo.loadLabel(mPackageManager).toString()
++                                .toLowerCase(Locale.ENGLISH).contains(filterText)) {
++                            FilteredList.add(data);
++                        } else if (data.packageName.contains(filterText)) {
++                            FilteredList.add(data);
++                        }
++                    } catch (Exception e) {
++                    }
++                }
++                mTemporarylist = FilteredList;
++                return new FilterResults();
++            }
++        };
++    }
++
++    public class AppItem implements Comparable<AppItem> {
++        public CharSequence title;
++        public String packageName;
++        public Drawable icon;
++
++        @Override
++        public int compareTo(AppItem another) {
++            return this.title.toString().compareTo(another.title.toString());
++        }
++    }
++
++    static class ViewHolder {
++        TextView name;
++        ImageView icon;
++        TextView pkg;
++    }
++}
+diff --git a/src/com/android/settings/development/HAFRAppChooserDialog.java b/src/com/android/settings/development/HAFRAppChooserDialog.java
+new file mode 100644
+index 0000000000..234390cef0
+--- /dev/null
++++ b/src/com/android/settings/development/HAFRAppChooserDialog.java
+@@ -0,0 +1,80 @@
++package com.android.settings.development;
++
++import android.app.Dialog;
++import android.content.Context;
++import android.view.View;
++import android.view.Window;
++import android.widget.AdapterView;
++import android.widget.EditText;
++import android.widget.Filter;
++import android.widget.ImageButton;
++import android.widget.ListView;
++import android.widget.ProgressBar;
++import android.widget.AdapterView.OnItemClickListener;
++
++import com.android.settings.R;
++
++public abstract class HAFRAppChooserDialog extends Dialog {
++
++    final HAFRAppChooserAdapter dAdapter;
++    final ProgressBar dProgressBar;
++    final ListView dListView;
++    final EditText dSearch;
++    final ImageButton dButton;
++
++    private int mId;
++
++    public HAFRAppChooserDialog(Context context) {
++        super(context);
++        requestWindowFeature(Window.FEATURE_NO_TITLE);
++        setContentView(R.layout.dialog_app_chooser_list);
++
++        dListView = (ListView) findViewById(R.id.listView1);
++        dSearch = (EditText) findViewById(R.id.searchText);
++        dButton = (ImageButton) findViewById(R.id.searchButton);
++        dProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
++
++        dAdapter = new HAFRAppChooserAdapter(context) {
++            @Override
++            public void onStartUpdate() {
++                dProgressBar.setVisibility(View.VISIBLE);
++            }
++
++            @Override
++            public void onFinishUpdate() {
++                dProgressBar.setVisibility(View.GONE);
++            }
++        };
++
++        dListView.setAdapter(dAdapter);
++        dListView.setOnItemClickListener(new OnItemClickListener() {
++            @Override
++            public void onItemClick(AdapterView<?> av, View v, int pos, long id) {
++                HAFRAppChooserAdapter.AppItem info = (HAFRAppChooserAdapter.AppItem) av
++                        .getItemAtPosition(pos);
++                onListViewItemClick(info, mId);
++                dismiss();
++            }
++        });
++
++        dButton.setOnClickListener(new View.OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                dAdapter.getFilter().filter(dSearch.getText().toString(), new Filter.FilterListener() {
++                    public void onFilterComplete(int count) {
++                        dAdapter.update();
++                    }
++                });
++            }
++        });
++
++        dAdapter.update();
++    }
++
++    public void show(int id) {
++        mId = id;
++        show();
++    }
++
++    public abstract void onListViewItemClick(HAFRAppChooserAdapter.AppItem info, int id);
++}
+diff --git a/src/com/android/settings/development/HAFRAppListActivity.java b/src/com/android/settings/development/HAFRAppListActivity.java
+new file mode 100644
+index 0000000000..ed21cffbef
+--- /dev/null
++++ b/src/com/android/settings/development/HAFRAppListActivity.java
+@@ -0,0 +1,206 @@
++package com.android.settings.development;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Collections;
++import java.util.Comparator;
++import java.util.List;
++import java.util.Map;
++
++import com.android.settings.development.HAFRAppChooserAdapter.AppItem;
++
++import android.annotation.SuppressLint;
++import android.app.Activity;
++import android.content.SharedPreferences;
++import android.content.SharedPreferences.Editor;
++import android.content.pm.PackageManager;
++import android.os.Bundle;
++import android.provider.Settings;
++import android.util.Log;
++import android.view.Menu;
++import android.view.MenuItem;
++import android.widget.ListView;
++
++import com.android.settings.R;
++
++public class HAFRAppListActivity extends Activity {
++
++    /* others */
++    static final int ID_ADD_APP = 1;
++
++    /* main stuff */
++    SharedPreferences mPref;
++    HAFRAppListAdapter mPkgAdapter;
++    ListView mListView;
++
++    /* app dialog stuff */
++    HAFRAppChooserDialog dDialog;
++    ArrayList<String> excludeFromRecentsList;
++    public static final String KEY_PREFERENCE_APPS = "hide_recents_apps_pref";
++
++    @Override
++    @SuppressLint("WorldReadableFiles")
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        mPref = getSharedPreferences(KEY_PREFERENCE_APPS, MODE_PRIVATE);
++        loadList();
++        initAppList();
++    }
++
++    @Override
++    public void onPause() {
++        super.onPause();
++        // Avoid WindowLeaked Exception
++        // http://publicstaticdroidmain.com/2012/01/avoiding-android-memory-leaks-part-1/
++        if (dDialog != null && dDialog.isShowing()) {
++            dDialog.dismiss();
++        }
++    }
++
++    @Override
++    public boolean onCreateOptionsMenu(Menu menu) {
++        MenuItem add = menu.add(Menu.NONE, ID_ADD_APP, 0, R.string.hide_from_recents_add_app);
++        add.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
++        return true;
++    }
++
++    @Override
++    public boolean onOptionsItemSelected(MenuItem item) {
++        switch (item.getItemId()) {
++            case ID_ADD_APP:
++                dDialog.show(ID_ADD_APP);
++                break;
++        }
++        return false;
++    }
++
++    private void initAppList() {
++        dDialog = new HAFRAppChooserDialog(this) {
++            @Override
++            public void onListViewItemClick(AppItem info, int id) {
++                addApp(info.packageName);
++            }
++        };
++    }
++
++    private void loadList() {
++        final Map<String, Integer> list = getSetStrings();
++        mPkgAdapter = new HAFRAppListAdapter(this, list) {
++            @Override
++            public void onRemoveButtonPress(PackageItem app_info) {
++                removeApp(app_info.packageName);
++            }
++        };
++        mListView = new ListView(this);
++        mListView.setAdapter(mPkgAdapter);
++        setContentView(mListView);
++    }
++
++    @SuppressWarnings("unchecked")
++    private Map<String, Integer> getSetStrings() {
++        return (Map<String, Integer>) mPref.getAll();
++    }
++
++    public void removeApp(String pkg) {
++
++        Editor editor = mPref.edit().clear();
++        excludeFromRecentsList = new ArrayList<String>();
++        List<ArrayList<String>> tempItemList2 = new ArrayList<ArrayList<String>>();
++        List<String> tempItemList3 = new ArrayList<String>();
++
++        for (HAFRAppListAdapter.PackageItem item : mPkgAdapter.getList()) {
++            if (!item.packageName.equals(pkg)) {
++                excludeFromRecentsList.add(item.packageName);
++            }
++        }
++
++        PackageManager packageManager = getApplicationContext().getPackageManager();
++
++        for (int i = 0; i < excludeFromRecentsList.size(); i++) {
++            try {
++                tempItemList2.add(new ArrayList<String>(Arrays.asList((String) packageManager.getApplicationLabel(packageManager.getApplicationInfo(excludeFromRecentsList.get(i), PackageManager.GET_META_DATA)), excludeFromRecentsList.get(i))));
++            } catch (PackageManager.NameNotFoundException e) {
++                e.printStackTrace();
++            }
++        }
++        Collections.sort(tempItemList2, new Comparator<ArrayList<String>>() {
++            @Override
++            public int compare(ArrayList<String> o1, ArrayList<String> o2) {
++                return o1.get(0).toLowerCase().compareTo(o2.get(0).toLowerCase());
++            }
++        });
++
++        for (int i = 0; i < excludeFromRecentsList.size(); i++) {
++            tempItemList3.add(tempItemList2.get(i).get(1));
++        }
++
++
++        for (HAFRAppListAdapter.PackageItem item : mPkgAdapter.getList()) {
++            editor.putInt(item.packageName, tempItemList3.indexOf(item.packageName));
++        }
++        editor.commit();
++        saveExcludeFromRecentsString();
++        updateList();
++    }
++
++    public void addApp(String pkg) {
++        Editor editor = mPref.edit().clear();
++        excludeFromRecentsList = new ArrayList<String>();
++        List<ArrayList<String>> tempItemList2 = new ArrayList<ArrayList<String>>();
++        List<String> tempItemList3 = new ArrayList<String>();
++
++        for (HAFRAppListAdapter.PackageItem item : mPkgAdapter.getList()) {
++            excludeFromRecentsList.add(item.packageName);
++        }
++
++        excludeFromRecentsList.add(pkg);
++        PackageManager packageManager = getApplicationContext().getPackageManager();
++
++        for (int i = 0; i < excludeFromRecentsList.size(); i++) {
++            try {
++                tempItemList2.add(new ArrayList<String>(Arrays.asList((String) packageManager.getApplicationLabel(packageManager.getApplicationInfo(excludeFromRecentsList.get(i), PackageManager.GET_META_DATA)), excludeFromRecentsList.get(i))));
++            } catch (PackageManager.NameNotFoundException e) {
++                e.printStackTrace();
++            }
++        }
++        Collections.sort(tempItemList2, new Comparator<ArrayList<String>>() {
++            @Override
++            public int compare(ArrayList<String> o1, ArrayList<String> o2) {
++                return o1.get(0).toLowerCase().compareTo(o2.get(0).toLowerCase());
++            }
++        });
++
++        for (int i = 0; i < excludeFromRecentsList.size(); i++) {
++            tempItemList3.add(tempItemList2.get(i).get(1));
++        }
++
++
++        for (HAFRAppListAdapter.PackageItem item : mPkgAdapter.getList()) {
++            editor.putInt(item.packageName, tempItemList3.indexOf(item.packageName));
++        }
++
++        editor.putInt(pkg, tempItemList3.indexOf(pkg));
++        editor.commit();
++        saveExcludeFromRecentsString();
++        updateList();
++    }
++
++    private void saveExcludeFromRecentsString() {
++        StringBuilder sb = new StringBuilder();
++        for (String name : excludeFromRecentsList) {
++            sb.append(name + "|");
++        }
++
++        if (sb.length() > 0) {
++            sb.deleteCharAt(sb.length() - 1);
++        }
++
++        Log.d("Myself5", sb.toString());
++        Settings.System.putString(getContentResolver(),
++        		Settings.System.HIDE_FROM_RECENTS_LIST, sb.toString());
++    }
++
++    public void updateList() {
++        mPkgAdapter.update(getSetStrings());
++    }
++}
+diff --git a/src/com/android/settings/development/HAFRAppListAdapter.java b/src/com/android/settings/development/HAFRAppListAdapter.java
+new file mode 100644
+index 0000000000..eede47aed9
+--- /dev/null
++++ b/src/com/android/settings/development/HAFRAppListAdapter.java
+@@ -0,0 +1,152 @@
++package com.android.settings.development;
++
++
++import java.util.LinkedList;
++import java.util.Map;
++
++import android.content.Context;
++import android.content.pm.ApplicationInfo;
++import android.content.pm.PackageManager;
++import android.graphics.drawable.Drawable;
++import android.os.Handler;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.View.OnClickListener;
++import android.view.ViewGroup;
++import android.widget.BaseAdapter;
++import android.widget.ImageButton;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import com.android.settings.R;
++
++public abstract class HAFRAppListAdapter extends BaseAdapter {
++
++    final Context mContext;
++    final Handler mHandler;
++    final PackageManager mPackageManager;
++    final LayoutInflater mLayoutInflater;
++
++    protected LinkedList<PackageItem> mApps = new LinkedList<PackageItem>();
++
++    public HAFRAppListAdapter(Context context, Map<String, Integer> list) {
++        mContext = context;
++        mHandler = new Handler();
++        mPackageManager = context.getPackageManager();
++        mLayoutInflater = (LayoutInflater) context
++                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
++        update(list);
++    }
++
++    public void update(final Map<String, Integer> app_array) {
++        new Thread(new Runnable() {
++            @Override
++            public void run() {
++                synchronized (mApps) {
++                    final PackageItem[] array = new PackageItem[app_array.size() * 2];
++                    for (String pkg_name : app_array.keySet()) {
++                        try {
++                            ApplicationInfo ai = mPackageManager.getApplicationInfo(pkg_name, 0);
++                            final PackageItem item = new PackageItem();
++                            item.title = ai.loadLabel(mPackageManager);
++                            item.icon = ai.loadIcon(mPackageManager);
++                            item.packageName = ai.packageName;
++                            array[app_array.get(pkg_name)] = item;
++                        } catch (Exception e) {
++                        }
++                    }
++
++                    final LinkedList<PackageItem> temp = new LinkedList<PackageItem>();
++                    for (int x = 0; x < array.length; x++) {
++                        if (array[x] != null) {
++                            temp.add(array[x]);
++                        }
++                    }
++                    mHandler.post(new Runnable() {
++                        @Override
++                        public void run() {
++                            mApps.clear();
++                            mApps = temp;
++                            notifyDataSetChanged();
++                        }
++                    });
++                }
++            }
++        }).start();
++    }
++
++    @Override
++    public int getCount() {
++        return mApps.size();
++    }
++
++    public LinkedList<PackageItem> getList() {
++        return mApps;
++    }
++
++    @Override
++    public PackageItem getItem(int position) {
++        return mApps.get(position);
++    }
++
++    @Override
++    public long getItemId(int position) {
++        if (position < 0 || position >= mApps.size()) {
++            return -1;
++        }
++        return mApps.get(position).hashCode();
++    }
++
++    @Override
++    public boolean hasStableIds() {
++        return true;
++    }
++
++    @Override
++    public View getView(final int position, View convertView, ViewGroup parent) {
++        ViewHolder holder;
++        if (convertView != null) {
++            holder = (ViewHolder) convertView.getTag();
++        } else {
++            convertView = mLayoutInflater.inflate(R.layout.view_package_list, parent, false);
++            holder = new ViewHolder();
++            holder.name = (TextView) convertView.findViewById(android.R.id.title);
++            holder.icon = (ImageView) convertView.findViewById(android.R.id.icon);
++            holder.pkg = (TextView) convertView.findViewById(android.R.id.message);
++            holder.remove = (ImageButton) convertView.findViewById(R.id.removeButton);
++            convertView.setTag(holder);
++        }
++        final PackageItem appInfo = getItem(position);
++
++        holder.name.setText(appInfo.title);
++        holder.pkg.setText(appInfo.packageName);
++        holder.icon.setImageDrawable(appInfo.icon);
++        holder.remove.setOnClickListener(new OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                onRemoveButtonPress(appInfo);
++            }
++        });
++        return convertView;
++    }
++
++    public abstract void onRemoveButtonPress(PackageItem app_info);
++
++    public class PackageItem implements Comparable<PackageItem> {
++        public CharSequence title;
++        public String packageName;
++        public Drawable icon;
++
++        @Override
++        public int compareTo(PackageItem another) {
++            return this.title.toString().compareTo(another.title.toString());
++        }
++    }
++
++    static class ViewHolder {
++        TextView name;
++        ImageView icon;
++        TextView pkg;
++        ImageButton remove;
++    }
++}
+-- 
+2.11.0
+

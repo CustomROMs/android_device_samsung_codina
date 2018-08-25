@@ -1,0 +1,28 @@
+From fbde173abf5f0038633dfe505a5d27010786e5e0 Mon Sep 17 00:00:00 2001
+From: BigBrother1984 <carlosavignano@aospa.co>
+Date: Sun, 4 Jan 2015 03:07:39 +0100
+Subject: [PATCH 230/296] Activity: Add an helper to get its handler instance
+
+---
+ core/java/android/app/Activity.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
+index 34f6464c1e2..b56a83c2ff7 100644
+--- a/core/java/android/app/Activity.java
++++ b/core/java/android/app/Activity.java
+@@ -861,6 +861,11 @@ public class Activity extends ContextThemeWrapper
+ 
+     private static native String getDlWarning();
+ 
++    /** Return the activity handler instance. */
++    public Handler getHandler() {
++        return mHandler;
++    }
++
+     /** Return the intent that started this activity. */
+     public Intent getIntent() {
+         return mIntent;
+-- 
+2.11.0
+

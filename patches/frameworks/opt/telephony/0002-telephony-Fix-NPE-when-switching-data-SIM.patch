@@ -1,0 +1,27 @@
+From aa2c4b8f5b07cc54b718a848ece26d44e721a8d6 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Sun, 6 Nov 2016 01:49:51 -0800
+Subject: [PATCH 2/4] telephony: Fix NPE when switching data SIM
+
+---
+ src/java/com/android/internal/telephony/Phone.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/java/com/android/internal/telephony/Phone.java b/src/java/com/android/internal/telephony/Phone.java
+index 1422f8f6b..69b1dbcd7 100644
+--- a/src/java/com/android/internal/telephony/Phone.java
++++ b/src/java/com/android/internal/telephony/Phone.java
+@@ -3477,7 +3477,9 @@ public abstract class Phone extends Handler implements PhoneInternalInterface {
+     }
+ 
+     public void unregisterForDataEnabledChanged(Handler h) {
+-        mDcTracker.unregisterForDataEnabledChanged(h);
++        if (mDcTracker != null) {
++            mDcTracker.unregisterForDataEnabledChanged(h);
++        }
+     }
+ 
+     public IccSmsInterfaceManager getIccSmsInterfaceManager(){
+-- 
+2.11.0
+

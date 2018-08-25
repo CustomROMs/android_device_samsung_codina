@@ -1,7 +1,7 @@
-From 5d843743c119c1d029a70be45067178e668d3097 Mon Sep 17 00:00:00 2001
+From 13be42efd47701a28166d782c1fec83c788801e7 Mon Sep 17 00:00:00 2001
 From: Namit Solanki <nsolanki@codeaurora.org>
 Date: Fri, 30 Sep 2016 15:54:39 +0530
-Subject: [PATCH 40/43] surfaceflinger: Increase SurfaceFlinger dump buffer
+Subject: [PATCH 40/44] surfaceflinger: Increase SurfaceFlinger dump buffer
  size to 16k.
 
  - Increase the SurfaceFlinger dump buffer size from 4k to 16k bytes to avoid buffer overflow.

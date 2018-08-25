@@ -1,0 +1,81 @@
+From 6cb34c3026b593bd4b9724f36d29bf321ab34a9a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 1/2] Allow the LoaderManager to be retained when already
+ stopped.
+
+---
+ fragment/java/android/support/v4/app/FragmentActivity.java     | 5 +----
+ fragment/java/android/support/v4/app/FragmentHostCallback.java | 8 +++-----
+ fragment/java/android/support/v4/app/LoaderManager.java        | 6 ------
+ 3 files changed, 4 insertions(+), 15 deletions(-)
+
+diff --git a/fragment/java/android/support/v4/app/FragmentActivity.java b/fragment/java/android/support/v4/app/FragmentActivity.java
+index e513ff7..4fbb747 100644
+--- a/fragment/java/android/support/v4/app/FragmentActivity.java
++++ b/fragment/java/android/support/v4/app/FragmentActivity.java
+@@ -662,10 +662,7 @@ public class FragmentActivity extends BaseFragmentActivityApi16 implements
+         } else if (retaining) {
+             // We're already really stopped, but we've been asked to retain.
+             // Our fragments are taken care of but we need to mark the loaders for retention.
+-            // In order to do this correctly we need to restart the loaders first before
+-            // handing them off to the next activity.
+-            mFragments.doLoaderStart();
+-            mFragments.doLoaderStop(true);
++            mFragments.doLoaderRetain();
+         }
+     }
+ 
+diff --git a/fragment/java/android/support/v4/app/FragmentHostCallback.java b/fragment/java/android/support/v4/app/FragmentHostCallback.java
+index 7dc9f59..5bd4c3d 100644
+--- a/fragment/java/android/support/v4/app/FragmentHostCallback.java
++++ b/fragment/java/android/support/v4/app/FragmentHostCallback.java
+@@ -272,6 +272,8 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
+     }
+ 
+     void doLoaderRetain() {
++        mRetainLoaders = true;
++
+         if (mLoaderManager == null) {
+             return;
+         }
+@@ -317,8 +319,7 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
+     SimpleArrayMap<String, LoaderManager> retainLoaderNonConfig() {
+         boolean retainLoaders = false;
+         if (mAllLoaderManagers != null) {
+-            // Restart any loader managers that were already stopped so that they
+-            // will be ready to retain
++            // Retain any loader manager, including those that were already stopped
+             final int N = mAllLoaderManagers.size();
+             LoaderManagerImpl loaders[] = new LoaderManagerImpl[N];
+             for (int i=N-1; i>=0; i--) {
+@@ -328,9 +329,6 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
+             for (int i=0; i<N; i++) {
+                 LoaderManagerImpl lm = loaders[i];
+                 if (!lm.mRetaining && doRetainLoaders) {
+-                    if (!lm.mStarted) {
+-                        lm.doStart();
+-                    }
+                     lm.doRetain();
+                 }
+                 if (lm.mRetaining) {
+diff --git a/fragment/java/android/support/v4/app/LoaderManager.java b/fragment/java/android/support/v4/app/LoaderManager.java
+index 521b218..4bc8f8c 100644
+--- a/fragment/java/android/support/v4/app/LoaderManager.java
++++ b/fragment/java/android/support/v4/app/LoaderManager.java
+@@ -788,12 +788,6 @@ class LoaderManagerImpl extends LoaderManager {
+ 
+     void doRetain() {
+         if (DEBUG) Log.v(TAG, "Retaining in " + this);
+-        if (!mStarted) {
+-            RuntimeException e = new RuntimeException("here");
+-            e.fillInStackTrace();
+-            Log.w(TAG, "Called doRetain when not started: " + this, e);
+-            return;
+-        }
+ 
+         mRetaining = true;
+         mStarted = false;
+-- 
+2.11.0
+

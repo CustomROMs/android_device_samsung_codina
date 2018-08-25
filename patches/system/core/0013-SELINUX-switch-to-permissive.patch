@@ -1,0 +1,68 @@
+From fea4ac72e954e0c744cc2a3210fd6e9347a398f0 Mon Sep 17 00:00:00 2001
+From: Varun Chitre <varun.chitre15@gmail.com>
+Date: Sun, 28 Aug 2016 07:22:48 -0400
+Subject: [PATCH 13/40] SELINUX: switch to permissive
+
+---
+ init/Android.bp |  1 -
+ init/Android.mk |  3 +--
+ init/init.cpp   | 10 +---------
+ 3 files changed, 2 insertions(+), 12 deletions(-)
+
+diff --git a/init/Android.bp b/init/Android.bp
+index 8483510c4..f69667bea 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -25,7 +25,6 @@ cc_defaults {
+         "-Wall",
+         "-Wextra",
+         "-Wno-unused-parameter",
+-        "-Werror",
+         "-DALLOW_LOCAL_PROP_OVERRIDE=1",
+         "-DALLOW_PERMISSIVE_SELINUX=0",
+         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
+diff --git a/init/Android.mk b/init/Android.mk
+index 2f56c2e33..80d78f374 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -36,8 +36,7 @@ init_cflags += \
+     $(init_options) \
+     -Wall -Wextra \
+     -Wno-unused-parameter \
+-    -Werror \
+-    -std=gnu++1z \
++    -std=gnu++1z
+ 
+ # --
+ 
+diff --git a/init/init.cpp b/init/init.cpp
+index b7a4f83f6..e83d2fa24 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -584,14 +584,6 @@ static selinux_enforcing_status selinux_status_from_cmdline() {
+     return status;
+ }
+ 
+-static bool selinux_is_enforcing(void)
+-{
+-    if (ALLOW_PERMISSIVE_SELINUX) {
+-        return selinux_status_from_cmdline() == SELINUX_ENFORCING;
+-    }
+-    return true;
+-}
+-
+ static int audit_callback(void *data, security_class_t /*cls*/, char *buf, size_t len) {
+ 
+     property_audit_data *d = reinterpret_cast<property_audit_data*>(data);
+@@ -888,7 +880,7 @@ static void selinux_initialize(bool in_kernel_domain) {
+         }
+ 
+         bool kernel_enforcing = (security_getenforce() == 1);
+-        bool is_enforcing = selinux_is_enforcing();
++        bool is_enforcing = false;
+         if (kernel_enforcing != is_enforcing) {
+             if (security_setenforce(is_enforcing)) {
+                 PLOG(ERROR) << "security_setenforce(%s) failed" << (is_enforcing ? "true" : "false");
+-- 
+2.11.0
+

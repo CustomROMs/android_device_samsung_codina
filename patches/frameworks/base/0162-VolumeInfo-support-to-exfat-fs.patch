@@ -1,0 +1,31 @@
+From 2839a657500ad4bde0bf6b1437edcd1ff79dead4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 162/296] VolumeInfo: support to exfat fs.
+
+set maxFileSize for exfat fs is 256TB. TODO, this value
+maybe set to 16TB.
+---
+ core/java/android/os/storage/VolumeInfo.java | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/core/java/android/os/storage/VolumeInfo.java b/core/java/android/os/storage/VolumeInfo.java
+index a21e05e314b..ef022c3cd71 100644
+--- a/core/java/android/os/storage/VolumeInfo.java
++++ b/core/java/android/os/storage/VolumeInfo.java
+@@ -385,6 +385,12 @@ public class VolumeInfo implements Parcelable {
+                 maxFileSize = 4294967295L;
+             }
+ 
++            if ("exfat".equals(fsType)) {
++                // Now, the max file size is 256TB.
++                // TODO: the max file size maybe support to 16EB.
++                maxFileSize = 256L * 1024 * 1024 * 1024 * 1024;
++            }
++
+         } else {
+             throw new IllegalStateException("Unexpected volume type " + type);
+         }
+-- 
+2.11.0
+

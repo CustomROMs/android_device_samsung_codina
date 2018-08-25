@@ -1,7 +1,7 @@
-From 3aa616c97a7003e52e92ce459f20dad8d6a0e936 Mon Sep 17 00:00:00 2001
+From 85f3371c33db8d756a6813551e6301c07124c76d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 14/43] libgui: fix graphic buffers sharing with camera HAL
+Subject: [PATCH 14/44] libgui: fix graphic buffers sharing with camera HAL
 
  libgui: STE: add GraphicBuffer constructors
 ---

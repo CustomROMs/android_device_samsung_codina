@@ -1,0 +1,37 @@
+From be2c8510daaaf2d4a098e3a1e5ae01ce4fcf3787 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 17:11:49 +0300
+Subject: [PATCH 09/15] bootable-recovery_009-Toybox-lineage-source.patch
+
+Change-Id: I601535faeb106dfb558e04ed73fcdd95a7c95c0a
+---
+ toybox/Android.mk | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/toybox/Android.mk b/toybox/Android.mk
+index 8c3d7c59..13ac2032 100644
+--- a/toybox/Android.mk
++++ b/toybox/Android.mk
+@@ -240,6 +240,11 @@ LOCAL_SRC_FILES += \
+     toys/pending/ftpget.c
+ endif
+ 
++ifneq ($(wildcard toys/net/microcom.c),)
++LOCAL_SRC_FILES += \
++    toys/net/microcom.c
++endif
++
+ # Account for master branch changes pulld into CM14.1
+ ifneq ($(CM_BUILD),)
+ LOCAL_SRC_FILES += \
+@@ -268,7 +273,6 @@ LOCAL_SRC_FILES += \
+     toys/android/sendevent.c \
+     toys/android/start.c \
+     toys/net/ifconfig.c \
+-    toys/net/microcom.c \
+     toys/net/netcat.c \
+     toys/net/netstat.c \
+     toys/net/rfkill.c \
+-- 
+2.11.0
+

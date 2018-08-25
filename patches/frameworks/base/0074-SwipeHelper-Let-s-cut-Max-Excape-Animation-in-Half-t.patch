@@ -1,0 +1,26 @@
+From f2d6318c630116440f941bf2edb062c5c786cc4d Mon Sep 17 00:00:00 2001
+From: "Aldrin Holmes (CallMeAldy)" <aldrin.holmes20@gmail.com>
+Date: Tue, 1 Sep 2015 13:02:24 +0200
+Subject: [PATCH 074/296] SwipeHelper: Let's cut Max Excape Animation in Half
+ too
+
+---
+ packages/SystemUI/src/com/android/systemui/SwipeHelper.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/SwipeHelper.java b/packages/SystemUI/src/com/android/systemui/SwipeHelper.java
+index 4b377153e55..a691375e292 100644
+--- a/packages/SystemUI/src/com/android/systemui/SwipeHelper.java
++++ b/packages/SystemUI/src/com/android/systemui/SwipeHelper.java
+@@ -393,7 +393,7 @@ public class SwipeHelper implements Gefingerpoken {
+             duration = MAX_ESCAPE_ANIMATION_DURATION;
+             if (velocity != 0) {
+                 duration = Math.min(duration,
+-                        (int) (Math.abs(newPos - getTranslation(animView)) * 1000f / Math
++                        (int) (Math.abs(newPos - getTranslation(animView)) * 500f / Math
+                                 .abs(velocity))
+                 );
+             } else {
+-- 
+2.11.0
+

@@ -1,0 +1,76 @@
+From 5ad8e54fa597800afb3caefc4abca1a615665ff3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 17:11:49 +0300
+Subject: [PATCH 05/15] bootable-recovery_005-Fix-fb-hack-screen-no-blank.patch
+
+Change-Id: I6de5a6be1afa34331dbc22585afc43231958326d
+---
+ minui/graphics_fbdev.cpp       | 2 ++
+ minui/graphics_overlay.cpp     | 2 ++
+ minuitwrp/graphics_fbdev.cpp   | 2 ++
+ minuitwrp/graphics_overlay.cpp | 2 ++
+ 4 files changed, 8 insertions(+)
+
+diff --git a/minui/graphics_fbdev.cpp b/minui/graphics_fbdev.cpp
+index bb91a574..dd883eab 100644
+--- a/minui/graphics_fbdev.cpp
++++ b/minui/graphics_fbdev.cpp
+@@ -152,8 +152,10 @@ GRSurface* MinuiBackendFbdev::Init() {
+ 
+   printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+ 
++#ifndef TW_NO_SCREEN_BLANK
+   Blank(true);
+   Blank(false);
++#endif
+ 
+   return gr_draw;
+ }
+diff --git a/minui/graphics_overlay.cpp b/minui/graphics_overlay.cpp
+index 082d385d..98728c1e 100644
+--- a/minui/graphics_overlay.cpp
++++ b/minui/graphics_overlay.cpp
+@@ -622,8 +622,10 @@ GRSurface* MinuiBackendOverlay::Init() {
+ 
+     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+ 
++#ifndef TW_NO_SCREEN_BLANK
+     Blank(true);
+     Blank(false);
++#endif
+ 
+     if (!alloc_ion_mem(fi.line_length * vi.yres))
+         allocate_overlay(fb_fd, gr_framebuffer);
+diff --git a/minuitwrp/graphics_fbdev.cpp b/minuitwrp/graphics_fbdev.cpp
+index a1c42d05..eb818eaa 100644
+--- a/minuitwrp/graphics_fbdev.cpp
++++ b/minuitwrp/graphics_fbdev.cpp
+@@ -274,8 +274,10 @@ static GRSurface* fbdev_init(minui_backend* backend) {
+ 
+     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+ 
++#ifndef TW_NO_SCREEN_BLANK
+     fbdev_blank(backend, true);
+     fbdev_blank(backend, false);
++#endif
+ 
+     smem_len = fi.smem_len;
+ 
+diff --git a/minuitwrp/graphics_overlay.cpp b/minuitwrp/graphics_overlay.cpp
+index 84ea6e0e..a095029c 100644
+--- a/minuitwrp/graphics_overlay.cpp
++++ b/minuitwrp/graphics_overlay.cpp
+@@ -636,8 +636,10 @@ static GRSurface* overlay_init(minui_backend* backend) {
+ 
+     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+ 
++#ifndef TW_NO_SCREEN_BLANK
+     overlay_blank(backend, true);
+     overlay_blank(backend, false);
++#endif
+ 
+     if (!alloc_ion_mem(frame_size))
+         allocate_overlay(fb_fd, gr_framebuffer);
+-- 
+2.11.0
+

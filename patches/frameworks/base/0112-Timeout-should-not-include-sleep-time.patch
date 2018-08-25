@@ -1,0 +1,37 @@
+From 19d6033a2d4e1c76f9d9638664fbdcae36ae12e5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 112/296] Timeout should not include sleep time.
+
+The command execution time should not include sleep time,
+but the elapsedRealtime include sleep time, and the
+uptimeMillis is not counting time spent in deep sleep.
+---
+ services/core/java/com/android/server/NativeDaemonConnector.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/NativeDaemonConnector.java b/services/core/java/com/android/server/NativeDaemonConnector.java
+index f5f77321412..35ad416a2c1 100644
+--- a/services/core/java/com/android/server/NativeDaemonConnector.java
++++ b/services/core/java/com/android/server/NativeDaemonConnector.java
+@@ -455,7 +455,7 @@ final class NativeDaemonConnector implements Runnable, Handler.Callback, Watchdo
+                     + Integer.toHexString(System.identityHashCode(mWarnIfHeld)), new Throwable());
+         }
+ 
+-        final long startTime = SystemClock.elapsedRealtime();
++        final long startTime = SystemClock.uptimeMillis();
+ 
+         final ArrayList<NativeDaemonEvent> events = Lists.newArrayList();
+ 
+@@ -493,7 +493,7 @@ final class NativeDaemonConnector implements Runnable, Handler.Callback, Watchdo
+             events.add(event);
+         } while (event.isClassContinue());
+ 
+-        final long endTime = SystemClock.elapsedRealtime();
++        final long endTime = SystemClock.uptimeMillis();
+         if (endTime - startTime > WARN_EXECUTE_DELAY_MS) {
+             loge("NDC Command {" + logCmd + "} took too long (" + (endTime - startTime) + "ms)");
+         }
+-- 
+2.11.0
+

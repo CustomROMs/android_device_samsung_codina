@@ -1,0 +1,28 @@
+From 3180d2cbfb2472ebbdbd687e21135f1c213e1f38 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 07/31] Fix recovery build [2]
+
+---
+ core/Makefile | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 46d8aa4c9..367cf4cf8 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1530,7 +1530,11 @@ SYSTEMIMAGE_SOURCE_DIR := $(TARGET_OUT)
+ ifneq ($(INSTALLED_RECOVERYIMAGE_TARGET),)
+ ifneq ($(BOARD_USES_FULL_RECOVERY_IMAGE),true)
+ intermediates := $(call intermediates-dir-for,PACKAGING,recovery_patch)
++ifndef BOARD_CANT_BUILD_RECOVERY_FROM_BOOT_PATCH
+ RECOVERY_FROM_BOOT_PATCH := $(intermediates)/recovery_from_boot.p
++else
++RECOVERY_FROM_BOOT_PATCH :=
++endif
+ $(RECOVERY_FROM_BOOT_PATCH): $(INSTALLED_RECOVERYIMAGE_TARGET) \
+                              $(INSTALLED_BOOTIMAGE_TARGET) \
+ 			     $(HOST_OUT_EXECUTABLES)/imgdiff \
+-- 
+2.11.0
+

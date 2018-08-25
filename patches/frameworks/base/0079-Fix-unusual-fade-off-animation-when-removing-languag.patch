@@ -1,0 +1,33 @@
+From 647af5ac814dad3c3722d72eee80d6b7d4e38531 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 079/296] Fix unusual fade off animation when removing language
+
+When change all menu item display property from SHOW_AS_ACTION_NEVER
+to SHOW_AS_ACTION_ALWAYS, it will call ListPopupWindow.show()
+finally. Since the menu item is changed to show as action, the popup
+window height is changed to 0 and then the popup window will be
+updated to the wrong position with animation. So it would be better
+to skip operation at that time.
+---
+ core/java/android/widget/ListPopupWindow.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/java/android/widget/ListPopupWindow.java b/core/java/android/widget/ListPopupWindow.java
+index 0d676153b28..c72fed35eb9 100644
+--- a/core/java/android/widget/ListPopupWindow.java
++++ b/core/java/android/widget/ListPopupWindow.java
+@@ -611,6 +611,10 @@ public class ListPopupWindow implements ShowableListMenu {
+     @Override
+     public void show() {
+         int height = buildDropDown();
++        if (height == 0) {
++            //do nothing if there are no item to show.
++            return;
++        }
+ 
+         final boolean noInputMethod = isInputMethodNotNeeded();
+         mPopup.setAllowScrollingAnchorParent(!noInputMethod);
+-- 
+2.11.0
+

@@ -1,0 +1,40 @@
+From 2783eca915669994fde480652248fe6bf82a8da5 Mon Sep 17 00:00:00 2001
+From: xiaohuin <xiaohuin@codeaurora.org>
+Date: Thu, 1 Mar 2018 16:01:37 +0800
+Subject: [PATCH 213/296] Accessibility: Fix FWR when unlinkToDeath if
+ linkToDeath failed
+
+If linkToDeath failed, NoSuchElementException will throw when
+unlinkToDeath. Catch this exception to avoid system server reboot
+---
+ .../android/server/accessibility/AccessibilityManagerService.java  | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java b/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java
+index 83dfccb57eb..76f1515e197 100644
+--- a/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java
++++ b/services/accessibility/java/com/android/server/accessibility/AccessibilityManagerService.java
+@@ -127,6 +127,7 @@ import java.util.HashSet;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.Map;
++import java.util.NoSuchElementException;
+ import java.util.Set;
+ import java.util.concurrent.CopyOnWriteArrayList;
+ import java.util.function.Consumer;
+@@ -3687,7 +3688,11 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub {
+                 /* ignore */
+             }
+             if (mService != null) {
+-                mService.unlinkToDeath(this, 0);
++                try {
++                    mService.unlinkToDeath(this, 0);
++                } catch (NoSuchElementException e) {
++                    Slog.e(LOG_TAG, "Unable to unlinkToDeath", e);
++                }
+                 mService = null;
+             }
+             mServiceInterface = null;
+-- 
+2.11.0
+

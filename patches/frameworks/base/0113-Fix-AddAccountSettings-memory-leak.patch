@@ -1,0 +1,44 @@
+From caf338a2ff5473c0b39574651c5fddf80c870975 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 113/296] Fix AddAccountSettings memory leak
+
+The memory leak will always occur in AddAccoutSettings
+when a null Bundle is returned in the addAccount we implement.
+---
+ core/java/android/accounts/AbstractAccountAuthenticator.java | 3 +++
+ core/java/android/accounts/AccountManager.java               | 4 ++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/core/java/android/accounts/AbstractAccountAuthenticator.java b/core/java/android/accounts/AbstractAccountAuthenticator.java
+index bf9bd79e63e..a3b3a9f2195 100644
+--- a/core/java/android/accounts/AbstractAccountAuthenticator.java
++++ b/core/java/android/accounts/AbstractAccountAuthenticator.java
+@@ -175,6 +175,9 @@ public abstract class AbstractAccountAuthenticator {
+                 }
+                 if (result != null) {
+                     response.onResult(result);
++                } else {
++                    response.onError(AccountManager.ERROR_CODE_INVALID_RESPONSE,
++                            "null bundle returned");
+                 }
+             } catch (Exception e) {
+                 handleException(response, "addAccount", accountType, e);
+diff --git a/core/java/android/accounts/AccountManager.java b/core/java/android/accounts/AccountManager.java
+index dd6ad55fba6..bd9c9fa3053 100644
+--- a/core/java/android/accounts/AccountManager.java
++++ b/core/java/android/accounts/AccountManager.java
+@@ -2321,6 +2321,10 @@ public class AccountManager {
+         private class Response extends IAccountManagerResponse.Stub {
+             @Override
+             public void onResult(Bundle bundle) {
++                if (bundle == null) {
++                    onError(ERROR_CODE_INVALID_RESPONSE, "null bundle returned");
++                    return;
++                }
+                 Intent intent = bundle.getParcelable(KEY_INTENT);
+                 if (intent != null && mActivity != null) {
+                     // since the user provided an Activity we will silently start intents
+-- 
+2.11.0
+

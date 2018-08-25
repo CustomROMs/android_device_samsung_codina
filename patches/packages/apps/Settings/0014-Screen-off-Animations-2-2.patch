@@ -1,0 +1,305 @@
+From 744638a301bcf1d24e9e31e6a59ae3a4e65bee8b Mon Sep 17 00:00:00 2001
+From: bigrushdog <randall.rushing@gmail.com>
+Date: Tue, 23 Jan 2018 10:22:20 -0800
+Subject: [PATCH 14/30] Screen off Animations [2/2]
+
+---
+ res/drawable/rr_screen_off_animations_icon.xml     |  8 +++
+ res/values/cr_arrays.xml                           | 13 ++++
+ res/values/cr_strings.xml                          |  6 ++
+ res/xml/animation_settings.xml                     | 10 +++
+ .../SystemSettingIntListPreference.java            | 46 +++++++++++++
+ .../development/SystemSettingListPreference.java   | 77 ++++++++++++++++++++++
+ .../settings/development/SystemSettingsStore.java  | 72 ++++++++++++++++++++
+ 7 files changed, 232 insertions(+)
+ create mode 100644 res/drawable/rr_screen_off_animations_icon.xml
+ create mode 100644 src/com/android/settings/development/SystemSettingIntListPreference.java
+ create mode 100644 src/com/android/settings/development/SystemSettingListPreference.java
+ create mode 100644 src/com/android/settings/development/SystemSettingsStore.java
+
+diff --git a/res/drawable/rr_screen_off_animations_icon.xml b/res/drawable/rr_screen_off_animations_icon.xml
+new file mode 100644
+index 0000000000..2fc01bea37
+--- /dev/null
++++ b/res/drawable/rr_screen_off_animations_icon.xml
+@@ -0,0 +1,8 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:height="24dp"
++    android:width="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path android:fillColor="?android:attr/colorControlNormal"
++android:pathData="M1,4.27L2.28,3L20,20.72L18.73,22L16.73,20H0V18H4C2.89,18 2,17.1 2,16V6C2,5.78 2.04,5.57 2.1,5.37L1,4.27M4,16H12.73L4,7.27V16M20,16V6H7.82L5.82,4H20A2,2 0 0,1 22,6V16A2,2 0 0,1 20,18H24V20H21.82L17.82,16H20Z" />
++</vector>
+diff --git a/res/values/cr_arrays.xml b/res/values/cr_arrays.xml
+index 245312accb..258ac5863b 100644
+--- a/res/values/cr_arrays.xml
++++ b/res/values/cr_arrays.xml
+@@ -45,4 +45,17 @@
+         <item>3</item>
+     </string-array>
+ 
++    <!-- Screen off animation -->
++    <string-array name="screen_off_animation_entries">
++        <item>@string/screen_off_animation_default</item>
++        <item>@string/screen_off_animation_crt</item>
++        <item>@string/screen_off_animation_scale</item>
++    </string-array>
++
++    <string-array name="screen_off_animation_values" translatable="false">
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++    </string-array>
++
+ </resources>
+diff --git a/res/values/cr_strings.xml b/res/values/cr_strings.xml
+index e2b6f02b7e..99bb003ef1 100644
+--- a/res/values/cr_strings.xml
++++ b/res/values/cr_strings.xml
+@@ -47,4 +47,10 @@
+     <string name="pref_scrollingcache_force_disable">Force disable</string>
+     <string name="animation_settings_title">Advanced options</string>
+ 
++    <!-- Screen Off animation -->
++    <string name="screen_off_animation_title">Screen off animation</string>
++    <string name="screen_off_animation_default">Default</string>
++    <string name="screen_off_animation_crt">CRT</string>
++    <string name="screen_off_animation_scale">Scale</string>
++
+ </resources>
+diff --git a/res/xml/animation_settings.xml b/res/xml/animation_settings.xml
+index 2fcf4cce75..94e7119311 100644
+--- a/res/xml/animation_settings.xml
++++ b/res/xml/animation_settings.xml
+@@ -25,4 +25,14 @@
+         android:entryValues="@array/values_scrollingcache"
+         android:icon="@drawable/rr_scroll_icon" />
+ 
++    <com.android.settings.development.SystemSettingIntListPreference
++        android:key="screen_off_animation"
++        android:title="@string/screen_off_animation_title"
++        android:dialogTitle="@string/screen_off_animation_title"
++        android:entries="@array/screen_off_animation_entries"
++        android:entryValues="@array/screen_off_animation_values"
++        android:icon="@drawable/rr_screen_off_animations_icon"
++        android:summary="%s"
++        android:defaultValue="0" />
++ 
+ </PreferenceScreen>
+diff --git a/src/com/android/settings/development/SystemSettingIntListPreference.java b/src/com/android/settings/development/SystemSettingIntListPreference.java
+new file mode 100644
+index 0000000000..4fcddc9ae3
+--- /dev/null
++++ b/src/com/android/settings/development/SystemSettingIntListPreference.java
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (C) 2017 AICP
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.development;
++
++import android.content.Context;
++import android.util.AttributeSet;
++
++public class SystemSettingIntListPreference extends SystemSettingListPreference {
++
++    public SystemSettingIntListPreference(Context context, AttributeSet attrs, int defStyle) {
++        super(context, attrs, defStyle);
++    }
++
++    public SystemSettingIntListPreference(Context context, AttributeSet attrs) {
++        super(context, attrs);
++    }
++
++    public SystemSettingIntListPreference(Context context) {
++        super(context);
++    }
++
++    @Override
++    protected boolean persistString(String value) {
++        return persistInt(Integer.parseInt(value));
++    }
++
++    @Override
++    protected String getPersistedString(String defaultReturnValue) {
++        return String.valueOf(getPersistedInt(Integer.parseInt(defaultReturnValue)));
++    }
++
++}
+diff --git a/src/com/android/settings/development/SystemSettingListPreference.java b/src/com/android/settings/development/SystemSettingListPreference.java
+new file mode 100644
+index 0000000000..968116fa13
+--- /dev/null
++++ b/src/com/android/settings/development/SystemSettingListPreference.java
+@@ -0,0 +1,77 @@
++/*
++ * Copyright (C) 2017 AICP
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.development;
++
++import android.content.Context;
++import android.support.v7.preference.ListPreference;
++import android.text.TextUtils;
++import android.util.AttributeSet;
++import android.provider.Settings;
++
++public class SystemSettingListPreference extends ListPreference {
++
++    private boolean mAutoSummary = false;
++
++    public SystemSettingListPreference(Context context, AttributeSet attrs, int defStyle) {
++        super(context, attrs, defStyle);
++        setPreferenceDataStore(new SystemSettingsStore(context.getContentResolver()));
++    }
++
++    public SystemSettingListPreference(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        setPreferenceDataStore(new SystemSettingsStore(context.getContentResolver()));
++    }
++
++    public SystemSettingListPreference(Context context) {
++        super(context);
++        setPreferenceDataStore(new SystemSettingsStore(context.getContentResolver()));
++    }
++
++    @Override
++    public void setValue(String value) {
++        super.setValue(value);
++        if (mAutoSummary || TextUtils.isEmpty(getSummary())) {
++            setSummary(getEntry(), true);
++        }
++    }
++
++    @Override
++    public void setSummary(CharSequence summary) {
++        setSummary(summary, false);
++    }
++
++    private void setSummary(CharSequence summary, boolean autoSummary) {
++        mAutoSummary = autoSummary;
++        super.setSummary(summary);
++    }
++
++    @Override
++    protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
++        // This is what default ListPreference implementation is doing without respecting
++        // real default value:
++        //setValue(restoreValue ? getPersistedString(mValue) : (String) defaultValue);
++        // Instead, we better do
++        setValue(restoreValue ? getPersistedString((String) defaultValue) : (String) defaultValue);
++    }
++
++    @Override
++    protected boolean isPersisted() {
++        // Using getString instead of getInt so we can simply check for null
++        // instead of catching an exception. (All values are stored as strings.)
++        return Settings.System.getString(getContext().getContentResolver(), getKey()) != null;
++    }
++}
+diff --git a/src/com/android/settings/development/SystemSettingsStore.java b/src/com/android/settings/development/SystemSettingsStore.java
+new file mode 100644
+index 0000000000..91d3df592c
+--- /dev/null
++++ b/src/com/android/settings/development/SystemSettingsStore.java
+@@ -0,0 +1,72 @@
++/*
++ * Copyright (C) 2017 AICP
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.development;
++
++import android.content.ContentResolver;
++import android.preference.PreferenceDataStore;
++import android.provider.Settings;
++
++public class SystemSettingsStore extends android.support.v7.preference.PreferenceDataStore
++        implements PreferenceDataStore {
++
++    private ContentResolver mContentResolver;
++
++    public SystemSettingsStore(ContentResolver contentResolver) {
++        mContentResolver = contentResolver;
++    }
++
++    public boolean getBoolean(String key, boolean defValue) {
++        return getInt(key, defValue ? 1 : 0) != 0;
++    }
++
++    public float getFloat(String key, float defValue) {
++        return Settings.System.getFloat(mContentResolver, key, defValue);
++    }
++
++    public int getInt(String key, int defValue) {
++        return Settings.System.getInt(mContentResolver, key, defValue);
++    }
++
++    public long getLong(String key, long defValue) {
++        return Settings.System.getLong(mContentResolver, key, defValue);
++    }
++
++    public String getString(String key, String defValue) {
++        String result = Settings.System.getString(mContentResolver, key);
++        return result == null ? defValue : result;
++    }
++
++    public void putBoolean(String key, boolean value) {
++        putInt(key, value ? 1 : 0);
++    }
++
++    public void putFloat(String key, float value) {
++        Settings.System.putFloat(mContentResolver, key, value);
++    }
++
++    public void putInt(String key, int value) {
++        Settings.System.putInt(mContentResolver, key, value);
++    }
++
++    public void putLong(String key, long value) {
++        Settings.System.putLong(mContentResolver, key, value);
++    }
++
++    public void putString(String key, String value) {
++        Settings.System.putString(mContentResolver, key, value);
++    }
++}
+-- 
+2.11.0
+

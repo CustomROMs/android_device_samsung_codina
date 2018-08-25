@@ -1,7 +1,7 @@
-From 532ea6e9a2a703c94656a314c178715fec6181ec Mon Sep 17 00:00:00 2001
+From d80d79bf183f6181268602235aca1f5f023c8c02 Mon Sep 17 00:00:00 2001
 From: Sam Doran <git@samdoran.com>
 Date: Fri, 4 Mar 2016 01:38:22 -0500
-Subject: [PATCH 18/43] Fix installd: disable SELinux
+Subject: [PATCH 18/44] Fix installd: disable SELinux
 
 ---
  cmds/installd/Android.bp                |  1 -

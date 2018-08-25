@@ -1,0 +1,29 @@
+From 6014290904760663feac39668087120e303e22dd Mon Sep 17 00:00:00 2001
+From: riddle_hsu <riddle_hsu@htc.com>
+Date: Thu, 4 Feb 2016 15:28:30 +0800
+Subject: [PATCH 232/296] Also remove activity record if its app is removed.
+
+When forcing stop the package of top activity during screen off,
+because the top activity is paused with state, its activity will
+not be removed then continue to restart the activity once and
+finish it again that is unnecessary.
+---
+ services/core/java/com/android/server/am/ActivityStack.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityStack.java b/services/core/java/com/android/server/am/ActivityStack.java
+index 18a66dedeac..5ff7395b62f 100644
+--- a/services/core/java/com/android/server/am/ActivityStack.java
++++ b/services/core/java/com/android/server/am/ActivityStack.java
+@@ -4449,7 +4449,7 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
+                         hasVisibleActivities = true;
+                     }
+                     final boolean remove;
+-                    if ((!r.haveState && !r.stateNotNeeded) || r.finishing) {
++                    if ((!r.haveState && !r.stateNotNeeded) || r.finishing || app.removed) {
+                         // Don't currently have state for the activity, or
+                         // it is finishing -- always remove it.
+                         remove = true;
+-- 
+2.11.0
+

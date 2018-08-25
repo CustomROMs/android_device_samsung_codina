@@ -1,0 +1,31 @@
+From 77c0ff2e836a1c7fdda25e66a42027e8f940e8db Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Igor=20Cvetkovi=C4=87?= <i.cvetkovic@gmx.com>
+Date: Wed, 6 Sep 2017 21:45:19 +0200
+Subject: [PATCH 241/296] low memory killer: Add custom min free
+
+persist.sys.ram_minfree=138240
+---
+ services/core/java/com/android/server/am/ProcessList.java | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
+index 4cd5cbf9def..0148b4b0e9e 100644
+--- a/services/core/java/com/android/server/am/ProcessList.java
++++ b/services/core/java/com/android/server/am/ProcessList.java
+@@ -227,8 +227,11 @@ final class ProcessList {
+         else if (scale > 1) scale = 1;
+         int minfree_adj = Resources.getSystem().getInteger(
+                 com.android.internal.R.integer.config_lowMemoryKillerMinFreeKbytesAdjust);
+-        int minfree_abs = Resources.getSystem().getInteger(
+-                com.android.internal.R.integer.config_lowMemoryKillerMinFreeKbytesAbsolute);
++        int minfree_abs = SystemProperties.getInt("persist.sys.ram_minfree", -1);
++        if (minfree_abs < 0) {
++            minfree_abs = Resources.getSystem().getInteger(
++                    com.android.internal.R.integer.config_lowMemoryKillerMinFreeKbytesAbsolute);
++        }
+         if (false) {
+             Slog.i("XXXXXX", "minfree_adj=" + minfree_adj + " minfree_abs=" + minfree_abs);
+         }
+-- 
+2.11.0
+

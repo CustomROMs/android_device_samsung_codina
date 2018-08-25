@@ -1,0 +1,48 @@
+From baff2c84f47684fed9079d8147b09608eede4846 Mon Sep 17 00:00:00 2001
+From: Bill Chen <billchen1977@gmail.com>
+Date: Sat, 1 Apr 2017 21:05:56 +0800
+Subject: [PATCH 35/57] stagefright: Revert Fix SurfaceMediaSource buffer
+ search condition when buffer return
+
+ buffer handle stored in MediaBuffer had changed, but the buffer return
+code did not change correspondingly, so returned buffer can't be
+found in list and lead to crash.
+
+stagefright: Fix buffer handle retrieval in signalBufferReturned
+---
+ media/libstagefright/SurfaceMediaSource.cpp | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/media/libstagefright/SurfaceMediaSource.cpp b/media/libstagefright/SurfaceMediaSource.cpp
+index efce0a2a3..6bebbecdc 100644
+--- a/media/libstagefright/SurfaceMediaSource.cpp
++++ b/media/libstagefright/SurfaceMediaSource.cpp
+@@ -433,9 +433,12 @@ void SurfaceMediaSource::signalBufferReturned(MediaBuffer *buffer) {
+     Mutex::Autolock lock(mMutex);
+ 
+     buffer_handle_t bufferHandle = getMediaBufferHandle(buffer);
++    ANativeWindowBuffer* curNativeHandle = NULL;
+ 
+     for (size_t i = 0; i < mCurrentBuffers.size(); i++) {
+-        if ((buffer_handle_t)mCurrentBuffers[i]->getNativeBuffer() == bufferHandle) {
++        curNativeHandle = mCurrentBuffers[i]->getNativeBuffer();
++        if ((mCurrentBuffers[i]->handle == bufferHandle) ||
++            ((buffer_handle_t)curNativeHandle == bufferHandle)) {
+             mCurrentBuffers.removeAt(i);
+             foundBuffer = true;
+             break;
+@@ -451,7 +454,10 @@ void SurfaceMediaSource::signalBufferReturned(MediaBuffer *buffer) {
+             continue;
+         }
+ 
+-        if (bufferHandle == (buffer_handle_t)mSlots[id].mGraphicBuffer->getNativeBuffer()) {
++        curNativeHandle = mSlots[id].mGraphicBuffer->getNativeBuffer();
++
++        if ((bufferHandle == mSlots[id].mGraphicBuffer->handle) ||
++            (bufferHandle == (buffer_handle_t)curNativeHandle)) {
+             ALOGV("Slot %d returned, matches handle = %p", id,
+                     mSlots[id].mGraphicBuffer->handle);
+ 
+-- 
+2.11.0
+

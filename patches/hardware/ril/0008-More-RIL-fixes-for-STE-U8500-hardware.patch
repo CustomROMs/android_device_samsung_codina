@@ -1,0 +1,172 @@
+From 4927b194e8bd8dbbded095c410fcaf3087399268 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 08/17] More RIL fixes for STE U8500 hardware
+
+---
+ libril/ril_service.cpp | 75 ++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 52 insertions(+), 23 deletions(-)
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index b704fa1..fd6c8c2 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -3034,14 +3034,36 @@ int radio::getIccCardStatusResponse(int slotId,
+         RadioResponseInfo responseInfo = {};
+         populateResponseInfo(responseInfo, serial, responseType, e);
+         CardStatus cardStatus = {};
+-        RIL_CardStatus_v6 *p_cur = ((RIL_CardStatus_v6 *) response);
+-        if (response == NULL || responseLen != sizeof(RIL_CardStatus_v6)
+-                || p_cur->gsm_umts_subscription_app_index >= p_cur->num_applications
+-                || p_cur->cdma_subscription_app_index >= p_cur->num_applications
+-                || p_cur->ims_subscription_app_index >= p_cur->num_applications) {
++        if (response == NULL) {
+             RLOGE("getIccCardStatusResponse: Invalid response");
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+-        } else {
++        } else if (responseLen == sizeof(RIL_CardStatus_v5) || responseLen == 436) {
++            RIL_CardStatus_v5 *p_cur = ((RIL_CardStatus_v5 *) response);
++            cardStatus.cardState = (CardState) p_cur->card_state;
++            cardStatus.universalPinState = (PinState) p_cur->universal_pin_state;
++            cardStatus.gsmUmtsSubscriptionAppIndex = p_cur->gsm_umts_subscription_app_index;
++            cardStatus.cdmaSubscriptionAppIndex = p_cur->cdma_subscription_app_index;
++            cardStatus.imsSubscriptionAppIndex = -1;
++
++            RIL_AppStatus *rilAppStatus = p_cur->applications;
++            cardStatus.applications.resize(p_cur->num_applications);
++            AppStatus *appStatus = cardStatus.applications.data();
++#if VDBG
++            RLOGD("getIccCardStatusResponse: num_applications %d", p_cur->num_applications);
++#endif
++            for (int i = 0; i < p_cur->num_applications; i++) {
++                appStatus[i].appType = (AppType) rilAppStatus[i].app_type;
++                appStatus[i].appState = (AppState) rilAppStatus[i].app_state;
++                appStatus[i].persoSubstate = (PersoSubstate) rilAppStatus[i].perso_substate;
++                appStatus[i].aidPtr = convertCharPtrToHidlString(rilAppStatus[i].aid_ptr);
++                appStatus[i].appLabelPtr = convertCharPtrToHidlString(
++                        rilAppStatus[i].app_label_ptr);
++                appStatus[i].pin1Replaced = rilAppStatus[i].pin1_replaced;
++                appStatus[i].pin1 = (PinState) rilAppStatus[i].pin1;
++                appStatus[i].pin2 = (PinState) rilAppStatus[i].pin2;
++            }
++        } else if (responseLen == sizeof(RIL_CardStatus_v6)) {
++            RIL_CardStatus_v6 *p_cur = ((RIL_CardStatus_v6 *) response);
+             cardStatus.cardState = (CardState) p_cur->card_state;
+             cardStatus.universalPinState = (PinState) p_cur->universal_pin_state;
+             cardStatus.gsmUmtsSubscriptionAppIndex = p_cur->gsm_umts_subscription_app_index;
+@@ -3065,6 +3087,10 @@ int radio::getIccCardStatusResponse(int slotId,
+                 appStatus[i].pin1 = (PinState) rilAppStatus[i].pin1;
+                 appStatus[i].pin2 = (PinState) rilAppStatus[i].pin2;
+             }
++        } else {
++            RLOGE("%s: Invalid response: Unsupported RIL_CardStatus (%d)",
++                __func__, responseLen);
++            if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+         }
+ 
+         Return<void> retStatus = radioService[slotId]->mRadioResponse->
+@@ -3260,8 +3286,12 @@ int radio::getCurrentCallsResponse(int slotId,
+                 calls[i].numberPresentation = (CallPresentation) p_cur->numberPresentation;
+                 calls[i].name = convertCharPtrToHidlString(p_cur->name);
+                 calls[i].namePresentation = (CallPresentation) p_cur->namePresentation;
+-                if (p_cur->uusInfo != NULL && p_cur->uusInfo->uusData != NULL) {
++                // Remove when partners upgrade to version 3
++                if ((s_vendorFunctions->version < 3) || (p_cur->uusInfo == NULL || p_cur->uusInfo->uusData == NULL)) {
++                    calls[i].uusInfo.resize(0); /* UUS Information is absent */
++                } else {
+                     RIL_UUS_Info *uusInfo = p_cur->uusInfo;
++                    calls[i].uusInfo.resize(1); /* UUS Information is present */
+                     calls[i].uusInfo[0].uusType = (UusType) uusInfo->uusType;
+                     calls[i].uusInfo[0].uusDcs = (UusDcs) uusInfo->uusDcs;
+                     // convert uusInfo->uusData to a null-terminated string
+@@ -3502,8 +3532,9 @@ int radio::getSignalStrengthResponse(int slotId,
+         if (response == NULL || (responseLen != sizeof(RIL_SignalStrength_v10)
+                 && responseLen != sizeof(RIL_SignalStrength_v8)
+                 && responseLen != sizeof(RIL_SignalStrength_v6)
+-                && responseLen != sizeof(RIL_SignalStrength_v5))) {
+-            RLOGE("getSignalStrengthResponse: Invalid response");
++                && responseLen != sizeof(RIL_SignalStrength_v5)
++                && responseLen != 48)) {
++            RLOGE("getSignalStrengthResponse: responseLen = %d", responseLen);
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+         } else {
+             convertRilSignalStrengthToHal(response, responseLen, signalStrength);
+@@ -3826,10 +3857,7 @@ int radio::getVoiceRegistrationStateResponse(int slotId,
+                RLOGE("getVoiceRegistrationStateResponse Invalid response: NULL");
+                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+         } else if (s_vendorFunctions->version <= 14) {
+-            if (numStrings != 15) {
+-                RLOGE("getVoiceRegistrationStateResponse Invalid response: NULL");
+-                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+-            } else {
++                RLOGE("getVoiceRegistrationStateResponse: numStrings=%d", numStrings);
+                 char **resp = (char **) response;
+                 voiceRegResponse.regState = (RegState) ATOI_NULL_HANDLED_DEF(resp[0], 4);
+                 voiceRegResponse.rat = ATOI_NULL_HANDLED(resp[3]);
+@@ -3840,7 +3868,6 @@ int radio::getVoiceRegistrationStateResponse(int slotId,
+                 voiceRegResponse.reasonForDenial = ATOI_NULL_HANDLED_DEF(resp[13], 0);
+                 fillCellIdentityFromVoiceRegStateResponseString(voiceRegResponse.cellIdentity,
+                         numStrings, resp);
+-            }
+         } else {
+             RIL_VoiceRegistrationStateResponse *voiceRegState =
+                     (RIL_VoiceRegistrationStateResponse *)response;
+@@ -3889,10 +3916,7 @@ int radio::getDataRegistrationStateResponse(int slotId,
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+         } else if (s_vendorFunctions->version <= 14) {
+             int numStrings = responseLen / sizeof(char *);
+-            if ((numStrings != 6) && (numStrings != 11)) {
+-                RLOGE("getDataRegistrationStateResponse Invalid response: NULL");
+-                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+-            } else {
++                RLOGE("getDataRegistrationStateResponse: numStrings=%d", numStrings);
+                 char **resp = (char **) response;
+                 dataRegResponse.regState = (RegState) ATOI_NULL_HANDLED_DEF(resp[0], 4);
+                 dataRegResponse.rat =  ATOI_NULL_HANDLED_DEF(resp[3], 0);
+@@ -3900,7 +3924,6 @@ int radio::getDataRegistrationStateResponse(int slotId,
+                 dataRegResponse.maxDataCalls =  ATOI_NULL_HANDLED_DEF(resp[5], 1);
+                 fillCellIdentityFromDataRegStateResponseString(dataRegResponse.cellIdentity,
+                         numStrings, resp);
+-            }
+         } else {
+             RIL_DataRegistrationStateResponse *dataRegState =
+                     (RIL_DataRegistrationStateResponse *)response;
+@@ -7174,8 +7197,13 @@ int radio::nitzTimeReceivedInd(int slotId,
+ void convertRilSignalStrengthToHalV5(void *response, size_t responseLen,
+         SignalStrength& signalStrength) {
+     RIL_SignalStrength_v5 *rilSignalStrength = (RIL_SignalStrength_v5 *) response;
++    int gsmSignalStrength;
+ 
+-    signalStrength.gw.signalStrength = rilSignalStrength->GW_SignalStrength.signalStrength;
++    //Samsung sends the count of bars that should be displayed instead of
++    //a real signal strength
++    gsmSignalStrength = ((rilSignalStrength->GW_SignalStrength.signalStrength & 0xFF00) >> 8) * 3; //gsmDbm
++
++    signalStrength.gw.signalStrength = gsmSignalStrength;
+     signalStrength.gw.bitErrorRate = rilSignalStrength->GW_SignalStrength.bitErrorRate;
+     signalStrength.cdma.dbm = rilSignalStrength->CDMA_SignalStrength.dbm;
+     signalStrength.cdma.ecio = rilSignalStrength->CDMA_SignalStrength.ecio;
+@@ -7323,7 +7351,7 @@ void convertRilSignalStrengthToHalV10(void *response, size_t responseLen,
+ 
+ void convertRilSignalStrengthToHal(void *response, size_t responseLen,
+         SignalStrength& signalStrength) {
+-    if (responseLen == sizeof(RIL_SignalStrength_v5)) {
++    if (responseLen == sizeof(RIL_SignalStrength_v5) || responseLen == 48) {
+         convertRilSignalStrengthToHalV5(response, responseLen, signalStrength);
+     } else if (responseLen == sizeof(RIL_SignalStrength_v6)) {
+         convertRilSignalStrengthToHalV6(response, responseLen, signalStrength);
+@@ -7341,8 +7369,9 @@ int radio::currentSignalStrengthInd(int slotId,
+         if (response == NULL || (responseLen != sizeof(RIL_SignalStrength_v10)
+                 && responseLen != sizeof(RIL_SignalStrength_v8)
+                 && responseLen != sizeof(RIL_SignalStrength_v6)
+-                && responseLen != sizeof(RIL_SignalStrength_v5))) {
+-            RLOGE("currentSignalStrengthInd: invalid response");
++                && responseLen != sizeof(RIL_SignalStrength_v5)
++                && responseLen != 48)) {
++            RLOGE("currentSignalStrengthInd: responseLen = %d", responseLen);
+             return 0;
+         }
+ 
+-- 
+2.11.0
+

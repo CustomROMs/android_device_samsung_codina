@@ -1,0 +1,32 @@
+From 1db5de732c7de9d25e909119b8256d01f83b59f6 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 176/296] MediaScanner behavior on boot
+
+---
+ core/java/android/provider/Settings.java | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 03779ce204a..08d6b64bdf4 100755
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -3972,6 +3972,15 @@ public final class Settings {
+         public static final String SCREEN_OFF_ANIMATION = "screen_off_animation";
+ 
+         /**
++         * MediaScanner behavior on boot.
++         * 0 = enabled
++         * 1 = ask (notification)
++         * 2 = disabled
++         * @hide
++         */
++        public static final String MEDIA_SCANNER_ON_BOOT = "media_scanner_on_boot";
++
++        /**
+          * Settings to backup. This is here so that it's in the same place as the settings
+          * keys and easy to update.
+          *
+-- 
+2.11.0
+

@@ -1,0 +1,45 @@
+From 9fe8414b3f9769269f3ba1f856819760f54a44fe Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 001/296] hwui: Allow devices to opt-out of asynchronouse
+ setSurface initialization
+
+Not all devices seem to be able to deal with this so let them opt
+out of it, even though it does provide a UI slow-down.
+---
+ libs/hwui/Android.bp                   | 2 ++
+ libs/hwui/renderthread/RenderProxy.cpp | 4 ++++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/libs/hwui/Android.bp b/libs/hwui/Android.bp
+index 770a57a5c44..0bec42733de 100644
+--- a/libs/hwui/Android.bp
++++ b/libs/hwui/Android.bp
+@@ -28,6 +28,8 @@ cc_defaults {
+         // TODO: Linear blending should be enabled by default, but we are
+         // TODO: making it an opt-in while it's a work in progress
+         //"-DANDROID_ENABLE_LINEAR_BLENDING",
++
++        "-DREQUIRES_SYNCHRONOUS_SETSURFACE",
+     ],
+ 
+     include_dirs: [
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index 9048bd14b35..c98418ff213 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -150,7 +150,11 @@ void RenderProxy::initialize(const sp<Surface>& surface) {
+     SETUP_TASK(initialize);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(updateSurface, CanvasContext* context, Surface* surface) {
+-- 
+2.11.0
+

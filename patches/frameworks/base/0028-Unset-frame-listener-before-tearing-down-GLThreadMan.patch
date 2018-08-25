@@ -1,0 +1,30 @@
+From 6174f2a3e02c04b23fd62cd65b7e0750c92862d6 Mon Sep 17 00:00:00 2001
+From: Danny Baumann <dannybaumann@web.de>
+Date: Tue, 28 Apr 2015 10:55:15 +0200
+Subject: [PATCH 028/296] Unset frame listener before tearing down
+ GLThreadManager.
+
+Otherwise might lead to messages being delivered to the then dead
+mGLHandlerThread via RequestThreadManager.mPreviewCallback ->
+GLThreadManager.queueNewFrame().
+---
+ core/java/android/hardware/camera2/legacy/RequestThreadManager.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+index aaf07e60bef..fd208ed24f5 100644
+--- a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
++++ b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+@@ -963,6 +963,9 @@ public class RequestThreadManager {
+                         mDeviceState.setError(
+                                 CameraDeviceImpl.CameraDeviceCallbacks.ERROR_CAMERA_DEVICE);
+                     }
++                    if (mPreviewTexture != null) {
++                        mPreviewTexture.setOnFrameAvailableListener(null);
++                    }
+                     if (mGLThreadManager != null) {
+                         mGLThreadManager.quit();
+                         mGLThreadManager = null;
+-- 
+2.11.0
+

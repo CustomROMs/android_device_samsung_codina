@@ -1,0 +1,32 @@
+From 7cc00fde9a3bad21136d24b0983c8f10758dd554 Mon Sep 17 00:00:00 2001
+From: mqi <mqi@codeaurora.org>
+Date: Sun, 4 Jun 2017 20:03:01 +0800
+Subject: [PATCH 039/296] Frameworks: Fix Null Pointer Issue
+
+Add a null pointer check to avoid crash while customizing quick settings
+in systemui.
+---
+ core/java/android/widget/ArrayAdapter.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 core/java/android/widget/ArrayAdapter.java
+
+diff --git a/core/java/android/widget/ArrayAdapter.java b/core/java/android/widget/ArrayAdapter.java
+old mode 100644
+new mode 100755
+index 690067b4813..86455d2e2e2
+--- a/core/java/android/widget/ArrayAdapter.java
++++ b/core/java/android/widget/ArrayAdapter.java
+@@ -439,7 +439,9 @@ public class ArrayAdapter<T> extends BaseAdapter implements Filterable, ThemedSp
+         }
+ 
+         final T item = getItem(position);
+-        if (item instanceof CharSequence) {
++        if (item == null) {
++            text.setText("");
++        } else if (item instanceof CharSequence) {
+             text.setText((CharSequence) item);
+         } else {
+             text.setText(item.toString());
+-- 
+2.11.0
+

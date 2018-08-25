@@ -1,0 +1,68 @@
+From 2a42fb34cbb0ba0bbd3e0062a031af51281dae76 Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Wed, 30 Aug 2017 12:11:23 -0700
+Subject: [PATCH 3/6] soong: Set GCC version to 4.9-linaro
+
+I set getNdkStlLibDir to 4.9 so I don't have to track ndk just for a link
+---
+ cc/config/arm64_device.go          | 2 +-
+ cc/config/arm_device.go            | 2 +-
+ cc/config/x86_linux_bionic_host.go | 2 +-
+ cc/ndk_prebuilt.go                 | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/cc/config/arm64_device.go b/cc/config/arm64_device.go
+index a371cf6..491e02f 100644
+--- a/cc/config/arm64_device.go
++++ b/cc/config/arm64_device.go
+@@ -87,7 +87,7 @@ var (
+ )
+ 
+ const (
+-	arm64GccVersion = "4.9"
++	arm64GccVersion = "4.9-linaro"
+ )
+ 
+ func init() {
+diff --git a/cc/config/arm_device.go b/cc/config/arm_device.go
+index f5c3eb8..57aca53 100644
+--- a/cc/config/arm_device.go
++++ b/cc/config/arm_device.go
+@@ -165,7 +165,7 @@ var (
+ )
+ 
+ const (
+-	armGccVersion = "4.9"
++	armGccVersion = "4.9-linaro"
+ )
+ 
+ func init() {
+diff --git a/cc/config/x86_linux_bionic_host.go b/cc/config/x86_linux_bionic_host.go
+index bd6cd0e..8df9ab0 100644
+--- a/cc/config/x86_linux_bionic_host.go
++++ b/cc/config/x86_linux_bionic_host.go
+@@ -105,7 +105,7 @@ func (t *toolchainLinuxBionic) GccTriple() string {
+ }
+ 
+ func (t *toolchainLinuxBionic) GccVersion() string {
+-	return "4.9"
++	return "4.9-linaro"
+ }
+ 
+ func (t *toolchainLinuxBionic) Cflags() string {
+diff --git a/cc/ndk_prebuilt.go b/cc/ndk_prebuilt.go
+index 13424e3..48b778f 100644
+--- a/cc/ndk_prebuilt.go
++++ b/cc/ndk_prebuilt.go
+@@ -161,7 +161,7 @@ func ndkPrebuiltStaticStlFactory() android.Module {
+ }
+ 
+ func getNdkStlLibDir(ctx android.ModuleContext, toolchain config.Toolchain, stl string) android.SourcePath {
+-	gccVersion := toolchain.GccVersion()
++	gccVersion := "4.9"
+ 	var libDir string
+ 	switch stl {
+ 	case "libstlport":
+-- 
+2.11.0
+

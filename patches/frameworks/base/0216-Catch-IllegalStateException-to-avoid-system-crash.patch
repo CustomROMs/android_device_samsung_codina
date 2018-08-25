@@ -1,0 +1,40 @@
+From 13b37412f29c94abf5322728441ed6b300fc1636 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 216/296] Catch IllegalStateException to avoid system crash
+
+The locale for decryption UI is stored via daemon.
+Daemon is "vold" on Android L.
+Daemon is "cryptd" on Android M.
+When the response of daemon is delayed,
+IllegalStateException is thrown from NativeDaemonConnector
+due to time out.
+That causes system crash on booting etc.
+
+To solve this issue, catch code is added.
+If exception is thrown, phone is running without storing
+locale for decryption UI.
+When phone is encrypted, decryption UI is translated
+by default locale(English), not setup locale by user.
+It is side effect.
+But system crash is bigger impact than it.
+---
+ services/core/java/com/android/server/am/ActivityManagerService.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index b728d896292..e7bf984bb2c 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -2276,6 +2276,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     storageManager.setField(StorageManager.SYSTEM_LOCALE_KEY, l.toLanguageTag());
+                 } catch (RemoteException e) {
+                     Log.e(TAG, "Error storing locale for decryption UI", e);
++                } catch (IllegalStateException e) {
++                    Log.e(TAG, "Error storing locale for decryption UI", e);
+                 }
+                 break;
+             }
+-- 
+2.11.0
+

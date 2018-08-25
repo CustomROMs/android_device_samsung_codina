@@ -1,0 +1,84 @@
+From 730265e56ad8ab62a7ccc8c2be5d403c20a7c991 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 062/296] Catch egl errors when drawIntoSurfaces
+
+Cts test case: testAbandonRepeatingRequestSurface is
+used to test the GPU for the ability of detecting the
+interrupt release of surface. It may have a dequeue buffer
+action in eglMakeCurrent, so it would return error
+"EGL_BAD_NATIVE_WINDOW" after surfaceflinger has been
+disconnected. In this case, the test can be passed
+only when we catch the errors thrown from GPU when calling
+eglMakeCurrent, or the test would be interrupted by
+the error exception.
+---
+ .../camera2/legacy/SurfaceTextureRenderer.java     | 27 ++++++++++++++++++----
+ 1 file changed, 23 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java b/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java
+index a05a8ec00e7..2bc58564bde 100644
+--- a/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java
++++ b/core/java/android/hardware/camera2/legacy/SurfaceTextureRenderer.java
+@@ -521,9 +521,10 @@ public class SurfaceTextureRenderer {
+         clearState();
+     }
+ 
+-    private void makeCurrent(EGLSurface surface) {
++    private void makeCurrent(EGLSurface surface)
++            throws LegacyExceptionUtils.BufferQueueAbandonedException {
+         EGL14.eglMakeCurrent(mEGLDisplay, surface, surface, mEGLContext);
+-        checkEglError("makeCurrent");
++        checkEglDrawError("makeCurrent");
+     }
+ 
+     private boolean swapBuffers(EGLSurface surface)
+@@ -539,6 +540,18 @@ public class SurfaceTextureRenderer {
+         return result;
+     }
+ 
++    private void checkEglDrawError(String msg)
++            throws LegacyExceptionUtils.BufferQueueAbandonedException {
++        int error;
++        if ((error = EGL14.eglGetError()) == EGL14.EGL_BAD_NATIVE_WINDOW) {
++            Log.d(TAG, "workaround for EGL_BAD_NATIVE_WINDOW");
++            throw new LegacyExceptionUtils.BufferQueueAbandonedException();
++        }
++        if ((error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS) {
++            throw new IllegalStateException(msg + ": EGL error: 0x" + Integer.toHexString(error));
++        }
++    }
++
+     private void checkEglError(String msg) {
+         int error;
+         if ((error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS) {
+@@ -691,8 +704,14 @@ public class SurfaceTextureRenderer {
+         if (mConversionSurfaces.size() > 0) {
+             configureEGLPbufferSurfaces(mConversionSurfaces);
+         }
+-        makeCurrent((mSurfaces.size() > 0) ? mSurfaces.get(0).eglSurface :
++
++        try {
++            makeCurrent((mSurfaces.size() > 0) ? mSurfaces.get(0).eglSurface :
+                 mConversionSurfaces.get(0).eglSurface);
++        } catch (LegacyExceptionUtils.BufferQueueAbandonedException e) {
++                Log.w(TAG, "Surface abandoned, skipping configuration... ", e);
++        }
++
+         initializeGLState();
+         mSurfaceTexture = new SurfaceTexture(getTextureId());
+ 
+@@ -780,9 +799,9 @@ public class SurfaceTextureRenderer {
+         }
+         for (EGLSurfaceHolder holder : mConversionSurfaces) {
+             if (LegacyCameraDevice.containsSurfaceId(holder.surface, targetSurfaceIds)) {
+-                makeCurrent(holder.eglSurface);
+                 // glReadPixels reads from the bottom of the buffer, so add an extra vertical flip
+                 try {
++                    makeCurrent(holder.eglSurface);
+                     drawFrame(mSurfaceTexture, holder.width, holder.height,
+                             (mFacing == CameraCharacteristics.LENS_FACING_FRONT) ?
+                                     FLIP_TYPE_BOTH : FLIP_TYPE_VERTICAL);
+-- 
+2.11.0
+

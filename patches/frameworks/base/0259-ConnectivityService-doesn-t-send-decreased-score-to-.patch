@@ -1,0 +1,38 @@
+From 4b825c2aa8fff2cf9a34df34e2e3a937ea305e71 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 259/296] ConnectivityService doesn't send decreased score to
+ factories at need
+
+When there is more than one network, after Score of a network fell down
+requests of that network are removed from its "networkRequests" during
+process of rematchNetworkAndRequests().
+
+As a result, current implementation of updateNetworkScore()
+cannot send score of that network in sendUpdatedScoreToFactories().
+This may prevent other network factories from updating their status,
+e.g. TelephonyNetworkFactory cannot enable APN.
+
+Therefore, we add process of sending decreased score into
+rematchNetworkAndRequests() to fix the issue.
+---
+ services/core/java/com/android/server/ConnectivityService.java | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/services/core/java/com/android/server/ConnectivityService.java b/services/core/java/com/android/server/ConnectivityService.java
+index 67a400e1789..7d7b54e3736 100644
+--- a/services/core/java/com/android/server/ConnectivityService.java
++++ b/services/core/java/com/android/server/ConnectivityService.java
+@@ -4980,6 +4980,9 @@ public class ConnectivityService extends IConnectivityManager.Stub
+                     if (VDBG) log("rematch for " + newNetwork.name());
+                     if (currentNetwork != null) {
+                         if (VDBG) log("   accepting network in place of " + currentNetwork.name());
++                        // Also need to send score of network which is being replaced
++                        sendUpdatedScoreToFactories(nri.request, currentNetwork.getCurrentScore());
++
+                         currentNetwork.removeRequest(nri.request.requestId);
+                         currentNetwork.lingerRequest(nri.request, now, mLingerDelayMs);
+                         affectedNetworks.add(currentNetwork);
+-- 
+2.11.0
+

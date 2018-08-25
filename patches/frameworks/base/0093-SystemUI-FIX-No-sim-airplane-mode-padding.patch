@@ -1,0 +1,31 @@
+From ff50fac2c3ffa56f80993b10b9607543ccd7741b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 093/296] SystemUI: FIX No sim - airplane mode padding
+
+Steps to reproduce:
+Enable airplane mode
+Reboot
+
+Check the statusbar. The no sim icon is too close to airplane icon.
+This commit shows mWifiAirplaneSpacer everytime airplane mode is on, and not only when wifi is also on, and fixes that.
+---
+ .../SystemUI/src/com/android/systemui/statusbar/SignalClusterView.java  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/SignalClusterView.java b/packages/SystemUI/src/com/android/systemui/statusbar/SignalClusterView.java
+index 274244ef267..7df3e988acb 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/SignalClusterView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/SignalClusterView.java
+@@ -534,7 +534,7 @@ public class SignalClusterView extends LinearLayout implements NetworkController
+             mAirplane.setVisibility(View.GONE);
+         }
+ 
+-        if (mIsAirplaneMode && mWifiVisible) {
++        if (mIsAirplaneMode) {
+             mWifiAirplaneSpacer.setVisibility(View.VISIBLE);
+         } else {
+             mWifiAirplaneSpacer.setVisibility(View.GONE);
+-- 
+2.11.0
+

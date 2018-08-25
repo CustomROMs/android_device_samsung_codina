@@ -1,0 +1,57 @@
+From a4d672bfd551403772b388d89628b824a0d999b5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 155/296] Fix some mouse + list-item selection/scrolling issues
+
+Any "touch" interaction now hides selection (since mouse
+doesn't enable touch-mode, this wasn't happening anymore;
+also, allowing listview to scroll an actual selection
+off-screen would be very involved and risky).
+
+The selector hilight remains (since mouse doesn't enter
+touch-mode). This is a new scenario, so this change also
+makes sure to hide the selector hilight when it's target
+view is scrolled off-screen.
+---
+ core/java/android/widget/AbsListView.java | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/widget/AbsListView.java b/core/java/android/widget/AbsListView.java
+index 60479ecdb66..ab8c3fcf0a0 100644
+--- a/core/java/android/widget/AbsListView.java
++++ b/core/java/android/widget/AbsListView.java
+@@ -3868,6 +3868,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+     private void onTouchDown(MotionEvent ev) {
+         mHasPerformedLongPress = false;
+         mActivePointerId = ev.getPointerId(0);
++        hideSelector();
+ 
+         if (mTouchMode == TOUCH_MODE_OVERFLING) {
+             // Stopped the fling. It is a scroll.
+@@ -5240,17 +5241,21 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+         }
+ 
+         mRecycler.fullyDetachScrapViews();
++        boolean selectorOnScreen = false;
+         if (!inTouchMode && mSelectedPosition != INVALID_POSITION) {
+             final int childIndex = mSelectedPosition - mFirstPosition;
+             if (childIndex >= 0 && childIndex < getChildCount()) {
+                 positionSelector(mSelectedPosition, getChildAt(childIndex));
++                selectorOnScreen = true;
+             }
+         } else if (mSelectorPosition != INVALID_POSITION) {
+             final int childIndex = mSelectorPosition - mFirstPosition;
+             if (childIndex >= 0 && childIndex < getChildCount()) {
+-                positionSelector(INVALID_POSITION, getChildAt(childIndex));
++                positionSelector(mSelectorPosition, getChildAt(childIndex));
++                selectorOnScreen = true;
+             }
+-        } else {
++        }
++        if (!selectorOnScreen) {
+             mSelectorRect.setEmpty();
+         }
+ 
+-- 
+2.11.0
+

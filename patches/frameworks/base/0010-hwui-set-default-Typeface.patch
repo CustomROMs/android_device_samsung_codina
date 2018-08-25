@@ -1,0 +1,27 @@
+From 91cba04dc394ccf0429555d2503a88e3001f41dd Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 010/296] hwui: set default Typeface
+
+---
+ libs/hwui/hwui/Typeface.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libs/hwui/hwui/Typeface.cpp b/libs/hwui/hwui/Typeface.cpp
+index f66bb045373..88cf99850e6 100644
+--- a/libs/hwui/hwui/Typeface.cpp
++++ b/libs/hwui/hwui/Typeface.cpp
+@@ -68,6 +68,10 @@ static minikin::FontStyle computeRelativeStyle(int baseWeight, SkTypeface::Style
+ Typeface* gDefaultTypeface = NULL;
+ 
+ Typeface* Typeface::resolveDefault(Typeface* src) {
++    if (gDefaultTypeface == nullptr) {
++        setRobotoTypefaceForTest();
++    }
++
+     LOG_ALWAYS_FATAL_IF(gDefaultTypeface == nullptr);
+     return src == nullptr ? gDefaultTypeface : src;
+ }
+-- 
+2.11.0
+

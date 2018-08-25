@@ -1,7 +1,7 @@
-From d356758b5df3eb6a4d4bcf3f227e18bc9f50940c Mon Sep 17 00:00:00 2001
+From 9454074882d1efc718ead2aa185ffc0bb54ad932 Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Thu, 1 Sep 2016 22:10:07 -0700
-Subject: [PATCH 09/43] libgui: Provide M-compatible sensors ABI
+Subject: [PATCH 09/44] libgui: Provide M-compatible sensors ABI
 
  * Enable with -DCOMPAT_SENSORS_M
 ---

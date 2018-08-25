@@ -1,0 +1,28 @@
+From 0fe63fcaf6c50cb3c57883e50184714ef2cd1fc7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 01/11] Fix I/O scheduler sysfs interfaces
+
+---
+ prebuilt/common/etc/init/lineage-iosched.rc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/prebuilt/common/etc/init/lineage-iosched.rc b/prebuilt/common/etc/init/lineage-iosched.rc
+index f194f3e9..5e244364 100644
+--- a/prebuilt/common/etc/init/lineage-iosched.rc
++++ b/prebuilt/common/etc/init/lineage-iosched.rc
+@@ -15,8 +15,11 @@ on init
+ 
+ on boot
+     chown system system /sys/block/mmcblk0/queue/scheduler
++    chown system system /sys/block/mmcblk1/queue/scheduler
+     chmod 0664 /sys/block/mmcblk0/queue/scheduler
++    chmod 0664 /sys/block/mmcblk1/queue/scheduler
+     restorecon /sys/block/mmcblk0/queue/scheduler
++    restorecon /sys/block/mmcblk1/queue/scheduler
+ 
+     chown system system /sys/block/sda/queue/scheduler
+     chmod 0664 /sys/block/sda/queue/scheduler
+-- 
+2.11.0
+

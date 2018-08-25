@@ -1,0 +1,28 @@
+From bc6841b2a35a5fc297025c223e4602efaf3b9045 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 17:11:49 +0300
+Subject: [PATCH 02/15] bootable-recovery_002-Fix-TWRP-app-install.patch
+
+Change-Id: Ie7f51e4c3ca0c59c003a85f9dcc96daa4943b6da
+---
+ data.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data.cpp b/data.cpp
+index 4dfbde2d..bb2a7af9 100644
+--- a/data.cpp
++++ b/data.cpp
+@@ -890,8 +890,8 @@ void DataManager::SetDefaultValues()
+ 	mConst.SetValue("tw_oem_build", "1");
+ #else
+ 	mConst.SetValue("tw_oem_build", "0");
+-	mPersist.SetValue("tw_app_prompt", "1");
+-	mPersist.SetValue("tw_app_install_system", "1");
++	mPersist.SetValue("tw_app_prompt", "0");
++	mPersist.SetValue("tw_app_install_system", "0");
+ 	mData.SetValue("tw_app_install_status", "0"); // 0 = no status, 1 = not installed, 2 = already installed
+ #endif
+ 
+-- 
+2.11.0
+

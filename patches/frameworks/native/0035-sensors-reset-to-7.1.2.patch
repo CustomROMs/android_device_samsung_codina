@@ -1,7 +1,7 @@
-From 93beba743a966371c6a3ab56c66507cd7f3ea42f Mon Sep 17 00:00:00 2001
+From 044283d4288598dcfe5dcab16dbfc26298a4d036 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 35/43] sensors: reset to 7.1.2
+Subject: [PATCH 35/44] sensors: reset to 7.1.2
 
 ---
  libs/sensor/Sensor.cpp                             | 21 ++++++

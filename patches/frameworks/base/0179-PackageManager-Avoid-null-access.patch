@@ -1,0 +1,27 @@
+From 4cb6907947d5bd0193b219e0faef7eb8898b9c43 Mon Sep 17 00:00:00 2001
+From: Andreas Gampe <agampe@google.com>
+Date: Mon, 5 Mar 2018 17:46:25 -0800
+Subject: [PATCH 179/296] PackageManager: Avoid null access
+
+In case cache creation fails, mCacheDir may be null. Avoid an access.
+---
+ services/core/java/com/android/server/pm/PackageManagerService.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index dc305742791..19e7a92dfc1 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -3433,7 +3433,8 @@ public class PackageManagerService extends IPackageManager.Stub
+         // NOTE: When no BUILD_NUMBER is set by the build system, it defaults to a build
+         // that starts with "eng." to signify that this is an engineering build and not
+         // destined for release.
+-        if (Build.IS_USERDEBUG && Build.VERSION.INCREMENTAL.startsWith("eng.")) {
++        if (Build.IS_USERDEBUG && Build.VERSION.INCREMENTAL.startsWith("eng.") &&
++                cacheDir != null) {
+             Slog.w(TAG, "Wiping cache directory because the system partition changed.");
+ 
+             // Heuristic: If the /system directory has been modified recently due to an "adb sync"
+-- 
+2.11.0
+

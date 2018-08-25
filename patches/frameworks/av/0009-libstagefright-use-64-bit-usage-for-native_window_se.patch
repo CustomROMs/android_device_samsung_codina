@@ -1,0 +1,41 @@
+From 5d63ce172ff310a080a2fe02376f6e762d647400 Mon Sep 17 00:00:00 2001
+From: Milos Ratkovic <milosr@gmail.com>
+Date: Mon, 8 Jan 2018 00:23:58 +0100
+Subject: [PATCH 09/57] libstagefright: use 64-bit usage for
+ native_window_set_usage
+
+Since Android 8.1 native_window_set_usage has changed to use 64-bit int
+for the usage parameter. Use of 32-bit signed integer as parameter does
+implicit conversion which may cause unexpected behaviour.
+---
+ media/libstagefright/SurfaceUtils.cpp | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/media/libstagefright/SurfaceUtils.cpp b/media/libstagefright/SurfaceUtils.cpp
+index 2dd6df803..b7c1598ec 100644
+--- a/media/libstagefright/SurfaceUtils.cpp
++++ b/media/libstagefright/SurfaceUtils.cpp
+@@ -108,9 +108,8 @@ status_t setNativeWindowSizeFormatAndUsage(
+         }
+     }
+ 
+-    uint64_t finalUsage = (usage | consumerUsage) & 0xffffffffLL;
+-    ALOGV("gralloc usage: %#x(producer) + %#x(consumer) = %#" PRIx64,
+-            usage, consumerUsage, finalUsage);
++    int finalUsage = usage | consumerUsage;
++    ALOGV("gralloc usage: %#x(producer) + %#x(consumer) = %#x", usage, consumerUsage, finalUsage);
+     err = native_window_set_usage(nativeWindow, finalUsage);
+     if (err != NO_ERROR) {
+         ALOGE("native_window_set_usage failed: %s (%d)", strerror(-err), -err);
+@@ -124,7 +123,7 @@ status_t setNativeWindowSizeFormatAndUsage(
+         return err;
+     }
+ 
+-    ALOGD("set up nativeWindow %p for %dx%d, color %#x, rotation %d, usage %#" PRIx64,
++    ALOGD("set up nativeWindow %p for %dx%d, color %#x, rotation %d, usage %#x",
+             nativeWindow, width, height, format, rotation, finalUsage);
+     return NO_ERROR;
+ }
+-- 
+2.11.0
+

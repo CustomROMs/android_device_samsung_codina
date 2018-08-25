@@ -1,7 +1,7 @@
-From 20e71d2687a5134bc12063dbe1f09b2571a54b53 Mon Sep 17 00:00:00 2001
+From 82003e25ec6c060c0dff3ec78c4eb54709449928 Mon Sep 17 00:00:00 2001
 From: Dohyun Lee <dohyun.lee@lge.com>
 Date: Tue, 27 Dec 2016 16:16:00 +0900
-Subject: [PATCH 23/43] correct the graphic buffer size allocated when rotating
+Subject: [PATCH 23/44] correct the graphic buffer size allocated when rotating
  the device
 
 allocateBuffers() is called with H x W when a device is rotated

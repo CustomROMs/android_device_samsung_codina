@@ -1,7 +1,7 @@
-From 63f184e27f7bbc4fae2642bb721e23ce19b8f1bc Mon Sep 17 00:00:00 2001
+From 2ae3212f2c286c13e2a93f85edc4ddd9e5ed8b6d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 04/43] restore gralloc0/gralloc1 support
+Subject: [PATCH 04/44] restore gralloc0/gralloc1 support
 
 ---
  libs/ui/Android.bp                          |   2 +

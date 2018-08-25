@@ -1,0 +1,43 @@
+From 306fe758211724bcbec59c39d8c6fe46cd1dfcf2 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 268/296] Handle application crash in new thread.
+
+The system server will watchdog reboot when the binder thread
+be application crash transaction exhaustion at same time.
+---
+ .../java/com/android/server/am/ActivityManagerService.java    | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index f7a1d1fdfab..5070ddc5cbb 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -14458,8 +14458,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+     /* Native crash reporting uses this inner version because it needs to be somewhat
+      * decoupled from the AM-managed cleanup lifecycle
+      */
+-    void handleApplicationCrashInner(String eventType, ProcessRecord r, String processName,
+-            ApplicationErrorReport.CrashInfo crashInfo) {
++    void handleApplicationCrashInner(String eventType, final ProcessRecord r, String processName,
++            final ApplicationErrorReport.CrashInfo crashInfo) {
+         EventLog.writeEvent(EventLogTags.AM_CRASH, Binder.getCallingPid(),
+                 UserHandle.getUserId(Binder.getCallingUid()), processName,
+                 r == null ? -1 : r.info.flags,
+@@ -14470,7 +14470,12 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+         addErrorToDropBox(eventType, r, processName, null, null, null, null, null, crashInfo);
+ 
+-        mAppErrors.crashApplication(r, crashInfo);
++        new Thread(new Runnable() {
++            @Override
++            public void run() {
++                mAppErrors.crashApplication(r, crashInfo);
++            }
++        }).start();
+     }
+ 
+     public void handleApplicationStrictModeViolation(
+-- 
+2.11.0
+

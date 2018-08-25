@@ -1,7 +1,7 @@
-From 53b58242640ea473299230835abbae1e1f0872fe Mon Sep 17 00:00:00 2001
+From a5222400dd815cffced700c53baa68796122b9e4 Mon Sep 17 00:00:00 2001
 From: Dimitris Mantzouranis <d3xter93@gmail.com>
 Date: Fri, 15 Apr 2016 11:48:59 +0300
-Subject: [PATCH 13/43] Revert "egl: Remove old tuna BGRA vs RGBA workaround."
+Subject: [PATCH 13/44] Revert "egl: Remove old tuna BGRA vs RGBA workaround."
 
 ---
  opengl/libs/Android.bp     | 7 +++++++

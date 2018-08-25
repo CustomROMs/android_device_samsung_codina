@@ -1,7 +1,7 @@
-From fa59cb046fed5736691d4a14a30dfb65ee2e9ba2 Mon Sep 17 00:00:00 2001
+From 7e23b5ab12c5a1f203a9dec7bd14f576d1ffa370 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 19/43] UI loop reboot on no GPU platform when go into early
+Subject: [PATCH 19/44] UI loop reboot on no GPU platform when go into early
  suspend.
 
 ColorFade app calls opengl-es 2.0 api to draw black.

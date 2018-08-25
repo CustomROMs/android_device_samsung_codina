@@ -1,0 +1,37 @@
+From 085d3908163fd78b7844e87299c5a0f5d2d7734f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 203/296] AndroidBlockGuardPolicy: Prevent NPE in
+ HandleViolation
+
+---
+ core/java/android/os/StrictMode.java | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/os/StrictMode.java b/core/java/android/os/StrictMode.java
+index 8203373d989..2473a26e65c 100644
+--- a/core/java/android/os/StrictMode.java
++++ b/core/java/android/os/StrictMode.java
+@@ -1663,11 +1663,14 @@ public final class StrictMode {
+                     // to disk, thus violating policy, thus requiring logging, etc...
+                     // We restore the current policy below, in the finally block.
+                     setThreadPolicyMask(0);
+-
+-                    ActivityManager.getService().handleApplicationStrictModeViolation(
+-                        RuntimeInit.getApplicationObject(),
+-                        violationMaskSubset,
+-                        info);
++                    if (ActivityManager.getService() == null) {
++                        return;
++                    } else {
++                        ActivityManager.getService().handleApplicationStrictModeViolation(
++                            RuntimeInit.getApplicationObject(),
++                            violationMaskSubset,
++                            info);
++                    }
+                 } catch (RemoteException e) {
+                     if (e instanceof DeadObjectException) {
+                         // System process is dead; ignore
+-- 
+2.11.0
+

@@ -1,0 +1,58 @@
+From c119b4e1838631d7b81ba0d57c3c9f16b2eeb490 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 147/296] Provide synchronization in doTrimForeground to avoid
+ NPE
+
+If doDie() is not called from main thread, then mView property
+of a View object may have inconsistent value. For instance,
+dispatchDetachedFromWindow() may set mView to null,
+causing NullPointerException.
+---
+ core/java/android/view/ViewRootImpl.java        | 11 +++++++++++
+ core/java/android/view/WindowManagerGlobal.java |  7 +------
+ 2 files changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index 8f250a9e9f1..0023c4f2053 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -626,6 +626,17 @@ public final class ViewRootImpl implements ViewParent,
+         }
+     }
+ 
++    public boolean doTrimForeground() {
++        synchronized(this) {
++            if (mView != null && getHostVisibility() == View.VISIBLE
++                    && mAttachInfo.mThreadedRenderer != null) {
++                return true;
++            } else {
++                destroyHardwareResources();
++            }
++            return false;
++        }
++    }
+     /**
+      * We have one child
+      */
+diff --git a/core/java/android/view/WindowManagerGlobal.java b/core/java/android/view/WindowManagerGlobal.java
+index c7e8dee3da8..6d3c5ecb2ea 100644
+--- a/core/java/android/view/WindowManagerGlobal.java
++++ b/core/java/android/view/WindowManagerGlobal.java
+@@ -534,12 +534,7 @@ public final class WindowManagerGlobal {
+         synchronized (mLock) {
+             for (int i = mRoots.size() - 1; i >= 0; --i) {
+                 final ViewRootImpl root = mRoots.get(i);
+-                if (root.mView != null && root.getHostVisibility() == View.VISIBLE
+-                        && root.mAttachInfo.mThreadedRenderer != null) {
+-                    hasVisibleWindows = true;
+-                } else {
+-                    root.destroyHardwareResources();
+-                }
++                hasVisibleWindows |= root.doTrimForeground();
+             }
+         }
+         if (!hasVisibleWindows) {
+-- 
+2.11.0
+

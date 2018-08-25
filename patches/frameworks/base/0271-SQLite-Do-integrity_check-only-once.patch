@@ -1,0 +1,63 @@
+From 21c7f17d21a2251b8c77df6574c25b86b53771d9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 271/296] SQLite: Do integrity_check only once
+
+(Remove multiple integrity_check call for all attached databases)
+
+"PRAGMA integrity_check" checks not only main database
+but also all of attached databases.
+---
+ .../android/database/sqlite/SQLiteDatabase.java    | 34 ++++++----------------
+ 1 file changed, 9 insertions(+), 25 deletions(-)
+
+diff --git a/core/java/android/database/sqlite/SQLiteDatabase.java b/core/java/android/database/sqlite/SQLiteDatabase.java
+index 5046f29279f..4e00587602b 100755
+--- a/core/java/android/database/sqlite/SQLiteDatabase.java
++++ b/core/java/android/database/sqlite/SQLiteDatabase.java
+@@ -2227,33 +2227,17 @@ public final class SQLiteDatabase extends SQLiteClosable {
+     public boolean isDatabaseIntegrityOk() {
+         acquireReference();
+         try {
+-            List<Pair<String, String>> attachedDbs = null;
++            SQLiteStatement prog = null;
+             try {
+-                attachedDbs = getAttachedDbs();
+-                if (attachedDbs == null) {
+-                    throw new IllegalStateException("databaselist for: " + getPath() + " couldn't " +
+-                            "be retrieved. probably because the database is closed");
+-                }
+-            } catch (SQLiteException e) {
+-                // can't get attachedDb list. do integrity check on the main database
+-                attachedDbs = new ArrayList<Pair<String, String>>();
+-                attachedDbs.add(new Pair<String, String>("main", getPath()));
+-            }
+-
+-            for (int i = 0; i < attachedDbs.size(); i++) {
+-                Pair<String, String> p = attachedDbs.get(i);
+-                SQLiteStatement prog = null;
+-                try {
+-                    prog = compileStatement("PRAGMA " + p.first + ".integrity_check(1);");
+-                    String rslt = prog.simpleQueryForString();
+-                    if (!rslt.equalsIgnoreCase("ok")) {
+-                        // integrity_checker failed on main or attached databases
+-                        Log.e(TAG, "PRAGMA integrity_check on " + p.second + " returned: " + rslt);
+-                        return false;
+-                    }
+-                } finally {
+-                    if (prog != null) prog.close();
++                prog = compileStatement("PRAGMA integrity_check(1);");
++                String rslt = prog.simpleQueryForString();
++                if (!rslt.equalsIgnoreCase("ok")) {
++                    // integrity_checker failed on main or attached databases
++                    Log.e(TAG, "PRAGMA integrity_check returned: " + rslt);
++                    return false;
+                 }
++            } finally {
++                if (prog != null) prog.close();
+             }
+         } finally {
+             releaseReference();
+-- 
+2.11.0
+

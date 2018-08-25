@@ -1,0 +1,39 @@
+From 7941e3d1323b7d302ddfec50965ca41798d0a32b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 045/296] Fix Photosphere/Camera FCs
+
+Photosphere is setting a few parameters "blindly"
+while the API says it should check the device capabilities first.
+
+On TF101 (and probably other devices) the camera HAL doesn't handle
+FLASH_MODE & SCENE_MODE and so it sends the required RuntimeException
+for these, which makes Photosphere FC the Camera app.
+Fix: check device capabilities & ignore these 2 parameters if the device doesn't support them.
+---
+ core/java/android/hardware/Camera.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware/Camera.java
+index 89c9e7d7fb5..8ea0ec6a71b 100644
+--- a/core/java/android/hardware/Camera.java
++++ b/core/java/android/hardware/Camera.java
+@@ -3746,6 +3746,7 @@ public class Camera {
+          * @see #getSceneMode()
+          */
+         public void setSceneMode(String value) {
++            if(getSupportedSceneModes() == null) return;
+             set(KEY_SCENE_MODE, value);
+         }
+ 
+@@ -3783,6 +3784,7 @@ public class Camera {
+          * @see #getFlashMode()
+          */
+         public void setFlashMode(String value) {
++	    if(getSupportedFlashModes() == null) return;
+             set(KEY_FLASH_MODE, value);
+         }
+ 
+-- 
+2.11.0
+

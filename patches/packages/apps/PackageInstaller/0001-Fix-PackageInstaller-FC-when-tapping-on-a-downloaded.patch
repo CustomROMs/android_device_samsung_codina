@@ -1,0 +1,29 @@
+From 97e3e290e0f60534403b929bb26a956776b4e8bf Mon Sep 17 00:00:00 2001
+From: ezio84 <brabus84@gmail.com>
+Date: Mon, 31 Oct 2016 16:32:50 +0100
+Subject: [PATCH] Fix PackageInstaller FC when tapping on a downloaded apk
+ notification
+
+ DatabaseUtils: Writing exception to parcel
+ DatabaseUtils: java.lang.SecurityException: Permission Denial: reading com.android.providers.downloads.DownloadProvider
+ uri content://downloads/my_downloads/831 from pid=25212, uid=10019 requires android.permission.INTERNET, or grantUriPermission()
+---
+ AndroidManifest.xml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index f939175..a12f9f3 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -22,6 +22,8 @@
+     <uses-permission android:name="android.permission.MANAGE_APP_OPS_RESTRICTIONS" />
+     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+     <uses-permission android:name="android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS" />
++    <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_ALL_DOWNLOADS" />
+ 
+     <uses-permission android:name="com.google.android.permission.INSTALL_WEARABLE_PACKAGES" />
+ 
+-- 
+2.11.0
+

@@ -1,0 +1,31 @@
+From 3aae1d26ae3feb9d7a10e0930d936d157c116e06 Mon Sep 17 00:00:00 2001
+From: Alex Cruz <mazdarider23@gmail.com>
+Date: Fri, 12 Feb 2016 23:26:33 -0500
+Subject: [PATCH 103/296] Speed up the volume panel timeout
+
+---
+ .../SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java    | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
+index 92d40a47ab9..be09f31400d 100644
+--- a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
+@@ -518,12 +518,12 @@ public class VolumeDialogImpl implements VolumeDialog, TunerService.Tunable {
+         if (mAccessibility.mFeedbackEnabled) return 20000;
+         if (mHovering) return 16000;
+         if (mSafetyWarning != null) return 5000;
+-        if (mExpanded || mExpandButtonAnimationRunning) return 5000;
++        if (mExpanded || mExpandButtonAnimationRunning) return 1500;
+         if (mActiveStream == AudioManager.STREAM_MUSIC) return 1500;
+         if (mZenFooter.shouldShowIntroduction()) {
+             return 6000;
+         }
+-        return 3000;
++        return 1500;
+     }
+ 
+     protected void dismissH(int reason) {
+-- 
+2.11.0
+

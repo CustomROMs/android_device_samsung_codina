@@ -1,7 +1,7 @@
-From 73d60b18eb48a98ee2bc3993fe3a65365aa29e0e Mon Sep 17 00:00:00 2001
+From 0036f7474538829b0ddf3a03a6903bfe1196f4e1 Mon Sep 17 00:00:00 2001
 From: Rock Yeh <rock.yeh@mediatek.com>
 Date: Thu, 13 Jul 2017 21:15:58 +0800
-Subject: [PATCH 26/43] Fix installd get wrong inode cause APK crash
+Subject: [PATCH 26/44] Fix installd get wrong inode cause APK crash
 
 ---
  cmds/installd/utils.cpp | 16 +++++++++++++++-

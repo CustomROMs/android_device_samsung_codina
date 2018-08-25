@@ -1,0 +1,31 @@
+From b47ab10f18b85f91334ead19918127af314bd730 Mon Sep 17 00:00:00 2001
+From: mickybart <mickybart@pygoscelis.org>
+Date: Sat, 19 Nov 2016 19:05:05 -0500
+Subject: [PATCH 119/296] StrictMode and files under
+
+/storage/sdcard1/
+/storage/sdcard0/
+android.os.FileUriExposedException: file:///storage/sdcard1/Downloads/taskmanager.ver.2.8.2.4.apk
+at android.os.StrictMode.onFileUriExposed(StrictMode.java:1799)
+at android.net.Uri.checkFileUriExposed(Uri.java:2346)
+---
+ core/java/android/net/Uri.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/net/Uri.java b/core/java/android/net/Uri.java
+index 5ca3a4106a2..4a3f2bedd95 100644
+--- a/core/java/android/net/Uri.java
++++ b/core/java/android/net/Uri.java
+@@ -2352,7 +2352,8 @@ public abstract class Uri implements Parcelable, Comparable<Uri> {
+      */
+     public void checkFileUriExposed(String location) {
+         if ("file".equals(getScheme())
+-                && (getPath() != null) && !getPath().startsWith("/system/")) {
++                && (getPath() != null) && !(getPath().startsWith("/system/")
++                || getPath().startsWith("/storage/") || getPath().startsWith("/data/"))) {
+             StrictMode.onFileUriExposed(this, location);
+         }
+     }
+-- 
+2.11.0
+

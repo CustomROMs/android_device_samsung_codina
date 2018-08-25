@@ -1,0 +1,40 @@
+From 49b16c2d21621c009bde9d72325e3ffd22f2c5de Mon Sep 17 00:00:00 2001
+From: "Qiushi.Han" <qiushi.han@spreadtrum.com>
+Date: Fri, 14 Oct 2016 11:11:14 +0800
+Subject: [PATCH 067/296] Fix window transformation related issue
+
+In some cases, for example, a window containing a SurfaceView,
+when pressing switch button, the window animation of SurfaceView
+and it's attached window are not sync, which leads animation not
+behaving correctly.
+
+To avoid this, apply the translation that applies the position
+of the window before the app transformation.
+---
+ services/core/java/com/android/server/wm/WindowStateAnimator.java | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/WindowStateAnimator.java b/services/core/java/com/android/server/wm/WindowStateAnimator.java
+index 64ac7ac90db..fe5f2ad0d74 100644
+--- a/services/core/java/com/android/server/wm/WindowStateAnimator.java
++++ b/services/core/java/com/android/server/wm/WindowStateAnimator.java
+@@ -962,15 +962,10 @@ class WindowStateAnimator {
+             if (attachedTransformation != null) {
+                 tmpMatrix.postConcat(attachedTransformation.getMatrix());
+             }
++            tmpMatrix.postTranslate(frame.left + mWin.mXOffset, frame.top + mWin.mYOffset);
+             if (appTransformation != null) {
+                 tmpMatrix.postConcat(appTransformation.getMatrix());
+             }
+-
+-            // The translation that applies the position of the window needs to be applied at the
+-            // end in case that other translations include scaling. Otherwise the scaling will
+-            // affect this translation. But it needs to be set before the screen rotation animation
+-            // so the pivot point is at the center of the screen for all windows.
+-            tmpMatrix.postTranslate(frame.left + mWin.mXOffset, frame.top + mWin.mYOffset);
+             if (screenAnimation) {
+                 tmpMatrix.postConcat(screenRotationAnimation.getEnterTransformation().getMatrix());
+             }
+-- 
+2.11.0
+

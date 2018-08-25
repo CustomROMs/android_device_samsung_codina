@@ -1,0 +1,28 @@
+From 5c0fe5248581f3c98793c8ac3f0d8cd1fac52741 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 185/296] Fix UnsupportedOperationException: removeView(View)
+ is not supported in AdapterView
+
+---
+ core/java/android/widget/AdapterView.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/widget/AdapterView.java b/core/java/android/widget/AdapterView.java
+index dd01251cf9b..f8271952aa4 100644
+--- a/core/java/android/widget/AdapterView.java
++++ b/core/java/android/widget/AdapterView.java
+@@ -528,7 +528,9 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
+      */
+     @Override
+     public void removeView(View child) {
+-        throw new UnsupportedOperationException("removeView(View) is not supported in AdapterView");
++        if (child == null) {
++            throw new UnsupportedOperationException("removeView(View) is not supported in AdapterView");
++        }
+     }
+ 
+     /**
+-- 
+2.11.0
+

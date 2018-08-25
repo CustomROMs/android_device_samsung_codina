@@ -1,0 +1,32 @@
+From 1bc0a5ed08e59b3525943e37e705776a2099d9eb Mon Sep 17 00:00:00 2001
+From: antirez <antirez@gmail.com>
+Date: Wed, 5 Jul 2017 15:40:25 +0200
+Subject: [PATCH 06/10] Avoid closing invalid fds
+
+These fds can be invalid if, for example, we fail to open ns/mnt.
+---
+ VolumeManager.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index 8c7d491..55010a7 100644
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -688,8 +688,12 @@ int VolumeManager::remountUid(uid_t uid, const std::string& mode) {
+         }
+ 
+ next:
+-        close(nsFd);
+-        close(pidFd);
++        if (nsFd >= 0) {
++            close(nsFd);
++        }
++        if (pidFd >= 0) {
++            close(pidFd);
++        }
+     }
+     closedir(dir);
+     return 0;
+-- 
+2.11.0
+

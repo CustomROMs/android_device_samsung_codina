@@ -1,0 +1,25 @@
+From bd62def567efecbf60f0667a7ec6263b51f5057d Mon Sep 17 00:00:00 2001
+From: Milos Ratkovic <milosr@gmail.com>
+Date: Wed, 14 Sep 2016 21:44:34 -0400
+Subject: [PATCH 11/17] libril: fix rild crash end of call
+
+---
+ libril/ril_service.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index 66067fa..f96cdf1 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -3501,7 +3501,7 @@ int radio::getLastCallFailCauseResponse(int slotId,
+         } else if (responseLen == sizeof(RIL_LastCallFailCauseInfo))  {
+             RIL_LastCallFailCauseInfo *pFailCauseInfo = (RIL_LastCallFailCauseInfo *) response;
+             info.causeCode = (LastCallFailCause) pFailCauseInfo->cause_code;
+-            info.vendorCause = convertCharPtrToHidlString(pFailCauseInfo->vendor_cause);
++            //info.vendorCause = convertCharPtrToHidlString(pFailCauseInfo->vendor_cause);
+         } else {
+             RLOGE("getCurrentCallsResponse Invalid response: NULL");
+             if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+-- 
+2.11.0
+

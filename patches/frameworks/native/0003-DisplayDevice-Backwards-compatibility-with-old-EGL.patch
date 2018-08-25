@@ -1,7 +1,7 @@
-From cba7ea789586afb2623cda1c6d7f829b6d1c453f Mon Sep 17 00:00:00 2001
+From dca8f9715b43b675acd6c6e6c90dd0e9522a8cdf Mon Sep 17 00:00:00 2001
 From: Andrew Dodd <atd7@cornell.edu>
 Date: Mon, 10 Dec 2012 08:26:54 -0500
-Subject: [PATCH 03/43] DisplayDevice: Backwards compatibility with old EGL
+Subject: [PATCH 03/44] DisplayDevice: Backwards compatibility with old EGL
 
 From 4.1 to 4.2, the display subsystem was reworked to
 use SurfaceTextureClient/BufferQueue instead of

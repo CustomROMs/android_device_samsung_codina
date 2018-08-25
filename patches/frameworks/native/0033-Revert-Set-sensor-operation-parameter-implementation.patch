@@ -1,7 +1,7 @@
-From 9bdff6bb905b72237464a67beca60a4493138701 Mon Sep 17 00:00:00 2001
+From 0f805acb9131edd7baa93ae547e526049458b2ab Mon Sep 17 00:00:00 2001
 From: Tom Joseph <tomjoseph@in.ibm.com>
 Date: Fri, 2 Mar 2018 19:49:17 +0530
-Subject: [PATCH 33/43] Revert "Set sensor operation parameter implementation"
+Subject: [PATCH 33/44] Revert "Set sensor operation parameter implementation"
 
 ---
  libs/sensor/ISensorServer.cpp              | 42 ------------------------------

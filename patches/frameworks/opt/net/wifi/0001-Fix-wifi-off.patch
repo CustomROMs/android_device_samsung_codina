@@ -1,0 +1,28 @@
+From 069362aaac4d66c77ea04c184b11e00effd16963 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 1/5] Fix wifi off
+
+---
+ service/java/com/android/server/wifi/WifiStateMachine.java | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/service/java/com/android/server/wifi/WifiStateMachine.java b/service/java/com/android/server/wifi/WifiStateMachine.java
+index 44d6339c6..9574bd1ed 100644
+--- a/service/java/com/android/server/wifi/WifiStateMachine.java
++++ b/service/java/com/android/server/wifi/WifiStateMachine.java
+@@ -3914,7 +3914,10 @@ public class WifiStateMachine extends StateMachine implements WifiNative.WifiRss
+                     maybeRegisterPhoneListener();
+                     break;
+                 case CMD_SCREEN_STATE_CHANGED:
+-                    handleScreenStateChanged(message.arg1 != 0);
++                    WifiManager manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
++                    if(manager.isWifiEnabled()) {
++                        handleScreenStateChanged(message.arg1 != 0);
++                    }
+                     break;
+                     /* Discard */
+                 case CMD_START_SCAN:
+-- 
+2.11.0
+

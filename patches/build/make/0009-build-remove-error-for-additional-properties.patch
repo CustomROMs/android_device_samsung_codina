@@ -1,0 +1,51 @@
+From 1d5fb1f03e8c6b4358462d140076ea749bf9694f Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Mon, 21 Aug 2017 19:34:34 -0700
+Subject: [PATCH 09/31] build: remove error for additional properties
+
+---
+ core/Makefile |  2 +-
+ core/main.mk  | 14 --------------
+ 2 files changed, 1 insertion(+), 15 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 367cf4cf8..b024f1fd5 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -22,7 +22,7 @@ endif
+ # src:dest pair is the first one to match the same dest"
+ #$(1): the src:dest pair
+ define check-product-copy-files
+-$(if $(filter %.apk, $(call word-colon, 2, $(1))),$(error \
++$(if $(filter %.apk, $(call word-colon, 2, $(1))),$(warning \
+     Prebuilt apk found in PRODUCT_COPY_FILES: $(1), use BUILD_PREBUILT instead!))
+ endef
+ # filter out the duplicate <source file>:<dest file> pairs.
+diff --git a/core/main.mk b/core/main.mk
+index 27dbf5b3a..797e76b4f 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -100,20 +100,6 @@ endif
+ 
+ #
+ # -----------------------------------------------------------------
+-# Validate ADDITIONAL_DEFAULT_PROPERTIES.
+-ifneq ($(ADDITIONAL_DEFAULT_PROPERTIES),)
+-$(error ADDITIONAL_DEFAULT_PROPERTIES must not be set before here: $(ADDITIONAL_DEFAULT_PROPERTIES))
+-endif
+-
+-#
+-# -----------------------------------------------------------------
+-# Validate ADDITIONAL_BUILD_PROPERTIES.
+-ifneq ($(ADDITIONAL_BUILD_PROPERTIES),)
+-$(error ADDITIONAL_BUILD_PROPERTIES must not be set before here: $(ADDITIONAL_BUILD_PROPERTIES))
+-endif
+-
+-#
+-# -----------------------------------------------------------------
+ # Add the product-defined properties to the build properties.
+ ifdef PRODUCT_SHIPPING_API_LEVEL
+ ADDITIONAL_BUILD_PROPERTIES += \
+-- 
+2.11.0
+

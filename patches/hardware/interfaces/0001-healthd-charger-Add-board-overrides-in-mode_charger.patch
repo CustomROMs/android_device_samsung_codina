@@ -1,0 +1,46 @@
+From c1e33fc5bf5b70d6eafd54a4f0c2a29f0b188ddb Mon Sep 17 00:00:00 2001
+From: Chunmei Cai <ccai@codeaurora.org>
+Date: Sun, 6 Sep 2015 15:43:32 +0800
+Subject: [PATCH 01/10] healthd: charger: Add board overrides in mode_charger
+
+Add following overrides in mode_charger to improve the off-mode charging
+user experience:
+ 1. Draw battery information on the animation, such as: capacity;
+ 2. Handle board specific battery status update;
+ 3. Handle board specific mode charger initialization;
+ 4. Turn on/off the backlight explicitely;
+---
+ .../1.0/default/libhealthd/healthd_board_default.cpp | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/health/1.0/default/libhealthd/healthd_board_default.cpp b/health/1.0/default/libhealthd/healthd_board_default.cpp
+index 127f98e4..bb733368 100644
+--- a/health/1.0/default/libhealthd/healthd_board_default.cpp
++++ b/health/1.0/default/libhealthd/healthd_board_default.cpp
+@@ -26,3 +26,23 @@ int healthd_board_battery_update(struct android::BatteryProperties*)
+     // return 0 to log periodic polled battery status to kernel log
+     return 0;
+ }
++
++void healthd_board_mode_charger_draw_battery(struct android::BatteryProperties*)
++{
++
++}
++
++void healthd_board_mode_charger_battery_update(struct android::BatteryProperties*)
++{
++
++}
++
++void healthd_board_mode_charger_set_backlight(bool)
++{
++
++}
++
++void healthd_board_mode_charger_init()
++{
++
++}
+-- 
+2.11.0
+

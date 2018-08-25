@@ -1,0 +1,28 @@
+From 1c9428307638716d2d44144af57b02acf39e7bcd Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 217/296] Fix a crashed when clicking list item and button
+ meanwhile
+
+Null Check for target.child
+Because the "next" maybe recycle by view in dispatchTransformedTouchEvent
+---
+ core/java/android/view/ViewGroup.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/view/ViewGroup.java b/core/java/android/view/ViewGroup.java
+index bf324070f5b..c0e22c82c4a 100644
+--- a/core/java/android/view/ViewGroup.java
++++ b/core/java/android/view/ViewGroup.java
+@@ -2647,7 +2647,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager
+                 // dispatched to it.  Cancel touch targets if necessary.
+                 TouchTarget predecessor = null;
+                 TouchTarget target = mFirstTouchTarget;
+-                while (target != null) {
++                while (target != null && target.child != null) {
+                     final TouchTarget next = target.next;
+                     if (alreadyDispatchedToNewTouchTarget && target == newTouchTarget) {
+                         handled = true;
+-- 
+2.11.0
+

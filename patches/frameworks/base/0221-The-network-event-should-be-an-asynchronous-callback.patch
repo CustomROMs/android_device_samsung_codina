@@ -1,0 +1,30 @@
+From eba3fdab61501ecb14731544b6509f7ab4bf0d68 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 221/296] The network event should be an asynchronous callback.
+
+When callback to other APP, timeout or blocking
+may happen, which will block system_server thread
+and cause the system to generate watchdog.
+So, we changed the synchronous callback to
+asynchronous.
+---
+ core/java/android/net/INetworkManagementEventObserver.aidl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/net/INetworkManagementEventObserver.aidl b/core/java/android/net/INetworkManagementEventObserver.aidl
+index b7af3747430..f0fe92eb864 100644
+--- a/core/java/android/net/INetworkManagementEventObserver.aidl
++++ b/core/java/android/net/INetworkManagementEventObserver.aidl
+@@ -24,7 +24,7 @@ import android.net.RouteInfo;
+  *
+  * @hide
+  */
+-interface INetworkManagementEventObserver {
++oneway interface INetworkManagementEventObserver {
+     /**
+      * Interface configuration status has changed.
+      *
+-- 
+2.11.0
+

@@ -1,7 +1,7 @@
-From d8f7b51d2e09108bca6a387479e8b0c94b9a3d41 Mon Sep 17 00:00:00 2001
+From e700bc738c97a9048df1df0a2d247004e21579a6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 07/43] STE Native fix [2]
+Subject: [PATCH 07/44] STE Native fix [2]
 
 ---
  libs/binder/include/binder/SafeInterface.h    | 8 ++++----

@@ -1,7 +1,7 @@
-From 6b67c007f61c455b64e13d6cf9e615a3e08709d0 Mon Sep 17 00:00:00 2001
+From 3483dfcff2410e8c8a596902c96eb16f3113e0c3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 16/43] Remove gralloc1/gralloc2 support
+Subject: [PATCH 16/44] Remove gralloc1/gralloc2 support
 
 ---
  libs/gui/GLConsumer.cpp                     |   3 +-

@@ -1,7 +1,7 @@
 From ad25e9d03d53970c378ae1c1faf1fe519d3ef6f8 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 3 Jun 2018 07:35:09 +0300
-Subject: [PATCH 1/1] disable selinux
+Subject: [PATCH] selinux
 
 Change-Id: I62bbcd1ff6d46ae7163e07fef8d915730d32b903
 ---

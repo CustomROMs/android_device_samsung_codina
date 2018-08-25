@@ -1,0 +1,25 @@
+From 574edba32a5249369689683cabb3abd91c01f412 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 081/296] java.lang.NullPointerException: name is null
+
+---
+ core/java/android/view/AccessibilityInteractionController.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/view/AccessibilityInteractionController.java b/core/java/android/view/AccessibilityInteractionController.java
+index 45fa5614abb..d40566199b2 100644
+--- a/core/java/android/view/AccessibilityInteractionController.java
++++ b/core/java/android/view/AccessibilityInteractionController.java
+@@ -388,7 +388,7 @@ final class AccessibilityInteractionController {
+             } else {
+                 root = mViewRootImpl.mView;
+             }
+-            if (root != null) {
++            if (root != null && viewId != null) {
+                 final int resolvedViewId = root.getContext().getResources()
+                         .getIdentifier(viewId, null, null);
+                 if (resolvedViewId <= 0) {
+-- 
+2.11.0
+

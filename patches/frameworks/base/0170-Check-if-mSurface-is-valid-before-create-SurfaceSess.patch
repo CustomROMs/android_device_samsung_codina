@@ -1,0 +1,31 @@
+From 6ca092a9a0c6a425f2900fa111b83ddf03850c7b Mon Sep 17 00:00:00 2001
+From: Shibin George <shibing@codeaurora.org>
+Date: Mon, 26 Feb 2018 20:29:44 +0530
+Subject: [PATCH 170/296] Check if mSurface is valid before create
+ SurfaceSession
+
+If mSurface has already been released in another thread,
+this would result in a null-pointer dereference in
+SurfaceSession contructor i.e. in nativeCreateScoped().
+---
+ services/core/java/com/android/server/wm/TaskSnapshotSurface.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/TaskSnapshotSurface.java b/services/core/java/com/android/server/wm/TaskSnapshotSurface.java
+index 4698d72567c..36a734bdca6 100644
+--- a/services/core/java/com/android/server/wm/TaskSnapshotSurface.java
++++ b/services/core/java/com/android/server/wm/TaskSnapshotSurface.java
+@@ -301,6 +301,10 @@ class TaskSnapshotSurface implements StartingSurface {
+     }
+ 
+     private void drawSizeMismatchSnapshot(GraphicBuffer buffer) {
++        // check if mNativeObject of mSurface is valid or not
++        if (!mSurface.isValid()) {
++            throw new IllegalStateException("mSurface does not hold a valid surface.");
++        }
+         final SurfaceSession session = new SurfaceSession(mSurface);
+ 
+         // Keep a reference to it such that it doesn't get destroyed when finalized.
+-- 
+2.11.0
+

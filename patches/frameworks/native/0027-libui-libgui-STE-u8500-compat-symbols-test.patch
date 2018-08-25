@@ -1,7 +1,7 @@
-From 0c451ac204d97db3b98a24ac38343dcbb24dd967 Mon Sep 17 00:00:00 2001
+From 2a9b75940cf21c8937d86a8081d62620a3c65af0 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 27/43] libui, libgui: STE u8500 compat symbols test
+Subject: [PATCH 27/44] libui, libgui: STE u8500 compat symbols test
 
 ---
  libs/gui/DisplayEventReceiver.cpp           |  2 ++

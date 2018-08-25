@@ -1,7 +1,7 @@
-From f40a6a323dc7d969dee6a707be8c2c42d0b85eff Mon Sep 17 00:00:00 2001
+From 7ce96fe0d2422c3106ed470aa626b35f97b5bada Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 29/43] libgui: reset Consumer to 32-bit usage
+Subject: [PATCH 29/44] libgui: reset Consumer to 32-bit usage
 
 ---
  libs/gui/BufferItemConsumer.cpp                    |  6 ++--

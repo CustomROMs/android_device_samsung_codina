@@ -1,0 +1,58 @@
+From 0cf0dbee8e6f137a032cccf7b6d8062aa05f7bc7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 17:11:49 +0300
+Subject: [PATCH 07/15] bootable-recovery_007-Allow-twrp-parted-binary.patch
+
+Change-Id: Ib289ec6c035cb6b33233ac3795e600f9b282c302
+---
+ Android.mk          |  3 +++
+ prebuilt/Android.mk | 19 +++++++++++--------
+ 2 files changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index f6564a1a..d3cb71cd 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -429,6 +429,9 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+         LOCAL_ADDITIONAL_DEPENDENCIES += sgdisk_static
+     endif
+ endif
++ifeq ($(TW_EXCLUDE_PARTED), true)
++    LOCAL_ADDITIONAL_DEPENDENCIES += parted
++endif
+ ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
+     LOCAL_ADDITIONAL_DEPENDENCIES += openaes openaes_license
+ endif
+diff --git a/prebuilt/Android.mk b/prebuilt/Android.mk
+index 6d032e98..2bd2e6f0 100644
+--- a/prebuilt/Android.mk
++++ b/prebuilt/Android.mk
+@@ -354,14 +354,17 @@ ifeq ($(BOARD_HAS_NO_REAL_SDCARD),)
+ 	    LOCAL_SRC_FILES := $(LOCAL_MODULE)
+ 	    include $(BUILD_PREBUILT)
+ 	endif
+-	#parted
+-	#include $(CLEAR_VARS)
+-	#LOCAL_MODULE := parted
+-	#LOCAL_MODULE_TAGS := eng
+-	#LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
+-	#LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
+-	#LOCAL_SRC_FILES := $(LOCAL_MODULE)
+-	#include $(BUILD_PREBUILT)
++endif
++
++ifeq ($(TW_EXCLUDE_PARTED), true)
++	#copy parted binary
++	include $(CLEAR_VARS)
++	LOCAL_MODULE := parted
++	LOCAL_MODULE_TAGS := eng
++	LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
++	LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/sbin
++	LOCAL_SRC_FILES := $(LOCAL_MODULE)
++	include $(BUILD_PREBUILT)
+ endif
+ 
+ # copy license file for OpenAES
+-- 
+2.11.0
+

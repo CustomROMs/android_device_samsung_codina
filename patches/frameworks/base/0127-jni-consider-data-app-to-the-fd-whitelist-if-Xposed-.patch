@@ -1,0 +1,40 @@
+From 852cbaf95289d1d4df3120160d1efcaa7a5635f4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 127/296] jni: consider /data/app to the fd whitelist if Xposed
+ is detected
+
+Latest security update has added whitelisting routine to the Zygote.
+
+Since Xposed now reads from /data/app,
+it's necessary to add /data/app to the whitelist.
+
+Dynamically do this if XposedBridge.jar is detected.
+---
+ core/jni/fd_utils.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/core/jni/fd_utils.cpp b/core/jni/fd_utils.cpp
+index 25664d28f5d..c2986ea4b68 100644
+--- a/core/jni/fd_utils.cpp
++++ b/core/jni/fd_utils.cpp
+@@ -112,6 +112,16 @@ bool FileDescriptorWhitelist::IsAllowed(const std::string& path) const {
+     return true;
+   }
+ 
++  if (access("/system/framework/XposedBridge.jar", F_OK ) != -1) {
++    // Xposed-powered Zygote might read from extensions other than .apk
++    // so skip extension check
++    // ALOGW("Xposed detected, loosening up Zygote fd check!");
++    static const char* kDataAppPrefix = "/data/app/";
++    if (android::base::StartsWith(path, kDataAppPrefix)) {
++      return true;
++    }
++  }
++
+   return false;
+ }
+ 
+-- 
+2.11.0
+

@@ -1,0 +1,66 @@
+From 0497a62ef2342a9044c631fbc39b220af8b61522 Mon Sep 17 00:00:00 2001
+From: LuK1337 <priv.luk@gmail.com>
+Date: Fri, 11 Nov 2016 19:10:42 +0100
+Subject: [PATCH 11/57] OMXNodeInstance: Fix legacy HAL1 after merge of
+ android-7.1.0_r7
+
+[AdrianDC]
+ * Forward-port to AOSP 8.0.0 libstagefright changes
+ * Convert to Android.bp product variables
+---
+ media/libstagefright/omx/Android.bp          |  3 +++
+ media/libstagefright/omx/OMXNodeInstance.cpp | 20 ++++++++++++++++++++
+ 2 files changed, 23 insertions(+)
+
+diff --git a/media/libstagefright/omx/Android.bp b/media/libstagefright/omx/Android.bp
+index 2c4668fba..6a3439a74 100644
+--- a/media/libstagefright/omx/Android.bp
++++ b/media/libstagefright/omx/Android.bp
+@@ -84,6 +84,9 @@ cc_library_shared {
+             uses_qcom_bsp_legacy: {
+                 cppflags: ["-DQCOM_BSP_LEGACY"],
+             },
++            has_legacy_camera_hal1: {
++                cflags: ["-DCAMCORDER_GRALLOC_SOURCE"],
++            },
+         },
+     },
+ 
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index fa7a81e1d..3b6f1482e 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -1677,10 +1677,30 @@ status_t OMXNodeInstance::emptyBuffer_l(
+     BufferMeta *buffer_meta =
+         static_cast<BufferMeta *>(header->pAppPrivate);
+ 
++#ifdef CAMCORDER_GRALLOC_SOURCE
++    sp<ABuffer> backup = buffer_meta->getBuffer(header, false /* limit */);
++    sp<ABuffer> codec = buffer_meta->getBuffer(header, false /* limit */);
++
++    // convert incoming ANW meta buffers if component is configured for gralloc metadata mode
++    // ignore rangeOffset in this case
++    if (mMetadataType[kPortIndexInput] == kMetadataBufferTypeGrallocSource
++            && backup->capacity() >= sizeof(VideoNativeMetadata)
++            && codec->capacity() >= sizeof(VideoGrallocMetadata)
++            && ((VideoNativeMetadata *)backup->base())->eType
++                    == kMetadataBufferTypeANWBuffer) {
++        VideoNativeMetadata &backupMeta = *(VideoNativeMetadata *)backup->base();
++        VideoGrallocMetadata &codecMeta = *(VideoGrallocMetadata *)codec->base();
++        CLOG_BUFFER(emptyBuffer, "converting ANWB %p to handle %p",
++                backupMeta.pBuffer, backupMeta.pBuffer->handle);
++        codecMeta.pHandle = backupMeta.pBuffer != NULL ? backupMeta.pBuffer->handle : NULL;
++        codecMeta.eType = kMetadataBufferTypeGrallocSource;
++        header->nFilledLen = rangeLength ? sizeof(codecMeta) : 0;
++#else
+     // set up proper filled length if component is configured for gralloc metadata mode
+     // ignore rangeOffset in this case (as client may be assuming ANW meta buffers).
+     if (mMetadataType[kPortIndexInput] == kMetadataBufferTypeGrallocSource) {
+         header->nFilledLen = rangeLength ? sizeof(VideoGrallocMetadata) : 0;
++#endif
+         header->nOffset = 0;
+     } else {
+         // rangeLength and rangeOffset must be a subset of the allocated data in the buffer.
+-- 
+2.11.0
+

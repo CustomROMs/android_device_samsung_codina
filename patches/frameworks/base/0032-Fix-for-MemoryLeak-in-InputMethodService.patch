@@ -1,0 +1,31 @@
+From 5f9ebda5582b7a87d7fb73a242cd735b60d3b0c1 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 032/296] Fix for MemoryLeak in InputMethodService
+
+Problem: when onConfigrationChanged is called many times,
+mInsetsComputer is added many times to the list.
+Solution: check before if specific listener is already
+in the arraylist.
+---
+ core/java/android/view/ViewTreeObserver.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/view/ViewTreeObserver.java b/core/java/android/view/ViewTreeObserver.java
+index 0973d0aa9b9..7fbd443a136 100644
+--- a/core/java/android/view/ViewTreeObserver.java
++++ b/core/java/android/view/ViewTreeObserver.java
+@@ -1178,7 +1178,9 @@ public final class ViewTreeObserver {
+         }
+ 
+         void add(T item) {
+-            getArray().add(item);
++            if (!getArray().contains(item)) {
++                getArray().add(item);
++            }
+         }
+ 
+         void addAll(CopyOnWriteArray<T> array) {
+-- 
+2.11.0
+

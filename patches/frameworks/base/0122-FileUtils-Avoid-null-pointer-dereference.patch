@@ -1,0 +1,24 @@
+From 366058f593f8705bc0002ce92a3c111c84949e6f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 122/296] FileUtils: Avoid null pointer dereference
+
+---
+ core/java/android/os/FileUtils.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/java/android/os/FileUtils.java b/core/java/android/os/FileUtils.java
+index 56d6e0a62f9..4b7e07761e8 100644
+--- a/core/java/android/os/FileUtils.java
++++ b/core/java/android/os/FileUtils.java
+@@ -436,6 +436,7 @@ public class FileUtils {
+     }
+ 
+     public static boolean contains(String dirPath, String filePath) {
++        if (dirPath == null || filePath == null) return false;
+         if (dirPath.equals(filePath)) {
+             return true;
+         }
+-- 
+2.11.0
+

@@ -1,7 +1,7 @@
-From dc8ceb0c3db3a1b2e36fc1f88cb464277c8f354a Mon Sep 17 00:00:00 2001
+From fee431f5cae36efb892ab0781cd9001b39fd33e6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 31/43] libgui: fixes for 32-bit usage [2]
+Subject: [PATCH 31/44] libgui: fixes for 32-bit usage [2]
 
  GrallocUsage to legacy 32-bit
 ---

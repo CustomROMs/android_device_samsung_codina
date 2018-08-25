@@ -1,0 +1,36 @@
+From 082b5911b4bbbc526c413b8d5608551f10de79f9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 164/296] Native crash occurs.
+ android.renderscript.FieldPacker#subalign()
+
+Bug Details:
+Although arguments are checked by android.renderscript.FieldPacker#subalign(),
+Native crash occurs without RSIllegalArgumentException being thrown because there is no consideration when the argument is 0 or less.
+
+Modification:
+When checking the argument of the subalign() method,
+if it is 0 or less (like align()), a condition to throw RSIllegalArgumentException is added.
+---
+ rs/java/android/renderscript/FieldPacker.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100644 => 100755 rs/java/android/renderscript/FieldPacker.java
+
+diff --git a/rs/java/android/renderscript/FieldPacker.java b/rs/java/android/renderscript/FieldPacker.java
+old mode 100644
+new mode 100755
+index de1c49730aa..2c69c52dbb2
+--- a/rs/java/android/renderscript/FieldPacker.java
++++ b/rs/java/android/renderscript/FieldPacker.java
+@@ -68,7 +68,7 @@ public class FieldPacker {
+     }
+ 
+     public void subalign(int v) {
+-        if ((v & (v - 1)) != 0) {
++        if ((v <= 0) || (v & (v - 1)) != 0) {
+             throw new RSIllegalArgumentException("argument must be a non-negative non-zero power of 2: " + v);
+         }
+ 
+-- 
+2.11.0
+

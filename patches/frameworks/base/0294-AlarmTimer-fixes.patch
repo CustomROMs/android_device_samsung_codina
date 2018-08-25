@@ -1,0 +1,266 @@
+From f24238781043ea32060d9941ac16af23c07acbbd Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 16 Aug 2018 16:27:16 +0300
+Subject: [PATCH 294/296] AlarmTimer fixes
+
+Change-Id: Ia589e9757aef99d59820d37114ee79517c48b034
+---
+ .../com/android/settingslib/wifi/AccessPoint.java  |  6 ++--
+ packages/SystemUI/Android.mk                       |  1 +
+ .../com/android/systemui/util/AlarmTimeout.java    |  2 +-
+ services/Android.mk                                |  1 +
+ .../com/android/server/AlarmManagerService.java    | 34 +++++++++++-----------
+ .../android/server/am/ActivityManagerService.java  | 15 ++--------
+ 6 files changed, 25 insertions(+), 34 deletions(-)
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java b/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
+index 11e0126a18e..6a2bd507651 100755
+--- a/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
++++ b/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
+@@ -469,7 +469,7 @@ public class AccessPoint implements Comparable<AccessPoint> {
+      * @return true if the set speed has changed
+      */
+     private boolean updateScores(WifiNetworkScoreCache scoreCache, long maxScoreCacheAgeMillis) {
+-        long nowMillis = SystemClock.elapsedRealtime();
++        long nowMillis = SystemClock.uptimeMillis();
+         for (ScanResult result : mScanResultCache.values()) {
+             ScoredNetwork score = scoreCache.getScoredNetwork(result);
+             if (score == null) {
+@@ -570,7 +570,7 @@ public class AccessPoint implements Comparable<AccessPoint> {
+     }
+ 
+     private void evictOldScanResults() {
+-        long nowMs = SystemClock.elapsedRealtime();
++        long nowMs = SystemClock.uptimeMillis();
+         for (Iterator<ScanResult> iter = mScanResultCache.values().iterator(); iter.hasNext(); ) {
+             ScanResult result = iter.next();
+             // result timestamp is in microseconds
+@@ -956,7 +956,7 @@ public class AccessPoint implements Comparable<AccessPoint> {
+         evictOldScanResults();
+ 
+         // TODO: sort list by RSSI or age
+-        long nowMs = SystemClock.elapsedRealtime();
++        long nowMs = SystemClock.uptimeMillis();
+         for (ScanResult result : mScanResultCache.values()) {
+             if (result.frequency >= LOWER_FREQ_5GHZ
+                     && result.frequency <= HIGHER_FREQ_5GHZ) {
+diff --git a/packages/SystemUI/Android.mk b/packages/SystemUI/Android.mk
+index 0e25717a099..b9df2d074f1 100644
+--- a/packages/SystemUI/Android.mk
++++ b/packages/SystemUI/Android.mk
+@@ -50,6 +50,7 @@ LOCAL_JAVA_LIBRARIES += android.car
+ LOCAL_FULL_LIBS_MANIFEST_FILES := $(LOCAL_PATH)/LineageManifest.xml
+ 
+ LOCAL_PACKAGE_NAME := SystemUI
++LOCAL_DEX_PREOPT := false
+ LOCAL_CERTIFICATE := platform
+ LOCAL_PRIVILEGED_MODULE := true
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/util/AlarmTimeout.java b/packages/SystemUI/src/com/android/systemui/util/AlarmTimeout.java
+index f7f61aff984..6c0008e617f 100644
+--- a/packages/SystemUI/src/com/android/systemui/util/AlarmTimeout.java
++++ b/packages/SystemUI/src/com/android/systemui/util/AlarmTimeout.java
+@@ -66,7 +66,7 @@ public class AlarmTimeout implements AlarmManager.OnAlarmListener {
+         }
+ 
+         mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+-                SystemClock.elapsedRealtime() + timeout, mTag, this, mHandler);
++                SystemClock.elapsedRealtime1() + timeout, mTag, this, mHandler);
+         mScheduled = true;
+     }
+ 
+diff --git a/services/Android.mk b/services/Android.mk
+index 5a182e216bf..c26b2f1d36b 100644
+--- a/services/Android.mk
++++ b/services/Android.mk
+@@ -46,6 +46,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := $(addprefix services.,$(services)) \
+ LOCAL_JAVA_LIBRARIES := \
+     android.hidl.manager-V1.0-java
+ 
++LOCAL_DEX_PREOPT := false
+ LOCAL_JAVA_LIBRARIES += org.lineageos.platform.internal
+ 
+ ifeq ($(EMMA_INSTRUMENT_FRAMEWORK),true)
+diff --git a/services/core/java/com/android/server/AlarmManagerService.java b/services/core/java/com/android/server/AlarmManagerService.java
+index 022c431413b..be4de6f0d7c 100644
+--- a/services/core/java/com/android/server/AlarmManagerService.java
++++ b/services/core/java/com/android/server/AlarmManagerService.java
+@@ -720,7 +720,7 @@ class AlarmManagerService extends SystemService {
+     static long convertToElapsed(long when, int type) {
+         final boolean isRtc = (type == RTC || type == RTC_WAKEUP);
+         if (isRtc) {
+-            when -= System.currentTimeMillis() - SystemClock.elapsedRealtime();
++            when -= System.currentTimeMillis() - SystemClock.elapsedRealtime1();
+         }
+         return when;
+     }
+@@ -774,7 +774,7 @@ class AlarmManagerService extends SystemService {
+         ArrayList<Batch> oldSet = (ArrayList<Batch>) mAlarmBatches.clone();
+         mAlarmBatches.clear();
+         Alarm oldPendingIdleUntil = mPendingIdleUntil;
+-        final long nowElapsed = SystemClock.elapsedRealtime();
++        final long nowElapsed = SystemClock.elapsedRealtime1();
+         final int oldBatches = oldSet.size();
+         for (int batchNum = 0; batchNum < oldBatches; batchNum++) {
+             Batch batch = oldSet.get(batchNum);
+@@ -820,7 +820,7 @@ class AlarmManagerService extends SystemService {
+             IdleDispatchEntry ent = new IdleDispatchEntry();
+             ent.uid = 0;
+             ent.pkg = "FINISH IDLE";
+-            ent.elapsedRealtime = SystemClock.elapsedRealtime();
++            ent.elapsedRealtime = SystemClock.elapsedRealtime1();
+             mAllowWhileIdleDispatches.add(ent);
+         }
+ 
+@@ -828,7 +828,7 @@ class AlarmManagerService extends SystemService {
+         if (mPendingWhileIdleAlarms.size() > 0) {
+             ArrayList<Alarm> alarms = mPendingWhileIdleAlarms;
+             mPendingWhileIdleAlarms = new ArrayList<>();
+-            final long nowElapsed = SystemClock.elapsedRealtime();
++            final long nowElapsed = SystemClock.elapsedRealtime1();
+             for (int i=alarms.size() - 1; i >= 0; i--) {
+                 Alarm a = alarms.get(i);
+                 reAddAlarmLocked(a, nowElapsed, false);
+@@ -1149,7 +1149,7 @@ class AlarmManagerService extends SystemService {
+             triggerAtTime = 0;
+         }
+ 
+-        final long nowElapsed = SystemClock.elapsedRealtime();
++        final long nowElapsed = SystemClock.elapsedRealtime1();
+         final long nominalTrigger = convertToElapsed(triggerAtTime, type);
+         // Try to prevent spamming by making sure we aren't firing alarms in the immediate future
+         final long minTrigger = nowElapsed + mConstants.MIN_FUTURITY;
+@@ -1208,7 +1208,7 @@ class AlarmManagerService extends SystemService {
+                 a.when = a.whenElapsed = a.maxWhenElapsed = mNextWakeFromIdle.whenElapsed;
+             }
+             // Add fuzz to make the alarm go off some time before the actual desired time.
+-            final long nowElapsed = SystemClock.elapsedRealtime();
++            final long nowElapsed = SystemClock.elapsedRealtime1();
+             final int fuzz = fuzzForDuration(a.whenElapsed-nowElapsed);
+             if (fuzz > 0) {
+                 if (mRandom == null) {
+@@ -1245,7 +1245,7 @@ class AlarmManagerService extends SystemService {
+                 ent.pkg = a.operation.getCreatorPackage();
+                 ent.tag = a.operation.getTag("");
+                 ent.op = "SET";
+-                ent.elapsedRealtime = SystemClock.elapsedRealtime();
++                ent.elapsedRealtime = SystemClock.elapsedRealtime1();
+                 ent.argRealtime = a.whenElapsed;
+                 mAllowWhileIdleDispatches.add(ent);
+             }
+@@ -1278,7 +1278,7 @@ class AlarmManagerService extends SystemService {
+                     IdleDispatchEntry ent = new IdleDispatchEntry();
+                     ent.uid = 0;
+                     ent.pkg = "START IDLE";
+-                    ent.elapsedRealtime = SystemClock.elapsedRealtime();
++                    ent.elapsedRealtime = SystemClock.elapsedRealtime1();
+                     mAllowWhileIdleDispatches.add(ent);
+                 }
+             }
+@@ -1473,7 +1473,7 @@ class AlarmManagerService extends SystemService {
+             pw.println();
+ 
+             final long nowRTC = System.currentTimeMillis();
+-            final long nowELAPSED = SystemClock.elapsedRealtime();
++            final long nowELAPSED = SystemClock.elapsedRealtime1();
+             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+ 
+             pw.print("  nowRTC="); pw.print(nowRTC);
+@@ -1759,7 +1759,7 @@ class AlarmManagerService extends SystemService {
+         ByteArrayOutputStream bs = new ByteArrayOutputStream(2048);
+         PrintWriter pw = new PrintWriter(bs);
+         final long nowRTC = System.currentTimeMillis();
+-        final long nowELAPSED = SystemClock.elapsedRealtime();
++        final long nowELAPSED = SystemClock.elapsedRealtime1();
+         final int NZ = mAlarmBatches.size();
+         for (int iz = 0; iz < NZ; iz++) {
+             Batch bz = mAlarmBatches.get(iz);
+@@ -1957,7 +1957,7 @@ class AlarmManagerService extends SystemService {
+             final Batch firstBatch = mAlarmBatches.get(0);
+             if (firstWakeup != null && mNextWakeup != firstWakeup.start) {
+                 mNextWakeup = firstWakeup.start;
+-                mLastWakeupSet = SystemClock.elapsedRealtime();
++                mLastWakeupSet = SystemClock.elapsedRealtime1();
+                 setLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup.start);
+             }
+             if (firstBatch != firstWakeup) {
+@@ -2100,7 +2100,7 @@ class AlarmManagerService extends SystemService {
+     void interactiveStateChangedLocked(boolean interactive) {
+         if (mInteractive != interactive) {
+             mInteractive = interactive;
+-            final long nowELAPSED = SystemClock.elapsedRealtime();
++            final long nowELAPSED = SystemClock.elapsedRealtime1();
+             if (interactive) {
+                 if (mPendingNonWakeupAlarms.size() > 0) {
+                     final long thisDelayTime = nowELAPSED - mStartCurrentDelayTime;
+@@ -2552,12 +2552,12 @@ class AlarmManagerService extends SystemService {
+             while (true)
+             {
+                 int result = waitForAlarm(mNativeData);
+-                mLastWakeup = SystemClock.elapsedRealtime();
++                mLastWakeup = SystemClock.elapsedRealtime1();
+ 
+                 triggerList.clear();
+ 
+                 final long nowRTC = System.currentTimeMillis();
+-                final long nowELAPSED = SystemClock.elapsedRealtime();
++                final long nowELAPSED = SystemClock.elapsedRealtime1();
+ 
+                 if ((result & TIME_CHANGED_MASK) != 0) {
+                     // The kernel can give us spurious time change notifications due to
+@@ -2719,7 +2719,7 @@ class AlarmManagerService extends SystemService {
+                     ArrayList<Alarm> triggerList = new ArrayList<Alarm>();
+                     synchronized (mLock) {
+                         final long nowRTC = System.currentTimeMillis();
+-                        final long nowELAPSED = SystemClock.elapsedRealtime();
++                        final long nowELAPSED = SystemClock.elapsedRealtime1();
+                         triggerAlarmsLocked(triggerList, nowELAPSED, nowRTC);
+                         updateNextAlarmClockLocked();
+                     }
+@@ -2801,7 +2801,7 @@ class AlarmManagerService extends SystemService {
+             final long tickEventDelay = nextTime - currentTime;
+ 
+             final WorkSource workSource = null; // Let system take blame for time tick events.
+-            setImpl(ELAPSED_REALTIME, SystemClock.elapsedRealtime() + tickEventDelay, 0,
++            setImpl(ELAPSED_REALTIME, SystemClock.elapsedRealtime1() + tickEventDelay, 0,
+                     0, mTimeTickSender, null, null, AlarmManager.FLAG_STANDALONE, workSource,
+                     null, Process.myUid(), "android");
+         }
+@@ -2997,7 +2997,7 @@ class AlarmManagerService extends SystemService {
+         }
+ 
+         private void updateStatsLocked(InFlight inflight) {
+-            final long nowELAPSED = SystemClock.elapsedRealtime();
++            final long nowELAPSED = SystemClock.elapsedRealtime1();
+             BroadcastStats bs = inflight.mBroadcastStats;
+             bs.nesting--;
+             if (bs.nesting <= 0) {
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 5070ddc5cbb..210e9fa835b 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -1861,19 +1861,8 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     d.show();
+                 }
+             } break;
+-            case SHOW_FINGERPRINT_ERROR_UI_MSG: {
+-                if (mShowDialogs) {
+-                    AlertDialog d = new BaseErrorDialog(mUiContext);
+-                    d.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
+-                    d.setCancelable(false);
+-                    d.setTitle(mUiContext.getText(R.string.android_system_label));
+-                    d.setMessage(mContext.getString(R.string.lineage_system_error_manufacturer,
+-                            SystemProperties.get("ro.build.fingerprint").split("/")[3]));
+-                    d.setButton(DialogInterface.BUTTON_POSITIVE, mUiContext.getText(R.string.ok),
+-                            obtainMessage(DISMISS_DIALOG_UI_MSG, d));
+-                    d.show();
+-                }
+-            } break;
++            case SHOW_FINGERPRINT_ERROR_UI_MSG:
++                break;
+             case SHOW_COMPAT_MODE_DIALOG_UI_MSG: {
+                 synchronized (ActivityManagerService.this) {
+                     ActivityRecord ar = (ActivityRecord) msg.obj;
+-- 
+2.11.0
+

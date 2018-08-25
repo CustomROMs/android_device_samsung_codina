@@ -1,0 +1,36 @@
+From 948846baa9a5d8b4aa8089653c2fcdbe882cca9f Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 161/296] Fix the unlocking by SPACE key event
+
+StatusBar view is handling SPACE key for unlocking,
+but QSContainerImpl consumes the event before StatusBar,
+so unlocking does not work.
+
+The purpose of QSContainerImpl is to prevent miss touch,
+so this patch changes not to consume the event
+if phone is not in touch mode.
+---
+ packages/SystemUI/src/com/android/systemui/qs/QSContainerImpl.java | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/QSContainerImpl.java b/packages/SystemUI/src/com/android/systemui/qs/QSContainerImpl.java
+index 33b5268e03e..771973d1902 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/QSContainerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/QSContainerImpl.java
+@@ -61,6 +61,12 @@ public class QSContainerImpl extends FrameLayout {
+ 
+     @Override
+     public boolean performClick() {
++        if (!isInTouchMode()) {
++            // Do not consume Click event if it is not in Touch Mode in order to
++            // handle SPACE key which is mapped as unlocking in StatusBarWindowView.
++            return false;
++        }
++
+         // Want to receive clicks so missing QQS tiles doesn't cause collapse, but
+         // don't want to do anything with them.
+         return true;
+-- 
+2.11.0
+

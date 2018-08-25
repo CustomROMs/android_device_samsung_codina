@@ -1,0 +1,25 @@
+From 7082c8758f5e0216aea3afafbd5b978ba0580190 Mon Sep 17 00:00:00 2001
+From: Lei Peng <lei.peng@spreadtrum.com>
+Date: Fri, 10 Mar 2017 15:00:02 +0800
+Subject: [PATCH 148/296] Fix a null pointer exception in FragmentManager
+
+---
+ core/java/android/app/FragmentManager.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/app/FragmentManager.java b/core/java/android/app/FragmentManager.java
+index 0d5cd0214f3..d993f46e3f1 100644
+--- a/core/java/android/app/FragmentManager.java
++++ b/core/java/android/app/FragmentManager.java
+@@ -1349,7 +1349,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
+                         if (f.mView != null) {
+                             // Need to save the current view state if not
+                             // done already.
+-                            if (mHost.onShouldSaveFragmentState(f) && f.mSavedViewState == null) {
++                            if (mHost != null && mHost.onShouldSaveFragmentState(f) && f.mSavedViewState == null) {
+                                 saveFragmentViewState(f);
+                             }
+                         }
+-- 
+2.11.0
+

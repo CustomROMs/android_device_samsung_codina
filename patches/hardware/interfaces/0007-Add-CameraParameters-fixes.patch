@@ -1,0 +1,87 @@
+From 629e3b535948ceb7f31efe0c84b3f280397a6146 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 07/10] Add CameraParameters fixes
+
+---
+ camera/common/1.0/default/CameraParameters.cpp       | 15 ++++++++++++++-
+ camera/common/1.0/default/include/CameraParameters.h | 16 ++++++++++++++++
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/camera/common/1.0/default/CameraParameters.cpp b/camera/common/1.0/default/CameraParameters.cpp
+index e707b085..40e80728 100644
+--- a/camera/common/1.0/default/CameraParameters.cpp
++++ b/camera/common/1.0/default/CameraParameters.cpp
+@@ -99,6 +99,8 @@ const char CameraParameters::KEY_VIDEO_SNAPSHOT_SUPPORTED[] = "video-snapshot-su
+ const char CameraParameters::KEY_VIDEO_STABILIZATION[] = "video-stabilization";
+ const char CameraParameters::KEY_VIDEO_STABILIZATION_SUPPORTED[] = "video-stabilization-supported";
+ const char CameraParameters::KEY_LIGHTFX[] = "light-fx";
++const char CameraParameters::KEY_RECORD_STRIDE[] = "record-stride";
++const char CameraParameters::KEY_RECORD_SLICE_HEIGHT[] = "record-slice-height";
+ 
+ const char CameraParameters::TRUE[] = "true";
+ const char CameraParameters::FALSE[] = "false";
+@@ -156,7 +158,18 @@ const char CameraParameters::SCENE_MODE_PARTY[] = "party";
+ const char CameraParameters::SCENE_MODE_CANDLELIGHT[] = "candlelight";
+ const char CameraParameters::SCENE_MODE_BARCODE[] = "barcode";
+ const char CameraParameters::SCENE_MODE_HDR[] = "hdr";
+-
++const char CameraParameters::SCENE_MODE_AQUA[] = "aqua";
++const char CameraParameters::SCENE_MODE_BACKLIGHT[] = "backlight";
++const char CameraParameters::SCENE_MODE_DUSKDAWN[] = "duskdawn";
++const char CameraParameters::SCENE_MODE_FALLCOLOR[] = "fallcolor";
++const char CameraParameters::SCENE_MODE_TEXT[] = "text";
++
++const char CameraParameters::PIXEL_FORMAT_YUV420SPNV12[] = "yuv420spnv12";
++const char CameraParameters::PIXEL_FORMAT_YUV420MB[] = "yuv420mb";
++const char CameraParameters::PIXEL_FORMAT_YVU422SP[] = "yvu422sp";
++const char CameraParameters::PIXEL_FORMAT_YVU422P[] = "yvu422p";
++const char CameraParameters::PIXEL_FORMAT_YVU420SP[] = "yvu420sp";
++const char CameraParameters::PIXEL_FORMAT_YVU420P[]  = "yvu420p";
+ const char CameraParameters::PIXEL_FORMAT_YUV422SP[] = "yuv422sp";
+ const char CameraParameters::PIXEL_FORMAT_YUV420SP[] = "yuv420sp";
+ const char CameraParameters::PIXEL_FORMAT_YUV422I[] = "yuv422i-yuyv";
+diff --git a/camera/common/1.0/default/include/CameraParameters.h b/camera/common/1.0/default/include/CameraParameters.h
+index e4ff6f21..7f67e26d 100644
+--- a/camera/common/1.0/default/include/CameraParameters.h
++++ b/camera/common/1.0/default/include/CameraParameters.h
+@@ -543,6 +543,9 @@ public:
+     // Example values: "lowlight,hdr".
+     static const char KEY_LIGHTFX[];
+ 
++    static const char KEY_RECORD_STRIDE[];
++    static const char KEY_RECORD_SLICE_HEIGHT[];
++
+     // Value for KEY_ZOOM_SUPPORTED or KEY_SMOOTH_ZOOM_SUPPORTED.
+     static const char TRUE[];
+     static const char FALSE[];
+@@ -616,6 +619,12 @@ public:
+     // image in some fashion. Only the final image is returned.
+     static const char SCENE_MODE_HDR[];
+ 
++    static const char SCENE_MODE_AQUA[];
++    static const char SCENE_MODE_BACKLIGHT[];
++    static const char SCENE_MODE_DUSKDAWN[];
++    static const char SCENE_MODE_FALLCOLOR[];
++    static const char SCENE_MODE_TEXT[];
++
+     // Pixel color formats for KEY_PREVIEW_FORMAT, KEY_PICTURE_FORMAT,
+     // and KEY_VIDEO_FRAME_FORMAT
+     static const char PIXEL_FORMAT_YUV422SP[];
+@@ -631,6 +640,13 @@ public:
+     // Pixel format is not known to the framework
+     static const char PIXEL_FORMAT_ANDROID_OPAQUE[];
+ 
++    static const char PIXEL_FORMAT_YUV420SPNV12[];
++    static const char PIXEL_FORMAT_YVU422SP[];
++    static const char PIXEL_FORMAT_YVU422P[];
++    static const char PIXEL_FORMAT_YVU420SP[];
++    static const char PIXEL_FORMAT_YVU420P[];
++    static const char PIXEL_FORMAT_YUV420MB[];
++
+     // Values for focus mode settings.
+     // Auto-focus mode. Applications should call
+     // CameraHardwareInterface.autoFocus to start the focus in this mode.
+-- 
+2.11.0
+

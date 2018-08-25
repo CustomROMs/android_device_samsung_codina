@@ -1,0 +1,207 @@
+From e898c3543e8a5069cd3ff5c7c2775cda06142c54 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 19:28:52 +0300
+Subject: [PATCH 40/40] Revert "SystemClock fixes"
+
+This reverts commit e0f014e8e558bf3324a6f1d9a9f1946fd61d0780.
+
+Change-Id: Ie733797308cab948b84e902ead2906d5b1a89f96
+---
+ libutils/Android.bp      |   5 +-
+ libutils/SystemClock.cpp | 117 ++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 102 insertions(+), 20 deletions(-)
+
+diff --git a/libutils/Android.bp b/libutils/Android.bp
+index b4b59a50b..0083f6657 100644
+--- a/libutils/Android.bp
++++ b/libutils/Android.bp
+@@ -38,7 +38,7 @@ cc_library_headers {
+             enabled: true,
+         },
+         windows: {
+-            enabled: false,
++            enabled: true,
+         },
+     },
+ }
+@@ -111,7 +111,6 @@ cc_library {
+                 "libdl",
+                 "libvndksupport",
+             ],
+-
+             sanitize: {
+                 misc_undefined: ["integer"],
+             },
+@@ -150,7 +149,7 @@ cc_library {
+                 "-Wno-unused-private-field",
+             ],
+ 
+-            enabled: false,
++            enabled: true,
+         },
+     },
+ 
+diff --git a/libutils/SystemClock.cpp b/libutils/SystemClock.cpp
+index a89a411f9..76aa78a64 100644
+--- a/libutils/SystemClock.cpp
++++ b/libutils/SystemClock.cpp
+@@ -29,11 +29,22 @@
+ 
+ #include <cutils/compiler.h>
+ 
++#if defined(__ANDROID__)
++#include <linux/ioctl.h>
++#include <linux/rtc.h>
++#include <utils/Atomic.h>
++#include <linux/android_alarm.h>
++#endif
++
+ #include <utils/Timers.h>
+ #include <utils/Log.h>
+ 
+ namespace android {
+ 
++static int clock_method = -1;
++
++static int debug_time = 0;
++
+ /*
+  * native public static long uptimeMillis();
+  */
+@@ -59,44 +70,116 @@ int64_t elapsedRealtime1()
+ 	return nanoseconds_to_milliseconds(elapsedRealtimeNano1());
+ }
+ 
++#define METHOD_CLOCK_GETTIME    0
++#define METHOD_IOCTL            1
++#define METHOD_SYSTEMTIME       2
++
++/*
++ * To debug/verify the timestamps returned by the kernel, change
++ * DEBUG_TIMESTAMP to 1 and call the timestamp routine from a single thread
++ * in the test program. b/10899829
++ */
++#define DEBUG_TIMESTAMP         0
++
++#if DEBUG_TIMESTAMP && defined(__arm__)
++static inline void checkTimeStamps(int64_t timestamp,
++                                   int64_t volatile *prevTimestampPtr,
++                                   int volatile *prevMethodPtr,
++                                   int curMethod)
++{
++    /*
++     * Disable the check for SDK since the prebuilt toolchain doesn't contain
++     * gettid, and int64_t is different on the ARM platform
++     * (ie long vs long long).
++     */
++    int64_t prevTimestamp = *prevTimestampPtr;
++    int prevMethod = *prevMethodPtr;
++
++    if (timestamp < prevTimestamp) {
++        static const char *gettime_method_names[] = {
++            "clock_gettime",
++            "ioctl",
++            "systemTime",
++        };
++
++        ALOGW("time going backwards: prev %lld(%s) vs now %lld(%s), tid=%d",
++              prevTimestamp, gettime_method_names[prevMethod],
++              timestamp, gettime_method_names[curMethod],
++              gettid());
++    }
++    // NOTE - not atomic and may generate spurious warnings if the 64-bit
++    // write is interrupted or not observed as a whole.
++    *prevTimestampPtr = timestamp;
++    *prevMethodPtr = curMethod;
++}
++#else
++#define checkTimeStamps(timestamp, prevTimestampPtr, prevMethodPtr, curMethod)
++#endif
++
+ /*
+  * native public static long elapsedRealtimeNano();
+  */
+ int64_t elapsedRealtimeNano()
+ {
+-#if defined(__linux__)
++#if defined(__ANDROID__)
++    static int s_fd = -1;
++
++    if (s_fd == -1) {
++        int fd = open("/dev/alarm", O_RDONLY);
++        if (android_atomic_cmpxchg(-1, fd, &s_fd)) {
++            close(fd);
++        }
++    }
++
+     struct timespec ts;
+-    int err = clock_gettime(CLOCK_BOOTTIME, &ts);
+-    if (CC_UNLIKELY(err)) {
+-        // This should never happen, but just in case ...
+-        ALOGE("clock_gettime(CLOCK_BOOTTIME) failed: %s", strerror(errno));
+-        return 0;
++    if (ioctl(s_fd, ANDROID_ALARM_GET_TIME(ANDROID_ALARM_ELAPSED_REALTIME), &ts) == 0) {
++        return seconds_to_nanoseconds(ts.tv_sec) + ts.tv_nsec;
++    }
++
++    // /dev/alarm doesn't exist, fallback to CLOCK_BOOTTIME
++    if (clock_gettime(CLOCK_BOOTTIME, &ts) == 0) {
++        return seconds_to_nanoseconds(ts.tv_sec) + ts.tv_nsec;
+     }
+ 
+-    return seconds_to_nanoseconds(ts.tv_sec) + ts.tv_nsec;
++    // XXX: there was an error, probably because the driver didn't
++    // exist ... this should return
++    // a real error, like an exception!
++    return systemTime(SYSTEM_TIME_MONOTONIC);
+ #else
+     return systemTime(SYSTEM_TIME_MONOTONIC);
+ #endif
+ }
+ 
++
+ /*
+  * native public static long elapsedRealtimeNano1();
+  */
+ int64_t elapsedRealtimeNano1()
+ {
+-#if defined(__linux__)
+     struct timespec ts;
+-    int err = clock_gettime(CLOCK_BOOTTIME, &ts);
+-    if (CC_UNLIKELY(err)) {
+-        // This should never happen, but just in case ...
+-        ALOGE("clock_gettime(CLOCK_BOOTTIME) failed: %s", strerror(errno));
+-        return 0;
++    int result;
++    int64_t timestamp;
++#if DEBUG_TIMESTAMP
++    static volatile int64_t prevTimestamp;
++    static volatile int prevMethod;
++#endif
++
++    static int s_fd = -1;
++
++    //pthread_mutex_lock(&clock_lock);
++
++    // /dev/alarm doesn't exist, fallback to CLOCK_BOOTTIME
++    result = clock_gettime(CLOCK_BOOTTIME, &ts);
++    if (result == 0) {
++        timestamp = seconds_to_nanoseconds(ts.tv_sec) + ts.tv_nsec;
++        checkTimeStamps(timestamp, &prevTimestamp, &prevMethod,
++                        METHOD_CLOCK_GETTIME);
++	if (debug_time)
++	        ALOGI("elapsedRealtimeNano: using METHOD_CLOCK_GETTIME");
+     }
++    //pthread_mutex_unlock(&clock_lock);
+ 
+-    return seconds_to_nanoseconds(ts.tv_sec) + ts.tv_nsec;
+-#else
+-    return systemTime(SYSTEM_TIME_MONOTONIC);
+-#endif
++    return timestamp;
+ }
+ 
+ }; // namespace android
+-- 
+2.11.0
+

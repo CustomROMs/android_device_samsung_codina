@@ -1,0 +1,58 @@
+From 19a2e7b905a807a8c0e55970d55887297253ce59 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 085/296] Hack: fix wifi autoconnection [2/3]
+
+---
+ core/java/android/os/SystemClock.java | 14 ++++++++++++++
+ core/jni/android_os_SystemClock.cpp   |  2 ++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/core/java/android/os/SystemClock.java b/core/java/android/os/SystemClock.java
+index b3d76d73ac3..44428f4240b 100644
+--- a/core/java/android/os/SystemClock.java
++++ b/core/java/android/os/SystemClock.java
+@@ -176,6 +176,13 @@ public final class SystemClock {
+     native public static long elapsedRealtime();
+ 
+     /**
++     * Returns milliseconds since boot, including time spent in sleep.
++     *
++     * @return elapsed milliseconds since boot.
++     */
++    native public static long elapsedRealtime1();
++
++    /**
+      * Returns nanoseconds since boot, including time spent in sleep.
+      *
+      * @return elapsed nanoseconds since boot.
+@@ -184,6 +191,13 @@ public final class SystemClock {
+     public static native long elapsedRealtimeNanos();
+ 
+     /**
++     * Returns nanoseconds since boot, including time spent in sleep.
++     *
++     * @return elapsed nanoseconds since boot.
++     */
++    public static native long elapsedRealtimeNanos1();
++
++    /**
+      * Returns milliseconds running in the current thread.
+      *
+      * @return elapsed milliseconds in the thread
+diff --git a/core/jni/android_os_SystemClock.cpp b/core/jni/android_os_SystemClock.cpp
+index 1f000d748b1..b23583a1605 100644
+--- a/core/jni/android_os_SystemClock.cpp
++++ b/core/jni/android_os_SystemClock.cpp
+@@ -88,6 +88,8 @@ static const JNINativeMethod gMethods[] = {
+     { "uptimeMillis", "()J", (void*) uptimeMillis },
+     { "elapsedRealtime", "()J", (void*) elapsedRealtime },
+     { "elapsedRealtimeNanos", "()J", (void*) elapsedRealtimeNano },
++    { "elapsedRealtime1", "()J", (void*) elapsedRealtime1 },
++    { "elapsedRealtimeNanos1", "()J", (void*) elapsedRealtimeNano1 },
+ 
+     // SystemClock doesn't have an implementation for these that we can directly call
+     { "currentThreadTimeMillis", "()J",
+-- 
+2.11.0
+

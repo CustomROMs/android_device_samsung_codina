@@ -1,7 +1,7 @@
-From 16e1d75918d0d9351fbe18c0b2aae8fc9b2bad9d Mon Sep 17 00:00:00 2001
+From 8c1a4bf4d20ec0d8f808350c74f3da861ceb9614 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 28/43] libui: revert GraphicBuffer to 32-bit usage
+Subject: [PATCH 28/44] libui: revert GraphicBuffer to 32-bit usage
 
 ---
  libs/ui/GraphicBuffer.cpp                          | 76 ++++++++--------------

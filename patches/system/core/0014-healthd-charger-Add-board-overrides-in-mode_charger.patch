@@ -1,0 +1,37 @@
+From 8d602539afe4fc61adc20656d6d9375534be2150 Mon Sep 17 00:00:00 2001
+From: Chunmei Cai <ccai@codeaurora.org>
+Date: Sun, 6 Sep 2015 15:43:32 +0800
+Subject: [PATCH 14/40] healthd: charger: Add board overrides in mode_charger
+
+---
+ healthd/include/healthd/healthd.h | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/healthd/include/healthd/healthd.h b/healthd/include/healthd/healthd.h
+index 17efbd62a..32f7521a9 100644
+--- a/healthd/include/healthd/healthd.h
++++ b/healthd/include/healthd/healthd.h
+@@ -128,4 +128,20 @@ void healthd_board_init(struct healthd_config *config);
+ 
+ int healthd_board_battery_update(struct android::BatteryProperties *props);
+ 
++//This API is called to turn on/off the display backlight incase it can't be
++//handle correcty in the display driver by calling gr_fg_blank();
++void healthd_board_mode_charger_set_backlight(bool en);
++
++//This API is called to update the battery/charging status by using the user
++//noticeable method other then the animation, such as: LEDs
++void healthd_board_mode_charger_battery_update(struct android::BatteryProperties *batt_prop);
++
++//This API is used to handle some board specific charger mode initialization,
++//such as: checking the charging is enabled or not.
++void healthd_board_mode_charger_init(void);
++
++//This API is called in the draw_battery() function to draw more infomation
++//about the battery on the animation, such as the SoC (State of Charge).
++void healthd_board_mode_charger_draw_battery(struct android::BatteryProperties *batt_prop);
++
+ #endif /* _HEALTHD_H_ */
+-- 
+2.11.0
+

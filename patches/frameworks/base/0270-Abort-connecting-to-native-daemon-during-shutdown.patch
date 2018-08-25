@@ -1,0 +1,56 @@
+From 2489ae03782890ea84b66ec5511bc02676e0c9c7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 270/296] Abort connecting to native daemon during shutdown
+
+Symptom:
+System_server crashed due to unsolved "netd" service.
+
+Root cause:
+Init intentionally killed services when shutdown was triggered.
+NativeDaemonConnector unnecessarily tried to reconnect the killed
+daemon and NetworkManagemantService got a callback of connection.
+Finally, NetworkManagemantService failed to get netd service and it
+crashed with NPE.
+
+Solution:
+Do not retry connecting to the target native daemon when the device
+is in the middle of shutdown.
+---
+ services/core/java/com/android/server/NativeDaemonConnector.java | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/services/core/java/com/android/server/NativeDaemonConnector.java b/services/core/java/com/android/server/NativeDaemonConnector.java
+index 35ad416a2c1..67433b0159d 100644
+--- a/services/core/java/com/android/server/NativeDaemonConnector.java
++++ b/services/core/java/com/android/server/NativeDaemonConnector.java
+@@ -24,11 +24,13 @@ import android.os.Looper;
+ import android.os.Message;
+ import android.os.PowerManager;
+ import android.os.SystemClock;
++import android.os.SystemProperties;
+ import android.util.LocalLog;
+ import android.util.Slog;
+ 
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.util.Preconditions;
++import com.android.server.power.ShutdownThread;
+ import com.google.android.collect.Lists;
+ 
+ import java.io.FileDescriptor;
+@@ -136,6 +138,12 @@ final class NativeDaemonConnector implements Runnable, Handler.Callback, Watchdo
+                 listenToSocket();
+             } catch (Exception e) {
+                 loge("Error in NativeDaemonConnector: " + e);
++                String shutdownAct = SystemProperties.get(
++                        ShutdownThread.SHUTDOWN_ACTION_PROPERTY, "");
++                if (shutdownAct != null && shutdownAct.length() > 0) {
++                    // The device is in middle of shutdown.
++                    break;
++                }
+                 SystemClock.sleep(5000);
+             }
+         }
+-- 
+2.11.0
+

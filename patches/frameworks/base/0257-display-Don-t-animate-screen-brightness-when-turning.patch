@@ -1,0 +1,28 @@
+From d7f904e34e038a7ad4d344f79eba2c4dd4daec70 Mon Sep 17 00:00:00 2001
+From: Sultanxda <sultanxda@gmail.com>
+Date: Tue, 30 May 2017 00:02:52 +0530
+Subject: [PATCH 257/296] display: Don't animate screen brightness when turning
+ the screen on
+
+Make the display wake from sleep faster by going directly to the target
+brightness instead of ramping up to it.
+---
+ services/core/java/com/android/server/display/RampAnimator.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/display/RampAnimator.java b/services/core/java/com/android/server/display/RampAnimator.java
+index d71269f9eae..5625e348009 100644
+--- a/services/core/java/com/android/server/display/RampAnimator.java
++++ b/services/core/java/com/android/server/display/RampAnimator.java
+@@ -59,7 +59,7 @@ final class RampAnimator<T> {
+      */
+     public boolean animateTo(int target, int rate) {
+         // Immediately jump to the target the first time.
+-        if (mFirstTime || rate <= 0) {
++        if (mFirstTime || rate <= 0 || mCurrentValue == 0) {
+             if (mFirstTime || target != mCurrentValue) {
+                 mFirstTime = false;
+                 mRate = 0;
+-- 
+2.11.0
+

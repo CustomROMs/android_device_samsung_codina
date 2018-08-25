@@ -1,0 +1,108 @@
+From a6cd63e88f13cb8929905baf8a767957bf9d6f56 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 095/296] Revert Add data disabled icon
+
+---
+ .../statusbar/policy/MobileSignalController.java      | 12 ++----------
+ .../statusbar/policy/NetworkControllerImpl.java       |  1 -
+ .../systemui/statusbar/policy/TelephonyIcons.java     | 19 -------------------
+ 3 files changed, 2 insertions(+), 30 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/MobileSignalController.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/MobileSignalController.java
+index a82682a8450..c8d224cec38 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/MobileSignalController.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/MobileSignalController.java
+@@ -278,11 +278,9 @@ public class MobileSignalController extends SignalController<
+ 
+         String contentDescription = getStringIfExists(getContentDescription());
+         String dataContentDescription = getStringIfExists(icons.mDataContentDescription);
+-        final boolean dataDisabled = mCurrentState.iconGroup == TelephonyIcons.DATA_DISABLED
+-                && mCurrentState.userSetup;
+ 
+         // Show icon in QS when we are connected or data is disabled.
+-        boolean showDataIcon = mCurrentState.dataConnected || dataDisabled;
++        boolean showDataIcon = mCurrentState.dataConnected;
+         IconState statusIcon = new IconState(mCurrentState.enabled && !mCurrentState.airplaneMode,
+                 getCurrentIconId(), contentDescription);
+ 
+@@ -302,7 +300,7 @@ public class MobileSignalController extends SignalController<
+         boolean activityOut = mCurrentState.dataConnected
+                 && !mCurrentState.carrierNetworkChangeMode
+                 && mCurrentState.activityOut;
+-        showDataIcon &= mCurrentState.isDefault || dataDisabled;
++        showDataIcon &= mCurrentState.isDefault;
+         int typeIcon = showDataIcon ? icons.mDataType : 0;
+         callback.setMobileDataIndicators(statusIcon, qsIcon, typeIcon, qsTypeIcon,
+                 activityIn, activityOut, dataContentDescription, description, icons.mIsWide,
+@@ -463,8 +461,6 @@ public class MobileSignalController extends SignalController<
+         mCurrentState.roaming = isRoaming();
+         if (isCarrierNetworkChangeActive()) {
+             mCurrentState.iconGroup = TelephonyIcons.CARRIER_NETWORK_CHANGE;
+-        } else if (isDataDisabled()) {
+-            mCurrentState.iconGroup = TelephonyIcons.DATA_DISABLED;
+         }
+         if (isEmergencyOnly() != mCurrentState.isEmergency) {
+             mCurrentState.isEmergency = isEmergencyOnly();
+@@ -479,10 +475,6 @@ public class MobileSignalController extends SignalController<
+         notifyListenersIfNecessary();
+     }
+ 
+-    private boolean isDataDisabled() {
+-        return !mPhone.getDataEnabled(mSubscriptionInfo.getSubscriptionId());
+-    }
+-
+     @VisibleForTesting
+     void setActivity(int activity) {
+         mCurrentState.activityIn = activity == TelephonyManager.DATA_ACTIVITY_INOUT
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java
+index 1b9414dd4c6..7d672e1ff8c 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java
+@@ -871,7 +871,6 @@ public class NetworkControllerImpl extends BroadcastReceiver
+                             datatype.equals("h+") ? TelephonyIcons.HP :
+                             datatype.equals("lte") ? TelephonyIcons.LTE :
+                             datatype.equals("lte+") ? TelephonyIcons.LTE_PLUS :
+-                            datatype.equals("dis") ? TelephonyIcons.DATA_DISABLED :
+                             TelephonyIcons.UNKNOWN;
+                 }
+                 if (args.containsKey("roam")) {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/TelephonyIcons.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/TelephonyIcons.java
+index cf5bcc07b9a..aeb98430ba2 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/TelephonyIcons.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/TelephonyIcons.java
+@@ -46,10 +46,6 @@ class TelephonyIcons {
+     static final int ICON_4G_PLUS = R.drawable.stat_sys_data_fully_connected_4g_plus;
+     static final int ICON_1X = R.drawable.stat_sys_data_fully_connected_1x;
+ 
+-    static final int ICON_DATA_DISABLED = R.drawable.stat_sys_data_disabled;
+-
+-    static final int QS_ICON_DATA_DISABLED = R.drawable.ic_qs_data_disabled;
+-
+     static final MobileIconGroup CARRIER_NETWORK_CHANGE = new MobileIconGroup(
+             "CARRIER_NETWORK_CHANGE",
+             null,
+@@ -238,20 +234,5 @@ class TelephonyIcons {
+             true,
+             TelephonyIcons.QS_DATA_LTE_PLUS
+             );
+-
+-    static final MobileIconGroup DATA_DISABLED = new MobileIconGroup(
+-            "DataDisabled",
+-            null,
+-            null,
+-            AccessibilityContentDescriptions.PHONE_SIGNAL_STRENGTH,
+-            0, 0,
+-            0,
+-            0,
+-            AccessibilityContentDescriptions.PHONE_SIGNAL_STRENGTH[0],
+-            R.string.accessibility_cell_data_off,
+-            TelephonyIcons.ICON_DATA_DISABLED,
+-            false,
+-            TelephonyIcons.QS_ICON_DATA_DISABLED
+-            );
+ }
+ 
+-- 
+2.11.0
+

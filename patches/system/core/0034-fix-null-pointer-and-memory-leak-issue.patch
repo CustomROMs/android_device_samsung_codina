@@ -1,0 +1,29 @@
+From 8134a97607319ed9c383a91a6fe9d7eb9b83b6b5 Mon Sep 17 00:00:00 2001
+From: Hong-Mei Li <a21834@motorola.com>
+Date: Wed, 27 Mar 2013 12:54:37 -0400
+Subject: [PATCH 34/40] fix null pointer and memory leak issue
+
+In SocketClient::quoteArg function
+ 1. Fix potential null pointer accessing issue
+ 2. Fix potential memory leak introduced by realloc fail
+---
+ libsysutils/src/SocketClient.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libsysutils/src/SocketClient.cpp b/libsysutils/src/SocketClient.cpp
+index 971f90821..949312431 100644
+--- a/libsysutils/src/SocketClient.cpp
++++ b/libsysutils/src/SocketClient.cpp
+@@ -129,6 +129,9 @@ int SocketClient::sendCode(int code) {
+ }
+ 
+ char *SocketClient::quoteArg(const char *arg) {
++    if(arg == NULL) {
++        return NULL; // caller should check the return value
++    }
+     int len = strlen(arg);
+     char *result = (char *)malloc(len * 2 + 3);
+     char *current = result;
+-- 
+2.11.0
+

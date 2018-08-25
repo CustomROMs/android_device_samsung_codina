@@ -1,0 +1,78 @@
+From 60233e6c6a49b3119d95ead46518fd2beb4f7976 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 159/296] Native crash occurs. forEach()
+
+Bug Details:
+If null is specified as an argument of the following class of RenderScript's forEach() method,
+Native crash occurs without throwing RSIllegalArgumentException.
+  android.renderscript.ScriptIntrinsicColorMatrix
+  android.renderscript.ScriptIntrinsicLUT
+  android.renderscript.ScriptIntrinsic3DLUT
+
+Modification:
+When the argument of the forEach() method of the ScriptIntrinsicColorMatrix, ScriptIntrinsicLUT and ScriptIntrinsic3DLUT class is null,
+RSIllegalArgumentException is thrown.
+---
+ rs/java/android/renderscript/ScriptIntrinsic3DLUT.java       | 4 ++++
+ rs/java/android/renderscript/ScriptIntrinsicColorMatrix.java | 4 ++++
+ rs/java/android/renderscript/ScriptIntrinsicLUT.java         | 4 ++++
+ 3 files changed, 12 insertions(+)
+ mode change 100644 => 100755 rs/java/android/renderscript/ScriptIntrinsic3DLUT.java
+ mode change 100644 => 100755 rs/java/android/renderscript/ScriptIntrinsicColorMatrix.java
+ mode change 100644 => 100755 rs/java/android/renderscript/ScriptIntrinsicLUT.java
+
+diff --git a/rs/java/android/renderscript/ScriptIntrinsic3DLUT.java b/rs/java/android/renderscript/ScriptIntrinsic3DLUT.java
+old mode 100644
+new mode 100755
+index ce149d9a103..9952601067b
+--- a/rs/java/android/renderscript/ScriptIntrinsic3DLUT.java
++++ b/rs/java/android/renderscript/ScriptIntrinsic3DLUT.java
+@@ -96,6 +96,10 @@ public final class ScriptIntrinsic3DLUT extends ScriptIntrinsic {
+      * @param opt Launch options for kernel
+      */
+     public void forEach(Allocation ain, Allocation aout, Script.LaunchOptions opt) {
++        if (ain == null || aout == null) {
++            throw new RSIllegalArgumentException("ain or aout is required to be non-null.");
++        }
++
+         forEach(0, ain, aout, null, opt);
+     }
+ 
+diff --git a/rs/java/android/renderscript/ScriptIntrinsicColorMatrix.java b/rs/java/android/renderscript/ScriptIntrinsicColorMatrix.java
+old mode 100644
+new mode 100755
+index e8a299c28c5..04103293687
+--- a/rs/java/android/renderscript/ScriptIntrinsicColorMatrix.java
++++ b/rs/java/android/renderscript/ScriptIntrinsicColorMatrix.java
+@@ -242,6 +242,10 @@ public final class ScriptIntrinsicColorMatrix extends ScriptIntrinsic {
+      * @param opt LaunchOptions for clipping
+      */
+     public void forEach(Allocation ain, Allocation aout, Script.LaunchOptions opt) {
++        if (ain == null || aout == null) {
++            throw new RSIllegalArgumentException("ain or aout is required to be non-null.");
++        }
++
+         if (!ain.getElement().isCompatible(Element.U8(mRS)) &&
+             !ain.getElement().isCompatible(Element.U8_2(mRS)) &&
+             !ain.getElement().isCompatible(Element.U8_3(mRS)) &&
+diff --git a/rs/java/android/renderscript/ScriptIntrinsicLUT.java b/rs/java/android/renderscript/ScriptIntrinsicLUT.java
+old mode 100644
+new mode 100755
+index e90462d1112..44afb7299ce
+--- a/rs/java/android/renderscript/ScriptIntrinsicLUT.java
++++ b/rs/java/android/renderscript/ScriptIntrinsicLUT.java
+@@ -138,6 +138,10 @@ public final class ScriptIntrinsicLUT extends ScriptIntrinsic {
+      * @param opt Options for clipping
+      */
+     public void forEach(Allocation ain, Allocation aout, Script.LaunchOptions opt) {
++        if (ain == null || aout == null) {
++            throw new RSIllegalArgumentException("ain or aout is required to be non-null.");
++        }
++
+         if (mDirty) {
+             mDirty = false;
+             mTables.copyFromUnchecked(mCache);
+-- 
+2.11.0
+

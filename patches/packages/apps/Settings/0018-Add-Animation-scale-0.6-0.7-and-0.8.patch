@@ -1,0 +1,162 @@
+From 06af757df17e7207d1d97b39611f0123164597f1 Mon Sep 17 00:00:00 2001
+From: Lars Karbo <mail@larskarbo.no>
+Date: Tue, 13 Feb 2018 20:19:23 +0100
+Subject: [PATCH 18/30] Add Animation scale 0.6 , 0.7 and 0.8
+
+---
+ res/values-ru/cr_arrays.xml   | 33 ++++++++++++++++++++++
+ res/values/cr_arrays.xml      | 66 +++++++++++++++++++++++++++++++++++++++++++
+ res/xml/development_prefs.xml | 12 ++++----
+ 3 files changed, 105 insertions(+), 6 deletions(-)
+
+diff --git a/res/values-ru/cr_arrays.xml b/res/values-ru/cr_arrays.xml
+index b03fc550ea..1a6eadf143 100644
+--- a/res/values-ru/cr_arrays.xml
++++ b/res/values-ru/cr_arrays.xml
+@@ -30,4 +30,37 @@
+         <item>mass_storage</item>
+     </string-array>
+ 
++    <!-- Titles for window animation scale preference. [CHAR LIMIT=35] -->
++    <string-array name="new_window_animation_scale_entries">
++        <item>Без анимации</item>
++        <item>Анимация 0.5x</item>
++        <item>Анимация 0.6x</item>
++        <item>Анимация 0.7x</item>
++        <item>Анимация 0.8x</item>
++        <item>Анимация 1x</item>
++        <item>Анимация 1.5x</item>
++    </string-array>
++
++    <!-- Titles for transition animation scale preference. [CHAR LIMIT=35] -->
++    <string-array name="new_transition_animation_scale_entries">
++        <item>Без анимации</item>
++        <item>Анимация 0.5x</item>
++        <item>Анимация 0.6x</item>
++        <item>Анимация 0.7x</item>
++        <item>Анимация 0.8x</item>
++        <item>Анимация 1x</item>
++        <item>Анимация 1.5x</item>
++    </string-array>
++
++    <!-- Titles for animator duration scale preference. [CHAR LIMIT=35] -->
++    <string-array name="new_animator_duration_scale_entries">
++        <item>Без анимации</item>
++        <item>Анимация 0.5x</item>
++        <item>Анимация 0.6x</item>
++        <item>Анимация 0.7x</item>
++        <item>Анимация 0.8x</item>
++        <item>Анимация 1x</item>
++        <item>Анимация 1.5x</item>
++    </string-array>
++
+ </resources>
+diff --git a/res/values/cr_arrays.xml b/res/values/cr_arrays.xml
+index 254be4fc80..0597d4c404 100644
+--- a/res/values/cr_arrays.xml
++++ b/res/values/cr_arrays.xml
+@@ -71,4 +71,70 @@
+         <item>2</item>
+     </string-array>
+ 
++    <!-- Titles for window animation scale preference. [CHAR LIMIT=35] -->
++    <string-array name="new_window_animation_scale_entries">
++        <item>Animation off</item>
++        <item>Animation scale 0.5x</item>
++        <item>Animation scale 0.6x</item>
++        <item>Animation scale 0.7x</item>
++        <item>Animation scale 0.8x</item>
++        <item>Animation scale 1x</item>
++        <item>Animation scale 1.5x</item>
++    </string-array>
++
++    <!-- Values for window animation scale preference. -->
++    <string-array name="new_window_animation_scale_values" translatable="false" >
++        <item>0</item>
++        <item>.5</item>
++        <item>.6</item>
++        <item>.7</item>
++        <item>.8</item>
++        <item>1</item>
++        <item>1.5</item>
++    </string-array>
++
++    <!-- Titles for transition animation scale preference. [CHAR LIMIT=35] -->
++    <string-array name="new_transition_animation_scale_entries">
++        <item>Animation off</item>
++        <item>Animation scale 0.5x</item>
++        <item>Animation scale 0.6x</item>
++        <item>Animation scale 0.7x</item>
++        <item>Animation scale 0.8x</item>
++        <item>Animation scale 1x</item>
++        <item>Animation scale 1.5x</item>
++    </string-array>
++
++    <!-- Values for transition animation scale preference. -->
++    <string-array name="new_transition_animation_scale_values" translatable="false" >
++        <item>0</item>
++        <item>.5</item>
++        <item>.6</item>
++        <item>.7</item>
++        <item>.8</item>
++        <item>1</item>
++        <item>1.5</item>
++    </string-array>
++
++    <!-- Titles for animator duration scale preference. [CHAR LIMIT=35] -->
++    <string-array name="new_animator_duration_scale_entries">
++        <item>Animation off</item>
++        <item>Animation scale 0.5x</item>
++        <item>Animation scale 0.6x</item>
++        <item>Animation scale 0.7x</item>
++        <item>Animation scale 0.8x</item>
++        <item>Animation scale 1x</item>
++        <item>Animation scale 1.5x</item>
++    </string-array>
++
++    <!-- Values for animator duration scale preference. -->
++    <string-array name="new_animator_duration_scale_values" translatable="false" >
++        <item>0</item>
++        <item>.5</item>
++        <item>.6</item>
++        <item>.7</item>
++        <item>.8</item>
++        <item>1</item>
++        <item>1.5</item>
++    </string-array>
++
+ </resources>
+diff --git a/res/xml/development_prefs.xml b/res/xml/development_prefs.xml
+index cc08af8f8e..b7b75a868f 100644
+--- a/res/xml/development_prefs.xml
++++ b/res/xml/development_prefs.xml
+@@ -371,20 +371,20 @@
+         <ListPreference
+             android:key="window_animation_scale"
+             android:title="@string/window_animation_scale_title"
+-            android:entries="@array/window_animation_scale_entries"
+-            android:entryValues="@array/window_animation_scale_values" />
++            android:entries="@array/new_window_animation_scale_entries"
++            android:entryValues="@array/new_window_animation_scale_values" />
+ 
+         <ListPreference
+             android:key="transition_animation_scale"
+             android:title="@string/transition_animation_scale_title"
+-            android:entries="@array/transition_animation_scale_entries"
+-            android:entryValues="@array/transition_animation_scale_values" />
++            android:entries="@array/new_transition_animation_scale_entries"
++            android:entryValues="@array/new_transition_animation_scale_values" />
+ 
+         <ListPreference
+             android:key="animator_duration_scale"
+             android:title="@string/animator_duration_scale_title"
+-            android:entries="@array/animator_duration_scale_entries"
+-            android:entryValues="@array/animator_duration_scale_values" />
++            android:entries="@array/new_animator_duration_scale_entries"
++            android:entryValues="@array/new_animator_duration_scale_values" />
+ 
+         <ListPreference
+             android:key="overlay_display_devices"
+-- 
+2.11.0
+

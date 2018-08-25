@@ -1,7 +1,7 @@
-From 12eb73bd12adfd0f0abbe33e704cfc21bcda0ddb Mon Sep 17 00:00:00 2001
+From 37a1a6e32a42d2c67f5f94467ba2eb0ad71b1962 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 30 Oct 2017 18:10:11 -0700
-Subject: [PATCH 30/43] libgui: fixes for 32-bit usage
+Subject: [PATCH 30/44] libgui: fixes for 32-bit usage
 
 ---
  libs/gui/BufferQueueConsumer.cpp                   |   4 +-

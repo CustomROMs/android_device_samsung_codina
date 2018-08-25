@@ -1,0 +1,25 @@
+From 7a842426d58955d4413a80b30a2b75dab1f27e4c Mon Sep 17 00:00:00 2001
+From: Tom Marshall <tdm@cyngn.com>
+Date: Mon, 24 Nov 2014 04:38:08 -0800
+Subject: [PATCH 15/40] healthd: Use project pathmap for recovery
+
+---
+ healthd/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/healthd/Android.mk b/healthd/Android.mk
+index a90f55022..1b6005ad0 100644
+--- a/healthd/Android.mk
++++ b/healthd/Android.mk
+@@ -70,7 +70,7 @@ LOCAL_SRC_FILES := \
+     AnimationParser.cpp
+ 
+ LOCAL_MODULE := libhealthd_charger
+-LOCAL_C_INCLUDES := bootable/recovery $(LOCAL_PATH)/include
++LOCAL_C_INCLUDES := $(call project-path-for,recovery) $(LOCAL_PATH)/include
+ LOCAL_EXPORT_C_INCLUDE_DIRS := \
+     $(LOCAL_PATH) \
+     $(LOCAL_PATH)/include
+-- 
+2.11.0
+

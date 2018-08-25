@@ -1,7 +1,7 @@
-From 8e2076173d72c24d32096d20fe175a059bf13793 Mon Sep 17 00:00:00 2001
+From ec02e966e112e717880619b9ff72fe27d237f456 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 01/43] Revert "libui: Remove FramebufferNativeWindow"
+Subject: [PATCH 01/44] Revert "libui: Remove FramebufferNativeWindow"
 
 ---
  libs/ui/Android.bp                           |   1 +

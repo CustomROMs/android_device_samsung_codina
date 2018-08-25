@@ -1,0 +1,49 @@
+From 20d400c9d042f29da11d62ab0cb8797e38451d42 Mon Sep 17 00:00:00 2001
+From: LuK1337 <priv.luk@gmail.com>
+Date: Tue, 5 Sep 2017 09:51:22 +0200
+Subject: [PATCH 05/11] soong_config: Add TARGET_USES_NON_TREBLE_CAMERA
+ variable
+
+* Soong product variable 'uses_non_treble_camera'
+---
+ build/soong/android/variable.go | 4 ++++
+ build/soong/soong_config.mk     | 1 +
+ 2 files changed, 5 insertions(+)
+
+diff --git a/build/soong/android/variable.go b/build/soong/android/variable.go
+index c2bb782a..1eb38c4f 100644
+--- a/build/soong/android/variable.go
++++ b/build/soong/android/variable.go
+@@ -3,6 +3,9 @@ type Product_variables struct {
+ 	Has_legacy_camera_hal1 struct {
+ 		Cflags []string
+ 	}
++	Uses_non_treble_camera struct {
++		Cflags []string
++	}
+ 	Needs_text_relocations struct {
+ 		Cppflags []string
+ 	}
+@@ -26,6 +29,7 @@ type Product_variables struct {
+ 
+ type ProductVariables struct {
+ 	Has_legacy_camera_hal1  *bool `json:",omitempty"`
++	Uses_non_treble_camera  *bool `json:",omitempty"`
+ 	Needs_text_relocations  *bool `json:",omitempty"`
+ 	Specific_camera_parameter_library  *string `json:",omitempty"`
+ 	Target_shim_libs  *string `json:",omitempty"`
+diff --git a/build/soong/soong_config.mk b/build/soong/soong_config.mk
+index fdc0869a..39e4f9b8 100644
+--- a/build/soong/soong_config.mk
++++ b/build/soong/soong_config.mk
+@@ -5,6 +5,7 @@ lineage_soong:
+ 	echo '{'; \
+ 	echo '"Lineage": {'; \
+ 	echo '    "Has_legacy_camera_hal1": $(if $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)),true,false),'; \
++	echo '    "Uses_non_treble_camera": $(if $(filter true,$(TARGET_USES_NON_TREBLE_CAMERA)),true,false),'; \
+ 	echo '    "Needs_text_relocations": $(if $(filter true,$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)),true,false),'; \
+ 	echo '    "Specific_camera_parameter_library": "$(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY)",'; \
+ 	echo '    "Target_shim_libs": "$(subst $(space),:,$(TARGET_LD_SHIM_LIBS))",'; \
+-- 
+2.11.0
+

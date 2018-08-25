@@ -1,0 +1,54 @@
+From 3765567a063d1b20eb9289a1776942e8252b203d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 142/296] Do not force crash for EGL_NO_SURFACE
+
+A forced crash will happen if an UI object is removed right after it
+is created and the OpenGLRenderer tries to render the removed object.
+A system crash and a reboot if this occurs in the system_server.
+Removing the forced crash and instead return the error code
+EGL_NO_SURFACE is a better option. The responsibilty to handle this is
+moved to the caller.
+---
+ libs/hwui/renderthread/CanvasContext.cpp | 4 ++++
+ libs/hwui/renderthread/EglManager.cpp    | 9 ++++-----
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/libs/hwui/renderthread/CanvasContext.cpp b/libs/hwui/renderthread/CanvasContext.cpp
+index 5d7f5948b0e..c846d7931b0 100644
+--- a/libs/hwui/renderthread/CanvasContext.cpp
++++ b/libs/hwui/renderthread/CanvasContext.cpp
+@@ -405,6 +405,10 @@ void CanvasContext::notifyFramePending() {
+ }
+ 
+ void CanvasContext::draw() {
++    if (!mRenderPipeline->isSurfaceReady()) {
++        return;
++    }
++
+     SkRect dirty;
+     mDamageAccumulator.finish(&dirty);
+ 
+diff --git a/libs/hwui/renderthread/EglManager.cpp b/libs/hwui/renderthread/EglManager.cpp
+index 16d77364942..fcb4a578bbf 100644
+--- a/libs/hwui/renderthread/EglManager.cpp
++++ b/libs/hwui/renderthread/EglManager.cpp
+@@ -304,11 +304,10 @@ EGLSurface EglManager::createSurface(EGLNativeWindowType window, bool wideColorG
+ 
+     EGLSurface surface = eglCreateWindowSurface(mEglDisplay,
+             wideColorGamut ? mEglConfigWideGamut : mEglConfig, window, attribs);
+-    LOG_ALWAYS_FATAL_IF(surface == EGL_NO_SURFACE,
+-            "Failed to create EGLSurface for window %p, eglErr = %s",
+-            (void*) window, eglErrorString());
+-
+-    if (mSwapBehavior != SwapBehavior::Preserved) {
++    if (surface == EGL_NO_SURFACE) {
++        ALOGW("Failed to create EGLSurface for window %p, eglErr = %s",
++                (void*) window, eglErrorString());
++    } else if (mSwapBehavior != SwapBehavior::Preserved) {
+         LOG_ALWAYS_FATAL_IF(eglSurfaceAttrib(mEglDisplay, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTROYED) == EGL_FALSE,
+                             "Failed to set swap behavior to destroyed for window %p, eglErr = %s",
+                             (void*) window, eglErrorString());
+-- 
+2.11.0
+

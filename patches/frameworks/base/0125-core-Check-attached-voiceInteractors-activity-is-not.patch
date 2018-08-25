@@ -1,0 +1,32 @@
+From 20631084edd4edb3888e94adf2d9a8836189bbcd Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 125/296] core: Check attached voiceInteractors activity is not
+ null
+
+It is some timing issue.
+Attached activity is just destroyed before request is
+made to VoiceInteractor.
+Submit request only when Activity context is not null.
+---
+ core/java/android/app/VoiceInteractor.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/java/android/app/VoiceInteractor.java b/core/java/android/app/VoiceInteractor.java
+index 823c4271adf..fbe95d01d26 100644
+--- a/core/java/android/app/VoiceInteractor.java
++++ b/core/java/android/app/VoiceInteractor.java
+@@ -977,6 +977,10 @@ public final class VoiceInteractor {
+             if (request.mRequestInterface != null) {
+                 throw new IllegalStateException("Given " + request + " is already active");
+             }
++            // Submit voice request only for non null activity context to avoid timing issue
++            if (mContext == null) {
++                return false;
++            }
+             IVoiceInteractorRequest ireq = request.submit(mInteractor,
+                     mContext.getOpPackageName(), mCallback);
+             request.mRequestInterface = ireq;
+-- 
+2.11.0
+

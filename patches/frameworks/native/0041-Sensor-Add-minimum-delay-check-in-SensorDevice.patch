@@ -1,7 +1,7 @@
-From 073187f21b50ebaf3a0d05ab2690bb5826011ec5 Mon Sep 17 00:00:00 2001
+From 7b1e2a897d6535acb768390f5274b91d03f73106 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 41/43] Sensor: Add minimum delay check in SensorDevice
+Subject: [PATCH 41/44] Sensor: Add minimum delay check in SensorDevice
 
 SensorService is not able to limit the delay values requested by SensorFusion
 algorithms as these algorithms directly set the delay using SensorDevice:batch

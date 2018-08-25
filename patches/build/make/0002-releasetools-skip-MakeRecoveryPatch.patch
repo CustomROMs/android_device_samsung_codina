@@ -1,0 +1,27 @@
+From eb3a5f20580fc4a709d187a7f626e82773badd2b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 02/31] releasetools: skip MakeRecoveryPatch
+
+---
+ tools/releasetools/common.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index b89de0f6b..9d1703c63 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1699,6 +1699,10 @@ def ParseCertificate(data):
+ 
+ def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
+                       info_dict=None):
++  pass
++
++def MakeRecoveryPatch2(input_dir, output_sink, recovery_img, boot_img,
++                      info_dict=None):
+   """Generate a binary patch that creates the recovery image starting
+   with the boot image.  (Most of the space in these images is just the
+   kernel, which is identical for the two, so the resulting patch
+-- 
+2.11.0
+

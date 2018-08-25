@@ -1,0 +1,41 @@
+From 766763d5254ba5ac3ec624d2d96bbfaa45b74336 Mon Sep 17 00:00:00 2001
+From: Krystian Owoc <krystekowoc@gmail.com>
+Date: Fri, 19 Jan 2018 08:31:09 +0100
+Subject: [PATCH 101/296] Fix graphical artifact in the fisheye effect
+
+The fisheye effect generates a graphical artifact close to the center of
+the picture, due to bad precision and division by zero in the shader.
+The problem is fixed by making a small change in the shader, so that the
+picture is uniformly scaled close to the center instead. This avoids the
+problem and looks as expected, without affecting the performance.
+---
+ .../filterpacks/java/android/filterpacks/imageproc/FisheyeFilter.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/media/mca/filterpacks/java/android/filterpacks/imageproc/FisheyeFilter.java b/media/mca/filterpacks/java/android/filterpacks/imageproc/FisheyeFilter.java
+index 2ff65889e1a..e0dbd571d56 100644
+--- a/media/mca/filterpacks/java/android/filterpacks/imageproc/FisheyeFilter.java
++++ b/media/mca/filterpacks/java/android/filterpacks/imageproc/FisheyeFilter.java
+@@ -49,6 +49,8 @@ public class FisheyeFilter extends Filter {
+     private int mHeight = 0;
+     private int mTarget = FrameFormat.TARGET_UNSPECIFIED;
+ 
++    // The constant min_dist, below, is an arbitrary number that gives good enough precision in
++    // the center of the picture without affecting the fisheye effect noticeably.
+     private static final String mFisheyeShader =
+             "precision mediump float;\n" +
+             "uniform sampler2D tex_sampler_0;\n" +
+@@ -59,8 +61,10 @@ public class FisheyeFilter extends Filter {
+             "varying vec2 v_texcoord;\n" +
+             "void main() {\n" +
+             "  const float m_pi_2 = 1.570963;\n" +
++            "  const float min_dist = 0.01;\n" +
+             "  vec2 coord = v_texcoord - vec2(0.5, 0.5);\n" +
+             "  float dist = length(coord * scale);\n" +
++            "  dist = max(dist, min_dist);\n" +
+             "  float radian = m_pi_2 - atan(alpha * sqrt(radius2 - dist * dist), dist);\n" +
+             "  float scalar = radian * factor / dist;\n" +
+             "  vec2 new_coord = coord * scalar + vec2(0.5, 0.5);\n" +
+-- 
+2.11.0
+

@@ -1,0 +1,32 @@
+From d7e7774b2a7e0f8581a6c33c9e87a469754f2b30 Mon Sep 17 00:00:00 2001
+From: Takamasa Kuramitsu <takamasa.kuramitsu@sony.com>
+Date: Tue, 5 Dec 2017 10:55:44 +0900
+Subject: [PATCH 3/3] Avoid crash on Files app when creating a directory
+
+Files app crashes if a client document provider creates a file
+in createDocument callback unexpectedly during the directory
+creation sequence.
+
+This CL fixes to avoid the crash on Files app and show a Snackbar
+message instead.
+---
+ src/com/android/documentsui/CreateDirectoryFragment.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/com/android/documentsui/CreateDirectoryFragment.java b/src/com/android/documentsui/CreateDirectoryFragment.java
+index 66be663..e7a33a0 100644
+--- a/src/com/android/documentsui/CreateDirectoryFragment.java
++++ b/src/com/android/documentsui/CreateDirectoryFragment.java
+@@ -141,7 +141,8 @@ public class CreateDirectoryFragment extends DialogFragment {
+                         resolver, mCwd.derivedUri.getAuthority());
+                 final Uri childUri = DocumentsContract.createDocument(
+                         client, mCwd.derivedUri, Document.MIME_TYPE_DIR, mDisplayName);
+-                return DocumentInfo.fromUri(resolver, childUri);
++                DocumentInfo doc = DocumentInfo.fromUri(resolver, childUri);
++                return doc.isDirectory() ? doc : null;
+             } catch (Exception e) {
+                 Log.w(TAG, "Failed to create directory", e);
+                 return null;
+-- 
+2.11.0
+

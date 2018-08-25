@@ -1,0 +1,24 @@
+From 8e0239e0896b031dea86215f48d9e6dfa4f9e1f4 Mon Sep 17 00:00:00 2001
+From: Andrew Dodd <atd7@cornell.edu>
+Date: Sun, 9 Nov 2014 18:06:04 -0500
+Subject: [PATCH 24/31] Add busybox to CLANG exclusion list
+
+---
+ core/clang/config.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/clang/config.mk b/core/clang/config.mk
+index 0e5993047..a3154f24b 100644
+--- a/core/clang/config.mk
++++ b/core/clang/config.mk
+@@ -74,6 +74,7 @@ LOCAL_CLANG_EXCEPTION_PROJECTS = \
+   bionic/tests/ \
+   device/huawei/angler/ \
+   device/lge/bullhead/ \
++  external/busybox/ \
+   external/gentoo/integration/ \
+   hardware/qcom/ \
+   test/vts/hals/camera/bullhead/ \
+-- 
+2.11.0
+

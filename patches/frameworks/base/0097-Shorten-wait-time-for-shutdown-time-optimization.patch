@@ -1,0 +1,42 @@
+From 976de666c1a1e6883a4c42ad06883141201292d0 Mon Sep 17 00:00:00 2001
+From: zljing <zljing@codeaurora.org>
+Date: Wed, 2 Aug 2017 15:10:40 +0800
+Subject: [PATCH 097/296] Shorten wait time for shutdown time optimization
+
+Default 500ms delay is waitting shutdown actions done in while cycle.
+Shutdown actions include broadcast,nfc,radio,wifi and mountservice.
+The whole actions are ordered serial operations. This delay is too
+long for broadcast/nfc/radio/wifi/mountservice shutdown. Decrease the
+delay will add mActionDoneSync lock time and while cycle times, so this
+delay also can't be too short. Set half will have 0.5~0.7s benefit for
+shutdown time, total time from 2.4s to 1.7~1.9s, which is comparable
+with ref device.
+---
+ services/core/java/com/android/server/power/ShutdownThread.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/power/ShutdownThread.java b/services/core/java/com/android/server/power/ShutdownThread.java
+index 368199f4b49..7a6d38bda76 100644
+--- a/services/core/java/com/android/server/power/ShutdownThread.java
++++ b/services/core/java/com/android/server/power/ShutdownThread.java
+@@ -70,7 +70,7 @@ import java.nio.charset.StandardCharsets;
+ public final class ShutdownThread extends Thread {
+     // constants
+     private static final String TAG = "ShutdownThread";
+-    private static final int PHONE_STATE_POLL_SLEEP_MSEC = 500;
++    private static final int PHONE_STATE_POLL_SLEEP_MSEC = 250;
+     // maximum time we wait for the shutdown broadcast before going on.
+     private static final int MAX_BROADCAST_TIME = 10*1000;
+     private static final int MAX_SHUTDOWN_WAIT_TIME = 20*1000;
+@@ -84,7 +84,7 @@ public final class ShutdownThread extends Thread {
+     private static final int MOUNT_SERVICE_STOP_PERCENT = 20;
+ 
+     // length of vibration before shutting down
+-    private static final int SHUTDOWN_VIBRATE_MS = 500;
++    private static final int SHUTDOWN_VIBRATE_MS = 250;
+ 
+     // state tracking
+     private static final Object sIsStartedGuard = new Object();
+-- 
+2.11.0
+

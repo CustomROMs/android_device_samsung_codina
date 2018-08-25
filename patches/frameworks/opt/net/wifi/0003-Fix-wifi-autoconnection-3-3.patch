@@ -1,0 +1,217 @@
+From eec8800721d41d9098d7adca9120d1c3ebae0d5b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 17 Sep 2016 07:11:54 +0700
+Subject: [PATCH 3/5] Fix wifi autoconnection [3/3]
+
+---
+ service/java/com/android/server/wifi/Clock.java        |  4 ++--
+ .../java/com/android/server/wifi/ScanDetailCache.java  |  2 +-
+ .../java/com/android/server/wifi/WifiController.java   |  8 ++++----
+ service/java/com/android/server/wifi/WifiNative.java   |  2 +-
+ .../wifi/aware/WifiAwareDataPathStateManager.java      |  6 +++---
+ .../server/wifi/aware/WifiAwareStateManager.java       | 18 +++++++++---------
+ 6 files changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/service/java/com/android/server/wifi/Clock.java b/service/java/com/android/server/wifi/Clock.java
+index bb2f21e2d..585a3abb4 100644
+--- a/service/java/com/android/server/wifi/Clock.java
++++ b/service/java/com/android/server/wifi/Clock.java
+@@ -37,7 +37,7 @@ public class Clock {
+      * @return Current time since boot in milliseconds.
+      */
+     public long getElapsedSinceBootMillis() {
+-        return SystemClock.elapsedRealtime();
++        return SystemClock.elapsedRealtime1();
+     }
+ 
+    /**
+@@ -46,7 +46,7 @@ public class Clock {
+      * @return Current time since boot in nanoseconds.
+      */
+     public long getElapsedSinceBootNanos() {
+-        return SystemClock.elapsedRealtimeNanos();
++        return SystemClock.elapsedRealtimeNanos1();
+     }
+ 
+     /**
+diff --git a/service/java/com/android/server/wifi/ScanDetailCache.java b/service/java/com/android/server/wifi/ScanDetailCache.java
+index abb6ad8b0..ecf5bd2e4 100644
+--- a/service/java/com/android/server/wifi/ScanDetailCache.java
++++ b/service/java/com/android/server/wifi/ScanDetailCache.java
+@@ -185,7 +185,7 @@ public class ScanDetailCache {
+         WifiConfiguration.Visibility status = new WifiConfiguration.Visibility();
+ 
+         long now_ms = System.currentTimeMillis();
+-        long now_elapsed_ms = SystemClock.elapsedRealtime();
++        long now_elapsed_ms = SystemClock.elapsedRealtime1();
+         for (ScanDetail scanDetail : values()) {
+             ScanResult result = scanDetail.getScanResult();
+             if (scanDetail.getSeen() == 0) {
+diff --git a/service/java/com/android/server/wifi/WifiController.java b/service/java/com/android/server/wifi/WifiController.java
+index 494ce86e5..100494ea4 100644
+--- a/service/java/com/android/server/wifi/WifiController.java
++++ b/service/java/com/android/server/wifi/WifiController.java
+@@ -436,7 +436,7 @@ public class WifiController extends StateMachine {
+         public void enter() {
+             mWifiStateMachine.setSupplicantRunning(false);
+             // Supplicant can't restart right away, so not the time we switched off
+-            mDisabledTimestamp = SystemClock.elapsedRealtime();
++            mDisabledTimestamp = SystemClock.elapsedRealtime1();
+             mDeferredEnableSerialNumber++;
+             mHaveDeferredEnable = false;
+             mWifiStateMachine.clearANQPCache();
+@@ -502,7 +502,7 @@ public class WifiController extends StateMachine {
+         }
+ 
+         private boolean doDeferEnable(Message msg) {
+-            long delaySoFar = SystemClock.elapsedRealtime() - mDisabledTimestamp;
++            long delaySoFar = SystemClock.elapsedRealtime1() - mDisabledTimestamp;
+             if (delaySoFar >= mReEnableDelayMillis) {
+                 return false;
+             }
+@@ -589,7 +589,7 @@ public class WifiController extends StateMachine {
+             mWifiStateMachine.setOperationalMode(WifiStateMachine.SCAN_ONLY_WITH_WIFI_OFF_MODE);
+             mWifiStateMachine.setSupplicantRunning(true);
+             // Supplicant can't restart right away, so not the time we switched off
+-            mDisabledTimestamp = SystemClock.elapsedRealtime();
++            mDisabledTimestamp = SystemClock.elapsedRealtime1();
+             mDeferredEnableSerialNumber++;
+             mHaveDeferredEnable = false;
+             mWifiStateMachine.clearANQPCache();
+@@ -649,7 +649,7 @@ public class WifiController extends StateMachine {
+         }
+ 
+         private boolean doDeferEnable(Message msg) {
+-            long delaySoFar = SystemClock.elapsedRealtime() - mDisabledTimestamp;
++            long delaySoFar = SystemClock.elapsedRealtime1() - mDisabledTimestamp;
+             if (delaySoFar >= mReEnableDelayMillis) {
+                 return false;
+             }
+diff --git a/service/java/com/android/server/wifi/WifiNative.java b/service/java/com/android/server/wifi/WifiNative.java
+index 5b12a3648..ef42e5706 100644
+--- a/service/java/com/android/server/wifi/WifiNative.java
++++ b/service/java/com/android/server/wifi/WifiNative.java
+@@ -1409,7 +1409,7 @@ public class WifiNative {
+          */
+         private static long convertDriverTimestampUSecToWallclockMSec(long driverTimestampUSec) {
+             final long wallclockMillisNow = System.currentTimeMillis();
+-            final long boottimeMillisNow = SystemClock.elapsedRealtime();
++            final long boottimeMillisNow = SystemClock.elapsedRealtime1();
+             final long driverTimestampMillis = driverTimestampUSec / USEC_PER_MSEC;
+ 
+             long boottimeTimestampMillis = boottimeMillisNow % MAX_DRIVER_TIMESTAMP_MSEC;
+diff --git a/service/java/com/android/server/wifi/aware/WifiAwareDataPathStateManager.java b/service/java/com/android/server/wifi/aware/WifiAwareDataPathStateManager.java
+index efeca655b..5d58d640b 100644
+--- a/service/java/com/android/server/wifi/aware/WifiAwareDataPathStateManager.java
++++ b/service/java/com/android/server/wifi/aware/WifiAwareDataPathStateManager.java
+@@ -375,7 +375,7 @@ public class WifiAwareDataPathStateManager {
+ 
+         nnri.state = AwareNetworkRequestInformation.STATE_RESPONDER_WAIT_FOR_RESPOND_RESPONSE;
+         nnri.ndpId = ndpId;
+-        nnri.startTimestamp = SystemClock.elapsedRealtime();
++        nnri.startTimestamp = SystemClock.elapsedRealtime1();
+         mMgr.respondToDataPathRequest(true, ndpId, nnri.interfaceName, nnri.networkSpecifier.pmk,
+                 nnri.networkSpecifier.passphrase, nnri.networkSpecifier.isOutOfBand());
+ 
+@@ -527,7 +527,7 @@ public class WifiAwareDataPathStateManager {
+ 
+             mAwareMetrics.recordNdpStatus(NanStatusType.SUCCESS, networkSpecifier.isOutOfBand(),
+                     nnri.startTimestamp);
+-            nnri.startTimestamp = SystemClock.elapsedRealtime(); // update time-stamp for duration
++            nnri.startTimestamp = SystemClock.elapsedRealtime1(); // update time-stamp for duration
+             mAwareMetrics.recordNdpCreation(nnri.uid, mNetworkRequestsCache);
+         } else {
+             if (DBG) {
+@@ -751,7 +751,7 @@ public class WifiAwareDataPathStateManager {
+                         nnri.networkSpecifier.passphrase, nnri.networkSpecifier.isOutOfBand());
+                 nnri.state =
+                         AwareNetworkRequestInformation.STATE_INITIATOR_WAIT_FOR_REQUEST_RESPONSE;
+-                nnri.startTimestamp = SystemClock.elapsedRealtime();
++                nnri.startTimestamp = SystemClock.elapsedRealtime1();
+             } else {
+                 nnri.state = AwareNetworkRequestInformation.STATE_RESPONDER_WAIT_FOR_REQUEST;
+             }
+diff --git a/service/java/com/android/server/wifi/aware/WifiAwareStateManager.java b/service/java/com/android/server/wifi/aware/WifiAwareStateManager.java
+index 6ced9486c..457ebf4db 100644
+--- a/service/java/com/android/server/wifi/aware/WifiAwareStateManager.java
++++ b/service/java/com/android/server/wifi/aware/WifiAwareStateManager.java
+@@ -1151,7 +1151,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+             public void enter() {
+                 mTimeoutMessage = new WakeupMessage(mContext, getHandler(), HAL_COMMAND_TIMEOUT_TAG,
+                         MESSAGE_TYPE_RESPONSE_TIMEOUT, mCurrentCommand.arg1, mCurrentTransactionId);
+-                mTimeoutMessage.schedule(SystemClock.elapsedRealtime() + AWARE_COMMAND_TIMEOUT);
++                mTimeoutMessage.schedule(SystemClock.elapsedRealtime1() + AWARE_COMMAND_TIMEOUT);
+             }
+ 
+             @Override
+@@ -1339,7 +1339,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+                                 0, 0, networkSpecifier);
+                         mDataPathConfirmTimeoutMessages.put(networkSpecifier, timeout);
+                         timeout.schedule(
+-                                SystemClock.elapsedRealtime() + AWARE_WAIT_FOR_DP_CONFIRM_TIMEOUT);
++                                SystemClock.elapsedRealtime1() + AWARE_WAIT_FOR_DP_CONFIRM_TIMEOUT);
+                     }
+ 
+                     break;
+@@ -1590,7 +1590,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+                                 0, 0, networkSpecifier);
+                         mDataPathConfirmTimeoutMessages.put(networkSpecifier, timeout);
+                         timeout.schedule(
+-                                SystemClock.elapsedRealtime() + AWARE_WAIT_FOR_DP_CONFIRM_TIMEOUT);
++                                SystemClock.elapsedRealtime1() + AWARE_WAIT_FOR_DP_CONFIRM_TIMEOUT);
+                     }
+                     break;
+                 }
+@@ -1672,7 +1672,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+                     Message sentMessage = mCurrentCommand.getData().getParcelable(
+                             MESSAGE_BUNDLE_KEY_SENT_MESSAGE);
+                     sentMessage.getData().putLong(MESSAGE_BUNDLE_KEY_SEND_MESSAGE_ENQUEUE_TIME,
+-                            SystemClock.elapsedRealtime());
++                            SystemClock.elapsedRealtime1());
+                     mFwQueuedSendMessages.put(mCurrentTransactionId, sentMessage);
+                     updateSendMessageTimeout();
+                     if (!mSendQueueBlocked) {
+@@ -1911,11 +1911,11 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+             }
+             /*
+              * Note: using 'first' to always time-out (remove) at least 1 notification (partially)
+-             * due to test code needs: there's no way to mock elapsedRealtime(). TODO: replace with
++             * due to test code needs: there's no way to mock elapsedRealtime1(). TODO: replace with
+              * injected getClock() once moved off of mmwd.
+              */
+             boolean first = true;
+-            long currentTime = SystemClock.elapsedRealtime();
++            long currentTime = SystemClock.elapsedRealtime1();
+             Iterator<Map.Entry<Short, Message>> it = mFwQueuedSendMessages.entrySet().iterator();
+             while (it.hasNext()) {
+                 Map.Entry<Short, Message> entry = it.next();
+@@ -2036,7 +2036,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+             }
+             WifiAwareClientState client = new WifiAwareClientState(mContext, clientId, uid, pid,
+                     callingPackage, callback, configRequest, notifyIdentityChange,
+-                    SystemClock.elapsedRealtime());
++                    SystemClock.elapsedRealtime1());
+             client.onInterfaceAddressChange(mCurrentDiscoveryInterfaceMac);
+             mClients.append(clientId, client);
+             mAwareMetrics.recordAttachSession(uid, notifyIdentityChange, mClients);
+@@ -2427,7 +2427,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+ 
+             WifiAwareClientState client = new WifiAwareClientState(mContext, clientId, uid, pid,
+                     callingPackage, callback, configRequest, notifyIdentityChange,
+-                    SystemClock.elapsedRealtime());
++                    SystemClock.elapsedRealtime1());
+             mClients.put(clientId, client);
+             mAwareMetrics.recordAttachSession(uid, notifyIdentityChange, mClients);
+             try {
+@@ -2542,7 +2542,7 @@ public class WifiAwareStateManager implements WifiAwareShellCommand.DelegatedShe
+ 
+             WifiAwareDiscoverySessionState session = new WifiAwareDiscoverySessionState(
+                     mWifiAwareNativeApi, sessionId, pubSubId, callback, isPublish,
+-                    SystemClock.elapsedRealtime());
++                    SystemClock.elapsedRealtime1());
+             client.addSession(session);
+ 
+             mAwareMetrics.recordDiscoverySession(client.getUid(),
+-- 
+2.11.0
+

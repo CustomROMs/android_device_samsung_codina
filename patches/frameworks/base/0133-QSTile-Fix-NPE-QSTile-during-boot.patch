@@ -1,0 +1,242 @@
+From 4caaea7713b5f10d3898566c44f9f2503b72e85d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 133/296] QSTile: Fix NPE QSTile during boot
+
+---
+ .../src/com/android/systemui/qs/tiles/AdbOverNetworkTile.java       | 3 +++
+ .../src/com/android/systemui/qs/tiles/AirplaneModeTile.java         | 6 ++++++
+ .../SystemUI/src/com/android/systemui/qs/tiles/BluetoothTile.java   | 1 +
+ .../SystemUI/src/com/android/systemui/qs/tiles/CaffeineTile.java    | 3 +++
+ packages/SystemUI/src/com/android/systemui/qs/tiles/CastTile.java   | 3 +++
+ .../SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java    | 2 ++
+ packages/SystemUI/src/com/android/systemui/qs/tiles/DndTile.java    | 1 +
+ .../SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java  | 4 ++++
+ .../SystemUI/src/com/android/systemui/qs/tiles/HeadsUpTile.java     | 3 +++
+ .../SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java    | 4 ++++
+ .../src/com/android/systemui/qs/tiles/NightDisplayTile.java         | 6 ++++++
+ packages/SystemUI/src/com/android/systemui/qs/tiles/SyncTile.java   | 3 +++
+ packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java   | 1 +
+ 13 files changed, 40 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/AdbOverNetworkTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/AdbOverNetworkTile.java
+index 099a9a355aa..e4f30924865 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/AdbOverNetworkTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/AdbOverNetworkTile.java
+@@ -121,6 +121,9 @@ public class AdbOverNetworkTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     public void handleSetListening(boolean listening) {
++        if (mObserver == null) {
++            return;
++        }
+         if (mListening != listening) {
+             mListening = listening;
+             if (listening) {
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/AirplaneModeTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/AirplaneModeTile.java
+index bef1aff571f..865ef8b83d0 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/AirplaneModeTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/AirplaneModeTile.java
+@@ -82,6 +82,9 @@ public class AirplaneModeTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mSetting == null) {
++            return;
++        }
+         final int value = arg instanceof Integer ? (Integer)arg : mSetting.getValue();
+         final boolean airplaneMode = value != 0;
+         state.value = airplaneMode;
+@@ -111,6 +114,9 @@ public class AirplaneModeTile extends QSTileImpl<BooleanState> {
+     }
+ 
+     public void handleSetListening(boolean listening) {
++        if (mReceiver == null) {
++            return;
++        }
+         if (mListening == listening) return;
+         mListening = listening;
+         if (listening) {
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/BluetoothTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/BluetoothTile.java
+index ac3326a8f63..260a242dcb1 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/BluetoothTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/BluetoothTile.java
+@@ -116,6 +116,7 @@ public class BluetoothTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mController == null) return;
+         final boolean enabled = mController.isBluetoothEnabled();
+         final boolean connected = mController.isBluetoothConnected();
+         state.isTransient = mController.isBluetoothConnecting()
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/CaffeineTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/CaffeineTile.java
+index 03f5b613744..f4a9275b141 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/CaffeineTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/CaffeineTile.java
+@@ -173,6 +173,9 @@ public class CaffeineTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mWakeLock == null) {
++            return;
++        }
+         state.value = mWakeLock.isHeld();
+         if (state.value) {
+             state.label = formatValueWithRemainingTime();
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/CastTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/CastTile.java
+index fb396b9ddb0..ee77ccadcfb 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/CastTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/CastTile.java
+@@ -157,6 +157,9 @@ public class CastTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mController == null){
++            return;
++        }
+         state.label = mContext.getString(R.string.quick_settings_cast_title);
+         state.contentDescription = state.label;
+         state.value = false;
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java
+index c0b0473b1e7..8e7c69db7d7 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/CellularTile.java
+@@ -93,6 +93,7 @@ public class CellularTile extends QSTileImpl<SignalState> {
+ 
+     @Override
+     public void handleSetListening(boolean listening) {
++        if (mController == null) return;
+         if (listening) {
+             mController.addCallback(mSignalCallback);
+         } else {
+@@ -158,6 +159,7 @@ public class CellularTile extends QSTileImpl<SignalState> {
+     @Override
+     protected void handleUpdateState(SignalState state, Object arg) {
+         CallbackInfo cb = (CallbackInfo) arg;
++        if (mSignalCallback == null) return;
+         if (cb == null) {
+             cb = mSignalCallback.mInfo;
+         }
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/DndTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/DndTile.java
+index 52b4c0ac4e1..9845c51acd3 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/DndTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/DndTile.java
+@@ -174,6 +174,7 @@ public class DndTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mController == null) return;
+         final int zen = arg instanceof Integer ? (Integer) arg : mController.getZen();
+         final boolean newValue = zen != ZEN_MODE_OFF;
+         final boolean valueChanged = state.value != newValue;
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
+index f2ead1cbca9..cf531b7f176 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/FlashlightTile.java
+@@ -55,6 +55,7 @@ public class FlashlightTile extends QSTileImpl<BooleanState> implements
+ 
+     @Override
+     public void handleSetListening(boolean listening) {
++        if (mFlashlightController == null) return;
+         if (listening) {
+             mFlashlightController.addCallback(this);
+         } else {
+@@ -98,6 +99,9 @@ public class FlashlightTile extends QSTileImpl<BooleanState> implements
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mFlashlightController == null) {
++            return;
++        }
+         if (state.slash == null) {
+             state.slash = new SlashState();
+         }
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/HeadsUpTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/HeadsUpTile.java
+index 71458866b66..a2569066024 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/HeadsUpTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/HeadsUpTile.java
+@@ -73,6 +73,9 @@ public class HeadsUpTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mSetting == null) {
++            return;
++        }
+         final int value = arg instanceof Integer ? (Integer)arg : mSetting.getValue();
+         final boolean headsUp = value != 0;
+         state.value = headsUp;
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java
+index 3b67f09d630..6a0c11dad10 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/LocationTile.java
+@@ -86,6 +86,7 @@ public class LocationTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     public void handleSetListening(boolean listening) {
++        if (mController == null) return;
+         if (listening) {
+             mController.addCallback(mCallback);
+             mKeyguard.addCallback(mCallback);
+@@ -131,6 +132,9 @@ public class LocationTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mController == null) {
++            return;
++        }
+         if (state.slash == null) {
+             state.slash = new SlashState();
+         }
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java
+index 4c2036141da..f227bb2cdc0 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/NightDisplayTile.java
+@@ -75,6 +75,9 @@ public class NightDisplayTile extends QSTileImpl<BooleanState>
+ 
+     @Override
+     protected void handleUpdateState(BooleanState state, Object arg) {
++        if (mController == null) {
++            return;
++        }
+         final boolean isActivated = mController.isActivated();
+         state.value = isActivated;
+         state.label = state.contentDescription =
+@@ -96,6 +99,9 @@ public class NightDisplayTile extends QSTileImpl<BooleanState>
+ 
+     @Override
+     protected void handleSetListening(boolean listening) {
++        if (mController == null) {
++            return;
++        }
+         mIsListening = listening;
+         if (listening) {
+             mController.setListener(this);
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/SyncTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/SyncTile.java
+index 5e7a27bb95f..865e8504044 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/SyncTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/SyncTile.java
+@@ -95,6 +95,9 @@ public class SyncTile extends QSTileImpl<BooleanState> {
+ 
+     @Override
+     public void handleSetListening(boolean listening) {
++        if (mSyncObserver == null) {
++            return;
++        }
+         if (mListening == listening) return;
+         mListening = listening;
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java b/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java
+index fdbb260f39b..0f9d0125694 100644
+--- a/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java
++++ b/packages/SystemUI/src/com/android/systemui/qs/tiles/WifiTile.java
+@@ -142,6 +142,7 @@ public class WifiTile extends QSTileImpl<SignalState> {
+     protected void handleUpdateState(SignalState state, Object arg) {
+         if (DEBUG) Log.d(TAG, "handleUpdateState arg=" + arg);
+         CallbackInfo cb = (CallbackInfo) arg;
++        if (mSignalCallback == null) return;
+         if (cb == null) {
+             cb = mSignalCallback.mInfo;
+         }
+-- 
+2.11.0
+

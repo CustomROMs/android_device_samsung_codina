@@ -1,0 +1,40 @@
+From bc055884fb72335138b63564ba4a52acc2f6869b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 143/296] Don't try to show crash dialog for dead app
+
+If an app is killed right after we have created a crash dialog, cleanup from
+AMS can set the dialog to null before we have time to show it.
+
+After commit 445fd2af, the call to show() has been moved outside the
+synchronized block.  Without proper synchronization, checking for null is not
+enough to prevent a crash.
+
+A better solution for this would fix the synchronization.  Without information
+about the motivation behind 445fd2af, we have instead opted for the simpler
+solution of catching the NPE.
+---
+ services/core/java/com/android/server/am/AppErrors.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/AppErrors.java b/services/core/java/com/android/server/am/AppErrors.java
+index a842724c317..e0850a68fd4 100644
+--- a/services/core/java/com/android/server/am/AppErrors.java
++++ b/services/core/java/com/android/server/am/AppErrors.java
+@@ -751,10 +751,12 @@ class AppErrors {
+             }
+         }
+         // If we've created a crash dialog, show it without the lock held
+-        if(data.proc.crashDialog != null) {
++        try {
+             Slog.i(TAG, "Showing crash dialog for package " + data.proc.info.packageName
+                     + " u" + data.proc.userId);
+             data.proc.crashDialog.show();
++        } catch (NullPointerException ne) {
++            Slog.w(TAG, "Tried to show crash dialog for dead app.");
+         }
+     }
+ 
+-- 
+2.11.0
+

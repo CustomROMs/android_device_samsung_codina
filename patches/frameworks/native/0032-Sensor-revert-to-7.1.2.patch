@@ -1,7 +1,7 @@
-From 0e6a9d44bb39ab001f0cb9e5be5ccbffacb0032d Mon Sep 17 00:00:00 2001
+From 627b70ca74b68d1bc7cc433c572356e42edaa205 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 32/43] Sensor: revert to 7.1.2
+Subject: [PATCH 32/44] Sensor: revert to 7.1.2
 
 ---
  services/sensorservice/RecentEventLogger.h       |   4 +-

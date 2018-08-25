@@ -1,77 +1,17 @@
-From fc1d562259f5a3bc489581a35626ea30d97be9d1 Mon Sep 17 00:00:00 2001
+From 167c2f8ebecd896b766c22af32e00acf8982283f Mon Sep 17 00:00:00 2001
 From: Luca Stefani <luca020400@lineageos.org>
 Date: Wed, 16 Aug 2017 19:43:35 +0200
-Subject: [PATCH] Add support for Cortex-A9
+Subject: [PATCH 1/6] Add support for Cortex-A9
 
-Change-Id: I6967353cf2a93540561d33c8fe3f65c4fbcb9b9c
 ---
- android/makevars.go     |  2 +-
- cc/config/arm_device.go | 42 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 43 insertions(+), 1 deletion(-)
+ cc/config/arm_device.go | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/android/makevars.go b/android/makevars.go
-index 482fbde..000cc1c 100644
---- a/android/makevars.go
-+++ b/android/makevars.go
-@@ -194,7 +194,7 @@ my_check_failed := false
- 
- 	fmt.Fprintln(buf, `
- ifneq ($(my_check_failed),false)
--  $(error Soong variable check failed)
-+  $(warning Soong variable check failed)
- endif
- my_check_failed :=
- 
 diff --git a/cc/config/arm_device.go b/cc/config/arm_device.go
-index 1b60eae..d97e63e 100644
+index 6606100..f5c3eb8 100644
 --- a/cc/config/arm_device.go
 +++ b/cc/config/arm_device.go
-@@ -51,10 +51,44 @@ var (
- 		"-fgcse-after-reload",
- 		"-frerun-cse-after-loop",
- 		"-frename-registers",
-+		"-DDISABLE_ASHMEM_TRACKING",
-+		"-DUMOUNT_AND_FSCK_IS_UNSAFE",
-+		"-DTARGET_LEGACY_CAMERA_HAL1",
-+		"-DMETADATA_CAMERA_SOURCE",
-+		"-DCAMCORDER_GRALLOC_SOURCE",
-+		"-DSTE_SCREEN_RECORD",
-+		"-DCOMPAT_SENSORS_M",
-+		"-DSTE_HARDWARE",
-+		"-DSTE_SAMSUNG_HARDWARE",
-+		"-DFORCE_SCREENSHOT_CPU_PATH",
-+		"-DBOARD_CANT_REALLOCATE_OMX_BUFFERS",
-+		"-DSTE_POSIX_CLOCKS",
-+		"-DMR0_AUDIO_BLOB",
-+		"-DMR1_AUDIO_BLOB",
-+		"-DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR",
-+		"-DNEEDS_VECTORIMPL_SYMBOLS",
-+		"-DADD_LEGACY_ACQUIRE_BUFFER_SYMBOL",
- 	}
- 
- 	armCppflags = []string{
- 		"-fvisibility-inlines-hidden",
-+		"-DDISABLE_ASHMEM_TRACKING",
-+		"-DUMOUNT_AND_FSCK_IS_UNSAFE",
-+		"-DTARGET_LEGACY_CAMERA_HAL1",
-+		"-DMETADATA_CAMERA_SOURCE",
-+		"-DCAMCORDER_GRALLOC_SOURCE",
-+		"-DSTE_SCREEN_RECORD",
-+		"-DCOMPAT_SENSORS_M",
-+		"-DSTE_HARDWARE",
-+		"-DSTE_SAMSUNG_HARDWARE",
-+		"-DFORCE_SCREENSHOT_CPU_PATH",
-+		"-DBOARD_CANT_REALLOCATE_OMX_BUFFERS",
-+		"-DSTE_POSIX_CLOCKS",
-+		"-DMR0_AUDIO_BLOB",
-+		"-DMR1_AUDIO_BLOB",
-+		"-DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR",
-+		"-DNEEDS_VECTORIMPL_SYMBOLS",
-+		"-DADD_LEGACY_ACQUIRE_BUFFER_SYMBOL",
- 	}
- 
- 	armLdflags = []string{
-@@ -118,6 +152,9 @@ var (
+@@ -119,6 +119,9 @@ var (
  		"cortex-a8": []string{
  			"-mcpu=cortex-a8",
  		},
@@ -80,16 +20,16 @@ index 1b60eae..d97e63e 100644
 +		},
  		"cortex-a15": []string{
  			"-mcpu=cortex-a15",
- 			// Fake an ARM compiler flag as these processors support LPAE which GCC/clang
-@@ -195,6 +232,7 @@ func init() {
+ 			"-mfpu=neon-vfpv4",
+@@ -217,6 +220,7 @@ func init() {
  	pctx.StaticVariable("ArmGenericCflags", strings.Join(armCpuVariantCflags[""], " "))
  	pctx.StaticVariable("ArmCortexA7Cflags", strings.Join(armCpuVariantCflags["cortex-a7"], " "))
  	pctx.StaticVariable("ArmCortexA8Cflags", strings.Join(armCpuVariantCflags["cortex-a8"], " "))
 +	pctx.StaticVariable("ArmCortexA9Cflags", strings.Join(armCpuVariantCflags["cortex-a9"], " "))
  	pctx.StaticVariable("ArmCortexA15Cflags", strings.Join(armCpuVariantCflags["cortex-a15"], " "))
+ 	pctx.StaticVariable("ArmCortexA53Cflags", strings.Join(armCpuVariantCflags["cortex-a53"], " "))
  	pctx.StaticVariable("ArmKraitCflags", strings.Join(armCpuVariantCflags["krait"], " "))
- 
-@@ -223,6 +261,8 @@ func init() {
+@@ -247,6 +251,8 @@ func init() {
  		strings.Join(armClangCpuVariantCflags["cortex-a7"], " "))
  	pctx.StaticVariable("ArmClangCortexA8Cflags",
  		strings.Join(armClangCpuVariantCflags["cortex-a8"], " "))
@@ -97,23 +37,23 @@ index 1b60eae..d97e63e 100644
 +		strings.Join(armClangCpuVariantCflags["cortex-a9"], " "))
  	pctx.StaticVariable("ArmClangCortexA15Cflags",
  		strings.Join(armClangCpuVariantCflags["cortex-a15"], " "))
- 	pctx.StaticVariable("ArmClangKraitCflags",
-@@ -240,6 +280,7 @@ var (
+ 	pctx.StaticVariable("ArmClangCortexA53Cflags",
+@@ -268,6 +274,7 @@ var (
  		"":               "${config.ArmGenericCflags}",
  		"cortex-a7":      "${config.ArmCortexA7Cflags}",
  		"cortex-a8":      "${config.ArmCortexA8Cflags}",
 +		"cortex-a9":      "${config.ArmCortexA9Cflags}",
  		"cortex-a15":     "${config.ArmCortexA15Cflags}",
- 		"cortex-a53":     "${config.ArmCortexA7Cflags}",
- 		"cortex-a53.a57": "${config.ArmCortexA7Cflags}",
-@@ -257,6 +298,7 @@ var (
+ 		"cortex-a53":     "${config.ArmCortexA53Cflags}",
+ 		"cortex-a53.a57": "${config.ArmCortexA53Cflags}",
+@@ -287,6 +294,7 @@ var (
  		"":               "${config.ArmClangGenericCflags}",
  		"cortex-a7":      "${config.ArmClangCortexA7Cflags}",
  		"cortex-a8":      "${config.ArmClangCortexA8Cflags}",
 +		"cortex-a9":      "${config.ArmClangCortexA9Cflags}",
  		"cortex-a15":     "${config.ArmClangCortexA15Cflags}",
- 		"cortex-a53":     "${config.ArmClangCortexA7Cflags}",
- 		"cortex-a53.a57": "${config.ArmClangCortexA7Cflags}",
+ 		"cortex-a53":     "${config.ArmClangCortexA53Cflags}",
+ 		"cortex-a53.a57": "${config.ArmClangCortexA53Cflags}",
 -- 
-2.7.4
+2.11.0
 

@@ -1,0 +1,28 @@
+From d8f73f6b025f7f38741ab4697c2b0150fa974757 Mon Sep 17 00:00:00 2001
+From: Park Ju Hyung <qkrwngud825@gmail.com>
+Date: Mon, 15 May 2017 03:44:27 +0900
+Subject: [PATCH] zlib: enable unaligned memory access
+
+arm32, arm64, x86 and x86_64 are all capable of
+handling unaligned memory access.
+
+Enable UNALIGNED_OK in order to improve performance.
+---
+ Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Android.bp b/Android.bp
+index b4c50f5..bcec865 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -5,6 +5,7 @@ cc_defaults {
+         "-O3",
+         "-DUSE_MMAP",
+         "-DZLIB_CONST",
++        "-DUNALIGNED_OK",
+     ],
+     stl: "none",
+     export_include_dirs: ["."],
+-- 
+2.11.0
+

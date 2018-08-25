@@ -1,27 +1,25 @@
-From 5f3ac1965bdfe35c3783d9e6c4ba3f109ce90c33 Mon Sep 17 00:00:00 2001
-From: Shilin Victor <chrono.monochrome@gmail.com>
-Date: Sun, 17 Sep 2017 12:41:28 +0300
+From fe8472da066d14fdb4711d87b0f1a5d6fb3ff418 Mon Sep 17 00:00:00 2001
+From: Lorenzo Colitti <lorenzo@google.com>
+Date: Mon, 1 Aug 2016 18:14:31 +0900
 Subject: [PATCH] Don't start tethering if IPv6 RPF is not supported.
 
-Change-Id: Idb2eb6cbb4cadd323daa499a8956866456fe71f2
 ---
- server/NatController.cpp | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ server/NatController.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/server/NatController.cpp b/server/NatController.cpp
-index 85a7ee1..cf3b398 100644
+index 58c732d..45b64b8 100644
 --- a/server/NatController.cpp
 +++ b/server/NatController.cpp
-@@ -382,7 +382,8 @@ int NatController::setForwardRules(bool add, const char *intIface, const char *e
-         goto err_return;
+@@ -205,7 +205,7 @@ int NatController::setForwardRules(bool add, const char *intIface, const char *e
+         "*raw\n"
+         "%s %s -i %s -m rpfilter --invert ! -s fe80::/64 -j DROP\n"
+         "COMMIT\n", op, LOCAL_RAW_PREROUTING, intIface);
+-    if (iptablesRestoreFunction(V6, rpfilterCmd) == -1 && add) {
++    if (iptablesRestoreFunction(V6, rpfilterCmd) == -1 && add && false /* STOPSHIP */) {
+         return -1;
      }
  
--    if (runCmd(ARRAY_SIZE(cmd4), cmd4) && add) {
-+    // STOPSHIP: Make this an error.
-+    if (runCmd(ARRAY_SIZE(cmd4), cmd4) && add && false /* STOPSHIP */) {
-         rc = -1;
-         goto err_rpfilter;
-     }
 -- 
-2.7.4
+2.11.0
 

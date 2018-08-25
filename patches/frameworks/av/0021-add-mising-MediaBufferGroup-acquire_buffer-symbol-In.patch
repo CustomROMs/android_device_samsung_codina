@@ -1,0 +1,45 @@
+From 683e425bbede92041e35621d0ebc38ca4d796b8a Mon Sep 17 00:00:00 2001
+From: DeckerSU <support@decker.su>
+Date: Mon, 12 Dec 2016 23:28:29 +0200
+Subject: [PATCH 21/57] add mising MediaBufferGroup::acquire_buffer symbol *
+ Instead of implying false, use overloaded methods to set nonBlocking flag
+ false * Fixes blobs that link against this
+
+---
+ media/libstagefright/foundation/Android.bp           | 1 +
+ media/libstagefright/foundation/MediaBufferGroup.cpp | 7 +++++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/media/libstagefright/foundation/Android.bp b/media/libstagefright/foundation/Android.bp
+index 221af1d07..157b84760 100644
+--- a/media/libstagefright/foundation/Android.bp
++++ b/media/libstagefright/foundation/Android.bp
+@@ -37,6 +37,7 @@ cc_library_shared {
+         "-Wno-multichar",
+         "-Werror",
+         "-Wall",
++        "-DADD_LEGACY_ACQUIRE_BUFFER_SYMBOL",
+     ],
+ 
+     shared_libs: [
+diff --git a/media/libstagefright/foundation/MediaBufferGroup.cpp b/media/libstagefright/foundation/MediaBufferGroup.cpp
+index cb62d9291..fdcce5fd2 100644
+--- a/media/libstagefright/foundation/MediaBufferGroup.cpp
++++ b/media/libstagefright/foundation/MediaBufferGroup.cpp
+@@ -138,6 +138,13 @@ bool MediaBufferGroup::has_buffers() {
+     return false;
+ }
+ 
++#ifdef ADD_LEGACY_ACQUIRE_BUFFER_SYMBOL
++extern "C" status_t _ZN7android16MediaBufferGroup14acquire_bufferEPPNS_11MediaBufferE(
++    MediaBufferGroup* group, MediaBuffer **out) {
++    return group->acquire_buffer(out, false);
++}
++#endif
++
+ status_t MediaBufferGroup::acquire_buffer(
+         MediaBuffer **out, bool nonBlocking, size_t requestedSize) {
+     Mutex::Autolock autoLock(mLock);
+-- 
+2.11.0
+

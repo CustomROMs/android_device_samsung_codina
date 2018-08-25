@@ -1,0 +1,41 @@
+From 0212602d1c13768c89120370434d8514f6ec6e7f Mon Sep 17 00:00:00 2001
+From: Sanjeev Jakkilinki <sanjeevj@codeaurora.org>
+Date: Tue, 25 Apr 2017 16:17:54 +0530
+Subject: [PATCH 129/296] frameworks/base: reduce the setTransactions
+
+reduce the setTransactions from window manager service to
+reduce the janks during animations for more numbered layers
+
+Test: Build successful, visible performance improvement.
+---
+ services/core/java/com/android/server/wm/DimLayer.java | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/DimLayer.java b/services/core/java/com/android/server/wm/DimLayer.java
+index 708973d5d4f..310216693fe 100644
+--- a/services/core/java/com/android/server/wm/DimLayer.java
++++ b/services/core/java/com/android/server/wm/DimLayer.java
+@@ -201,13 +201,14 @@ public class DimLayer {
+         }
+ 
+         if (mDimSurface != null) {
+-            mDimSurface.setPosition(mBounds.left, mBounds.top);
+-            mDimSurface.setSize(mBounds.width(), mBounds.height());
+-            if (DEBUG_DIM_LAYER) Slog.v(TAG,
+-                    "adjustBounds user=" + mUser.toShortString() + " mBounds=" + mBounds);
++            if(!mLastBounds.equals(mBounds)) {
++                 mDimSurface.setPosition(mBounds.left, mBounds.top);
++                 mDimSurface.setSize(mBounds.width(), mBounds.height());
++                 if (DEBUG_DIM_LAYER) Slog.v(TAG,
++                        "adjustBounds user=" + mUser.toShortString() + " mBounds=" + mBounds);
++                 mLastBounds.set(mBounds);
++           }
+         }
+-
+-        mLastBounds.set(mBounds);
+     }
+ 
+     private void getBoundsForFullscreen(Rect outBounds) {
+-- 
+2.11.0
+

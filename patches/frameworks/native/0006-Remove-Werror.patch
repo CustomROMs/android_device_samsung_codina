@@ -1,7 +1,7 @@
-From b4651cca0cfe0e3eb811edfccc8efe8562714bc4 Mon Sep 17 00:00:00 2001
+From f4b910565d70221239c3382d67178913c4d024e4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 06/43] Remove -Werror
+Subject: [PATCH 06/44] Remove -Werror
 
 ---
  libs/binder/Android.bp             | 1 -

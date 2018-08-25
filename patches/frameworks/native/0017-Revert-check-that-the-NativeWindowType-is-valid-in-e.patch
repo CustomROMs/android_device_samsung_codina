@@ -1,7 +1,7 @@
-From aa96ea1a51e1b4145055eb07ef359de0e5db5467 Mon Sep 17 00:00:00 2001
+From 857d72c3a76a4f389784700327835ec25a6413e4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 17/43] Revert "check that the NativeWindowType is valid in
+Subject: [PATCH 17/44] Revert "check that the NativeWindowType is valid in
  eglCreateWindowSurface"
 
 ---

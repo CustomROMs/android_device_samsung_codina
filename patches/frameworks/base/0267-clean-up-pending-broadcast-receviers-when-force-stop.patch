@@ -1,0 +1,38 @@
+From ee35ccee368b2993960aa8662d7abefacf75bd3a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 267/296] clean up pending broadcast receviers when force stop
+ package
+
+when app was force-stop, only clean up mOrderedBroadcasts and mParallelBroadcasts,
+maybe exist broadcast receviers in pendind list, need clean up it completely.
+
+AMS.forceStopPackage
+    AMS.forceStopPackageLocked
+        cleanupDisabledPackageReceiversLocked
+---
+ services/core/java/com/android/server/am/BroadcastQueue.java | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/services/core/java/com/android/server/am/BroadcastQueue.java b/services/core/java/com/android/server/am/BroadcastQueue.java
+index 61b18cd001e..1aab928a85d 100644
+--- a/services/core/java/com/android/server/am/BroadcastQueue.java
++++ b/services/core/java/com/android/server/am/BroadcastQueue.java
+@@ -1560,6 +1560,14 @@ public final class BroadcastQueue {
+             }
+         }
+ 
++        if (mPendingBroadcast != null) {
++            didSomething |= mPendingBroadcast.cleanupDisabledPackageReceiversLocked(
++                    packageName, filterByClasses, userId, doit);
++            if (!doit && didSomething) {
++                return true;
++            }
++        }
++
+         return didSomething;
+     }
+ 
+-- 
+2.11.0
+

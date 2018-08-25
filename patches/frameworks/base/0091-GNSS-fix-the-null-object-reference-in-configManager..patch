@@ -1,0 +1,31 @@
+From 9642ec483dc76d3e9f1952b30cae0b916347f259 Mon Sep 17 00:00:00 2001
+From: Narayan Kamath <narayan@google.com>
+Date: Tue, 20 Feb 2018 17:06:21 +0000
+Subject: [PATCH 091/296] GNSS: fix the null object reference in
+ configManager.getConfig(), judge the null pointer firstly..
+
+---
+ .../java/com/android/server/location/GnssLocationProvider.java     | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/location/GnssLocationProvider.java b/services/core/java/com/android/server/location/GnssLocationProvider.java
+index 43d5e0b5777..801dfc2f3d2 100644
+--- a/services/core/java/com/android/server/location/GnssLocationProvider.java
++++ b/services/core/java/com/android/server/location/GnssLocationProvider.java
+@@ -536,8 +536,11 @@ public class GnssLocationProvider implements LocationProviderInterface {
+             if (DEBUG) Log.d(TAG, "SIM MCC/MNC is available: " + mccMnc);
+             synchronized (mLock) {
+                 if (configManager != null) {
+-                    PersistableBundle b = configManager.getConfig();
+-                    isKeepLppProfile = b.getBoolean(CarrierConfigManager.KEY_PERSIST_LPP_MODE_BOOL);
++                    PersistableBundle bundle = configManager.getConfig();
++                    if (bundle != null) {
++                        isKeepLppProfile = bundle.getBoolean(
++                              CarrierConfigManager.KEY_PERSIST_LPP_MODE_BOOL);
++                    }
+                 }
+                 if (isKeepLppProfile) {
+                     // load current properties for the carrier
+-- 
+2.11.0
+

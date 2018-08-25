@@ -1,7 +1,7 @@
-From 5f8ded5a7c5c378c3881e9ae1cf20a09303745ba Mon Sep 17 00:00:00 2001
+From 0944fcfcf90c03c4788ff55bf94dd95a1c734c0e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 38/43] EGL: call vendor eglCreateWindowSurface with NULL
+Subject: [PATCH 38/44] EGL: call vendor eglCreateWindowSurface with NULL
  attrib_list
 
 Old adreno (200) gpu EGL libraries fail to create window surface
