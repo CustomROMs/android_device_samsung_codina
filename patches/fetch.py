@@ -21,12 +21,12 @@ def fetch_unshallow(projects, remotes, dry_run = False):
 
 		remote = p.get("remote") or remotes["default"].name
 		if p.get("revision"):
-			revision = "%s/%s" % (remote, p.get("revision"))
+			revision = p.get("revision")
 		else:
 			revision = remotes["default"].revision
 		repo_realpath = os.path.join(ANDROID_BUILD_TOP, path)
 		out_path = os.path.join(ROOT, path)
-		cmd = "git -C %s fetch %s --unshallow" % (repo_realpath, revision)
+		cmd = "git -C %s fetch %s %s --unshallow" % (repo_realpath, remote, revision)
 		print(cmd)
 		if not dry_run:
 			try:
