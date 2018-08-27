@@ -1,0 +1,40 @@
+From 8faace414bce8c7b8e1cdf8db46ec5dbe6ab86ca Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 27 Aug 2018 01:09:13 +0300
+Subject: [PATCH 07/16] bootloop fixes
+
+Change-Id: Ia707ee5aa87d8b4741dcdc9db61c9a6a35a67098
+---
+ init/Android.mk | 2 +-
+ init/init.cpp   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/init/Android.mk b/init/Android.mk
+index c89bacc99..1e7ab6b19 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -8,7 +8,7 @@ ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
+ init_options += \
+     -DALLOW_LOCAL_PROP_OVERRIDE=1 \
+     -DALLOW_PERMISSIVE_SELINUX=1 \
+-    -DREBOOT_BOOTLOADER_ON_PANIC=1 \
++    -DREBOOT_BOOTLOADER_ON_PANIC=0 \
+     -DWORLD_WRITABLE_KMSG=1 \
+     -DDUMP_ON_UMOUNT_FAILURE=1
+ else
+diff --git a/init/init.cpp b/init/init.cpp
+index 4fe115e92..4ebf7745b 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -477,7 +477,7 @@ static void InstallRebootSignalHandlers() {
+         // RebootSystem uses syscall() which isn't actually async-signal-safe, but our only option
+         // and probably good enough given this is already an error case and only enabled for
+         // development builds.
+-        RebootSystem(ANDROID_RB_RESTART2, "bootloader");
++        RebootSystem(ANDROID_RB_RESTART2, "recovery");
+     };
+     action.sa_flags = SA_RESTART;
+     sigaction(SIGABRT, &action, nullptr);
+-- 
+2.11.0
+

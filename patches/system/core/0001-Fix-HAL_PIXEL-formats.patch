@@ -1,0 +1,63 @@
+From 5e644f05b5e51587dbf93bd2d58708d5cf863fdb Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 27 Aug 2018 00:39:33 +0300
+Subject: [PATCH 01/16] Fix HAL_PIXEL formats
+
+Change-Id: I1b9f865260e3d2aaeb77f26bf5aacf47206bf5a8
+---
+ libsystem/include/system/graphics-base-v1.0.h | 36 ++++++++++++++++++++-------
+ 1 file changed, 27 insertions(+), 9 deletions(-)
+
+diff --git a/libsystem/include/system/graphics-base-v1.0.h b/libsystem/include/system/graphics-base-v1.0.h
+index 44913cc61..bf443b83b 100644
+--- a/libsystem/include/system/graphics-base-v1.0.h
++++ b/libsystem/include/system/graphics-base-v1.0.h
+@@ -15,18 +15,36 @@ typedef enum {
+     HAL_PIXEL_FORMAT_RGB_888 = 3,
+     HAL_PIXEL_FORMAT_RGB_565 = 4,
+     HAL_PIXEL_FORMAT_BGRA_8888 = 5,
++    HAL_PIXEL_FORMAT_RGBA_5551 = 6,
++    HAL_PIXEL_FORMAT_RGBA_4444 = 7,
+     HAL_PIXEL_FORMAT_YCBCR_422_SP = 16,
+     HAL_PIXEL_FORMAT_YCRCB_420_SP = 17,
+     HAL_PIXEL_FORMAT_YCBCR_422_I = 20,
+-    HAL_PIXEL_FORMAT_RGBA_FP16 = 22,
+-    HAL_PIXEL_FORMAT_RAW16 = 32,
+-    HAL_PIXEL_FORMAT_BLOB = 33,
+-    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED = 34,
+-    HAL_PIXEL_FORMAT_YCBCR_420_888 = 35,
+-    HAL_PIXEL_FORMAT_RAW_OPAQUE = 36,
+-    HAL_PIXEL_FORMAT_RAW10 = 37,
+-    HAL_PIXEL_FORMAT_RAW12 = 38,
+-    HAL_PIXEL_FORMAT_RGBA_1010102 = 43,
++#ifdef STE_HARDWARE
++    HAL_PIXEL_FORMAT_YCbCr_422_P        = 18,
++    HAL_PIXEL_FORMAT_YCbCr_420_P        = 19,
++    HAL_PIXEL_FORMAT_YCbCr_420_I        = 21,
++    HAL_PIXEL_FORMAT_CbYCrY_422_I       = 22,
++    HAL_PIXEL_FORMAT_CbYCrY_420_I       = 23,
++    HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED = 32,
++    HAL_PIXEL_FORMAT_YCbCr_420_SP       = 33,
++    HAL_PIXEL_FORMAT_YCrCb_420_SP_TILED = 34,
++    HAL_PIXEL_FORMAT_YCrCb_422_SP       = 35,
++    HAL_PIXEL_FORMAT_YCrCb_422_P        = 36,
++    HAL_PIXEL_FORMAT_YCrCb_420_P        = 37,
++     /* STE: Added Support of YUV42XMBN, required for Copybit CC acceleration */
++     HAL_PIXEL_FORMAT_YCBCR42XMBN        = 14,
++#endif
++
++    HAL_PIXEL_FORMAT_RAW16 = 38, // was = 32,
++    HAL_PIXEL_FORMAT_BLOB = 47, // was 33
++    HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED = 40,
++    HAL_PIXEL_FORMAT_YCBCR_420_888 = 41,
++    HAL_PIXEL_FORMAT_RAW_OPAQUE = 42,
++    HAL_PIXEL_FORMAT_RAW10 = 43,
++    HAL_PIXEL_FORMAT_RAW12 = 44,
++    HAL_PIXEL_FORMAT_RGBA_1010102 = 45,
++    HAL_PIXEL_FORMAT_RGBA_FP16 = 46, // was = 22,
+     HAL_PIXEL_FORMAT_Y8 = 538982489,
+     HAL_PIXEL_FORMAT_Y16 = 540422489,
+     HAL_PIXEL_FORMAT_YV12 = 842094169,
+-- 
+2.11.0
+

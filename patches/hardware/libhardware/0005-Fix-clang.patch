@@ -1,14 +1,15 @@
-From 864acad027109d526fc0ac2dd3a900b7bf0b4675 Mon Sep 17 00:00:00 2001
+From bd7be58a3949c3ba004b7b5c529a220670d6196d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 5/7] Fix clang
+Subject: [PATCH 5/6] Fix clang
 
+Change-Id: Ie8e4591fb360e7086c913b81b49b63c2d472033a
 ---
- modules/audio/Android.bp | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ modules/audio/Android.bp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/modules/audio/Android.bp b/modules/audio/Android.bp
-index 940a5366..a8849835 100644
+index a7467c29..f45f8691 100644
 --- a/modules/audio/Android.bp
 +++ b/modules/audio/Android.bp
 @@ -27,7 +27,7 @@ cc_library_shared {
@@ -29,16 +30,7 @@ index 940a5366..a8849835 100644
  }
  
  // The stub audio policy HAL module that can be used as a skeleton for
-@@ -59,7 +59,7 @@ cc_library_shared {
-     shared_libs: [
-         "liblog",
-     ],
--    cflags: ["-Wall", "-Werror", "-Wno-unused-parameter"],
-+    cflags: ["-Wall", "-Wno-unused-parameter"],
- }
- 
- // The stub audio amplifier HAL module that can be used as a skeleton for
-@@ -72,5 +72,5 @@ cc_library_shared {
+@@ -59,5 +59,5 @@ cc_library_shared {
      shared_libs: [
          "liblog",
      ],

@@ -1,0 +1,57 @@
+From a90a5e0dadf8b2e8bb2dcb1bc596a0062ca9f89c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 26 Aug 2018 18:16:50 +0300
+Subject: [PATCH 10/10] roomservicxe: change fetch address to CustomROMs
+
+Change-Id: Ia49d67802c1bfd0b1a27d1dee1b728d23d8dc4a3
+---
+ build/tools/roomservice.py | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/build/tools/roomservice.py b/build/tools/roomservice.py
+index 813d0b77..968a3b93 100755
+--- a/build/tools/roomservice.py
++++ b/build/tools/roomservice.py
+@@ -52,7 +52,7 @@ except:
+     device = product
+ 
+ if not depsonly:
+-    print("Device %s not found. Attempting to retrieve device repository from LineageOS Github (http://github.com/LineageOS)." % device)
++    print("Device %s not found. Attempting to retrieve device repository from CustomROMs Github (http://github.com/CustomROMs)." % device)
+ 
+ repositories = []
+ 
+@@ -72,7 +72,7 @@ def add_auth(githubreq):
+         githubreq.add_header("Authorization","Basic %s" % githubauth)
+ 
+ if not depsonly:
+-    githubreq = urllib.request.Request("https://api.github.com/search/repositories?q=%s+user:LineageOS+in:name+fork:true" % device)
++    githubreq = urllib.request.Request("https://api.github.com/search/repositories?q=%s+user:CustomROMs+in:name+fork:true" % device)
+     add_auth(githubreq)
+     try:
+         result = json.loads(urllib.request.urlopen(githubreq).read().decode())
+@@ -176,12 +176,12 @@ def add_to_manifest(repositories, fallback_branch = None):
+         repo_target = repository['target_path']
+         print('Checking if %s is fetched from %s' % (repo_target, repo_name))
+         if is_in_manifest(repo_target):
+-            print('LineageOS/%s already fetched to %s' % (repo_name, repo_target))
++            print('CustomROMs/%s already fetched to %s' % (repo_name, repo_target))
+             continue
+ 
+-        print('Adding dependency: LineageOS/%s -> %s' % (repo_name, repo_target))
++        print('Adding dependency: CustomROMs/%s -> %s' % (repo_name, repo_target))
+         project = ElementTree.Element("project", attrib = { "path": repo_target,
+-            "remote": "github", "name": "LineageOS/%s" % repo_name })
++            "remote": "github", "name": "CustomROMs/%s" % repo_name })
+ 
+         if 'branch' in repository:
+             project.set('revision',repository['branch'])
+@@ -299,4 +299,4 @@ else:
+             print("Done")
+             sys.exit()
+ 
+-print("Repository for %s not found in the LineageOS Github repository list. If this is in error, you may need to manually add it to your local_manifests/roomservice.xml." % device)
++print("Repository for %s not found in the CustomROMs Github repository list. If this is in error, you may need to manually add it to your local_manifests/roomservice.xml." % device)
+-- 
+2.11.0
+

@@ -260,7 +260,11 @@ PRODUCT_PACKAGES += \
 
 # graphics HIDL interfaces
 PRODUCT_PACKAGES += \
-    android.hardware.configstore@1.0-service
+    android.hardware.configstore@1.0-service \
+    android.hardware.graphics.allocator@2.0-impl-exynos4 \
+    android.hardware.graphics.mapper@2.0-impl-exynos4 \
+    android.hardware.graphics.composer@2.1-impl
+
 
 # Keymaster
 PRODUCT_PACKAGES += \
@@ -298,16 +302,8 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configsnew/hals.conf:system/vendor/etc/sensors/hals.conf
 endif
 
-# Gralloc Mapper
 PRODUCT_PACKAGES += \
-     android.hardware.graphics.mapper@2.0-impl \
-     android.hardware.graphics.allocator@2.0-impl-exynos4
-
-# Display HIDL interfaces
-#PRODUCT_PACKAGES += \
-#    android.hardware.graphics.allocator@2.0-service
-#    android.hardware.graphics.composer@2.1-service \
-#    android.hardware.graphics.composer@2.1-impl
+    input.evdev.default
 
 # Gatekeeper HAL
 #PRODUCT_PACKAGES += \

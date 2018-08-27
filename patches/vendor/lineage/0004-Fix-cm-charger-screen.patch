@@ -1,7 +1,7 @@
-From 2a92a31b9c41bf78563bcdc917ab8c4bda75be77 Mon Sep 17 00:00:00 2001
+From 848fca85de40d843aa92d08f65919b0a406058e3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 04/11] Fix cm charger screen
+Subject: [PATCH 04/10] Fix cm charger screen
 
 ---
  charger/Android.mk | 2 ++

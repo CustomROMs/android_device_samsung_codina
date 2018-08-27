@@ -1,0 +1,26 @@
+From b4a2bce326595d06ddc39697382f7de42a6968d2 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 26 Aug 2018 23:30:36 +0300
+Subject: [PATCH 30/31] Remove -Werror
+
+Change-Id: Iab2d5f975dcb4fb6fed15aac74efd9a311ed2802
+---
+ core/binary.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index d70a8e72c..d0bdf11c2 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -1691,7 +1691,7 @@ ifneq ($(LOCAL_MODULE_MAKEFILE),$(SOONG_ANDROID_MK))
+         ifeq (,$(filter -Werror,$(my_all_cflags)))
+           # Add -Wall -Werror unless the project is in the WARNING_ALLOWED project list.
+           ifeq (,$(strip $(call find_warning_allowed_projects,$(LOCAL_PATH))))
+-            my_cflags := -Wall -Werror $(my_cflags)
++            my_cflags := -Wall $(my_cflags)
+           else
+             $(eval MODULES_ADDED_WALL := $(MODULES_ADDED_WALL) $(LOCAL_MODULE_MAKEFILE):$(LOCAL_MODULE))
+             my_cflags := -Wall $(my_cflags)
+-- 
+2.11.0
+

@@ -1,0 +1,52 @@
+From 8b39346a02cf8934647106fb44fa86794553d4a1 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 18/31] core: ignore recovery resource zip
+
+Won't be shipping recovery or anything anyways
+
+Change-Id: I67789d0acbdfa9402eae71b1fdf1c3b719f6c8d7
+---
+ core/Makefile | 25 -------------------------
+ 1 file changed, 25 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 7b4a37f5a..31a6192ff 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1315,32 +1315,7 @@ else
+ recovery_wipe :=
+ endif
+ 
+-# Traditionally with non-A/B OTA we have:
+-#   boot.img + recovery-from-boot.p + recovery-resource.dat = recovery.img.
+-# recovery-resource.dat is needed only if we carry an imgdiff patch of the boot and recovery images
+-# and invoke install-recovery.sh on the first boot post an OTA update.
+-#
+-# We no longer need that if one of the following conditions holds:
+-#   a) We carry a full copy of the recovery image - no patching needed
+-#      (BOARD_USES_FULL_RECOVERY_IMAGE = true);
+-#   b) We build a single image that contains boot and recovery both - no recovery image to install
+-#      (BOARD_USES_RECOVERY_AS_BOOT = true);
+-#   c) We build the root into system image - not needing the resource file as we do bsdiff
+-#      (BOARD_BUILD_SYSTEM_ROOT_IMAGE = true).
+-#   d) We include the recovery DTBO image within recovery - not needing the resource file as we
+-#      do bsdiff because boot and recovery will contain different number of entries
+-#      (BOARD_INCLUDE_RECOVERY_DTBO = true).
+-# Note that condition b) implies condition c), because of the earlier check in this file:
+-# "BOARD_USES_RECOVERY_AS_BOOT = true must have BOARD_BUILD_SYSTEM_ROOT_IMAGE = true" (not vice
+-# versa though).
+-
+-ifeq (,$(filter true, $(BOARD_USES_FULL_RECOVERY_IMAGE) $(BOARD_BUILD_SYSTEM_ROOT_IMAGE) \
+-  $(BOARD_INCLUDE_RECOVERY_DTBO) $(TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK)))
+-# Named '.dat' so we don't attempt to use imgdiff for patching it.
+-RECOVERY_RESOURCE_ZIP := $(TARGET_OUT)/etc/recovery-resource.dat
+-else
+ RECOVERY_RESOURCE_ZIP :=
+-endif
+ 
+ INTERNAL_RECOVERYIMAGE_ARGS := \
+ 	$(addprefix --second ,$(INSTALLED_2NDBOOTLOADER_TARGET)) \
+-- 
+2.11.0
+

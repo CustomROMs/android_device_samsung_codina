@@ -1,8 +1,9 @@
-From abb4085dae393607c744c5f3f26ab56835dadef5 Mon Sep 17 00:00:00 2001
+From 1ad95c791287fb85b5c3939dca10829198a8612e Mon Sep 17 00:00:00 2001
 From: maxwen <max.weninger@gmail.com>
 Date: Sat, 9 Dec 2017 03:06:19 +0100
-Subject: [PATCH 5/6] soong: add TARGET_SPECIFIC_HEADER_PATH to config
+Subject: [PATCH 5/7] soong: add TARGET_SPECIFIC_HEADER_PATH to config
 
+Change-Id: I30f454a7eebedc8c537418d8594da8e309a80c02
 ---
  android/config.go   | 4 ++++
  android/variable.go | 1 +
@@ -10,37 +11,37 @@ Subject: [PATCH 5/6] soong: add TARGET_SPECIFIC_HEADER_PATH to config
  3 files changed, 8 insertions(+)
 
 diff --git a/android/config.go b/android/config.go
-index aa0ac82..00833c2 100644
+index a6ae2044..58a1d1e1 100644
 --- a/android/config.go
 +++ b/android/config.go
-@@ -552,3 +552,7 @@ func (c *config) IntegerOverflowDisabledForPath(path string) bool {
+@@ -849,3 +849,7 @@ func stringSlice(s *[]string) []string {
+ 		return nil
  	}
- 	return prefixInList(path, *c.ProductVariables.IntegerOverflowExcludePaths)
  }
 +
 +func (c *deviceConfig) TargetHeaderPathDir() string {
 +	return String(c.config.ProductVariables.TargetHeaderPath)
 +}
 diff --git a/android/variable.go b/android/variable.go
-index 6113063..2165ff6 100644
+index 6af4f7e1..4a739565 100644
 --- a/android/variable.go
 +++ b/android/variable.go
-@@ -171,6 +171,7 @@ type productVariables struct {
+@@ -225,6 +225,7 @@ type productVariables struct {
  
  	Override_rs_driver *string `json:",omitempty"`
  
 +	TargetHeaderPath *string `json:",omitempty"`
  	DeviceKernelHeaders []string `json:",omitempty"`
+ 	DistDir             *string  `json:",omitempty"`
  
- 	// include Lineage variables
 diff --git a/cc/library.go b/cc/library.go
-index 4a173a5..0744dfa 100644
+index 76f8a8cf..fe78a33d 100644
 --- a/cc/library.go
 +++ b/cc/library.go
-@@ -306,6 +306,9 @@ func (library *libraryDecorator) linkerFlags(ctx ModuleContext, flags Flags) Fla
+@@ -319,6 +319,9 @@ func (library *libraryDecorator) linkerFlags(ctx ModuleContext, flags Flags) Fla
  }
  
- func (library *libraryDecorator) compilerFlags(ctx ModuleContext, flags Flags) Flags {
+ func (library *libraryDecorator) compilerFlags(ctx ModuleContext, flags Flags, deps PathDeps) Flags {
 +	if len(ctx.DeviceConfig().TargetHeaderPathDir()) > 0 {
 +		flags.GlobalFlags = append(flags.GlobalFlags, "-I" + ctx.DeviceConfig().TargetHeaderPathDir())
 +	}

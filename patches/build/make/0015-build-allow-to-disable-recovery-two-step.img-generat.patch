@@ -1,0 +1,78 @@
+From 3de0b4dcea7162239f720f4719a1af7ce0e9e4da Mon Sep 17 00:00:00 2001
+From: Flex1911 <dedsa2002@gmail.com>
+Date: Fri, 7 Apr 2017 12:56:44 +0300
+Subject: [PATCH 15/31] build: allow to disable recovery-two-step.img
+ generation
+
+Android 7.1.2 introduced new mechanism for recovery updating in two-step OTAs.
+Although, recovery-two-step.img generation may be completely broken on some devices with custom mkbootimg handling.
+We can use recovery.img as base for that devices, so recovery-two-step.img generation will not be required in this case.
+Let's add new TARGET_NO_TWO_STEP_RECOVERY flag to skip recovery-two-step.img generation during target files packaging if we need it.
+
+Change-Id: I33878988de46b9503b7113db6cc8b087deebb155
+---
+ core/Makefile                                 |  3 +++
+ tools/releasetools/add_img_to_target_files.py | 26 ++++++++++++++------------
+ 2 files changed, 17 insertions(+), 12 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index a6f30cf42..7b4a37f5a 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2834,6 +2834,9 @@ endif
+ ifeq ($(TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK),true)
+ 	$(hide) echo "no_gzip_recovery_ramdisk=true" >> $(zip_root)/META/misc_info.txt
+ endif
++ifeq ($(TARGET_NO_TWO_STEP_RECOVERY),true)
++	$(hide) echo "no_two_step_recovery=true" >> $(zip_root)/META/misc_info.txt
++endif
+ ifeq ($(BOARD_AVB_ENABLE),true)
+ 	$(hide) echo "avb_enable=true" >> $(zip_root)/META/misc_info.txt
+ 	$(hide) echo "avb_vbmeta_key_path=$(BOARD_AVB_KEY_PATH)" >> $(zip_root)/META/misc_info.txt
+diff --git a/tools/releasetools/add_img_to_target_files.py b/tools/releasetools/add_img_to_target_files.py
+index 90acafc57..9ad25db29 100755
+--- a/tools/releasetools/add_img_to_target_files.py
++++ b/tools/releasetools/add_img_to_target_files.py
+@@ -664,6 +664,7 @@ def AddImagesToTargetFiles(filename):
+   OPTIONS.info_dict = common.LoadInfoDict(OPTIONS.input_tmp, OPTIONS.input_tmp)
+ 
+   has_recovery = OPTIONS.info_dict.get("no_recovery") != "true"
++  use_two_step_recovery = (OPTIONS.info_dict.get("no_two_step_recovery") != "true")
+ 
+   # {vendor,product}.img is unlike system.img or system_other.img. Because it
+   # could be built from source, or dropped into target_files.zip as a prebuilt
+@@ -726,18 +727,19 @@ def AddImagesToTargetFiles(filename):
+       if output_zip:
+         recovery_image.AddToZip(output_zip)
+ 
+-      banner("recovery (two-step image)")
+-      # The special recovery.img for two-step package use.
+-      recovery_two_step_image = common.GetBootableImage(
+-          "IMAGES/recovery-two-step.img", "recovery-two-step.img",
+-          OPTIONS.input_tmp, "RECOVERY", two_step_image=True)
+-      assert recovery_two_step_image, "Failed to create recovery-two-step.img."
+-      recovery_two_step_image_path = os.path.join(
+-          OPTIONS.input_tmp, "IMAGES", "recovery-two-step.img")
+-      if not os.path.exists(recovery_two_step_image_path):
+-        recovery_two_step_image.WriteToDir(OPTIONS.input_tmp)
+-        if output_zip:
+-          recovery_two_step_image.AddToZip(output_zip)
++      if use_two_step_recovery:
++        banner("recovery (two-step image)")
++        # The special recovery.img for two-step package use.
++        recovery_two_step_image = common.GetBootableImage(
++            "IMAGES/recovery-two-step.img", "recovery-two-step.img",
++            OPTIONS.input_tmp, "RECOVERY", two_step_image=True)
++        assert recovery_two_step_image, "Failed to create recovery-two-step.img."
++        recovery_two_step_image_path = os.path.join(
++            OPTIONS.input_tmp, "IMAGES", "recovery-two-step.img")
++        if not os.path.exists(recovery_two_step_image_path):
++          recovery_two_step_image.WriteToDir(OPTIONS.input_tmp)
++          if output_zip:
++            recovery_two_step_image.AddToZip(output_zip)
+ 
+   banner("system")
+   partitions['system'] = AddSystem(
+-- 
+2.11.0
+

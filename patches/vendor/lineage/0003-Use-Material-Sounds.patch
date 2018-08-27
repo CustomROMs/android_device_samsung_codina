@@ -1,7 +1,7 @@
-From e0071b8499931bf917c595bac6ab36cec2108b11 Mon Sep 17 00:00:00 2001
+From f6cbf8c640c5014fbc8b2fed2a760320f81444e4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 03/11] Use Material Sounds
+Subject: [PATCH 03/10] Use Material Sounds
 
 ---
  config/common.mk    | 4 ++--
@@ -9,7 +9,7 @@ Subject: [PATCH 03/11] Use Material Sounds
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/config/common.mk b/config/common.mk
-index a5b35320..219bd3ad 100644
+index d64f9ef1..aa043b04 100644
 --- a/config/common.mk
 +++ b/config/common.mk
 @@ -18,8 +18,8 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \

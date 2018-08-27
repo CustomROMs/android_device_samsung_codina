@@ -1,17 +1,17 @@
-From b7b65e56c3dbc29503602780e7188abe33099134 Mon Sep 17 00:00:00 2001
+From c89275394036b74f898cf9b998d5053d6c0a652e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 07/11] Remove apps
+Subject: [PATCH 07/10] Remove apps
 
 ---
  config/common.mk | 2 --
  1 file changed, 2 deletions(-)
 
 diff --git a/config/common.mk b/config/common.mk
-index 219bd3ad..7f8ae068 100644
+index aa043b04..edf5b044 100644
 --- a/config/common.mk
 +++ b/config/common.mk
-@@ -128,7 +128,6 @@ PRODUCT_PACKAGES += \
+@@ -130,7 +130,6 @@ PRODUCT_PACKAGES += \
  
  # Custom Lineage packages
  PRODUCT_PACKAGES += \
@@ -19,7 +19,7 @@ index 219bd3ad..7f8ae068 100644
      LineageSettingsProvider \
      LineageSetupWizard \
      Eleven \
-@@ -136,7 +135,6 @@ PRODUCT_PACKAGES += \
+@@ -138,7 +137,6 @@ PRODUCT_PACKAGES += \
      Jelly \
      LockClock \
      Trebuchet \

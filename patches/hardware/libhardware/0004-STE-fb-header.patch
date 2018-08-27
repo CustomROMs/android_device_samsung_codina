@@ -1,7 +1,7 @@
-From f1034f60e34c0a02e03d4b9c8c685d7f3a4cee76 Mon Sep 17 00:00:00 2001
+From 9184fb253058a50f9627e35d8d297c378a173b70 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 4/7] STE fb header
+Subject: [PATCH 4/6] STE fb header
 
 ---
  include/hardware/fb.h | 35 +++++++++++++++++++++++++++++++++++

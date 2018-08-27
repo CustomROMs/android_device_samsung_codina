@@ -1,10 +1,12 @@
-From 20d400c9d042f29da11d62ab0cb8797e38451d42 Mon Sep 17 00:00:00 2001
+From 6a90e8667362c38aec9fc583c37d9eabd4cc5190 Mon Sep 17 00:00:00 2001
 From: LuK1337 <priv.luk@gmail.com>
 Date: Tue, 5 Sep 2017 09:51:22 +0200
-Subject: [PATCH 05/11] soong_config: Add TARGET_USES_NON_TREBLE_CAMERA
+Subject: [PATCH 05/10] soong_config: Add TARGET_USES_NON_TREBLE_CAMERA
  variable
 
 * Soong product variable 'uses_non_treble_camera'
+
+Change-Id: I6fd08fe9711143457141dc45879a59345dacb239
 ---
  build/soong/android/variable.go | 4 ++++
  build/soong/soong_config.mk     | 1 +
@@ -33,17 +35,17 @@ index c2bb782a..1eb38c4f 100644
  	Specific_camera_parameter_library  *string `json:",omitempty"`
  	Target_shim_libs  *string `json:",omitempty"`
 diff --git a/build/soong/soong_config.mk b/build/soong/soong_config.mk
-index fdc0869a..39e4f9b8 100644
+index 0a7ca601..29beafb9 100644
 --- a/build/soong/soong_config.mk
 +++ b/build/soong/soong_config.mk
-@@ -5,6 +5,7 @@ lineage_soong:
- 	echo '{'; \
- 	echo '"Lineage": {'; \
- 	echo '    "Has_legacy_camera_hal1": $(if $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)),true,false),'; \
-+	echo '    "Uses_non_treble_camera": $(if $(filter true,$(TARGET_USES_NON_TREBLE_CAMERA)),true,false),'; \
- 	echo '    "Needs_text_relocations": $(if $(filter true,$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)),true,false),'; \
- 	echo '    "Specific_camera_parameter_library": "$(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY)",'; \
- 	echo '    "Target_shim_libs": "$(subst $(space),:,$(TARGET_LD_SHIM_LIBS))",'; \
+@@ -2,6 +2,7 @@ _contents := $(_contents)    "Lineage":{$(newline)
+ 
+ # See build/core/soong_config.mk for the add_json_* functions you can use here.
+ $(call add_json_bool, Has_legacy_camera_hal1,                $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)))
++$(call add_json_bool, Uses_non_treble_camera,                $(filter true,$(TARGET_USES_NON_TREBLE_CAMERA)))
+ $(call add_json_bool, Needs_text_relocations,                $(filter true,$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)))
+ $(call add_json_str,  Specific_camera_parameter_library,     $(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY))
+ $(call add_json_str,  Target_shim_libs,                      $(TARGET_LD_SHIM_LIBS))
 -- 
 2.11.0
 

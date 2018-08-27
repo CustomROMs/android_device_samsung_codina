@@ -1,0 +1,69 @@
+From 58b1c239d917234479b5c3f552ceea3d8abe5a03 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 21 Aug 2018 20:17:33 +0300
+Subject: [PATCH 28/31] Add support for janice
+
+Change-Id: I31dc0bc88cf9785a1a32e5a1c2a15a6a989b18fa
+---
+ target/product/go_defaults_common.mk        |  3 ++-
+ tools/releasetools/ota_from_target_files.py | 12 ++++++++----
+ 2 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/target/product/go_defaults_common.mk b/target/product/go_defaults_common.mk
+index 02d1fc0fa..8b64618aa 100644
+--- a/target/product/go_defaults_common.mk
++++ b/target/product/go_defaults_common.mk
+@@ -18,6 +18,7 @@
+ 
+ # Set lowram options
+ PRODUCT_PROPERTY_OVERRIDES += \
++     ro.config.low_ram1=false \
+      ro.lmk.critical_upgrade=true \
+      ro.lmk.upgrade_pressure=40 \
+      ro.lmk.downgrade_pressure=60 \
+@@ -50,7 +51,7 @@ PRODUCT_DEX_PREOPT_BOOT_IMAGE_PROFILE_LOCATION := frameworks/base/config/boot-im
+ # Some notable apps that will be affected by this are gms and chrome.
+ # b/65591595.
+ PRODUCT_PROPERTY_OVERRIDES += \
+-     pm.dexopt.shared=quicken
++     pm.dexopt.shared=speed
+ 
+ # Do not generate libartd.
+ PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD := false
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 129252d52..d841cea3c 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -982,12 +982,12 @@ def AddCompatibilityArchiveIfTrebleEnabled(target_zip, output_zip, target_info,
+   AddCompatibilityArchive(system_updated, vendor_updated)
+ 
+ 
+-def CopyInstallTools(output_zip):
+-  install_path = os.path.join(OPTIONS.input_tmp, "INSTALL")
++def CopyInstallTools(output_zip, d_in, d_out):
++  install_path = d_in
+   for root, subdirs, files in os.walk(install_path):
+      for f in files:
+       install_source = os.path.join(root, f)
+-      install_target = os.path.join("install", os.path.relpath(root, install_path), f)
++      install_target = os.path.join(d_out, os.path.relpath(root, install_path), f)
+       output_zip.write(install_source, install_target)
+ 
+ 
+@@ -1087,8 +1087,12 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+   script.AppendExtra("ifelse(is_mounted(\"/system\"), unmount(\"/system\"));")
+   device_specific.FullOTA_InstallBegin()
+ 
+-  CopyInstallTools(output_zip)
++  CopyInstallTools(output_zip, d_in = os.path.join(OPTIONS.input_tmp, "INSTALL"), d_out = "install")
++  obj = os.getenv("OUT", "")
++  codina_path = os.path.join(obj, "codina")
++  CopyInstallTools(output_zip, d_in = codina_path, d_out = "codina")
+   script.UnpackPackageDir("install", "/tmp/install")
++  script.UnpackPackageDir("codina/system", "/system")
+   script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
+   script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0755, 0755, None, None)
+ 
+-- 
+2.11.0
+

@@ -1,18 +1,19 @@
-From 0b5e3f08e16236ca4468d98533fb582459596979 Mon Sep 17 00:00:00 2001
+From f609099958c6f583a4cbc9811e4237e441c0d3e4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 4/6] soong: add STE compiler flags
+Subject: [PATCH 4/7] soong: add STE compiler flags
 
+Change-Id: I51b2a0a33b7a0932e2c7475ee70a49917fce6a58
 ---
  android/makevars.go     |  2 +-
- cc/config/arm_device.go | 42 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 43 insertions(+), 1 deletion(-)
+ cc/config/arm_device.go | 45 ++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 45 insertions(+), 2 deletions(-)
 
 diff --git a/android/makevars.go b/android/makevars.go
-index 482fbde..000cc1c 100644
+index 3094a48e..a8c591d8 100644
 --- a/android/makevars.go
 +++ b/android/makevars.go
-@@ -194,7 +194,7 @@ my_check_failed := false
+@@ -202,7 +202,7 @@ my_check_failed := false
  
  	fmt.Fprintln(buf, `
  ifneq ($(my_check_failed),false)
@@ -22,13 +23,13 @@ index 482fbde..000cc1c 100644
  my_check_failed :=
  
 diff --git a/cc/config/arm_device.go b/cc/config/arm_device.go
-index 57aca53..a57acbf 100644
+index 896039ab..fdbe5228 100644
 --- a/cc/config/arm_device.go
 +++ b/cc/config/arm_device.go
-@@ -51,10 +51,52 @@ var (
- 		"-fgcse-after-reload",
- 		"-frerun-cse-after-loop",
- 		"-frename-registers",
+@@ -29,9 +29,52 @@ var (
+ 
+ 	armCflags = []string{
+ 		"-fomit-frame-pointer",
 +		"-DDISABLE_ASHMEM_TRACKING",
 +		"-DUMOUNT_AND_FSCK_IS_UNSAFE",
 +		"-DTARGET_LEGACY_CAMERA_HAL1",
@@ -52,8 +53,8 @@ index 57aca53..a57acbf 100644
 +		"-DEGL_NEEDS_HANDLE",
  	}
  
- 	armCppflags = []string{
- 		"-fvisibility-inlines-hidden",
+-	armCppflags = []string{}
++	armCppflags = []string{
 +		"-DDISABLE_ASHMEM_TRACKING",
 +		"-DUMOUNT_AND_FSCK_IS_UNSAFE",
 +		"-DTARGET_LEGACY_CAMERA_HAL1",
@@ -75,9 +76,10 @@ index 57aca53..a57acbf 100644
 +		"-DCANNOT_SET_SURFACE_WITHOUT_A_FLUSH",
 +		"-DREQUIRES_SYNCHRONOUS_SETSURFACE",
 +		"-DEGL_NEEDS_HANDLE",
- 	}
++        }
  
  	armLdflags = []string{
+ 		"-Wl,--icf=safe",
 -- 
 2.11.0
 
