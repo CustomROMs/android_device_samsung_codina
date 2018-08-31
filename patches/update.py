@@ -17,19 +17,25 @@ def update_repos(projects, remotes, dry_run = False):
 		out_path = os.path.join(ROOT, path)
 		p = Popen("git -C %s rev-parse %s" % (repo_realpath, revision), shell=True, stdin=PIPE,
 						stderr = PIPE, stdout = PIPE, close_fds=True)
-		revision = p.stdout.read().split("\n")[0]
+		rev_parse = p.stdout.read().split("\n")[0]
 		if not os.path.exists(path):
 			os.makedirs(path)
 
-		if revision:
+		if rev_parse:
+			p = Popen("git -C %s merge-base HEAD %s" % (repo_realpath, rev_parse), shell=True, stdin=PIPE,
+                               	                stderr = PIPE, stdout = PIPE, close_fds=True)
+			if not (p.stdout.read()):
+				print("error: %s: no common merge base found for HEAD and manifest revision (%s), skipping this repo" % (path, revision))
+				continue
+
 			if not dry_run:
 				for i in os.listdir(path):
 					subfile = os.path.join(path, i)
 					if os.path.isfile(subfile):
 						os.remove(os.path.join(path, i))
-				p = Popen("git -C %s format-patch %s -o %s" % (repo_realpath, revision, out_path), shell=True, stdin=PIPE,
+				p = Popen("git -C %s format-patch %s -o %s" % (repo_realpath, rev_parse, out_path), shell=True, stdin=PIPE,
                                 	                stderr = PIPE, stdout = PIPE, close_fds=True)
-			print("git -C %s format-patch %s -o %s" % (repo_realpath, revision, out_path))
+			print("git -C %s format-patch %s -o %s" % (repo_realpath, rev_parse, out_path))
 			if not dry_run:
 				print(p.stdout.read())
 		else:
