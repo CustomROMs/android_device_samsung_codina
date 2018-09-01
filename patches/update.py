@@ -1,12 +1,14 @@
 import os, sys
 from common import *
 
-def update_repos(projects, remotes, dry_run = False):
+def update_repos(projects, remotes, dry_run = False, repos = []):
 	ANDROID_BUILD_TOP, MANIFEST, ROOT = setup_env()
+	if not repos:
+		repos = PROJECTS
 
 	for p in projects:
 		path = p.get("path")
-		if (not path in PROJECTS) or path.startswith("#"):
+		if (not path in repos) or path.startswith("#"):
 			continue
 		remote = p.get("remote") or remotes["default"].name
 		if p.get("revision"):
@@ -46,8 +48,15 @@ def update_repos(projects, remotes, dry_run = False):
 
 def main(dry_run = False):
 	projects, remotes, default = parse_manifests()
-	if "--dry-run" in sys.argv:
+	argv = sys.argv
+	if "--dry-run" in argv:
 		dry_run = True
+		del argv[argv.index("--dry-run")]
+
+	if len(argv) > 1:
+		update_repos(projects, remotes, dry_run, repos = argv[1:])
+		return
+
 	update_repos(projects, remotes, dry_run)
 
 
