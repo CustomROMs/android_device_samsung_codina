@@ -1,4 +1,4 @@
-From 9184fb253058a50f9627e35d8d297c378a173b70 Mon Sep 17 00:00:00 2001
+From c1d2726152150f7bab23fddd2425d903bda08541 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 4/6] STE fb header
@@ -8,7 +8,7 @@ Subject: [PATCH 4/6] STE fb header
  1 file changed, 35 insertions(+)
 
 diff --git a/include/hardware/fb.h b/include/hardware/fb.h
-index 65720a39..d0e324c6 100644
+index 65720a3..d0e324c 100644
 --- a/include/hardware/fb.h
 +++ b/include/hardware/fb.h
 @@ -48,18 +48,32 @@ typedef struct framebuffer_device_t {
@@ -73,5 +73,5 @@ index 65720a39..d0e324c6 100644
  
  } framebuffer_device_t;
 -- 
-2.11.0
+2.17.0
 

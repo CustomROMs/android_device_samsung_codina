@@ -8,8 +8,8 @@ def update_repos(projects, remotes, dry_run = False, repos = []):
 
 	for p in projects:
 		path = p.get("path")
-		if (not path in repos) or path.startswith("#"):
-			continue
+		#if (not path in repos) or path.startswith("#"):
+		#	continue
 		remote = p.get("remote") or remotes["default"].name
 		if p.get("revision"):
 			revision = "%s/%s" % (remote, p.get("revision"))

@@ -1,4 +1,4 @@
-From bd7be58a3949c3ba004b7b5c529a220670d6196d Mon Sep 17 00:00:00 2001
+From 53851d14be3810837c82375663e97f14a399311a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 5/6] Fix clang
@@ -9,7 +9,7 @@ Change-Id: Ie8e4591fb360e7086c913b81b49b63c2d472033a
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/modules/audio/Android.bp b/modules/audio/Android.bp
-index a7467c29..f45f8691 100644
+index a7467c2..f45f869 100644
 --- a/modules/audio/Android.bp
 +++ b/modules/audio/Android.bp
 @@ -27,7 +27,7 @@ cc_library_shared {
@@ -38,5 +38,5 @@ index a7467c29..f45f8691 100644
 +    cflags: ["-Wall", "-Wno-unused-parameter"],
  }
 -- 
-2.11.0
+2.17.0
 
