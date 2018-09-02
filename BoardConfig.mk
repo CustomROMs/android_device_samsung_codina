@@ -119,7 +119,7 @@ TARGET_NO_TWO_STEP_RECOVERY := true
 # BOARD_KERNEL_IMAGE_NAME := zImage
 
 ifeq ($(DEVICE_ENABLE_TOOLCHAIN),true)
-KERNEL_TOOLCHAIN := /media/system/root/kernel/armv7a-linux-gnueabihf-5.2/bin
+KERNEL_TOOLCHAIN := /media/chrono/dev/armv7a-linux-gnueabihf-gcc-5.2.0/bin
 KERNEL_TOOLCHAIN_PREFIX := armv7a-linux-gnueabihf-
 endif
 
