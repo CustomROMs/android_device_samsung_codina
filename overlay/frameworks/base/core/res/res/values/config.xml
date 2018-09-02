@@ -173,9 +173,6 @@
     <!-- The default iface on which to monitor data use -->
     <string name="config_datause_iface" translatable="false">pdp0</string>
 
-    <!-- The VoiceMail default value is displayed to my own number if it is true -->
-    <bool name="config_telephony_use_own_number_for_voicemail">true</bool>
-
     <!-- Boolean indicating if current platform supports bluetooth wide band
          speech -->
     <bool name="config_bluetooth_wide_band_speech">false</bool>
@@ -243,20 +240,6 @@
     <!-- Enable lockscreen translucent decor by default -->
     <bool name="config_enableLockScreenTranslucentDecor">true</bool>
 
-    <!-- The list of components which should be automatically disabled. -->
-    <string-array name="config_disabledComponents">
-        <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateActivity</item>
-        <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateService$Receiver</item>
-        <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateService$SecretCodeReceiver</item>
-        <item>com.google.android.gsf/com.google.android.gsf.update.SystemUpdateServiceReceiver</item>
-        <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateActivity</item>
-        <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateService$Receiver</item>
-        <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateService$ActiveReceiver</item>
-        <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateService$SecretCodeReceiver</item>
-        <item>com.google.android.gms/com.google.android.gms.update.SystemUpdateServiceReceiver</item>
-        <item>com.google.android.setupwizard/com.google.android.setupwizard.time.DateTimeCheck</item>
-    </string-array>
-
     <!-- Display low battery warning when battery level dips to this value -->
     <integer name="config_lowBatteryWarningLevel">5</integer>
 
@@ -309,10 +292,6 @@
 
     <!-- Flag indicating if device supports EAP SIM, AKA, AKA' -->
     <bool name="config_eap_sim_based_auth_supported">false</bool>
-
-    <!-- Older rotation sensors are not setting event.timestamp correctly. Setting to
-         true will use SystemClock.elapsedRealtimeNanos() to set timestamp. -->
-    <bool name="config_useSystemClockforRotationSensor">true</bool>
 
     <!-- Whether device supports double tap to wake 
     <bool name="config_supportDoubleTapWake">true</bool>-->
