@@ -3,13 +3,13 @@ from common import *
 
 def update_repos(projects, remotes, dry_run = False, repos = []):
 	ANDROID_BUILD_TOP, MANIFEST, ROOT = setup_env()
-	if not repos:
-		repos = PROJECTS
+	#if not repos:
+	#	repos = PROJECTS
 
 	for p in projects:
 		path = p.get("path")
-		#if (not path in repos) or path.startswith("#"):
-		#	continue
+		if (not path in repos) or path.startswith("#"):
+			continue
 		remote = p.get("remote") or remotes["default"].name
 		if p.get("revision"):
 			revision = "%s/%s" % (remote, p.get("revision"))

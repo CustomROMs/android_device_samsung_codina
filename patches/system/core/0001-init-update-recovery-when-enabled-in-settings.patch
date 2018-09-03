@@ -1,7 +1,7 @@
 From a182ccf6268f0e595963d5b146996f0f86c1b0e7 Mon Sep 17 00:00:00 2001
 From: "Brint E. Kriebel" <bekit@cyngn.com>
 Date: Wed, 14 May 2014 18:13:00 -0700
-Subject: [PATCH 01/42] init: update recovery when enabled in settings
+Subject: [PATCH 01/44] init: update recovery when enabled in settings
 
 Update the recovery image only if the option is enabled
 under Developer options

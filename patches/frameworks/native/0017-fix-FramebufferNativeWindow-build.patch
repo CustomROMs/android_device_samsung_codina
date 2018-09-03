@@ -1,7 +1,7 @@
 From e26a94a4e8f6f12cecf595571098b1f837e46c13 Mon Sep 17 00:00:00 2001
 From: Andrew Dodd <atd7@cornell.edu>
 Date: Fri, 20 Feb 2015 20:05:25 +0100
-Subject: [PATCH 17/24] fix FramebufferNativeWindow build
+Subject: [PATCH 17/45] fix FramebufferNativeWindow build
 
 ---
  .../include/nativebase/nativebase.h           | 579 +++++++++++++++++-
@@ -12,7 +12,7 @@ Subject: [PATCH 17/24] fix FramebufferNativeWindow build
  5 files changed, 586 insertions(+), 6 deletions(-)
 
 diff --git a/libs/nativebase/include/nativebase/nativebase.h b/libs/nativebase/include/nativebase/nativebase.h
-index 7ecdfbd74..66f9a6868 100644
+index 7ecdfbd745..66f9a68681 100644
 --- a/libs/nativebase/include/nativebase/nativebase.h
 +++ b/libs/nativebase/include/nativebase/nativebase.h
 @@ -37,8 +37,7 @@ __BEGIN_DECLS
@@ -607,7 +607,7 @@ index 7ecdfbd74..66f9a6868 100644
 +#endif
  __END_DECLS
 diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
-index 64908049d..55d3aac7a 100644
+index 64908049d6..55d3aac7aa 100644
 --- a/libs/nativewindow/include/system/window.h
 +++ b/libs/nativewindow/include/system/window.h
 @@ -55,7 +55,7 @@
@@ -629,7 +629,7 @@ index 64908049d..55d3aac7a 100644
    * android_native_window_t is deprecated.
    */
 diff --git a/libs/nativewindow/include/vndk/window.h b/libs/nativewindow/include/vndk/window.h
-index a7b340aea..aeb58cafe 100644
+index a7b340aea3..aeb58cafe6 100644
 --- a/libs/nativewindow/include/vndk/window.h
 +++ b/libs/nativewindow/include/vndk/window.h
 @@ -61,7 +61,7 @@ int ANativeWindow_OemStorageGet(ANativeWindow* window, uint32_t slot, intptr_t*
@@ -650,7 +650,7 @@ index a7b340aea..aeb58cafe 100644
  typedef enum ANativeWindowQuery ANativeWindowQuery;
  
 diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
-index 3a2b1b3d2..4701d7f9d 100644
+index 3a2b1b3d25..4701d7f9d7 100644
 --- a/libs/ui/FramebufferNativeWindow.cpp
 +++ b/libs/ui/FramebufferNativeWindow.cpp
 @@ -27,9 +27,10 @@
@@ -666,7 +666,7 @@ index 3a2b1b3d2..4701d7f9d 100644
  
  #include <EGL/egl.h>
 diff --git a/libs/ui/include/ui/FramebufferNativeWindow.h b/libs/ui/include/ui/FramebufferNativeWindow.h
-index 3c2e70574..6193d389a 100644
+index 3c2e705748..6193d389ab 100644
 --- a/libs/ui/include/ui/FramebufferNativeWindow.h
 +++ b/libs/ui/include/ui/FramebufferNativeWindow.h
 @@ -25,6 +25,9 @@

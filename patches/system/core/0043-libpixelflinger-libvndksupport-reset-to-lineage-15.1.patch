@@ -1,0 +1,1419 @@
+From 089075f012d3689fdf4f4a685f1c666a619dce60 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:41:58 +0300
+Subject: [PATCH 43/44] libpixelflinger, libvndksupport: reset to lineage-15.1
+
+Change-Id: I1644d032ca70f26a54560aaafffc77f64c1e4e6b
+---
+ libpixelflinger/Android.mk                    |   2 -
+ .../codeflinger/Arm64Assembler.cpp            |   6 +-
+ libpixelflinger/codeflinger/GGLAssembler.cpp  |   3 +
+ .../codeflinger/MIPS64Assembler.cpp           | 139 +++++++++---------
+ libpixelflinger/codeflinger/MIPSAssembler.cpp | 136 ++++++++---------
+ libpixelflinger/codeflinger/load_store.cpp    |   1 +
+ libpixelflinger/codeflinger/mips64_disassem.c |   6 +-
+ libpixelflinger/codeflinger/mips_disassem.c   |   3 +-
+ libpixelflinger/codeflinger/texturing.cpp     |  11 +-
+ .../include/private/pixelflinger/ggl_fixed.h  |   1 +
+ libpixelflinger/raster.cpp                    |   1 +
+ libpixelflinger/scanline.cpp                  |   1 +
+ .../tests/arch-arm64/assembler/Android.mk     |   2 -
+ .../arch-arm64/col32cb16blend/Android.mk      |   2 -
+ .../tests/arch-arm64/disassembler/Android.mk  |   2 -
+ .../tests/arch-arm64/t32cb16blend/Android.mk  |   2 -
+ libpixelflinger/tests/codegen/Android.mk      |   2 -
+ libpixelflinger/tests/codegen/codegen.cpp     |   6 +-
+ libpixelflinger/tests/gglmul/Android.mk       |   2 -
+ libpixelflinger/trap.cpp                      |   2 +
+ libvndksupport/Android.bp                     |   4 -
+ libvndksupport/linker.c                       |  12 +-
+ libvndksupport/tests/Android.bp               |   6 +-
+ 23 files changed, 164 insertions(+), 188 deletions(-)
+
+diff --git a/libpixelflinger/Android.mk b/libpixelflinger/Android.mk
+index c7306cd5e..55891db99 100644
+--- a/libpixelflinger/Android.mk
++++ b/libpixelflinger/Android.mk
+@@ -25,8 +25,6 @@ PIXELFLINGER_SRC_FILES:= \
+ 	buffer.cpp
+ 
+ PIXELFLINGER_CFLAGS := -fstrict-aliasing -fomit-frame-pointer
+-PIXELFLINGER_CFLAGS += -Wall -Werror
+-PIXELFLINGER_CFLAGS += -Wno-unused-function
+ 
+ PIXELFLINGER_SRC_FILES_arm := \
+ 	codeflinger/ARMAssembler.cpp \
+diff --git a/libpixelflinger/codeflinger/Arm64Assembler.cpp b/libpixelflinger/codeflinger/Arm64Assembler.cpp
+index aebc129bf..bff87bbac 100644
+--- a/libpixelflinger/codeflinger/Arm64Assembler.cpp
++++ b/libpixelflinger/codeflinger/Arm64Assembler.cpp
+@@ -151,11 +151,11 @@
+ 
+ namespace android {
+ 
+-static __unused const char* shift_codes[] =
++static const char* shift_codes[] =
+ {
+     "LSL", "LSR", "ASR", "ROR"
+ };
+-static __unused const char *cc_codes[] =
++static const char *cc_codes[] =
+ {
+     "EQ", "NE", "CS", "CC", "MI",
+     "PL", "VS", "VC", "HI", "LS",
+@@ -984,7 +984,7 @@ uint32_t ArmToArm64Assembler::reg_post(int /*Rm*/)
+ // A64 instructions
+ // ----------------------------------------------------------------------------
+ 
+-static __unused const char * dataTransferOpName[] =
++static const char * dataTransferOpName[] =
+ {
+     "LDR","LDRB","LDRH","STR","STRB","STRH"
+ };
+diff --git a/libpixelflinger/codeflinger/GGLAssembler.cpp b/libpixelflinger/codeflinger/GGLAssembler.cpp
+index 04e285d1b..91fbd53cf 100644
+--- a/libpixelflinger/codeflinger/GGLAssembler.cpp
++++ b/libpixelflinger/codeflinger/GGLAssembler.cpp
+@@ -94,6 +94,8 @@ int GGLAssembler::scanline(const needs_t& needs, context_t const* c)
+ 
+ int GGLAssembler::scanline_core(const needs_t& needs, context_t const* c)
+ {
++    int64_t duration = ggl_system_time();
++
+     mBlendFactorCached = 0;
+     mBlending = 0;
+     mMasking = 0;
+@@ -351,6 +353,7 @@ void GGLAssembler::build_scanline_prolog(
+     fragment_parts_t& parts, const needs_t& needs)
+ {
+     Scratch scratches(registerFile());
++    int Rctx = mBuilderContext.Rctx;
+ 
+     // compute count
+     comment("compute ct (# of pixels to process)");
+diff --git a/libpixelflinger/codeflinger/MIPS64Assembler.cpp b/libpixelflinger/codeflinger/MIPS64Assembler.cpp
+index d6d215679..d5e4cea89 100644
+--- a/libpixelflinger/codeflinger/MIPS64Assembler.cpp
++++ b/libpixelflinger/codeflinger/MIPS64Assembler.cpp
+@@ -39,7 +39,6 @@
+ #include "mips64_disassem.h"
+ 
+ #define NOT_IMPLEMENTED()  LOG_ALWAYS_FATAL("Arm instruction %s not yet implemented\n", __func__)
+-#define __unused __attribute__((__unused__))
+ 
+ // ----------------------------------------------------------------------------
+ 
+@@ -147,7 +146,7 @@ void ArmToMips64Assembler::prolog()
+     mMips->MOVE(R_v0, R_a0);    // move context * passed in a0 to v0 (arm r0)
+ }
+ 
+-void ArmToMips64Assembler::epilog(uint32_t touched __unused)
++void ArmToMips64Assembler::epilog(uint32_t touched)
+ {
+     mArmPC[mInum++] = pc();  // save starting PC for this instr
+ 
+@@ -206,7 +205,7 @@ int ArmToMips64Assembler::buildImmediate(
+ 
+ // shifters...
+ 
+-bool ArmToMips64Assembler::isValidImmediate(uint32_t immediate __unused)
++bool ArmToMips64Assembler::isValidImmediate(uint32_t immediate)
+ {
+     // for MIPS, any 32-bit immediate is OK
+     return true;
+@@ -226,14 +225,13 @@ uint32_t ArmToMips64Assembler::reg_imm(int Rm, int type, uint32_t shift)
+     return AMODE_REG_IMM;
+ }
+ 
+-uint32_t ArmToMips64Assembler::reg_rrx(int Rm __unused)
++uint32_t ArmToMips64Assembler::reg_rrx(int Rm)
+ {
+     // reg_rrx mode is not used in the GLLAssember code at this time
+     return AMODE_UNSUPPORTED;
+ }
+ 
+-uint32_t ArmToMips64Assembler::reg_reg(int Rm __unused, int type __unused,
+-                                       int Rs __unused)
++uint32_t ArmToMips64Assembler::reg_reg(int Rm, int type, int Rs)
+ {
+     // reg_reg mode is not used in the GLLAssember code at this time
+     return AMODE_UNSUPPORTED;
+@@ -274,15 +272,14 @@ uint32_t ArmToMips64Assembler::reg_scale_pre(int Rm, int type,
+     return AMODE_REG_SCALE_PRE;
+ }
+ 
+-uint32_t ArmToMips64Assembler::reg_scale_post(int Rm __unused, int type __unused,
+-                                              uint32_t shift __unused)
++uint32_t ArmToMips64Assembler::reg_scale_post(int Rm, int type, uint32_t shift)
+ {
+     LOG_ALWAYS_FATAL("adr mode reg_scale_post not yet implemented\n");
+     return AMODE_UNSUPPORTED;
+ }
+ 
+ // LDRH/LDRSB/LDRSH/STRH (immediate and Rm can be negative, which indicate U=0)
+-uint32_t ArmToMips64Assembler::immed8_pre(int32_t immed8, int W __unused)
++uint32_t ArmToMips64Assembler::immed8_pre(int32_t immed8, int W)
+ {
+     LOG_ALWAYS_FATAL("adr mode immed8_pre not yet implemented\n");
+ 
+@@ -308,7 +305,7 @@ uint32_t ArmToMips64Assembler::reg_pre(int Rm, int W)
+     return AMODE_REG_PRE;
+ }
+ 
+-uint32_t ArmToMips64Assembler::reg_post(int Rm __unused)
++uint32_t ArmToMips64Assembler::reg_post(int Rm)
+ {
+     LOG_ALWAYS_FATAL("adr mode reg_post not yet implemented\n");
+     return AMODE_UNSUPPORTED;
+@@ -323,6 +320,12 @@ uint32_t ArmToMips64Assembler::reg_post(int Rm __unused)
+ #pragma mark Data Processing...
+ #endif
+ 
++
++static const char * const dpOpNames[] = {
++    "AND", "EOR", "SUB", "RSB", "ADD", "ADC", "SBC", "RSC",
++    "TST", "TEQ", "CMP", "CMN", "ORR", "MOV", "BIC", "MVN"
++};
++
+ // check if the operand registers from a previous CMP or S-bit instruction
+ // would be overwritten by this instruction. If so, move the value to a
+ // safe register.
+@@ -591,7 +594,7 @@ void ArmToMips64Assembler::dataProcessing(int opcode, int cc,
+ #endif
+ 
+ // multiply, accumulate
+-void ArmToMips64Assembler::MLA(int cc __unused, int s,
++void ArmToMips64Assembler::MLA(int cc, int s,
+         int Rd, int Rm, int Rs, int Rn) {
+ 
+     //ALOGW("MLA");
+@@ -605,7 +608,7 @@ void ArmToMips64Assembler::MLA(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMips64Assembler::MUL(int cc __unused, int s,
++void ArmToMips64Assembler::MUL(int cc, int s,
+         int Rd, int Rm, int Rs) {
+     mArmPC[mInum++] = pc();
+     mMips->MUL(Rd, Rm, Rs);
+@@ -615,7 +618,7 @@ void ArmToMips64Assembler::MUL(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMips64Assembler::UMULL(int cc __unused, int s,
++void ArmToMips64Assembler::UMULL(int cc, int s,
+         int RdLo, int RdHi, int Rm, int Rs) {
+     mArmPC[mInum++] = pc();
+     mMips->MUH(RdHi, Rm, Rs);
+@@ -628,8 +631,8 @@ void ArmToMips64Assembler::UMULL(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMips64Assembler::UMUAL(int cc __unused, int s,
+-        int RdLo __unused, int RdHi, int Rm __unused, int Rs __unused) {
++void ArmToMips64Assembler::UMUAL(int cc, int s,
++        int RdLo, int RdHi, int Rm, int Rs) {
+     LOG_FATAL_IF(RdLo==Rm || RdHi==Rm || RdLo==RdHi,
+                         "UMUAL(r%u,r%u,r%u,r%u)", RdLo,RdHi,Rm,Rs);
+     // *mPC++ =    (cc<<28) | (1<<23) | (1<<21) | (s<<20) |
+@@ -644,8 +647,8 @@ void ArmToMips64Assembler::UMUAL(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMips64Assembler::SMULL(int cc __unused, int s,
+-        int RdLo __unused, int RdHi, int Rm __unused, int Rs __unused) {
++void ArmToMips64Assembler::SMULL(int cc, int s,
++        int RdLo, int RdHi, int Rm, int Rs) {
+     LOG_FATAL_IF(RdLo==Rm || RdHi==Rm || RdLo==RdHi,
+                         "SMULL(r%u,r%u,r%u,r%u)", RdLo,RdHi,Rm,Rs);
+     // *mPC++ =    (cc<<28) | (1<<23) | (1<<22) | (s<<20) |
+@@ -659,8 +662,8 @@ void ArmToMips64Assembler::SMULL(int cc __unused, int s,
+         LOG_ALWAYS_FATAL("Condition on SMULL must be on 64-bit result\n");
+     }
+ }
+-void ArmToMips64Assembler::SMUAL(int cc __unused, int s,
+-        int RdLo __unused, int RdHi, int Rm __unused, int Rs __unused) {
++void ArmToMips64Assembler::SMUAL(int cc, int s,
++        int RdLo, int RdHi, int Rm, int Rs) {
+     LOG_FATAL_IF(RdLo==Rm || RdHi==Rm || RdLo==RdHi,
+                         "SMUAL(r%u,r%u,r%u,r%u)", RdLo,RdHi,Rm,Rs);
+     // *mPC++ =    (cc<<28) | (1<<23) | (1<<22) | (1<<21) | (s<<20) |
+@@ -714,26 +717,26 @@ void ArmToMips64Assembler::B(int cc, const char* label)
+     }
+ }
+ 
+-void ArmToMips64Assembler::BL(int cc __unused, const char* label __unused)
++void ArmToMips64Assembler::BL(int cc, const char* label)
+ {
+     LOG_ALWAYS_FATAL("branch-and-link not supported yet\n");
+     mArmPC[mInum++] = pc();
+ }
+ 
+ // no use for Branches with integer PC, but they're in the Interface class ....
+-void ArmToMips64Assembler::B(int cc __unused, uint32_t* to_pc __unused)
++void ArmToMips64Assembler::B(int cc, uint32_t* to_pc)
+ {
+     LOG_ALWAYS_FATAL("branch to absolute PC not supported, use Label\n");
+     mArmPC[mInum++] = pc();
+ }
+ 
+-void ArmToMips64Assembler::BL(int cc __unused, uint32_t* to_pc __unused)
++void ArmToMips64Assembler::BL(int cc, uint32_t* to_pc)
+ {
+     LOG_ALWAYS_FATAL("branch to absolute PC not supported, use Label\n");
+     mArmPC[mInum++] = pc();
+ }
+ 
+-void ArmToMips64Assembler::BX(int cc __unused, int Rn __unused)
++void ArmToMips64Assembler::BX(int cc, int Rn)
+ {
+     LOG_ALWAYS_FATAL("branch to absolute PC not supported, use Label\n");
+     mArmPC[mInum++] = pc();
+@@ -747,7 +750,7 @@ void ArmToMips64Assembler::BX(int cc __unused, int Rn __unused)
+ #endif
+ 
+ // data transfer...
+-void ArmToMips64Assembler::LDR(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMips64Assembler::LDR(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -781,7 +784,7 @@ void ArmToMips64Assembler::LDR(int cc __unused, int Rd, int Rn, uint32_t offset)
+     }
+ }
+ 
+-void ArmToMips64Assembler::LDRB(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMips64Assembler::LDRB(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -810,7 +813,7 @@ void ArmToMips64Assembler::LDRB(int cc __unused, int Rd, int Rn, uint32_t offset
+ 
+ }
+ 
+-void ArmToMips64Assembler::STR(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMips64Assembler::STR(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -846,7 +849,7 @@ void ArmToMips64Assembler::STR(int cc __unused, int Rd, int Rn, uint32_t offset)
+     }
+ }
+ 
+-void ArmToMips64Assembler::STRB(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMips64Assembler::STRB(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -874,7 +877,7 @@ void ArmToMips64Assembler::STRB(int cc __unused, int Rd, int Rn, uint32_t offset
+     }
+ }
+ 
+-void ArmToMips64Assembler::LDRH(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMips64Assembler::LDRH(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed8_pre(0)
+@@ -902,23 +905,21 @@ void ArmToMips64Assembler::LDRH(int cc __unused, int Rd, int Rn, uint32_t offset
+     }
+ }
+ 
+-void ArmToMips64Assembler::LDRSB(int cc __unused, int Rd __unused,
+-                                 int Rn __unused, uint32_t offset __unused)
++void ArmToMips64Assembler::LDRSB(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::LDRSH(int cc __unused, int Rd __unused,
+-                                 int Rn __unused, uint32_t offset __unused)
++void ArmToMips64Assembler::LDRSH(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::STRH(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMips64Assembler::STRH(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed8_pre(0)
+@@ -954,8 +955,8 @@ void ArmToMips64Assembler::STRH(int cc __unused, int Rd, int Rn, uint32_t offset
+ #endif
+ 
+ // block data transfer...
+-void ArmToMips64Assembler::LDM(int cc __unused, int dir __unused,
+-        int Rn __unused, int W __unused, uint32_t reg_list __unused)
++void ArmToMips64Assembler::LDM(int cc, int dir,
++        int Rn, int W, uint32_t reg_list)
+ {   //                        ED FD EA FA      IB IA DB DA
+     // const uint8_t P[8] = { 1, 0, 1, 0,      1, 0, 1, 0 };
+     // const uint8_t U[8] = { 1, 1, 0, 0,      1, 1, 0, 0 };
+@@ -966,8 +967,8 @@ void ArmToMips64Assembler::LDM(int cc __unused, int dir __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::STM(int cc __unused, int dir __unused,
+-        int Rn __unused, int W __unused, uint32_t reg_list __unused)
++void ArmToMips64Assembler::STM(int cc, int dir,
++        int Rn, int W, uint32_t reg_list)
+ {   //                        FA EA FD ED      IB IA DB DA
+     // const uint8_t P[8] = { 0, 1, 0, 1,      1, 0, 1, 0 };
+     // const uint8_t U[8] = { 0, 0, 1, 1,      1, 1, 0, 0 };
+@@ -986,23 +987,21 @@ void ArmToMips64Assembler::STM(int cc __unused, int dir __unused,
+ #endif
+ 
+ // special...
+-void ArmToMips64Assembler::SWP(int cc __unused, int Rn __unused,
+-                               int Rd __unused, int Rm __unused) {
++void ArmToMips64Assembler::SWP(int cc, int Rn, int Rd, int Rm) {
+     // *mPC++ = (cc<<28) | (2<<23) | (Rn<<16) | (Rd << 12) | 0x90 | Rm;
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::SWPB(int cc __unused, int Rn __unused,
+-                                int Rd __unused, int Rm __unused) {
++void ArmToMips64Assembler::SWPB(int cc, int Rn, int Rd, int Rm) {
+     // *mPC++ = (cc<<28) | (2<<23) | (1<<22) | (Rn<<16) | (Rd << 12) | 0x90 | Rm;
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::SWI(int cc __unused, uint32_t comment __unused) {
++void ArmToMips64Assembler::SWI(int cc, uint32_t comment) {
+     // *mPC++ = (cc<<28) | (0xF<<24) | comment;
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+@@ -1016,7 +1015,7 @@ void ArmToMips64Assembler::SWI(int cc __unused, uint32_t comment __unused) {
+ #endif
+ 
+ // DSP instructions...
+-void ArmToMips64Assembler::PLD(int Rn __unused, uint32_t offset) {
++void ArmToMips64Assembler::PLD(int Rn, uint32_t offset) {
+     LOG_ALWAYS_FATAL_IF(!((offset&(1<<24)) && !(offset&(1<<21))),
+                         "PLD only P=1, W=0");
+     // *mPC++ = 0xF550F000 | (Rn<<16) | offset;
+@@ -1025,14 +1024,13 @@ void ArmToMips64Assembler::PLD(int Rn __unused, uint32_t offset) {
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::CLZ(int cc __unused, int Rd, int Rm)
++void ArmToMips64Assembler::CLZ(int cc, int Rd, int Rm)
+ {
+     mArmPC[mInum++] = pc();
+     mMips->CLZ(Rd, Rm);
+ }
+ 
+-void ArmToMips64Assembler::QADD(int cc __unused, int Rd __unused,
+-                                int Rm __unused, int Rn __unused)
++void ArmToMips64Assembler::QADD(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1000050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1040,8 +1038,7 @@ void ArmToMips64Assembler::QADD(int cc __unused, int Rd __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::QDADD(int cc __unused, int Rd __unused,
+-                                 int Rm __unused, int Rn __unused)
++void ArmToMips64Assembler::QDADD(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1400050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1049,8 +1046,7 @@ void ArmToMips64Assembler::QDADD(int cc __unused, int Rd __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::QSUB(int cc __unused, int Rd __unused,
+-                                int Rm __unused, int Rn __unused)
++void ArmToMips64Assembler::QSUB(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1200050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1058,8 +1054,7 @@ void ArmToMips64Assembler::QSUB(int cc __unused, int Rd __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::QDSUB(int cc __unused, int Rd __unused,
+-                                 int Rm __unused, int Rn __unused)
++void ArmToMips64Assembler::QDSUB(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1600050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1068,7 +1063,7 @@ void ArmToMips64Assembler::QDSUB(int cc __unused, int Rd __unused,
+ }
+ 
+ // 16 x 16 signed multiply (like SMLAxx without the accumulate)
+-void ArmToMips64Assembler::SMUL(int cc __unused, int xy,
++void ArmToMips64Assembler::SMUL(int cc, int xy,
+                 int Rd, int Rm, int Rs)
+ {
+     mArmPC[mInum++] = pc();
+@@ -1097,7 +1092,7 @@ void ArmToMips64Assembler::SMUL(int cc __unused, int xy,
+ }
+ 
+ // signed 32b x 16b multiple, save top 32-bits of 48-bit result
+-void ArmToMips64Assembler::SMULW(int cc __unused, int y,
++void ArmToMips64Assembler::SMULW(int cc, int y,
+                 int Rd, int Rm, int Rs)
+ {
+     mArmPC[mInum++] = pc();
+@@ -1116,7 +1111,7 @@ void ArmToMips64Assembler::SMULW(int cc __unused, int y,
+ }
+ 
+ // 16 x 16 signed multiply, accumulate: Rd = Rm{16} * Rs{16} + Rn
+-void ArmToMips64Assembler::SMLA(int cc __unused, int xy,
++void ArmToMips64Assembler::SMLA(int cc, int xy,
+                 int Rd, int Rm, int Rs, int Rn)
+ {
+     mArmPC[mInum++] = pc();
+@@ -1146,9 +1141,8 @@ void ArmToMips64Assembler::SMLA(int cc __unused, int xy,
+     mMips->ADDU(Rd, R_at, Rn);
+ }
+ 
+-void ArmToMips64Assembler::SMLAL(int cc __unused, int xy __unused,
+-                                 int RdHi __unused, int RdLo __unused,
+-                                 int Rs __unused, int Rm __unused)
++void ArmToMips64Assembler::SMLAL(int cc, int xy,
++                int RdHi, int RdLo, int Rs, int Rm)
+ {
+     // *mPC++ = (cc<<28) | 0x1400080 | (RdHi<<16) | (RdLo<<12) | (Rs<<8) | (xy<<4) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1156,9 +1150,8 @@ void ArmToMips64Assembler::SMLAL(int cc __unused, int xy __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMips64Assembler::SMLAW(int cc __unused, int y __unused,
+-                                 int Rd __unused, int Rm __unused,
+-                                 int Rs __unused, int Rn __unused)
++void ArmToMips64Assembler::SMLAW(int cc, int y,
++                int Rd, int Rm, int Rs, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1200080 | (Rd<<16) | (Rn<<12) | (Rs<<8) | (y<<4) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1167,7 +1160,7 @@ void ArmToMips64Assembler::SMLAW(int cc __unused, int y __unused,
+ }
+ 
+ // used by ARMv6 version of GGLAssembler::filter32
+-void ArmToMips64Assembler::UXTB16(int cc __unused, int Rd, int Rm, int rotate)
++void ArmToMips64Assembler::UXTB16(int cc, int Rd, int Rm, int rotate)
+ {
+     mArmPC[mInum++] = pc();
+ 
+@@ -1180,8 +1173,7 @@ void ArmToMips64Assembler::UXTB16(int cc __unused, int Rd, int Rm, int rotate)
+     mMips->AND(Rd, R_at2, R_at);
+ }
+ 
+-void ArmToMips64Assembler::UBFX(int cc __unused, int Rd __unused, int Rn __unused,
+-                                int lsb __unused, int width __unused)
++void ArmToMips64Assembler::UBFX(int cc, int Rd, int Rn, int lsb, int width)
+ {
+      /* Placeholder for UBFX */
+      mArmPC[mInum++] = pc();
+@@ -1210,8 +1202,7 @@ void ArmToMips64Assembler::ADDR_SUB(int cc,
+     dataProcessing(opSUB64, cc, s, Rd, Rn, Op2);
+ }
+ 
+-void ArmToMips64Assembler::ADDR_LDR(int cc __unused, int Rd,
+-                                    int Rn, uint32_t offset) {
++void ArmToMips64Assembler::ADDR_LDR(int cc, int Rd, int Rn, uint32_t offset) {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+     if (offset > AMODE_UNSUPPORTED) offset = 0;
+@@ -1244,8 +1235,7 @@ void ArmToMips64Assembler::ADDR_LDR(int cc __unused, int Rd,
+     }
+ }
+ 
+-void ArmToMips64Assembler::ADDR_STR(int cc __unused, int Rd,
+-                                    int Rn, uint32_t offset) {
++void ArmToMips64Assembler::ADDR_STR(int cc, int Rd, int Rn, uint32_t offset) {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+     if (offset > AMODE_UNSUPPORTED) offset = 0;
+@@ -1300,12 +1290,14 @@ void ArmToMips64Assembler::ADDR_STR(int cc __unused, int Rd,
+ */
+ 
+ MIPS64Assembler::MIPS64Assembler(const sp<Assembly>& assembly, ArmToMips64Assembler *parent)
+-    : MIPSAssembler::MIPSAssembler(assembly, NULL), mParent(parent)
++    : mParent(parent),
++    MIPSAssembler::MIPSAssembler(assembly, NULL)
+ {
+ }
+ 
+ MIPS64Assembler::MIPS64Assembler(void* assembly, ArmToMips64Assembler *parent)
+-    : MIPSAssembler::MIPSAssembler(assembly), mParent(parent)
++    : mParent(parent),
++    MIPSAssembler::MIPSAssembler(assembly)
+ {
+ }
+ 
+@@ -1327,7 +1319,7 @@ void MIPS64Assembler::reset()
+ }
+ 
+ 
+-void MIPS64Assembler::disassemble(const char* name __unused)
++void MIPS64Assembler::disassemble(const char* name)
+ {
+     char di_buf[140];
+ 
+@@ -1342,6 +1334,11 @@ void MIPS64Assembler::disassemble(const char* name __unused)
+         }
+     }
+ 
++    // iArm is an index to Arm instructions 1...n for this assembly sequence
++    // mArmPC[iArm] holds the value of the Mips-PC for the first MIPS
++    // instruction corresponding to that Arm instruction number
++
++    int iArm = 0;
+     size_t count = pc()-base();
+     uint32_t* mipsPC = base();
+ 
+diff --git a/libpixelflinger/codeflinger/MIPSAssembler.cpp b/libpixelflinger/codeflinger/MIPSAssembler.cpp
+index 039a72504..865a5683c 100644
+--- a/libpixelflinger/codeflinger/MIPSAssembler.cpp
++++ b/libpixelflinger/codeflinger/MIPSAssembler.cpp
+@@ -51,7 +51,6 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <inttypes.h>
+ 
+ #include <cutils/properties.h>
+ #include <log/log.h>
+@@ -61,8 +60,6 @@
+ #include "MIPSAssembler.h"
+ #include "mips_disassem.h"
+ 
+-#define __unused __attribute__((__unused__))
+-
+ // Choose MIPS arch variant following gcc flags
+ #if defined(__mips__) && __mips==32 && __mips_isa_rev>=2
+ #define mips32r2 1
+@@ -170,7 +167,7 @@ void ArmToMipsAssembler::prolog()
+     mMips->MOVE(R_v0, R_a0);    // move context * passed in a0 to v0 (arm r0)
+ }
+ 
+-void ArmToMipsAssembler::epilog(uint32_t touched __unused)
++void ArmToMipsAssembler::epilog(uint32_t touched)
+ {
+     mArmPC[mInum++] = pc();  // save starting PC for this instr
+ 
+@@ -216,7 +213,7 @@ int ArmToMipsAssembler::buildImmediate(
+ 
+ // shifters...
+ 
+-bool ArmToMipsAssembler::isValidImmediate(uint32_t immediate __unused)
++bool ArmToMipsAssembler::isValidImmediate(uint32_t immediate)
+ {
+     // for MIPS, any 32-bit immediate is OK
+     return true;
+@@ -237,14 +234,13 @@ uint32_t ArmToMipsAssembler::reg_imm(int Rm, int type, uint32_t shift)
+     return AMODE_REG_IMM;
+ }
+ 
+-uint32_t ArmToMipsAssembler::reg_rrx(int Rm __unused)
++uint32_t ArmToMipsAssembler::reg_rrx(int Rm)
+ {
+     // reg_rrx mode is not used in the GLLAssember code at this time
+     return AMODE_UNSUPPORTED;
+ }
+ 
+-uint32_t ArmToMipsAssembler::reg_reg(int Rm __unused, int type __unused,
+-                                     int Rs __unused)
++uint32_t ArmToMipsAssembler::reg_reg(int Rm, int type, int Rs)
+ {
+     // reg_reg mode is not used in the GLLAssember code at this time
+     return AMODE_UNSUPPORTED;
+@@ -285,15 +281,14 @@ uint32_t ArmToMipsAssembler::reg_scale_pre(int Rm, int type,
+     return AMODE_REG_SCALE_PRE;
+ }
+ 
+-uint32_t ArmToMipsAssembler::reg_scale_post(int Rm __unused, int type __unused,
+-                                            uint32_t shift __unused)
++uint32_t ArmToMipsAssembler::reg_scale_post(int Rm, int type, uint32_t shift)
+ {
+     LOG_ALWAYS_FATAL("adr mode reg_scale_post not yet implemented\n");
+     return AMODE_UNSUPPORTED;
+ }
+ 
+ // LDRH/LDRSB/LDRSH/STRH (immediate and Rm can be negative, which indicate U=0)
+-uint32_t ArmToMipsAssembler::immed8_pre(int32_t immed8, int W __unused)
++uint32_t ArmToMipsAssembler::immed8_pre(int32_t immed8, int W)
+ {
+     // uint32_t offset = abs(immed8);
+ 
+@@ -323,7 +318,7 @@ uint32_t ArmToMipsAssembler::reg_pre(int Rm, int W)
+     return AMODE_REG_PRE;
+ }
+ 
+-uint32_t ArmToMipsAssembler::reg_post(int Rm __unused)
++uint32_t ArmToMipsAssembler::reg_post(int Rm)
+ {
+     LOG_ALWAYS_FATAL("adr mode reg_post not yet implemented\n");
+     return AMODE_UNSUPPORTED;
+@@ -338,6 +333,12 @@ uint32_t ArmToMipsAssembler::reg_post(int Rm __unused)
+ #pragma mark Data Processing...
+ #endif
+ 
++
++static const char * const dpOpNames[] = {
++    "AND", "EOR", "SUB", "RSB", "ADD", "ADC", "SBC", "RSC",
++    "TST", "TEQ", "CMP", "CMN", "ORR", "MOV", "BIC", "MVN"
++};
++
+ // check if the operand registers from a previous CMP or S-bit instruction
+ // would be overwritten by this instruction. If so, move the value to a
+ // safe register.
+@@ -604,7 +605,7 @@ void ArmToMipsAssembler::dataProcessing(int opcode, int cc,
+ #endif
+ 
+ // multiply, accumulate
+-void ArmToMipsAssembler::MLA(int cc __unused, int s,
++void ArmToMipsAssembler::MLA(int cc, int s,
+         int Rd, int Rm, int Rs, int Rn) {
+ 
+     mArmPC[mInum++] = pc();  // save starting PC for this instr
+@@ -617,7 +618,7 @@ void ArmToMipsAssembler::MLA(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMipsAssembler::MUL(int cc __unused, int s,
++void ArmToMipsAssembler::MUL(int cc, int s,
+         int Rd, int Rm, int Rs) {
+     mArmPC[mInum++] = pc();
+     mMips->MUL(Rd, Rm, Rs);
+@@ -627,7 +628,7 @@ void ArmToMipsAssembler::MUL(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMipsAssembler::UMULL(int cc __unused, int s,
++void ArmToMipsAssembler::UMULL(int cc, int s,
+         int RdLo, int RdHi, int Rm, int Rs) {
+     mArmPC[mInum++] = pc();
+     mMips->MULT(Rm, Rs);
+@@ -640,8 +641,8 @@ void ArmToMipsAssembler::UMULL(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMipsAssembler::UMUAL(int cc __unused, int s,
+-        int RdLo __unused, int RdHi, int Rm __unused, int Rs __unused) {
++void ArmToMipsAssembler::UMUAL(int cc, int s,
++        int RdLo, int RdHi, int Rm, int Rs) {
+     LOG_FATAL_IF(RdLo==Rm || RdHi==Rm || RdLo==RdHi,
+                         "UMUAL(r%u,r%u,r%u,r%u)", RdLo,RdHi,Rm,Rs);
+     // *mPC++ =    (cc<<28) | (1<<23) | (1<<21) | (s<<20) |
+@@ -656,8 +657,8 @@ void ArmToMipsAssembler::UMUAL(int cc __unused, int s,
+     }
+ }
+ 
+-void ArmToMipsAssembler::SMULL(int cc __unused, int s,
+-        int RdLo __unused, int RdHi, int Rm __unused, int Rs __unused) {
++void ArmToMipsAssembler::SMULL(int cc, int s,
++        int RdLo, int RdHi, int Rm, int Rs) {
+     LOG_FATAL_IF(RdLo==Rm || RdHi==Rm || RdLo==RdHi,
+                         "SMULL(r%u,r%u,r%u,r%u)", RdLo,RdHi,Rm,Rs);
+     // *mPC++ =    (cc<<28) | (1<<23) | (1<<22) | (s<<20) |
+@@ -671,8 +672,8 @@ void ArmToMipsAssembler::SMULL(int cc __unused, int s,
+         LOG_ALWAYS_FATAL("Condition on SMULL must be on 64-bit result\n");
+     }
+ }
+-void ArmToMipsAssembler::SMUAL(int cc __unused, int s,
+-        int RdLo __unused, int RdHi, int Rm __unused, int Rs __unused) {
++void ArmToMipsAssembler::SMUAL(int cc, int s,
++        int RdLo, int RdHi, int Rm, int Rs) {
+     LOG_FATAL_IF(RdLo==Rm || RdHi==Rm || RdLo==RdHi,
+                         "SMUAL(r%u,r%u,r%u,r%u)", RdLo,RdHi,Rm,Rs);
+     // *mPC++ =    (cc<<28) | (1<<23) | (1<<22) | (1<<21) | (s<<20) |
+@@ -726,26 +727,26 @@ void ArmToMipsAssembler::B(int cc, const char* label)
+     }
+ }
+ 
+-void ArmToMipsAssembler::BL(int cc __unused, const char* label __unused)
++void ArmToMipsAssembler::BL(int cc, const char* label)
+ {
+     LOG_ALWAYS_FATAL("branch-and-link not supported yet\n");
+     mArmPC[mInum++] = pc();
+ }
+ 
+ // no use for Branches with integer PC, but they're in the Interface class ....
+-void ArmToMipsAssembler::B(int cc __unused, uint32_t* to_pc __unused)
++void ArmToMipsAssembler::B(int cc, uint32_t* to_pc)
+ {
+     LOG_ALWAYS_FATAL("branch to absolute PC not supported, use Label\n");
+     mArmPC[mInum++] = pc();
+ }
+ 
+-void ArmToMipsAssembler::BL(int cc __unused, uint32_t* to_pc __unused)
++void ArmToMipsAssembler::BL(int cc, uint32_t* to_pc)
+ {
+     LOG_ALWAYS_FATAL("branch to absolute PC not supported, use Label\n");
+     mArmPC[mInum++] = pc();
+ }
+ 
+-void ArmToMipsAssembler::BX(int cc __unused, int Rn __unused)
++void ArmToMipsAssembler::BX(int cc, int Rn)
+ {
+     LOG_ALWAYS_FATAL("branch to absolute PC not supported, use Label\n");
+     mArmPC[mInum++] = pc();
+@@ -759,7 +760,7 @@ void ArmToMipsAssembler::BX(int cc __unused, int Rn __unused)
+ #endif
+ 
+ // data transfer...
+-void ArmToMipsAssembler::LDR(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMipsAssembler::LDR(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -793,7 +794,7 @@ void ArmToMipsAssembler::LDR(int cc __unused, int Rd, int Rn, uint32_t offset)
+     }
+ }
+ 
+-void ArmToMipsAssembler::LDRB(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMipsAssembler::LDRB(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -822,7 +823,7 @@ void ArmToMipsAssembler::LDRB(int cc __unused, int Rd, int Rn, uint32_t offset)
+ 
+ }
+ 
+-void ArmToMipsAssembler::STR(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMipsAssembler::STR(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -858,7 +859,7 @@ void ArmToMipsAssembler::STR(int cc __unused, int Rd, int Rn, uint32_t offset)
+     }
+ }
+ 
+-void ArmToMipsAssembler::STRB(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMipsAssembler::STRB(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed12_pre(0)
+@@ -886,7 +887,7 @@ void ArmToMipsAssembler::STRB(int cc __unused, int Rd, int Rn, uint32_t offset)
+     }
+ }
+ 
+-void ArmToMipsAssembler::LDRH(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMipsAssembler::LDRH(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed8_pre(0)
+@@ -914,23 +915,21 @@ void ArmToMipsAssembler::LDRH(int cc __unused, int Rd, int Rn, uint32_t offset)
+     }
+ }
+ 
+-void ArmToMipsAssembler::LDRSB(int cc __unused, int Rd __unused,
+-                               int Rn __unused, uint32_t offset __unused)
++void ArmToMipsAssembler::LDRSB(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::LDRSH(int cc __unused, int Rd __unused,
+-                               int Rn __unused, uint32_t offset __unused)
++void ArmToMipsAssembler::LDRSH(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::STRH(int cc __unused, int Rd, int Rn, uint32_t offset)
++void ArmToMipsAssembler::STRH(int cc, int Rd, int Rn, uint32_t offset)
+ {
+     mArmPC[mInum++] = pc();
+     // work-around for ARM default address mode of immed8_pre(0)
+@@ -966,8 +965,8 @@ void ArmToMipsAssembler::STRH(int cc __unused, int Rd, int Rn, uint32_t offset)
+ #endif
+ 
+ // block data transfer...
+-void ArmToMipsAssembler::LDM(int cc __unused, int dir __unused,
+-        int Rn __unused, int W __unused, uint32_t reg_list __unused)
++void ArmToMipsAssembler::LDM(int cc, int dir,
++        int Rn, int W, uint32_t reg_list)
+ {   //                        ED FD EA FA      IB IA DB DA
+     // const uint8_t P[8] = { 1, 0, 1, 0,      1, 0, 1, 0 };
+     // const uint8_t U[8] = { 1, 1, 0, 0,      1, 1, 0, 0 };
+@@ -978,8 +977,8 @@ void ArmToMipsAssembler::LDM(int cc __unused, int dir __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::STM(int cc __unused, int dir __unused,
+-        int Rn __unused, int W __unused, uint32_t reg_list __unused)
++void ArmToMipsAssembler::STM(int cc, int dir,
++        int Rn, int W, uint32_t reg_list)
+ {   //                        FA EA FD ED      IB IA DB DA
+     // const uint8_t P[8] = { 0, 1, 0, 1,      1, 0, 1, 0 };
+     // const uint8_t U[8] = { 0, 0, 1, 1,      1, 1, 0, 0 };
+@@ -998,23 +997,21 @@ void ArmToMipsAssembler::STM(int cc __unused, int dir __unused,
+ #endif
+ 
+ // special...
+-void ArmToMipsAssembler::SWP(int cc __unused, int Rn __unused,
+-                             int Rd __unused, int Rm __unused) {
++void ArmToMipsAssembler::SWP(int cc, int Rn, int Rd, int Rm) {
+     // *mPC++ = (cc<<28) | (2<<23) | (Rn<<16) | (Rd << 12) | 0x90 | Rm;
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::SWPB(int cc __unused, int Rn __unused,
+-                              int Rd __unused, int Rm __unused) {
++void ArmToMipsAssembler::SWPB(int cc, int Rn, int Rd, int Rm) {
+     // *mPC++ = (cc<<28) | (2<<23) | (1<<22) | (Rn<<16) | (Rd << 12) | 0x90 | Rm;
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::SWI(int cc __unused, uint32_t comment __unused) {
++void ArmToMipsAssembler::SWI(int cc, uint32_t comment) {
+     // *mPC++ = (cc<<28) | (0xF<<24) | comment;
+     mArmPC[mInum++] = pc();
+     mMips->NOP2();
+@@ -1028,7 +1025,7 @@ void ArmToMipsAssembler::SWI(int cc __unused, uint32_t comment __unused) {
+ #endif
+ 
+ // DSP instructions...
+-void ArmToMipsAssembler::PLD(int Rn __unused, uint32_t offset) {
++void ArmToMipsAssembler::PLD(int Rn, uint32_t offset) {
+     LOG_ALWAYS_FATAL_IF(!((offset&(1<<24)) && !(offset&(1<<21))),
+                         "PLD only P=1, W=0");
+     // *mPC++ = 0xF550F000 | (Rn<<16) | offset;
+@@ -1037,14 +1034,13 @@ void ArmToMipsAssembler::PLD(int Rn __unused, uint32_t offset) {
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::CLZ(int cc __unused, int Rd, int Rm)
++void ArmToMipsAssembler::CLZ(int cc, int Rd, int Rm)
+ {
+     mArmPC[mInum++] = pc();
+     mMips->CLZ(Rd, Rm);
+ }
+ 
+-void ArmToMipsAssembler::QADD(int cc __unused,  int Rd __unused,
+-                              int Rm __unused, int Rn __unused)
++void ArmToMipsAssembler::QADD(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1000050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1052,8 +1048,7 @@ void ArmToMipsAssembler::QADD(int cc __unused,  int Rd __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::QDADD(int cc __unused,  int Rd __unused,
+-                               int Rm __unused, int Rn __unused)
++void ArmToMipsAssembler::QDADD(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1400050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1061,8 +1056,7 @@ void ArmToMipsAssembler::QDADD(int cc __unused,  int Rd __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::QSUB(int cc __unused,  int Rd __unused,
+-                              int Rm __unused, int Rn __unused)
++void ArmToMipsAssembler::QSUB(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1200050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1070,8 +1064,7 @@ void ArmToMipsAssembler::QSUB(int cc __unused,  int Rd __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::QDSUB(int cc __unused,  int Rd __unused,
+-                               int Rm __unused, int Rn __unused)
++void ArmToMipsAssembler::QDSUB(int cc,  int Rd, int Rm, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1600050 | (Rn<<16) | (Rd<<12) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1080,7 +1073,7 @@ void ArmToMipsAssembler::QDSUB(int cc __unused,  int Rd __unused,
+ }
+ 
+ // 16 x 16 signed multiply (like SMLAxx without the accumulate)
+-void ArmToMipsAssembler::SMUL(int cc __unused, int xy,
++void ArmToMipsAssembler::SMUL(int cc, int xy,
+                 int Rd, int Rm, int Rs)
+ {
+     mArmPC[mInum++] = pc();
+@@ -1119,7 +1112,7 @@ void ArmToMipsAssembler::SMUL(int cc __unused, int xy,
+ }
+ 
+ // signed 32b x 16b multiple, save top 32-bits of 48-bit result
+-void ArmToMipsAssembler::SMULW(int cc __unused, int y,
++void ArmToMipsAssembler::SMULW(int cc, int y,
+                 int Rd, int Rm, int Rs)
+ {
+     mArmPC[mInum++] = pc();
+@@ -1139,7 +1132,7 @@ void ArmToMipsAssembler::SMULW(int cc __unused, int y,
+ }
+ 
+ // 16 x 16 signed multiply, accumulate: Rd = Rm{16} * Rs{16} + Rn
+-void ArmToMipsAssembler::SMLA(int cc __unused, int xy,
++void ArmToMipsAssembler::SMLA(int cc, int xy,
+                 int Rd, int Rm, int Rs, int Rn)
+ {
+     mArmPC[mInum++] = pc();
+@@ -1179,9 +1172,8 @@ void ArmToMipsAssembler::SMLA(int cc __unused, int xy,
+     mMips->ADDU(Rd, R_at, Rn);
+ }
+ 
+-void ArmToMipsAssembler::SMLAL(int cc __unused, int xy __unused,
+-                               int RdHi __unused, int RdLo __unused,
+-                               int Rs __unused, int Rm __unused)
++void ArmToMipsAssembler::SMLAL(int cc, int xy,
++                int RdHi, int RdLo, int Rs, int Rm)
+ {
+     // *mPC++ = (cc<<28) | 0x1400080 | (RdHi<<16) | (RdLo<<12) | (Rs<<8) | (xy<<4) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1189,9 +1181,8 @@ void ArmToMipsAssembler::SMLAL(int cc __unused, int xy __unused,
+     NOT_IMPLEMENTED();
+ }
+ 
+-void ArmToMipsAssembler::SMLAW(int cc __unused, int y __unused,
+-                               int Rd __unused, int Rm __unused,
+-                               int Rs __unused, int Rn __unused)
++void ArmToMipsAssembler::SMLAW(int cc, int y,
++                int Rd, int Rm, int Rs, int Rn)
+ {
+     // *mPC++ = (cc<<28) | 0x1200080 | (Rd<<16) | (Rn<<12) | (Rs<<8) | (y<<4) | Rm;
+     mArmPC[mInum++] = pc();
+@@ -1200,7 +1191,7 @@ void ArmToMipsAssembler::SMLAW(int cc __unused, int y __unused,
+ }
+ 
+ // used by ARMv6 version of GGLAssembler::filter32
+-void ArmToMipsAssembler::UXTB16(int cc __unused, int Rd, int Rm, int rotate)
++void ArmToMipsAssembler::UXTB16(int cc, int Rd, int Rm, int rotate)
+ {
+     mArmPC[mInum++] = pc();
+ 
+@@ -1211,9 +1202,7 @@ void ArmToMipsAssembler::UXTB16(int cc __unused, int Rd, int Rm, int rotate)
+     mMips->AND(Rd, Rm, 0x00FF00FF);
+ }
+ 
+-void ArmToMipsAssembler::UBFX(int cc __unused, int Rd __unused,
+-                              int Rn __unused, int lsb __unused,
+-                              int width __unused)
++void ArmToMipsAssembler::UBFX(int cc, int Rd, int Rn, int lsb, int width)
+ {
+      /* Placeholder for UBFX */
+      mArmPC[mInum++] = pc();
+@@ -1350,6 +1339,11 @@ void MIPSAssembler::disassemble(const char* name)
+         }
+     }
+ 
++    // iArm is an index to Arm instructions 1...n for this assembly sequence
++    // mArmPC[iArm] holds the value of the Mips-PC for the first MIPS
++    // instruction corresponding to that Arm instruction number
++
++    int iArm = 0;
+     size_t count = pc()-base();
+     uint32_t* mipsPC = base();
+     while (count--) {
+@@ -1365,7 +1359,7 @@ void MIPSAssembler::disassemble(const char* name)
+         ::mips_disassem(mipsPC, di_buf, arm_disasm_fmt);
+         string_detab(di_buf);
+         string_pad(di_buf, 30);
+-        ALOGW("0x%p:    %08x    %s", mipsPC, uint32_t(*mipsPC), di_buf);
++        ALOGW("%08x:    %08x    %s", uintptr_t(mipsPC), uint32_t(*mipsPC), di_buf);
+         mipsPC++;
+     }
+ }
+@@ -1387,7 +1381,7 @@ void MIPSAssembler::prolog()
+     // empty - done in ArmToMipsAssembler
+ }
+ 
+-void MIPSAssembler::epilog(uint32_t touched __unused)
++void MIPSAssembler::epilog(uint32_t touched)
+ {
+     // empty - done in ArmToMipsAssembler
+ }
+@@ -1409,7 +1403,7 @@ int MIPSAssembler::generate(const char* name)
+ 
+     // the instruction & data caches are flushed by CodeCache
+     const int64_t duration = ggl_system_time() - mDuration;
+-    const char * const format = "generated %s (%d ins) at [%p:%p] in %" PRId64 " ns\n";
++    const char * const format = "generated %s (%d ins) at [%p:%p] in %lld ns\n";
+     ALOGI(format, name, int(pc()-base()), base(), pc(), duration);
+ 
+     char value[PROPERTY_VALUE_MAX];
+@@ -1870,7 +1864,7 @@ void MIPSAssembler::BEQZ(int Rs, const char* label)
+     BEQ(Rs, R_zero, label);
+ }
+ 
+-void MIPSAssembler::BNEZ(int Rs __unused, const char* label)
++void MIPSAssembler::BNEZ(int Rs, const char* label)
+ {
+     BNE(R_at, R_zero, label);
+ }
+diff --git a/libpixelflinger/codeflinger/load_store.cpp b/libpixelflinger/codeflinger/load_store.cpp
+index 4db0a4948..da21e1d97 100644
+--- a/libpixelflinger/codeflinger/load_store.cpp
++++ b/libpixelflinger/codeflinger/load_store.cpp
+@@ -232,6 +232,7 @@ void GGLAssembler::expand(integer_t& dst, const integer_t& src, int dbits)
+ void GGLAssembler::downshift(
+         pixel_t& d, int component, component_t s, const reg_t& dither)
+ {
++    const needs_t& needs = mBuilderContext.needs;
+     Scratch scratches(registerFile());
+ 
+     int sh = s.h;
+diff --git a/libpixelflinger/codeflinger/mips64_disassem.c b/libpixelflinger/codeflinger/mips64_disassem.c
+index 852829984..1856e5c0e 100644
+--- a/libpixelflinger/codeflinger/mips64_disassem.c
++++ b/libpixelflinger/codeflinger/mips64_disassem.c
+@@ -45,8 +45,6 @@
+ 
+ #include "mips_opcode.h"
+ 
+-#define __unused __attribute__((__unused__))
+-
+ static char *sprintf_buffer;
+ static int sprintf_buf_len;
+ 
+@@ -116,7 +114,7 @@ static char * alt_arm_reg_name[32] = {  // hacked names for comparison with ARM
+     "t8",   "t9",   "k0",   "k1",   "gp",   "sp",   "s8",   "ra"
+ };
+ 
+-static char * const * reg_name =  &mips_reg_name[0];
++static char ** reg_name =  &mips_reg_name[0];
+ 
+ static const char * const c0_opname[64] = {
+     "c0op00","tlbr",  "tlbwi", "c0op03","c0op04","c0op05","tlbwr", "c0op07",
+@@ -149,7 +147,7 @@ db_addr_t mips_disassem(db_addr_t loc, char *di_buffer, int alt_dis_format);
+  * 'loc' may in fact contain a breakpoint instruction.
+  */
+ static db_addr_t
+-db_disasm_insn(int insn, db_addr_t loc, bool altfmt __unused)
++db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
+ {
+     bool bdslot = false;
+     InstFmt i;
+diff --git a/libpixelflinger/codeflinger/mips_disassem.c b/libpixelflinger/codeflinger/mips_disassem.c
+index 1fe680675..83a9740ed 100644
+--- a/libpixelflinger/codeflinger/mips_disassem.c
++++ b/libpixelflinger/codeflinger/mips_disassem.c
+@@ -57,7 +57,6 @@
+ // #include <ddb/db_extern.h>
+ // #include <ddb/db_sym.h>
+ 
+-#define __unused __attribute__((__unused__))
+ 
+ static char *sprintf_buffer;
+ static int sprintf_buf_len;
+@@ -184,7 +183,7 @@ db_addr_t mips_disassem(db_addr_t loc, char *di_buffer, int alt_dis_format);
+  * 'loc' may in fact contain a breakpoint instruction.
+  */
+ static db_addr_t
+-db_disasm_insn(int insn, db_addr_t loc, bool altfmt __unused)
++db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
+ {
+     bool bdslot = false;
+     InstFmt i;
+diff --git a/libpixelflinger/codeflinger/texturing.cpp b/libpixelflinger/codeflinger/texturing.cpp
+index e6997bd4b..4c357af83 100644
+--- a/libpixelflinger/codeflinger/texturing.cpp
++++ b/libpixelflinger/codeflinger/texturing.cpp
+@@ -41,6 +41,7 @@ namespace android {
+ void GGLAssembler::init_iterated_color(fragment_parts_t& parts, const reg_t& x)
+ {
+     context_t const* c = mBuilderContext.c;
++    const needs_t& needs = mBuilderContext.needs;
+ 
+     if (mSmooth) {
+         // NOTE: we could take this case in the mDithering + !mSmooth case,
+@@ -323,7 +324,9 @@ void GGLAssembler::init_textures(
+         tex_coord_t* coords,
+         const reg_t& x, const reg_t& y)
+ {
++    context_t const* c = mBuilderContext.c;
+     const needs_t& needs = mBuilderContext.needs;
++    int Rctx = mBuilderContext.Rctx;
+     int Rx = x.reg;
+     int Ry = y.reg;
+ 
+@@ -399,6 +402,10 @@ void GGLAssembler::init_textures(
+ void GGLAssembler::build_textures(  fragment_parts_t& parts,
+                                     Scratch& regs)
+ {
++    context_t const* c = mBuilderContext.c;
++    const needs_t& needs = mBuilderContext.needs;
++    int Rctx = mBuilderContext.Rctx;
++
+     // We don't have a way to spill registers automatically
+     // spill depth and AA regs, when we know we may have to.
+     // build the spill list...
+@@ -427,6 +434,7 @@ void GGLAssembler::build_textures(  fragment_parts_t& parts,
+ 
+     Spill spill(registerFile(), *this, spill_list);
+ 
++    const bool multiTexture = mTextureMachine.activeUnits > 1;
+     for (int i=0 ; i<GGL_TEXTURE_UNIT_COUNT; i++) {
+         const texture_unit_t& tmu = mTextureMachine.tmu[i];
+         if (tmu.format_idx == 0)
+@@ -434,7 +442,7 @@ void GGLAssembler::build_textures(  fragment_parts_t& parts,
+ 
+         pointer_t& txPtr = parts.coords[i].ptr;
+         pixel_t& texel = parts.texel[i];
+-
++            
+         // repeat...
+         if ((tmu.swrap == GGL_NEEDS_WRAP_11) &&
+             (tmu.twrap == GGL_NEEDS_WRAP_11))
+@@ -648,6 +656,7 @@ void GGLAssembler::build_textures(  fragment_parts_t& parts,
+ void GGLAssembler::build_iterate_texture_coordinates(
+     const fragment_parts_t& parts)
+ {
++    const bool multiTexture = mTextureMachine.activeUnits > 1;
+     for (int i=0 ; i<GGL_TEXTURE_UNIT_COUNT; i++) {
+         const texture_unit_t& tmu = mTextureMachine.tmu[i];
+         if (tmu.format_idx == 0)
+diff --git a/libpixelflinger/include/private/pixelflinger/ggl_fixed.h b/libpixelflinger/include/private/pixelflinger/ggl_fixed.h
+index 51e9e2695..17b85dd58 100644
+--- a/libpixelflinger/include/private/pixelflinger/ggl_fixed.h
++++ b/libpixelflinger/include/private/pixelflinger/ggl_fixed.h
+@@ -497,6 +497,7 @@ inline GGLfixed gglMulSubx(GGLfixed x, GGLfixed y, GGLfixed a, int shift)
+ {
+ 
+     GGLfixed result;
++    int rshift;
+ 
+     asm("smull  %x[result], %w[x], %w[y]                     \n"
+         "lsr    %x[result], %x[result], %x[shift]            \n"
+diff --git a/libpixelflinger/raster.cpp b/libpixelflinger/raster.cpp
+index e95c2c8ab..26d8e4571 100644
+--- a/libpixelflinger/raster.cpp
++++ b/libpixelflinger/raster.cpp
+@@ -153,6 +153,7 @@ GGLint gglBitBlit(GGLContext* con, int tmu, GGLint crop[4], GGLint where[4])
+      GGLint h = where[3];
+ 
+     // exclsively enable this tmu
++    const GGLSurface& cbSurface = c->state.buffers.color.s;
+     c->procs.activeTexture(c, tmu);
+     c->procs.disable(c, GGL_W_LERP);
+ 
+diff --git a/libpixelflinger/scanline.cpp b/libpixelflinger/scanline.cpp
+index 4cc23c773..c6cf5bffe 100644
+--- a/libpixelflinger/scanline.cpp
++++ b/libpixelflinger/scanline.cpp
+@@ -2144,6 +2144,7 @@ void scanline_t32cb16(context_t* c)
+     const int32_t u = (c->state.texture[0].shade.is0>>16) + x;
+     const int32_t v = (c->state.texture[0].shade.it0>>16) + y;
+     uint32_t *src = reinterpret_cast<uint32_t*>(tex->data)+(u+(tex->stride*v));
++    int sR, sG, sB;
+     uint32_t s, d;
+ 
+     if (ct==1 || uintptr_t(dst)&2) {
+diff --git a/libpixelflinger/tests/arch-arm64/assembler/Android.mk b/libpixelflinger/tests/arch-arm64/assembler/Android.mk
+index db5dc4df9..bd0f24b3e 100644
+--- a/libpixelflinger/tests/arch-arm64/assembler/Android.mk
++++ b/libpixelflinger/tests/arch-arm64/assembler/Android.mk
+@@ -14,8 +14,6 @@ LOCAL_C_INCLUDES := \
+ 
+ LOCAL_MODULE:= test-pixelflinger-arm64-assembler-test
+ 
+-LOCAL_CFLAGS := -Wall -Werror
+-
+ LOCAL_MODULE_TAGS := tests
+ 
+ LOCAL_MULTILIB := 64
+diff --git a/libpixelflinger/tests/arch-arm64/col32cb16blend/Android.mk b/libpixelflinger/tests/arch-arm64/col32cb16blend/Android.mk
+index 3096232b8..3368eb017 100644
+--- a/libpixelflinger/tests/arch-arm64/col32cb16blend/Android.mk
++++ b/libpixelflinger/tests/arch-arm64/col32cb16blend/Android.mk
+@@ -11,8 +11,6 @@ LOCAL_C_INCLUDES :=
+ 
+ LOCAL_MODULE:= test-pixelflinger-arm64-col32cb16blend
+ 
+-LOCAL_CFLAGS := -Wall -Werror
+-
+ LOCAL_MODULE_TAGS := tests
+ 
+ LOCAL_MULTILIB := 64
+diff --git a/libpixelflinger/tests/arch-arm64/disassembler/Android.mk b/libpixelflinger/tests/arch-arm64/disassembler/Android.mk
+index 78f12af9d..d8f7e699f 100644
+--- a/libpixelflinger/tests/arch-arm64/disassembler/Android.mk
++++ b/libpixelflinger/tests/arch-arm64/disassembler/Android.mk
+@@ -9,8 +9,6 @@ LOCAL_SHARED_LIBRARIES :=
+ 
+ LOCAL_MODULE:= test-pixelflinger-arm64-disassembler-test
+ 
+-LOCAL_CFLAGS := -Wall -Werror
+-
+ LOCAL_MODULE_TAGS := tests
+ 
+ LOCAL_MULTILIB := 64
+diff --git a/libpixelflinger/tests/arch-arm64/t32cb16blend/Android.mk b/libpixelflinger/tests/arch-arm64/t32cb16blend/Android.mk
+index 664347f50..8e5ec5e01 100644
+--- a/libpixelflinger/tests/arch-arm64/t32cb16blend/Android.mk
++++ b/libpixelflinger/tests/arch-arm64/t32cb16blend/Android.mk
+@@ -11,8 +11,6 @@ LOCAL_C_INCLUDES :=
+ 
+ LOCAL_MODULE:= test-pixelflinger-arm64-t32cb16blend
+ 
+-LOCAL_CFLAGS := -Wall -Werror
+-
+ LOCAL_MODULE_TAGS := tests
+ 
+ LOCAL_MULTILIB := 64
+diff --git a/libpixelflinger/tests/codegen/Android.mk b/libpixelflinger/tests/codegen/Android.mk
+index 72d71efd3..2f9ca2f9a 100644
+--- a/libpixelflinger/tests/codegen/Android.mk
++++ b/libpixelflinger/tests/codegen/Android.mk
+@@ -13,8 +13,6 @@ LOCAL_C_INCLUDES := \
+ 
+ LOCAL_MODULE:= test-opengl-codegen
+ 
+-LOCAL_CFLAGS:= -Wall -Werror
+-
+ LOCAL_MODULE_TAGS := tests
+ 
+ include $(BUILD_NATIVE_TEST)
+diff --git a/libpixelflinger/tests/codegen/codegen.cpp b/libpixelflinger/tests/codegen/codegen.cpp
+index dce4ed72c..efa6d87bf 100644
+--- a/libpixelflinger/tests/codegen/codegen.cpp
++++ b/libpixelflinger/tests/codegen/codegen.cpp
+@@ -40,9 +40,9 @@ public:
+     const AssemblyKey<needs_t>& key() const { return mKey; }
+ };
+ 
+-#if ANDROID_ARM_CODEGEN
+ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+ {
++#if ANDROID_ARM_CODEGEN
+     GGLContext* c;
+     gglInit(&c);
+     needs_t needs;
+@@ -73,12 +73,10 @@ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+         printf("error %08x (%s)\n", err, strerror(-err));
+     }
+     gglUninit(c);
+-}
+ #else
+-static void ggl_test_codegen(uint32_t, uint32_t, uint32_t, uint32_t) {
+     printf("This test runs only on ARM, Arm64 or MIPS\n");
+-}
+ #endif
++}
+ 
+ int main(int argc, char** argv)
+ {
+diff --git a/libpixelflinger/tests/gglmul/Android.mk b/libpixelflinger/tests/gglmul/Android.mk
+index 67f358fc5..75bd39ef5 100644
+--- a/libpixelflinger/tests/gglmul/Android.mk
++++ b/libpixelflinger/tests/gglmul/Android.mk
+@@ -11,8 +11,6 @@ LOCAL_C_INCLUDES := \
+ 
+ LOCAL_MODULE:= test-pixelflinger-gglmul
+ 
+-LOCAL_CFLAGS:= -Wall -Werror
+-
+ LOCAL_MODULE_TAGS := tests
+ 
+ include $(BUILD_NATIVE_TEST)
+diff --git a/libpixelflinger/trap.cpp b/libpixelflinger/trap.cpp
+index 06ad2373c..234bfdde1 100644
+--- a/libpixelflinger/trap.cpp
++++ b/libpixelflinger/trap.cpp
+@@ -349,6 +349,7 @@ void linex_validate(void *con, const GGLcoord* v0, const GGLcoord* v1, GGLcoord
+ 
+ static void linex(void *con, const GGLcoord* v0, const GGLcoord* v1, GGLcoord width)
+ {
++    GGL_CONTEXT(c, con);
+     GGLcoord v[4][2];
+     v[0][0] = v0[0];    v[0][1] = v0[1];
+     v[1][0] = v1[0];    v[1][1] = v1[1];
+@@ -376,6 +377,7 @@ static void linex(void *con, const GGLcoord* v0, const GGLcoord* v1, GGLcoord wi
+ 
+ static void aa_linex(void *con, const GGLcoord* v0, const GGLcoord* v1, GGLcoord width)
+ {
++    GGL_CONTEXT(c, con);
+     GGLcoord v[4][2];
+     v[0][0] = v0[0];    v[0][1] = v0[1];
+     v[1][0] = v1[0];    v[1][1] = v1[1];
+diff --git a/libvndksupport/Android.bp b/libvndksupport/Android.bp
+index e73b36652..b62422323 100644
+--- a/libvndksupport/Android.bp
++++ b/libvndksupport/Android.bp
+@@ -3,10 +3,6 @@ subdirs = ["tests"]
+ cc_library {
+     name: "libvndksupport",
+     srcs: ["linker.c"],
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-    ],
+     local_include_dirs: ["include/vndksupport"],
+     export_include_dirs: ["include"],
+     shared_libs: ["liblog"],
+diff --git a/libvndksupport/linker.c b/libvndksupport/linker.c
+index bc5620b93..d06cafc8e 100644
+--- a/libvndksupport/linker.c
++++ b/libvndksupport/linker.c
+@@ -21,8 +21,7 @@
+ #define LOG_TAG "vndksupport"
+ #include <log/log.h>
+ 
+-__attribute__((weak)) extern struct android_namespace_t* android_get_exported_namespace(const char*);
+-__attribute__((weak)) extern void* android_dlopen_ext(const char*, int, const android_dlextinfo*);
++extern struct android_namespace_t* android_get_exported_namespace(const char*);
+ 
+ static const char* namespace_name = NULL;
+ 
+@@ -32,9 +31,7 @@ static struct android_namespace_t* get_vendor_namespace() {
+     if (vendor_namespace == NULL) {
+         int name_idx = 0;
+         while (namespace_names[name_idx] != NULL) {
+-            if (android_get_exported_namespace != NULL) {
+-                vendor_namespace = android_get_exported_namespace(namespace_names[name_idx]);
+-            }
++            vendor_namespace = android_get_exported_namespace(namespace_names[name_idx]);
+             if (vendor_namespace != NULL) {
+                 namespace_name = namespace_names[name_idx];
+                 break;
+@@ -51,10 +48,7 @@ void* android_load_sphal_library(const char* name, int flag) {
+         const android_dlextinfo dlextinfo = {
+             .flags = ANDROID_DLEXT_USE_NAMESPACE, .library_namespace = vendor_namespace,
+         };
+-        void* handle = NULL;
+-        if (android_dlopen_ext != NULL) {
+-            handle = android_dlopen_ext(name, flag, &dlextinfo);
+-        }
++        void* handle = android_dlopen_ext(name, flag, &dlextinfo);
+         if (!handle) {
+             ALOGE("Could not load %s from %s namespace: %s.", name, namespace_name, dlerror());
+         }
+diff --git a/libvndksupport/tests/Android.bp b/libvndksupport/tests/Android.bp
+index 2570cce95..3587cf88a 100644
+--- a/libvndksupport/tests/Android.bp
++++ b/libvndksupport/tests/Android.bp
+@@ -17,14 +17,10 @@ cc_test {
+     srcs: [
+         "linker_test.cpp",
+     ],
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-    ],
+ 
+     host_supported: false,
+     shared_libs: [
+         "libvndksupport",
+         "libbase",
+-    ],
++    ]
+ }
+-- 
+2.17.0
+

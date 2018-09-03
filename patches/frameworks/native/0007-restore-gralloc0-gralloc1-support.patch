@@ -1,7 +1,7 @@
 From 20d9b48f298cebd7c1717d05c47151ff0dd82e2f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 07/24] restore gralloc0/gralloc1 support
+Subject: [PATCH 07/45] restore gralloc0/gralloc1 support
 
 Change-Id: I7811dfa54ad14ba047163c436dc7db6fc868a592
 ---
@@ -25,7 +25,7 @@ Change-Id: I7811dfa54ad14ba047163c436dc7db6fc868a592
  create mode 100644 libs/ui/include/ui/Gralloc1On0Adapter.h
 
 diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
-index 7120772a1..17cd19aca 100644
+index 7120772a1a..17cd19acac 100644
 --- a/libs/ui/Android.bp
 +++ b/libs/ui/Android.bp
 @@ -23,7 +23,6 @@ cc_library_shared {
@@ -47,7 +47,7 @@ index 7120772a1..17cd19aca 100644
          "GraphicBufferAllocator.cpp",
 diff --git a/libs/ui/Gralloc1.cpp b/libs/ui/Gralloc1.cpp
 new file mode 100644
-index 000000000..6a133138d
+index 0000000000..6a133138d8
 --- /dev/null
 +++ b/libs/ui/Gralloc1.cpp
 @@ -0,0 +1,511 @@
@@ -564,7 +564,7 @@ index 000000000..6a133138d
 +} // namespace android
 diff --git a/libs/ui/Gralloc1On0Adapter.cpp b/libs/ui/Gralloc1On0Adapter.cpp
 new file mode 100644
-index 000000000..0fac7efaa
+index 0000000000..0fac7efaae
 --- /dev/null
 +++ b/libs/ui/Gralloc1On0Adapter.cpp
 @@ -0,0 +1,503 @@
@@ -1072,7 +1072,7 @@ index 000000000..0fac7efaa
 +
 +} // namespace android
 diff --git a/libs/ui/Gralloc2.cpp b/libs/ui/Gralloc2.cpp
-index 0eb08e59a..d252fb077 100644
+index 0eb08e59a9..d252fb0773 100644
 --- a/libs/ui/Gralloc2.cpp
 +++ b/libs/ui/Gralloc2.cpp
 @@ -39,7 +39,7 @@ void Mapper::preload() {
@@ -1097,7 +1097,7 @@ index 0eb08e59a..d252fb077 100644
  }
  
 diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
-index 0a3194ac5..440268cb6 100644
+index 0a3194ac5c..440268cb61 100644
 --- a/libs/ui/GraphicBuffer.cpp
 +++ b/libs/ui/GraphicBuffer.cpp
 @@ -188,6 +188,18 @@ status_t GraphicBuffer::initWithHandle(const native_handle_t* handle,
@@ -1179,7 +1179,7 @@ index 0a3194ac5..440268cb6 100644
  
      buffer = static_cast<void const*>(static_cast<uint8_t const*>(buffer) + sizeNeeded);
 diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
-index eaba1ed1a..605cd2bc8 100644
+index eaba1ed1aa..605cd2bc83 100644
 --- a/libs/ui/GraphicBufferAllocator.cpp
 +++ b/libs/ui/GraphicBufferAllocator.cpp
 @@ -46,6 +46,10 @@ GraphicBufferAllocator::GraphicBufferAllocator()
@@ -1342,7 +1342,7 @@ index eaba1ed1a..605cd2bc8 100644
      Mutex::Autolock _l(sLock);
      KeyedVector<buffer_handle_t, alloc_rec_t>& list(sAllocList);
 diff --git a/libs/ui/GraphicBufferMapper.cpp b/libs/ui/GraphicBufferMapper.cpp
-index d85448968..6b25c84d8 100644
+index d85448968a..6b25c84d83 100644
 --- a/libs/ui/GraphicBufferMapper.cpp
 +++ b/libs/ui/GraphicBufferMapper.cpp
 @@ -49,6 +49,10 @@ void GraphicBufferMapper::preloadHal() {
@@ -1663,7 +1663,7 @@ index d85448968..6b25c84d8 100644
  // ---------------------------------------------------------------------------
 diff --git a/libs/ui/include/ui/Gralloc1.h b/libs/ui/include/ui/Gralloc1.h
 new file mode 100644
-index 000000000..90713b334
+index 0000000000..90713b3343
 --- /dev/null
 +++ b/libs/ui/include/ui/Gralloc1.h
 @@ -0,0 +1,295 @@
@@ -1964,7 +1964,7 @@ index 000000000..90713b334
 +#endif
 diff --git a/libs/ui/include/ui/Gralloc1On0Adapter.h b/libs/ui/include/ui/Gralloc1On0Adapter.h
 new file mode 100644
-index 000000000..6379a08bf
+index 0000000000..6379a08bf4
 --- /dev/null
 +++ b/libs/ui/include/ui/Gralloc1On0Adapter.h
 @@ -0,0 +1,478 @@
@@ -2447,7 +2447,7 @@ index 000000000..6379a08bf
 +
 +#endif
 diff --git a/libs/ui/include/ui/Gralloc2.h b/libs/ui/include/ui/Gralloc2.h
-index 8aee16033..66c8188c0 100644
+index 8aee16033a..66c8188c08 100644
 --- a/libs/ui/include/ui/Gralloc2.h
 +++ b/libs/ui/include/ui/Gralloc2.h
 @@ -42,6 +42,9 @@ public:
@@ -2471,7 +2471,7 @@ index 8aee16033..66c8188c0 100644
  
      /*
 diff --git a/libs/ui/include/ui/GraphicBufferAllocator.h b/libs/ui/include/ui/GraphicBufferAllocator.h
-index 14a865e16..83e14b595 100644
+index 14a865e16c..83e14b595c 100644
 --- a/libs/ui/include/ui/GraphicBufferAllocator.h
 +++ b/libs/ui/include/ui/GraphicBufferAllocator.h
 @@ -26,6 +26,7 @@
@@ -2519,7 +2519,7 @@ index 14a865e16..83e14b595 100644
  
  // ---------------------------------------------------------------------------
 diff --git a/libs/ui/include/ui/GraphicBufferMapper.h b/libs/ui/include/ui/GraphicBufferMapper.h
-index 06961b11b..dbdd704a2 100644
+index 06961b11b5..dbdd704a2b 100644
 --- a/libs/ui/include/ui/GraphicBufferMapper.h
 +++ b/libs/ui/include/ui/GraphicBufferMapper.h
 @@ -22,6 +22,8 @@
@@ -2552,7 +2552,7 @@ index 06961b11b..dbdd704a2 100644
  
  // ---------------------------------------------------------------------------
 diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
-index 38529b6d0..19a44d856 100644
+index 38529b6d0a..19a44d8562 100644
 --- a/services/surfaceflinger/Android.mk
 +++ b/services/surfaceflinger/Android.mk
 @@ -69,10 +69,11 @@ LOCAL_STATIC_LIBRARIES := \

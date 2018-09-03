@@ -1,7 +1,7 @@
 From f55cfbe5b42e9d594929a14fd613e36f6243e0c1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 14/24] Revert "libui: Remove FramebufferNativeWindow"
+Subject: [PATCH 14/45] Revert "libui: Remove FramebufferNativeWindow"
 
 Change-Id: I25f2bc8136d918e518a21447162f7d75b83cae0c
 ---
@@ -13,7 +13,7 @@ Change-Id: I25f2bc8136d918e518a21447162f7d75b83cae0c
  create mode 100644 libs/ui/include/ui/FramebufferNativeWindow.h
 
 diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
-index 25f06431d..8e58ee694 100644
+index 25f06431d1..8e58ee694c 100644
 --- a/libs/ui/Android.bp
 +++ b/libs/ui/Android.bp
 @@ -53,6 +53,7 @@ cc_library_shared {
@@ -26,7 +26,7 @@ index 25f06431d..8e58ee694 100644
          "GraphicBufferMapper.cpp",
 diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
 new file mode 100644
-index 000000000..59db15750
+index 0000000000..59db157506
 --- /dev/null
 +++ b/libs/ui/FramebufferNativeWindow.cpp
 @@ -0,0 +1,372 @@
@@ -404,7 +404,7 @@ index 000000000..59db15750
 +}
 diff --git a/libs/ui/include/ui/FramebufferNativeWindow.h b/libs/ui/include/ui/FramebufferNativeWindow.h
 new file mode 100644
-index 000000000..4092e1cc4
+index 0000000000..4092e1cc4f
 --- /dev/null
 +++ b/libs/ui/include/ui/FramebufferNativeWindow.h
 @@ -0,0 +1,102 @@

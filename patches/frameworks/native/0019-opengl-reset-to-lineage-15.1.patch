@@ -1,7 +1,7 @@
 From 434c874df87e992310b9412446efdfdd7bd1a46d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 11:49:15 +0300
-Subject: [PATCH 19/24] opengl: reset to lineage-15.1
+Subject: [PATCH 19/45] opengl: reset to lineage-15.1
 
 Change-Id: I882e0733bc7f6f101a2ebefaec9caedecb989c31
 ---
@@ -296,7 +296,7 @@ Change-Id: I882e0733bc7f6f101a2ebefaec9caedecb989c31
  delete mode 100644 opengl/tests/tritex/tritex.cpp
 
 diff --git a/opengl/include/EGL/eglext.h b/opengl/include/EGL/eglext.h
-index 466768ae2..fd7b0cf73 100644
+index 466768ae2c..fd7b0cf738 100644
 --- a/opengl/include/EGL/eglext.h
 +++ b/opengl/include/EGL/eglext.h
 @@ -1266,6 +1266,7 @@ EGLAPI EGLBoolean EGLAPIENTRY eglGetSyncAttribNV (EGLSyncNV sync, EGLint attribu
@@ -316,7 +316,7 @@ index 466768ae2..fd7b0cf73 100644
  #ifndef EGL_TIZEN_image_native_buffer
  #define EGL_TIZEN_image_native_buffer 1
 diff --git a/opengl/include/GLES/gl.h b/opengl/include/GLES/gl.h
-index 25033f2a3..36acff937 100644
+index 25033f2a39..36acff937f 100644
 --- a/opengl/include/GLES/gl.h
 +++ b/opengl/include/GLES/gl.h
 @@ -51,7 +51,6 @@ extern "C" {
@@ -328,7 +328,7 @@ index 25033f2a3..36acff937 100644
  #include <KHR/khrplatform.h>
  typedef khronos_float_t GLfloat;
 diff --git a/opengl/include/GLES/glext.h b/opengl/include/GLES/glext.h
-index 1a150e34e..b6fe62082 100644
+index 1a150e34e8..b6fe620827 100644
 --- a/opengl/include/GLES/glext.h
 +++ b/opengl/include/GLES/glext.h
 @@ -104,6 +104,7 @@ GL_API void GL_APIENTRY glBlendEquationOES (GLenum mode);
@@ -356,7 +356,7 @@ index 1a150e34e..b6fe62082 100644
  typedef void (GL_APIENTRYP PFNGLCLIPPLANEFOESPROC) (GLenum plane, const GLfloat *equation);
  typedef void (GL_APIENTRYP PFNGLDEPTHRANGEFOESPROC) (GLclampf n, GLclampf f);
 diff --git a/opengl/libagl/Android.mk b/opengl/libagl/Android.mk
-index 15a12e458..c7635e27c 100644
+index 15a12e458d..c7635e27c7 100644
 --- a/opengl/libagl/Android.mk
 +++ b/opengl/libagl/Android.mk
 @@ -38,8 +38,6 @@ LOCAL_CFLAGS_mips += -fstrict-aliasing
@@ -369,7 +369,7 @@ index 15a12e458..c7635e27c 100644
  LOCAL_C_INCLUDES += bionic/libc/private
  
 diff --git a/opengl/libagl/array.cpp b/opengl/libagl/array.cpp
-index 2d36c6194..54207fa21 100644
+index 2d36c6194e..54207fa212 100644
 --- a/opengl/libagl/array.cpp
 +++ b/opengl/libagl/array.cpp
 @@ -136,6 +136,9 @@ void ogles_uninit_array(ogles_context_t* c)
@@ -391,7 +391,7 @@ index 2d36c6194..54207fa21 100644
      const int align = 32;
      const size_t s = VERTEX_BUFFER_SIZE + VERTEX_CACHE_SIZE;
 diff --git a/opengl/libagl/egl.cpp b/opengl/libagl/egl.cpp
-index be437054c..99c0bcf5a 100644
+index be437054ce..99c0bcf5a9 100644
 --- a/opengl/libagl/egl.cpp
 +++ b/opengl/libagl/egl.cpp
 @@ -81,9 +81,7 @@ namespace android {
@@ -456,7 +456,7 @@ index be437054c..99c0bcf5a 100644
          egl_surface_t* r = (egl_surface_t*)read;
          if ((d && d->ctx && d->ctx != ctx) ||
 diff --git a/opengl/libagl/light.cpp b/opengl/libagl/light.cpp
-index 216c72512..e7fe9d71a 100644
+index 216c725128..e7fe9d71a3 100644
 --- a/opengl/libagl/light.cpp
 +++ b/opengl/libagl/light.cpp
 @@ -467,6 +467,7 @@ static void lightx(GLenum i, GLenum pname, GLfixed param, ogles_context_t* c)
@@ -468,7 +468,7 @@ index 216c72512..e7fe9d71a 100644
      case GL_SPOT_EXPONENT:
          if (GGLfixed(param) >= gglIntToFixed(128)) {
 diff --git a/opengl/libagl/matrix.cpp b/opengl/libagl/matrix.cpp
-index edd474d30..034c857fa 100644
+index edd474d30c..034c857fa7 100644
 --- a/opengl/libagl/matrix.cpp
 +++ b/opengl/libagl/matrix.cpp
 @@ -51,6 +51,7 @@ static const matrixx_t gIdentityx = {
@@ -497,7 +497,7 @@ index edd474d30..034c857fa 100644
  void invert(GLfloat* inverse, const GLfloat* src)
  {
 diff --git a/opengl/libagl/primitives.cpp b/opengl/libagl/primitives.cpp
-index d3b19e8e6..57a798deb 100644
+index d3b19e8e6d..57a798deb3 100644
 --- a/opengl/libagl/primitives.cpp
 +++ b/opengl/libagl/primitives.cpp
 @@ -241,7 +241,6 @@ void compute_iterators_t::initTriangle(
@@ -509,7 +509,7 @@ index d3b19e8e6..57a798deb 100644
  
  void compute_iterators_t::initLine(
 diff --git a/opengl/libagl/texture.cpp b/opengl/libagl/texture.cpp
-index aae8e058b..3fe5ed063 100644
+index aae8e058bf..3fe5ed0630 100644
 --- a/opengl/libagl/texture.cpp
 +++ b/opengl/libagl/texture.cpp
 @@ -356,6 +356,10 @@ int createTextureSurface(ogles_context_t* c,
@@ -540,7 +540,7 @@ index aae8e058b..3fe5ed063 100644
      GGLSurface userSurface;
      userSurface.version = sizeof(userSurface);
 diff --git a/opengl/libs/Android.bp b/opengl/libs/Android.bp
-index 625ac3d9a..d755c76fb 100644
+index 625ac3d9ae..d755c76fb1 100644
 --- a/opengl/libs/Android.bp
 +++ b/opengl/libs/Android.bp
 @@ -3,7 +3,6 @@ cc_library {
@@ -583,7 +583,7 @@ index 625ac3d9a..d755c76fb 100644
      shared_libs: [
          // ***** DO NOT ADD NEW DEPENDENCIES HERE *****
 diff --git a/opengl/libs/EGL/Loader.cpp b/opengl/libs/EGL/Loader.cpp
-index 91a34558a..86b50efcc 100644
+index 91a34558aa..86b50efccf 100644
 --- a/opengl/libs/EGL/Loader.cpp
 +++ b/opengl/libs/EGL/Loader.cpp
 @@ -96,7 +96,6 @@ checkGlesEmulationStatus(void)
@@ -619,7 +619,7 @@ index 91a34558a..86b50efcc 100644
                      result = absolutePath;
                      return true;
 diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
-index 3049f29ee..59bb53645 100644
+index 3049f29ee0..59bb536458 100644
 --- a/opengl/libs/EGL/eglApi.cpp
 +++ b/opengl/libs/EGL/eglApi.cpp
 @@ -163,11 +163,13 @@ static const extention_map_t sExtensionMap[] = {
@@ -695,7 +695,7 @@ index 3049f29ee..59bb53645 100644
  // ----------------------------------------------------------------------------
  // Partial update extension
 diff --git a/opengl/libs/EGL/egl_display.cpp b/opengl/libs/EGL/egl_display.cpp
-index 3c1edd148..4e5833ab1 100644
+index 3c1edd148a..4e5833ab12 100644
 --- a/opengl/libs/EGL/egl_display.cpp
 +++ b/opengl/libs/EGL/egl_display.cpp
 @@ -79,10 +79,6 @@ egl_display_t::~egl_display_t() {
@@ -710,7 +710,7 @@ index 3c1edd148..4e5833ab1 100644
      if (index >= NUM_DISPLAYS || !sDisplay[index].isValid()) {
          return nullptr;
 diff --git a/opengl/libs/EGL/egl_entries.in b/opengl/libs/EGL/egl_entries.in
-index b587a1620..43468cd14 100644
+index b587a16203..43468cd14f 100644
 --- a/opengl/libs/EGL/egl_entries.in
 +++ b/opengl/libs/EGL/egl_entries.in
 @@ -85,8 +85,10 @@ EGL_ENTRY(EGLClientBuffer, eglGetNativeClientBufferANDROID, const AHardwareBuffe
@@ -725,7 +725,7 @@ index b587a1620..43468cd14 100644
  /* IMG extensions */
  
 diff --git a/opengl/specs/EGL_ANDROID_get_native_client_buffer.txt b/opengl/specs/EGL_ANDROID_get_native_client_buffer.txt
-index 285bba46d..772b21a13 100644
+index 285bba46de..772b21a132 100644
 --- a/opengl/specs/EGL_ANDROID_get_native_client_buffer.txt
 +++ b/opengl/specs/EGL_ANDROID_get_native_client_buffer.txt
 @@ -16,15 +16,15 @@ Contact
@@ -781,7 +781,7 @@ index 285bba46d..772b21a13 100644
      - Fix typographical errors.
  
 diff --git a/opengl/specs/README b/opengl/specs/README
-index fdafb1bff..cba445389 100644
+index fdafb1bffb..cba445389d 100644
 --- a/opengl/specs/README
 +++ b/opengl/specs/README
 @@ -24,8 +24,7 @@ Khronos.
@@ -796,7 +796,7 @@ index fdafb1bff..cba445389 100644
  ================     ==================================
 diff --git a/opengl/tests/Android.bp b/opengl/tests/Android.bp
 deleted file mode 100644
-index 639f351c6..000000000
+index 639f351c69..0000000000
 --- a/opengl/tests/Android.bp
 +++ /dev/null
 @@ -1,19 +0,0 @@
@@ -821,7 +821,7 @@ index 639f351c6..000000000
 -
 diff --git a/opengl/tests/Android.mk b/opengl/tests/Android.mk
 deleted file mode 100644
-index 134854a8b..000000000
+index 134854a8b7..0000000000
 --- a/opengl/tests/Android.mk
 +++ /dev/null
 @@ -1,28 +0,0 @@
@@ -855,7 +855,7 @@ index 134854a8b..000000000
 -include $(call all-named-subdir-makefiles, $(dirs))
 diff --git a/opengl/tests/EGLTest/Android.bp b/opengl/tests/EGLTest/Android.bp
 deleted file mode 100644
-index f24607703..000000000
+index f246077037..0000000000
 --- a/opengl/tests/EGLTest/Android.bp
 +++ /dev/null
 @@ -1,36 +0,0 @@
@@ -897,7 +897,7 @@ index f24607703..000000000
 -}
 diff --git a/opengl/tests/EGLTest/EGL_test.cpp b/opengl/tests/EGLTest/EGL_test.cpp
 deleted file mode 100644
-index b67a05302..000000000
+index b67a053021..0000000000
 --- a/opengl/tests/EGLTest/EGL_test.cpp
 +++ /dev/null
 @@ -1,541 +0,0 @@
@@ -1444,7 +1444,7 @@ index b67a05302..000000000
 -}
 diff --git a/opengl/tests/EGLTest/egl_cache_test.cpp b/opengl/tests/EGLTest/egl_cache_test.cpp
 deleted file mode 100644
-index c974f63c1..000000000
+index c974f63c13..0000000000
 --- a/opengl/tests/EGLTest/egl_cache_test.cpp
 +++ /dev/null
 @@ -1,111 +0,0 @@
@@ -1561,7 +1561,7 @@ index c974f63c1..000000000
 -}
 diff --git a/opengl/tests/angeles/Android.bp b/opengl/tests/angeles/Android.bp
 deleted file mode 100644
-index 5c398a632..000000000
+index 5c398a6323..0000000000
 --- a/opengl/tests/angeles/Android.bp
 +++ /dev/null
 @@ -1,27 +0,0 @@
@@ -1594,10 +1594,10 @@ index 5c398a632..000000000
 -}
 diff --git a/opengl/tests/angeles/MODULE_LICENSE_BSD_OR_LGPL b/opengl/tests/angeles/MODULE_LICENSE_BSD_OR_LGPL
 deleted file mode 100644
-index e69de29bb..000000000
+index e69de29bb2..0000000000
 diff --git a/opengl/tests/angeles/README.txt b/opengl/tests/angeles/README.txt
 deleted file mode 100644
-index 38b8a4a74..000000000
+index 38b8a4a74d..0000000000
 --- a/opengl/tests/angeles/README.txt
 +++ /dev/null
 @@ -1,77 +0,0 @@
@@ -1680,7 +1680,7 @@ index 38b8a4a74..000000000
 -------------------------------------------------------------------------
 diff --git a/opengl/tests/angeles/app-linux.cpp b/opengl/tests/angeles/app-linux.cpp
 deleted file mode 100644
-index 9d2c98ff8..000000000
+index 9d2c98ff8a..0000000000
 --- a/opengl/tests/angeles/app-linux.cpp
 +++ /dev/null
 @@ -1,229 +0,0 @@
@@ -1915,7 +1915,7 @@ index 9d2c98ff8..000000000
 -}
 diff --git a/opengl/tests/angeles/app.h b/opengl/tests/angeles/app.h
 deleted file mode 100644
-index 70ebd35be..000000000
+index 70ebd35be1..0000000000
 --- a/opengl/tests/angeles/app.h
 +++ /dev/null
 @@ -1,56 +0,0 @@
@@ -1977,7 +1977,7 @@ index 70ebd35be..000000000
 -#endif // !APP_H_INCLUDED
 diff --git a/opengl/tests/angeles/cams.h b/opengl/tests/angeles/cams.h
 deleted file mode 100644
-index 2b1acb3c3..000000000
+index 2b1acb3c35..0000000000
 --- a/opengl/tests/angeles/cams.h
 +++ /dev/null
 @@ -1,65 +0,0 @@
@@ -2048,7 +2048,7 @@ index 2b1acb3c3..000000000
 -#endif // !CAMS_H_INCLUDED
 diff --git a/opengl/tests/angeles/demo.c b/opengl/tests/angeles/demo.c
 deleted file mode 100644
-index 30c3202bd..000000000
+index 30c3202bd4..0000000000
 --- a/opengl/tests/angeles/demo.c
 +++ /dev/null
 @@ -1,792 +0,0 @@
@@ -2846,7 +2846,7 @@ index 30c3202bd..000000000
 -}
 diff --git a/opengl/tests/angeles/include/GLES/egl.h b/opengl/tests/angeles/include/GLES/egl.h
 deleted file mode 100644
-index cdf841083..000000000
+index cdf8410833..0000000000
 --- a/opengl/tests/angeles/include/GLES/egl.h
 +++ /dev/null
 @@ -1,229 +0,0 @@
@@ -3081,7 +3081,7 @@ index cdf841083..000000000
 -#endif /* ___egl_h_ */
 diff --git a/opengl/tests/angeles/include/GLES/egltypes.h b/opengl/tests/angeles/include/GLES/egltypes.h
 deleted file mode 100644
-index 9db36c987..000000000
+index 9db36c9876..0000000000
 --- a/opengl/tests/angeles/include/GLES/egltypes.h
 +++ /dev/null
 @@ -1,20 +0,0 @@
@@ -3107,7 +3107,7 @@ index 9db36c987..000000000
 -#define EGL_NO_SURFACE ((EGLSurface)0)
 diff --git a/opengl/tests/angeles/include/GLES/gl.h b/opengl/tests/angeles/include/GLES/gl.h
 deleted file mode 100644
-index 415482228..000000000
+index 415482228d..0000000000
 --- a/opengl/tests/angeles/include/GLES/gl.h
 +++ /dev/null
 @@ -1,584 +0,0 @@
@@ -3697,7 +3697,7 @@ index 415482228..000000000
 -#endif /* __gl_h_ */
 diff --git a/opengl/tests/angeles/license-BSD.txt b/opengl/tests/angeles/license-BSD.txt
 deleted file mode 100644
-index 8924e3ca2..000000000
+index 8924e3ca28..0000000000
 --- a/opengl/tests/angeles/license-BSD.txt
 +++ /dev/null
 @@ -1,34 +0,0 @@
@@ -3737,7 +3737,7 @@ index 8924e3ca2..000000000
 -SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 diff --git a/opengl/tests/angeles/license-LGPL.txt b/opengl/tests/angeles/license-LGPL.txt
 deleted file mode 100644
-index b1e3f5a26..000000000
+index b1e3f5a263..0000000000
 --- a/opengl/tests/angeles/license-LGPL.txt
 +++ /dev/null
 @@ -1,504 +0,0 @@
@@ -4247,7 +4247,7 @@ index b1e3f5a26..000000000
 -
 diff --git a/opengl/tests/angeles/license.txt b/opengl/tests/angeles/license.txt
 deleted file mode 100644
-index 620841e82..000000000
+index 620841e82e..0000000000
 --- a/opengl/tests/angeles/license.txt
 +++ /dev/null
 @@ -1,19 +0,0 @@
@@ -4272,7 +4272,7 @@ index 620841e82..000000000
 -LICENSE-LGPL.txt and LICENSE-BSD.txt for more details.
 diff --git a/opengl/tests/angeles/shapes.h b/opengl/tests/angeles/shapes.h
 deleted file mode 100644
-index 25ffae8ce..000000000
+index 25ffae8ce4..0000000000
 --- a/opengl/tests/angeles/shapes.h
 +++ /dev/null
 @@ -1,59 +0,0 @@
@@ -4337,7 +4337,7 @@ index 25ffae8ce..000000000
 -#endif // !SHAPES_H_INCLUDED
 diff --git a/opengl/tests/configdump/Android.bp b/opengl/tests/configdump/Android.bp
 deleted file mode 100644
-index ee9679703..000000000
+index ee96797030..0000000000
 --- a/opengl/tests/configdump/Android.bp
 +++ /dev/null
 @@ -1,18 +0,0 @@
@@ -4361,7 +4361,7 @@ index ee9679703..000000000
 -}
 diff --git a/opengl/tests/configdump/configdump.cpp b/opengl/tests/configdump/configdump.cpp
 deleted file mode 100644
-index a4bb8791e..000000000
+index a4bb8791ea..0000000000
 --- a/opengl/tests/configdump/configdump.cpp
 +++ /dev/null
 @@ -1,91 +0,0 @@
@@ -4458,7 +4458,7 @@ index a4bb8791e..000000000
 -}
 diff --git a/opengl/tests/fillrate/Android.bp b/opengl/tests/fillrate/Android.bp
 deleted file mode 100644
-index 689cee42d..000000000
+index 689cee42d5..0000000000
 --- a/opengl/tests/fillrate/Android.bp
 +++ /dev/null
 @@ -1,23 +0,0 @@
@@ -4487,7 +4487,7 @@ index 689cee42d..000000000
 -}
 diff --git a/opengl/tests/fillrate/fillrate.cpp b/opengl/tests/fillrate/fillrate.cpp
 deleted file mode 100644
-index f0220693d..000000000
+index f0220693d1..0000000000
 --- a/opengl/tests/fillrate/fillrate.cpp
 +++ /dev/null
 @@ -1,164 +0,0 @@
@@ -4657,7 +4657,7 @@ index f0220693d..000000000
 -}
 diff --git a/opengl/tests/filter/Android.bp b/opengl/tests/filter/Android.bp
 deleted file mode 100644
-index 23241e111..000000000
+index 23241e1116..0000000000
 --- a/opengl/tests/filter/Android.bp
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -4688,7 +4688,7 @@ index 23241e111..000000000
 -}
 diff --git a/opengl/tests/filter/filter.cpp b/opengl/tests/filter/filter.cpp
 deleted file mode 100644
-index 49778a068..000000000
+index 49778a0685..0000000000
 --- a/opengl/tests/filter/filter.cpp
 +++ /dev/null
 @@ -1,196 +0,0 @@
@@ -4890,7 +4890,7 @@ index 49778a068..000000000
 -}
 diff --git a/opengl/tests/finish/Android.bp b/opengl/tests/finish/Android.bp
 deleted file mode 100644
-index be20851e8..000000000
+index be20851e8f..0000000000
 --- a/opengl/tests/finish/Android.bp
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -4921,7 +4921,7 @@ index be20851e8..000000000
 -}
 diff --git a/opengl/tests/finish/finish.cpp b/opengl/tests/finish/finish.cpp
 deleted file mode 100644
-index 63ea82223..000000000
+index 63ea82223b..0000000000
 --- a/opengl/tests/finish/finish.cpp
 +++ /dev/null
 @@ -1,226 +0,0 @@
@@ -5153,7 +5153,7 @@ index 63ea82223..000000000
 -}
 diff --git a/opengl/tests/gl2_basic/Android.bp b/opengl/tests/gl2_basic/Android.bp
 deleted file mode 100644
-index f4538adb5..000000000
+index f4538adb54..0000000000
 --- a/opengl/tests/gl2_basic/Android.bp
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -5184,7 +5184,7 @@ index f4538adb5..000000000
 -}
 diff --git a/opengl/tests/gl2_basic/gl2_basic.cpp b/opengl/tests/gl2_basic/gl2_basic.cpp
 deleted file mode 100644
-index 13f6fba92..000000000
+index 13f6fba92e..0000000000
 --- a/opengl/tests/gl2_basic/gl2_basic.cpp
 +++ /dev/null
 @@ -1,364 +0,0 @@
@@ -5554,7 +5554,7 @@ index 13f6fba92..000000000
 -}
 diff --git a/opengl/tests/gl2_cameraeye/Android.mk b/opengl/tests/gl2_cameraeye/Android.mk
 deleted file mode 100644
-index 4a43a9e2f..000000000
+index 4a43a9e2ff..0000000000
 --- a/opengl/tests/gl2_cameraeye/Android.mk
 +++ /dev/null
 @@ -1,16 +0,0 @@
@@ -5576,7 +5576,7 @@ index 4a43a9e2f..000000000
 -include $(call all-makefiles-under,$(LOCAL_PATH))
 diff --git a/opengl/tests/gl2_cameraeye/AndroidManifest.xml b/opengl/tests/gl2_cameraeye/AndroidManifest.xml
 deleted file mode 100644
-index c53f7be0b..000000000
+index c53f7be0b0..0000000000
 --- a/opengl/tests/gl2_cameraeye/AndroidManifest.xml
 +++ /dev/null
 @@ -1,36 +0,0 @@
@@ -5618,7 +5618,7 @@ index c53f7be0b..000000000
 -</manifest>
 diff --git a/opengl/tests/gl2_cameraeye/res/values/strings.xml b/opengl/tests/gl2_cameraeye/res/values/strings.xml
 deleted file mode 100644
-index 386b93030..000000000
+index 386b930303..0000000000
 --- a/opengl/tests/gl2_cameraeye/res/values/strings.xml
 +++ /dev/null
 @@ -1,21 +0,0 @@
@@ -5645,7 +5645,7 @@ index 386b93030..000000000
 -</resources>
 diff --git a/opengl/tests/gl2_cameraeye/src/com/android/gl2cameraeye/GL2CameraEye.java b/opengl/tests/gl2_cameraeye/src/com/android/gl2cameraeye/GL2CameraEye.java
 deleted file mode 100644
-index 561e4c50f..000000000
+index 561e4c50f0..0000000000
 --- a/opengl/tests/gl2_cameraeye/src/com/android/gl2cameraeye/GL2CameraEye.java
 +++ /dev/null
 @@ -1,508 +0,0 @@
@@ -6159,7 +6159,7 @@ index 561e4c50f..000000000
 -}
 diff --git a/opengl/tests/gl2_copyTexImage/Android.bp b/opengl/tests/gl2_copyTexImage/Android.bp
 deleted file mode 100644
-index 87fa7ea37..000000000
+index 87fa7ea37d..0000000000
 --- a/opengl/tests/gl2_copyTexImage/Android.bp
 +++ /dev/null
 @@ -1,24 +0,0 @@
@@ -6189,7 +6189,7 @@ index 87fa7ea37..000000000
 -}
 diff --git a/opengl/tests/gl2_copyTexImage/gl2_copyTexImage.cpp b/opengl/tests/gl2_copyTexImage/gl2_copyTexImage.cpp
 deleted file mode 100644
-index ada98aa0c..000000000
+index ada98aa0c0..0000000000
 --- a/opengl/tests/gl2_copyTexImage/gl2_copyTexImage.cpp
 +++ /dev/null
 @@ -1,467 +0,0 @@
@@ -6662,7 +6662,7 @@ index ada98aa0c..000000000
 -}
 diff --git a/opengl/tests/gl2_java/Android.mk b/opengl/tests/gl2_java/Android.mk
 deleted file mode 100644
-index 71aa5a05f..000000000
+index 71aa5a05f1..0000000000
 --- a/opengl/tests/gl2_java/Android.mk
 +++ /dev/null
 @@ -1,19 +0,0 @@
@@ -6687,7 +6687,7 @@ index 71aa5a05f..000000000
 -include $(BUILD_PACKAGE)
 diff --git a/opengl/tests/gl2_java/AndroidManifest.xml b/opengl/tests/gl2_java/AndroidManifest.xml
 deleted file mode 100644
-index 8bb6840a1..000000000
+index 8bb6840a16..0000000000
 --- a/opengl/tests/gl2_java/AndroidManifest.xml
 +++ /dev/null
 @@ -1,32 +0,0 @@
@@ -6725,7 +6725,7 @@ index 8bb6840a1..000000000
 -</manifest>
 diff --git a/opengl/tests/gl2_java/res/values/strings.xml b/opengl/tests/gl2_java/res/values/strings.xml
 deleted file mode 100644
-index 06bd23c97..000000000
+index 06bd23c972..0000000000
 --- a/opengl/tests/gl2_java/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -6756,7 +6756,7 @@ index 06bd23c97..000000000
 -
 diff --git a/opengl/tests/gl2_java/src/com/android/gl2java/GL2JavaActivity.java b/opengl/tests/gl2_java/src/com/android/gl2java/GL2JavaActivity.java
 deleted file mode 100644
-index 37654fbd5..000000000
+index 37654fbd57..0000000000
 --- a/opengl/tests/gl2_java/src/com/android/gl2java/GL2JavaActivity.java
 +++ /dev/null
 @@ -1,46 +0,0 @@
@@ -6808,7 +6808,7 @@ index 37654fbd5..000000000
 -}
 diff --git a/opengl/tests/gl2_java/src/com/android/gl2java/GL2JavaView.java b/opengl/tests/gl2_java/src/com/android/gl2java/GL2JavaView.java
 deleted file mode 100644
-index 7f2bfd3e3..000000000
+index 7f2bfd3e34..0000000000
 --- a/opengl/tests/gl2_java/src/com/android/gl2java/GL2JavaView.java
 +++ /dev/null
 @@ -1,170 +0,0 @@
@@ -6984,7 +6984,7 @@ index 7f2bfd3e3..000000000
 -
 diff --git a/opengl/tests/gl2_jni/Android.mk b/opengl/tests/gl2_jni/Android.mk
 deleted file mode 100644
-index b0081c224..000000000
+index b0081c2244..0000000000
 --- a/opengl/tests/gl2_jni/Android.mk
 +++ /dev/null
 @@ -1,49 +0,0 @@
@@ -7039,7 +7039,7 @@ index b0081c224..000000000
 -include $(BUILD_SHARED_LIBRARY)
 diff --git a/opengl/tests/gl2_jni/AndroidManifest.xml b/opengl/tests/gl2_jni/AndroidManifest.xml
 deleted file mode 100644
-index 1827e5f37..000000000
+index 1827e5f377..0000000000
 --- a/opengl/tests/gl2_jni/AndroidManifest.xml
 +++ /dev/null
 @@ -1,31 +0,0 @@
@@ -7076,7 +7076,7 @@ index 1827e5f37..000000000
 -</manifest>
 diff --git a/opengl/tests/gl2_jni/jni/gl_code.cpp b/opengl/tests/gl2_jni/jni/gl_code.cpp
 deleted file mode 100644
-index 9b22c6cfd..000000000
+index 9b22c6cfd5..0000000000
 --- a/opengl/tests/gl2_jni/jni/gl_code.cpp
 +++ /dev/null
 @@ -1,170 +0,0 @@
@@ -7252,7 +7252,7 @@ index 9b22c6cfd..000000000
 -
 diff --git a/opengl/tests/gl2_jni/res/values/strings.xml b/opengl/tests/gl2_jni/res/values/strings.xml
 deleted file mode 100644
-index a29c74b25..000000000
+index a29c74b25d..0000000000
 --- a/opengl/tests/gl2_jni/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -7283,7 +7283,7 @@ index a29c74b25..000000000
 -
 diff --git a/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNIActivity.java b/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNIActivity.java
 deleted file mode 100644
-index c366a2cbc..000000000
+index c366a2cbc3..0000000000
 --- a/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNIActivity.java
 +++ /dev/null
 @@ -1,46 +0,0 @@
@@ -7335,7 +7335,7 @@ index c366a2cbc..000000000
 -}
 diff --git a/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNILib.java b/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNILib.java
 deleted file mode 100644
-index 040a98480..000000000
+index 040a984804..0000000000
 --- a/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNILib.java
 +++ /dev/null
 @@ -1,33 +0,0 @@
@@ -7374,7 +7374,7 @@ index 040a98480..000000000
 -}
 diff --git a/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNIView.java b/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNIView.java
 deleted file mode 100644
-index 72b1dfb9b..000000000
+index 72b1dfb9bb..0000000000
 --- a/opengl/tests/gl2_jni/src/com/android/gl2jni/GL2JNIView.java
 +++ /dev/null
 @@ -1,296 +0,0 @@
@@ -7676,7 +7676,7 @@ index 72b1dfb9b..000000000
 -
 diff --git a/opengl/tests/gl2_yuvtex/Android.bp b/opengl/tests/gl2_yuvtex/Android.bp
 deleted file mode 100644
-index b64d94d32..000000000
+index b64d94d320..0000000000
 --- a/opengl/tests/gl2_yuvtex/Android.bp
 +++ /dev/null
 @@ -1,26 +0,0 @@
@@ -7708,7 +7708,7 @@ index b64d94d32..000000000
 -}
 diff --git a/opengl/tests/gl2_yuvtex/gl2_yuvtex.cpp b/opengl/tests/gl2_yuvtex/gl2_yuvtex.cpp
 deleted file mode 100644
-index 850a615ee..000000000
+index 850a615ee1..0000000000
 --- a/opengl/tests/gl2_yuvtex/gl2_yuvtex.cpp
 +++ /dev/null
 @@ -1,427 +0,0 @@
@@ -8141,7 +8141,7 @@ index 850a615ee..000000000
 -}
 diff --git a/opengl/tests/gl_basic/Android.bp b/opengl/tests/gl_basic/Android.bp
 deleted file mode 100644
-index 5eed17e87..000000000
+index 5eed17e876..0000000000
 --- a/opengl/tests/gl_basic/Android.bp
 +++ /dev/null
 @@ -1,23 +0,0 @@
@@ -8170,7 +8170,7 @@ index 5eed17e87..000000000
 -}
 diff --git a/opengl/tests/gl_basic/gl_basic.cpp b/opengl/tests/gl_basic/gl_basic.cpp
 deleted file mode 100644
-index a675c7c5b..000000000
+index a675c7c5bd..0000000000
 --- a/opengl/tests/gl_basic/gl_basic.cpp
 +++ /dev/null
 @@ -1,358 +0,0 @@
@@ -8534,7 +8534,7 @@ index a675c7c5b..000000000
 -}
 diff --git a/opengl/tests/gl_jni/Android.mk b/opengl/tests/gl_jni/Android.mk
 deleted file mode 100644
-index d64dfcf2b..000000000
+index d64dfcf2bf..0000000000
 --- a/opengl/tests/gl_jni/Android.mk
 +++ /dev/null
 @@ -1,52 +0,0 @@
@@ -8592,7 +8592,7 @@ index d64dfcf2b..000000000
 -include $(BUILD_SHARED_LIBRARY)
 diff --git a/opengl/tests/gl_jni/AndroidManifest.xml b/opengl/tests/gl_jni/AndroidManifest.xml
 deleted file mode 100644
-index 5d0ec966f..000000000
+index 5d0ec966f4..0000000000
 --- a/opengl/tests/gl_jni/AndroidManifest.xml
 +++ /dev/null
 @@ -1,34 +0,0 @@
@@ -8632,7 +8632,7 @@ index 5d0ec966f..000000000
 -</manifest>
 diff --git a/opengl/tests/gl_jni/jni/gl_code.cpp b/opengl/tests/gl_jni/jni/gl_code.cpp
 deleted file mode 100644
-index 88f3228c6..000000000
+index 88f3228c62..0000000000
 --- a/opengl/tests/gl_jni/jni/gl_code.cpp
 +++ /dev/null
 @@ -1,188 +0,0 @@
@@ -8826,7 +8826,7 @@ index 88f3228c6..000000000
 -}
 diff --git a/opengl/tests/gl_jni/res/values/strings.xml b/opengl/tests/gl_jni/res/values/strings.xml
 deleted file mode 100644
-index aee9fa03a..000000000
+index aee9fa03ae..0000000000
 --- a/opengl/tests/gl_jni/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -8857,7 +8857,7 @@ index aee9fa03a..000000000
 -
 diff --git a/opengl/tests/gl_jni/src/com/android/gljni/GLJNIActivity.java b/opengl/tests/gl_jni/src/com/android/gljni/GLJNIActivity.java
 deleted file mode 100644
-index c6f53134f..000000000
+index c6f53134f9..0000000000
 --- a/opengl/tests/gl_jni/src/com/android/gljni/GLJNIActivity.java
 +++ /dev/null
 @@ -1,45 +0,0 @@
@@ -8908,7 +8908,7 @@ index c6f53134f..000000000
 -}
 diff --git a/opengl/tests/gl_jni/src/com/android/gljni/GLJNILib.java b/opengl/tests/gl_jni/src/com/android/gljni/GLJNILib.java
 deleted file mode 100644
-index f56d2af95..000000000
+index f56d2af95b..0000000000
 --- a/opengl/tests/gl_jni/src/com/android/gljni/GLJNILib.java
 +++ /dev/null
 @@ -1,34 +0,0 @@
@@ -8948,7 +8948,7 @@ index f56d2af95..000000000
 -}
 diff --git a/opengl/tests/gl_jni/src/com/android/gljni/GLJNIView.java b/opengl/tests/gl_jni/src/com/android/gljni/GLJNIView.java
 deleted file mode 100644
-index 9a2c8c454..000000000
+index 9a2c8c4548..0000000000
 --- a/opengl/tests/gl_jni/src/com/android/gljni/GLJNIView.java
 +++ /dev/null
 @@ -1,90 +0,0 @@
@@ -9044,7 +9044,7 @@ index 9a2c8c454..000000000
 -
 diff --git a/opengl/tests/gl_perf/Android.bp b/opengl/tests/gl_perf/Android.bp
 deleted file mode 100644
-index 25a317c3e..000000000
+index 25a317c3e3..0000000000
 --- a/opengl/tests/gl_perf/Android.bp
 +++ /dev/null
 @@ -1,28 +0,0 @@
@@ -9078,7 +9078,7 @@ index 25a317c3e..000000000
 -}
 diff --git a/opengl/tests/gl_perf/fill_common.cpp b/opengl/tests/gl_perf/fill_common.cpp
 deleted file mode 100644
-index fefedc093..000000000
+index fefedc0939..0000000000
 --- a/opengl/tests/gl_perf/fill_common.cpp
 +++ /dev/null
 @@ -1,298 +0,0 @@
@@ -9382,7 +9382,7 @@ index fefedc093..000000000
 -
 diff --git a/opengl/tests/gl_perf/filltest.cpp b/opengl/tests/gl_perf/filltest.cpp
 deleted file mode 100644
-index 4135c6252..000000000
+index 4135c6252f..0000000000
 --- a/opengl/tests/gl_perf/filltest.cpp
 +++ /dev/null
 @@ -1,50 +0,0 @@
@@ -9438,7 +9438,7 @@ index 4135c6252..000000000
 -}
 diff --git a/opengl/tests/gl_perf/fragment_shaders.cpp b/opengl/tests/gl_perf/fragment_shaders.cpp
 deleted file mode 100644
-index 79d5ead3f..000000000
+index 79d5ead3fd..0000000000
 --- a/opengl/tests/gl_perf/fragment_shaders.cpp
 +++ /dev/null
 @@ -1,139 +0,0 @@
@@ -9583,7 +9583,7 @@ index 79d5ead3f..000000000
 -static const size_t gFragmentTestCount = sizeof(gFragmentTests) / sizeof(gFragmentTests[0]);
 diff --git a/opengl/tests/gl_perf/gl2_perf.cpp b/opengl/tests/gl_perf/gl2_perf.cpp
 deleted file mode 100644
-index 047db2086..000000000
+index 047db20864..0000000000
 --- a/opengl/tests/gl_perf/gl2_perf.cpp
 +++ /dev/null
 @@ -1,129 +0,0 @@
@@ -9718,7 +9718,7 @@ index 047db2086..000000000
 -
 diff --git a/opengl/tests/gl_perfapp/Android.mk b/opengl/tests/gl_perfapp/Android.mk
 deleted file mode 100644
-index 3f411ea96..000000000
+index 3f411ea962..0000000000
 --- a/opengl/tests/gl_perfapp/Android.mk
 +++ /dev/null
 @@ -1,52 +0,0 @@
@@ -9776,7 +9776,7 @@ index 3f411ea96..000000000
 -include $(BUILD_SHARED_LIBRARY)
 diff --git a/opengl/tests/gl_perfapp/AndroidManifest.xml b/opengl/tests/gl_perfapp/AndroidManifest.xml
 deleted file mode 100644
-index ee4bd9800..000000000
+index ee4bd9800e..0000000000
 --- a/opengl/tests/gl_perfapp/AndroidManifest.xml
 +++ /dev/null
 @@ -1,34 +0,0 @@
@@ -9816,7 +9816,7 @@ index ee4bd9800..000000000
 -</manifest>
 diff --git a/opengl/tests/gl_perfapp/jni/gl_code.cpp b/opengl/tests/gl_perfapp/jni/gl_code.cpp
 deleted file mode 100644
-index bd1fd8318..000000000
+index bd1fd83184..0000000000
 --- a/opengl/tests/gl_perfapp/jni/gl_code.cpp
 +++ /dev/null
 @@ -1,106 +0,0 @@
@@ -9928,7 +9928,7 @@ index bd1fd8318..000000000
 -}
 diff --git a/opengl/tests/gl_perfapp/res/values/strings.xml b/opengl/tests/gl_perfapp/res/values/strings.xml
 deleted file mode 100644
-index 52cd96184..000000000
+index 52cd961841..0000000000
 --- a/opengl/tests/gl_perfapp/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -9959,7 +9959,7 @@ index 52cd96184..000000000
 -
 diff --git a/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfActivity.java b/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfActivity.java
 deleted file mode 100644
-index e3f3abf02..000000000
+index e3f3abf029..0000000000
 --- a/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfActivity.java
 +++ /dev/null
 @@ -1,47 +0,0 @@
@@ -10012,7 +10012,7 @@ index e3f3abf02..000000000
 -}
 diff --git a/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfLib.java b/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfLib.java
 deleted file mode 100644
-index 89a0e54d4..000000000
+index 89a0e54d4c..0000000000
 --- a/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfLib.java
 +++ /dev/null
 @@ -1,33 +0,0 @@
@@ -10051,7 +10051,7 @@ index 89a0e54d4..000000000
 -}
 diff --git a/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfView.java b/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfView.java
 deleted file mode 100644
-index 4ce4a4d3e..000000000
+index 4ce4a4d3ed..0000000000
 --- a/opengl/tests/gl_perfapp/src/com/android/glperf/GLPerfView.java
 +++ /dev/null
 @@ -1,296 +0,0 @@
@@ -10353,7 +10353,7 @@ index 4ce4a4d3e..000000000
 -
 diff --git a/opengl/tests/gl_yuvtex/Android.bp b/opengl/tests/gl_yuvtex/Android.bp
 deleted file mode 100644
-index 9b4924ab8..000000000
+index 9b4924ab82..0000000000
 --- a/opengl/tests/gl_yuvtex/Android.bp
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -10384,7 +10384,7 @@ index 9b4924ab8..000000000
 -}
 diff --git a/opengl/tests/gl_yuvtex/gl_yuvtex.cpp b/opengl/tests/gl_yuvtex/gl_yuvtex.cpp
 deleted file mode 100644
-index 2c9640bfe..000000000
+index 2c9640bfef..0000000000
 --- a/opengl/tests/gl_yuvtex/gl_yuvtex.cpp
 +++ /dev/null
 @@ -1,333 +0,0 @@
@@ -10723,7 +10723,7 @@ index 2c9640bfe..000000000
 -}
 diff --git a/opengl/tests/gldual/Android.mk b/opengl/tests/gldual/Android.mk
 deleted file mode 100644
-index 5bdc0a8f3..000000000
+index 5bdc0a8f3f..0000000000
 --- a/opengl/tests/gldual/Android.mk
 +++ /dev/null
 @@ -1,49 +0,0 @@
@@ -10778,7 +10778,7 @@ index 5bdc0a8f3..000000000
 -include $(BUILD_SHARED_LIBRARY)
 diff --git a/opengl/tests/gldual/AndroidManifest.xml b/opengl/tests/gldual/AndroidManifest.xml
 deleted file mode 100644
-index a36f4f715..000000000
+index a36f4f715e..0000000000
 --- a/opengl/tests/gldual/AndroidManifest.xml
 +++ /dev/null
 @@ -1,31 +0,0 @@
@@ -10815,7 +10815,7 @@ index a36f4f715..000000000
 -</manifest>
 diff --git a/opengl/tests/gldual/jni/gl_code.cpp b/opengl/tests/gldual/jni/gl_code.cpp
 deleted file mode 100644
-index 4e44976c9..000000000
+index 4e44976c92..0000000000
 --- a/opengl/tests/gldual/jni/gl_code.cpp
 +++ /dev/null
 @@ -1,170 +0,0 @@
@@ -10991,7 +10991,7 @@ index 4e44976c9..000000000
 -
 diff --git a/opengl/tests/gldual/res/layout/gldual_activity.xml b/opengl/tests/gldual/res/layout/gldual_activity.xml
 deleted file mode 100644
-index d75acbcb3..000000000
+index d75acbcb3e..0000000000
 --- a/opengl/tests/gldual/res/layout/gldual_activity.xml
 +++ /dev/null
 @@ -1,30 +0,0 @@
@@ -11027,7 +11027,7 @@ index d75acbcb3..000000000
 -</LinearLayout>
 diff --git a/opengl/tests/gldual/res/values/strings.xml b/opengl/tests/gldual/res/values/strings.xml
 deleted file mode 100644
-index b1f535da8..000000000
+index b1f535da87..0000000000
 --- a/opengl/tests/gldual/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -11058,7 +11058,7 @@ index b1f535da8..000000000
 -
 diff --git a/opengl/tests/gldual/src/com/android/gldual/GLDualActivity.java b/opengl/tests/gldual/src/com/android/gldual/GLDualActivity.java
 deleted file mode 100644
-index 9d88f6488..000000000
+index 9d88f64882..0000000000
 --- a/opengl/tests/gldual/src/com/android/gldual/GLDualActivity.java
 +++ /dev/null
 @@ -1,53 +0,0 @@
@@ -11117,7 +11117,7 @@ index 9d88f6488..000000000
 -}
 diff --git a/opengl/tests/gldual/src/com/android/gldual/GLDualGL2View.java b/opengl/tests/gldual/src/com/android/gldual/GLDualGL2View.java
 deleted file mode 100644
-index 8f5e347ea..000000000
+index 8f5e347ea8..0000000000
 --- a/opengl/tests/gldual/src/com/android/gldual/GLDualGL2View.java
 +++ /dev/null
 @@ -1,299 +0,0 @@
@@ -11422,7 +11422,7 @@ index 8f5e347ea..000000000
 -
 diff --git a/opengl/tests/gldual/src/com/android/gldual/GLDualLib.java b/opengl/tests/gldual/src/com/android/gldual/GLDualLib.java
 deleted file mode 100644
-index d8f765e49..000000000
+index d8f765e495..0000000000
 --- a/opengl/tests/gldual/src/com/android/gldual/GLDualLib.java
 +++ /dev/null
 @@ -1,33 +0,0 @@
@@ -11461,7 +11461,7 @@ index d8f765e49..000000000
 -}
 diff --git a/opengl/tests/gldual/src/com/android/gldual/TriangleRenderer.java b/opengl/tests/gldual/src/com/android/gldual/TriangleRenderer.java
 deleted file mode 100644
-index a082d4746..000000000
+index a082d47462..0000000000
 --- a/opengl/tests/gldual/src/com/android/gldual/TriangleRenderer.java
 +++ /dev/null
 @@ -1,165 +0,0 @@
@@ -11632,7 +11632,7 @@ index a082d4746..000000000
 -}
 diff --git a/opengl/tests/gralloc/Android.bp b/opengl/tests/gralloc/Android.bp
 deleted file mode 100644
-index 33c3dbaa1..000000000
+index 33c3dbaa17..0000000000
 --- a/opengl/tests/gralloc/Android.bp
 +++ /dev/null
 @@ -1,18 +0,0 @@
@@ -11656,7 +11656,7 @@ index 33c3dbaa1..000000000
 -}
 diff --git a/opengl/tests/gralloc/gralloc.cpp b/opengl/tests/gralloc/gralloc.cpp
 deleted file mode 100644
-index 29e0882cd..000000000
+index 29e0882cd0..0000000000
 --- a/opengl/tests/gralloc/gralloc.cpp
 +++ /dev/null
 @@ -1,110 +0,0 @@
@@ -11772,7 +11772,7 @@ index 29e0882cd..000000000
 -}
 diff --git a/opengl/tests/hwc/Android.bp b/opengl/tests/hwc/Android.bp
 deleted file mode 100644
-index 55f058f92..000000000
+index 55f058f922..0000000000
 --- a/opengl/tests/hwc/Android.bp
 +++ /dev/null
 @@ -1,109 +0,0 @@
@@ -11887,7 +11887,7 @@ index 55f058f92..000000000
 -}
 diff --git a/opengl/tests/hwc/hwcColorEquiv.cpp b/opengl/tests/hwc/hwcColorEquiv.cpp
 deleted file mode 100644
-index a9bbcb6f5..000000000
+index a9bbcb6f5f..0000000000
 --- a/opengl/tests/hwc/hwcColorEquiv.cpp
 +++ /dev/null
 @@ -1,436 +0,0 @@
@@ -12329,7 +12329,7 @@ index a9bbcb6f5..000000000
 -}
 diff --git a/opengl/tests/hwc/hwcCommit.cpp b/opengl/tests/hwc/hwcCommit.cpp
 deleted file mode 100644
-index 3686dab65..000000000
+index 3686dab654..0000000000
 --- a/opengl/tests/hwc/hwcCommit.cpp
 +++ /dev/null
 @@ -1,1558 +0,0 @@
@@ -13893,7 +13893,7 @@ index 3686dab65..000000000
 -}
 diff --git a/opengl/tests/hwc/hwcRects.cpp b/opengl/tests/hwc/hwcRects.cpp
 deleted file mode 100644
-index 595636680..000000000
+index 5956366809..0000000000
 --- a/opengl/tests/hwc/hwcRects.cpp
 +++ /dev/null
 @@ -1,575 +0,0 @@
@@ -14474,7 +14474,7 @@ index 595636680..000000000
 -}
 diff --git a/opengl/tests/hwc/hwcStress.cpp b/opengl/tests/hwc/hwcStress.cpp
 deleted file mode 100644
-index 1469f7c76..000000000
+index 1469f7c76d..0000000000
 --- a/opengl/tests/hwc/hwcStress.cpp
 +++ /dev/null
 @@ -1,646 +0,0 @@
@@ -15126,7 +15126,7 @@ index 1469f7c76..000000000
 -}
 diff --git a/opengl/tests/hwc/hwcTestLib.cpp b/opengl/tests/hwc/hwcTestLib.cpp
 deleted file mode 100644
-index 3b0ca744b..000000000
+index 3b0ca744bd..0000000000
 --- a/opengl/tests/hwc/hwcTestLib.cpp
 +++ /dev/null
 @@ -1,1015 +0,0 @@
@@ -16147,7 +16147,7 @@ index 3b0ca744b..000000000
 -}
 diff --git a/opengl/tests/hwc/hwcTestLib.h b/opengl/tests/hwc/hwcTestLib.h
 deleted file mode 100644
-index 922fc1990..000000000
+index 922fc1990b..0000000000
 --- a/opengl/tests/hwc/hwcTestLib.h
 +++ /dev/null
 @@ -1,131 +0,0 @@
@@ -16284,7 +16284,7 @@ index 922fc1990..000000000
 -HwcTestDim hwcTestParseDim(std::istringstream& in, bool& error);
 diff --git a/opengl/tests/lib/Android.bp b/opengl/tests/lib/Android.bp
 deleted file mode 100644
-index 2f6095d8e..000000000
+index 2f6095d8e7..0000000000
 --- a/opengl/tests/lib/Android.bp
 +++ /dev/null
 @@ -1,38 +0,0 @@
@@ -16328,7 +16328,7 @@ index 2f6095d8e..000000000
 -}
 diff --git a/opengl/tests/lib/WindowSurface.cpp b/opengl/tests/lib/WindowSurface.cpp
 deleted file mode 100644
-index 142894524..000000000
+index 142894524d..0000000000
 --- a/opengl/tests/lib/WindowSurface.cpp
 +++ /dev/null
 @@ -1,86 +0,0 @@
@@ -16420,7 +16420,7 @@ index 142894524..000000000
 -
 diff --git a/opengl/tests/lib/glTestLib.cpp b/opengl/tests/lib/glTestLib.cpp
 deleted file mode 100644
-index 213dffd50..000000000
+index 213dffd50f..0000000000
 --- a/opengl/tests/lib/glTestLib.cpp
 +++ /dev/null
 @@ -1,118 +0,0 @@
@@ -16544,7 +16544,7 @@ index 213dffd50..000000000
 -}
 diff --git a/opengl/tests/lib/include/EGLUtils.h b/opengl/tests/lib/include/EGLUtils.h
 deleted file mode 100644
-index 9dc6bcf56..000000000
+index 9dc6bcf56a..0000000000
 --- a/opengl/tests/lib/include/EGLUtils.h
 +++ /dev/null
 @@ -1,310 +0,0 @@
@@ -16860,7 +16860,7 @@ index 9dc6bcf56..000000000
 -#endif /* ANDROID_UI_EGLUTILS_H */
 diff --git a/opengl/tests/lib/include/WindowSurface.h b/opengl/tests/lib/include/WindowSurface.h
 deleted file mode 100644
-index 0ec140455..000000000
+index 0ec1404556..0000000000
 --- a/opengl/tests/lib/include/WindowSurface.h
 +++ /dev/null
 @@ -1,49 +0,0 @@
@@ -16915,7 +16915,7 @@ index 0ec140455..000000000
 -#endif /* OPENGL_TESTS_WINDOWSURFACE_H */
 diff --git a/opengl/tests/lib/include/glTestLib.h b/opengl/tests/lib/include/glTestLib.h
 deleted file mode 100644
-index c91c59488..000000000
+index c91c594882..0000000000
 --- a/opengl/tests/lib/include/glTestLib.h
 +++ /dev/null
 @@ -1,32 +0,0 @@
@@ -16953,7 +16953,7 @@ index c91c59488..000000000
 -void glTestPrintEGLConfiguration(EGLDisplay dpy, EGLConfig config);
 diff --git a/opengl/tests/lighting1709/Android.mk b/opengl/tests/lighting1709/Android.mk
 deleted file mode 100644
-index 004723176..000000000
+index 004723176e..0000000000
 --- a/opengl/tests/lighting1709/Android.mk
 +++ /dev/null
 @@ -1,12 +0,0 @@
@@ -16971,7 +16971,7 @@ index 004723176..000000000
 -include $(BUILD_PACKAGE)
 diff --git a/opengl/tests/lighting1709/AndroidManifest.xml b/opengl/tests/lighting1709/AndroidManifest.xml
 deleted file mode 100644
-index 6c23d422f..000000000
+index 6c23d422f5..0000000000
 --- a/opengl/tests/lighting1709/AndroidManifest.xml
 +++ /dev/null
 @@ -1,13 +0,0 @@
@@ -16990,7 +16990,7 @@ index 6c23d422f..000000000
 -</manifest>
 diff --git a/opengl/tests/lighting1709/src/com/android/lightingtest/ClearActivity.java b/opengl/tests/lighting1709/src/com/android/lightingtest/ClearActivity.java
 deleted file mode 100644
-index 3ae8c5ca2..000000000
+index 3ae8c5ca29..0000000000
 --- a/opengl/tests/lighting1709/src/com/android/lightingtest/ClearActivity.java
 +++ /dev/null
 @@ -1,174 +0,0 @@
@@ -17170,7 +17170,7 @@ index 3ae8c5ca2..000000000
 -
 diff --git a/opengl/tests/linetex/Android.mk b/opengl/tests/linetex/Android.mk
 deleted file mode 100644
-index 3df0a0fef..000000000
+index 3df0a0fef7..0000000000
 --- a/opengl/tests/linetex/Android.mk
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -17201,7 +17201,7 @@ index 3df0a0fef..000000000
 -include $(BUILD_EXECUTABLE)
 diff --git a/opengl/tests/linetex/linetex.cpp b/opengl/tests/linetex/linetex.cpp
 deleted file mode 100644
-index cdc051bc5..000000000
+index cdc051bc5a..0000000000
 --- a/opengl/tests/linetex/linetex.cpp
 +++ /dev/null
 @@ -1,117 +0,0 @@
@@ -17324,7 +17324,7 @@ index cdc051bc5..000000000
 -}
 diff --git a/opengl/tests/swapinterval/Android.mk b/opengl/tests/swapinterval/Android.mk
 deleted file mode 100644
-index 2a2c12f17..000000000
+index 2a2c12f17a..0000000000
 --- a/opengl/tests/swapinterval/Android.mk
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -17355,7 +17355,7 @@ index 2a2c12f17..000000000
 -include $(BUILD_EXECUTABLE)
 diff --git a/opengl/tests/swapinterval/swapinterval.cpp b/opengl/tests/swapinterval/swapinterval.cpp
 deleted file mode 100644
-index c4261e68f..000000000
+index c4261e68f6..0000000000
 --- a/opengl/tests/swapinterval/swapinterval.cpp
 +++ /dev/null
 @@ -1,126 +0,0 @@
@@ -17487,7 +17487,7 @@ index c4261e68f..000000000
 -}
 diff --git a/opengl/tests/testFramerate/Android.mk b/opengl/tests/testFramerate/Android.mk
 deleted file mode 100644
-index 2864fcf2c..000000000
+index 2864fcf2c4..0000000000
 --- a/opengl/tests/testFramerate/Android.mk
 +++ /dev/null
 @@ -1,20 +0,0 @@
@@ -17513,7 +17513,7 @@ index 2864fcf2c..000000000
 -include $(BUILD_PACKAGE)
 diff --git a/opengl/tests/testFramerate/AndroidManifest.xml b/opengl/tests/testFramerate/AndroidManifest.xml
 deleted file mode 100644
-index 85617f479..000000000
+index 85617f4797..0000000000
 --- a/opengl/tests/testFramerate/AndroidManifest.xml
 +++ /dev/null
 @@ -1,33 +0,0 @@
@@ -17552,7 +17552,7 @@ index 85617f479..000000000
 -</manifest>
 diff --git a/opengl/tests/testFramerate/res/values/strings.xml b/opengl/tests/testFramerate/res/values/strings.xml
 deleted file mode 100644
-index baadf0ed6..000000000
+index baadf0ed6c..0000000000
 --- a/opengl/tests/testFramerate/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -17583,7 +17583,7 @@ index baadf0ed6..000000000
 -
 diff --git a/opengl/tests/testFramerate/src/com/android/testframerate/TestFramerateActivity.java b/opengl/tests/testFramerate/src/com/android/testframerate/TestFramerateActivity.java
 deleted file mode 100644
-index cbe279b07..000000000
+index cbe279b079..0000000000
 --- a/opengl/tests/testFramerate/src/com/android/testframerate/TestFramerateActivity.java
 +++ /dev/null
 @@ -1,47 +0,0 @@
@@ -17636,7 +17636,7 @@ index cbe279b07..000000000
 -}
 diff --git a/opengl/tests/testFramerate/src/com/android/testframerate/TestFramerateView.java b/opengl/tests/testFramerate/src/com/android/testframerate/TestFramerateView.java
 deleted file mode 100644
-index f3fb5de41..000000000
+index f3fb5de414..0000000000
 --- a/opengl/tests/testFramerate/src/com/android/testframerate/TestFramerateView.java
 +++ /dev/null
 @@ -1,91 +0,0 @@
@@ -17733,7 +17733,7 @@ index f3fb5de41..000000000
 -}
 diff --git a/opengl/tests/testLatency/Android.mk b/opengl/tests/testLatency/Android.mk
 deleted file mode 100644
-index 96417c7ef..000000000
+index 96417c7ef5..0000000000
 --- a/opengl/tests/testLatency/Android.mk
 +++ /dev/null
 @@ -1,20 +0,0 @@
@@ -17759,7 +17759,7 @@ index 96417c7ef..000000000
 -include $(BUILD_PACKAGE)
 diff --git a/opengl/tests/testLatency/AndroidManifest.xml b/opengl/tests/testLatency/AndroidManifest.xml
 deleted file mode 100644
-index 59f2643a3..000000000
+index 59f2643a39..0000000000
 --- a/opengl/tests/testLatency/AndroidManifest.xml
 +++ /dev/null
 @@ -1,33 +0,0 @@
@@ -17798,7 +17798,7 @@ index 59f2643a3..000000000
 -</manifest>
 diff --git a/opengl/tests/testLatency/res/values/strings.xml b/opengl/tests/testLatency/res/values/strings.xml
 deleted file mode 100644
-index d80b77cfa..000000000
+index d80b77cfad..0000000000
 --- a/opengl/tests/testLatency/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -17829,7 +17829,7 @@ index d80b77cfa..000000000
 -
 diff --git a/opengl/tests/testLatency/src/com/android/testlatency/TestLatencyActivity.java b/opengl/tests/testLatency/src/com/android/testlatency/TestLatencyActivity.java
 deleted file mode 100644
-index ed993cb34..000000000
+index ed993cb34c..0000000000
 --- a/opengl/tests/testLatency/src/com/android/testlatency/TestLatencyActivity.java
 +++ /dev/null
 @@ -1,47 +0,0 @@
@@ -17882,7 +17882,7 @@ index ed993cb34..000000000
 -}
 diff --git a/opengl/tests/testLatency/src/com/android/testlatency/TestLatencyView.java b/opengl/tests/testLatency/src/com/android/testlatency/TestLatencyView.java
 deleted file mode 100644
-index d62bf1748..000000000
+index d62bf17487..0000000000
 --- a/opengl/tests/testLatency/src/com/android/testlatency/TestLatencyView.java
 +++ /dev/null
 @@ -1,267 +0,0 @@
@@ -18155,7 +18155,7 @@ index d62bf1748..000000000
 -
 diff --git a/opengl/tests/testPauseResume/Android.mk b/opengl/tests/testPauseResume/Android.mk
 deleted file mode 100644
-index dda542436..000000000
+index dda5424360..0000000000
 --- a/opengl/tests/testPauseResume/Android.mk
 +++ /dev/null
 @@ -1,19 +0,0 @@
@@ -18180,7 +18180,7 @@ index dda542436..000000000
 -include $(BUILD_PACKAGE)
 diff --git a/opengl/tests/testPauseResume/AndroidManifest.xml b/opengl/tests/testPauseResume/AndroidManifest.xml
 deleted file mode 100644
-index 1879bc321..000000000
+index 1879bc3217..0000000000
 --- a/opengl/tests/testPauseResume/AndroidManifest.xml
 +++ /dev/null
 @@ -1,34 +0,0 @@
@@ -18220,7 +18220,7 @@ index 1879bc321..000000000
 -</manifest>
 diff --git a/opengl/tests/testPauseResume/README b/opengl/tests/testPauseResume/README
 deleted file mode 100644
-index 87db74a5d..000000000
+index 87db74a5d8..0000000000
 --- a/opengl/tests/testPauseResume/README
 +++ /dev/null
 @@ -1,37 +0,0 @@
@@ -18263,7 +18263,7 @@ index 87db74a5d..000000000
 -See http://b/issue?id=2550745 for further details.
 diff --git a/opengl/tests/testPauseResume/res/values/strings.xml b/opengl/tests/testPauseResume/res/values/strings.xml
 deleted file mode 100644
-index b4c98fe2a..000000000
+index b4c98fe2aa..0000000000
 --- a/opengl/tests/testPauseResume/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -18294,7 +18294,7 @@ index b4c98fe2a..000000000
 -
 diff --git a/opengl/tests/testPauseResume/src/com/android/test/TestActivity.java b/opengl/tests/testPauseResume/src/com/android/test/TestActivity.java
 deleted file mode 100644
-index 9dc713216..000000000
+index 9dc713216d..0000000000
 --- a/opengl/tests/testPauseResume/src/com/android/test/TestActivity.java
 +++ /dev/null
 @@ -1,64 +0,0 @@
@@ -18364,7 +18364,7 @@ index 9dc713216..000000000
 -}
 diff --git a/opengl/tests/testPauseResume/src/com/android/test/TestView.java b/opengl/tests/testPauseResume/src/com/android/test/TestView.java
 deleted file mode 100644
-index 8c28f13ed..000000000
+index 8c28f13edb..0000000000
 --- a/opengl/tests/testPauseResume/src/com/android/test/TestView.java
 +++ /dev/null
 @@ -1,84 +0,0 @@
@@ -18454,7 +18454,7 @@ index 8c28f13ed..000000000
 -
 diff --git a/opengl/tests/testViewport/Android.mk b/opengl/tests/testViewport/Android.mk
 deleted file mode 100644
-index 9980e7dbc..000000000
+index 9980e7dbc7..0000000000
 --- a/opengl/tests/testViewport/Android.mk
 +++ /dev/null
 @@ -1,22 +0,0 @@
@@ -18482,7 +18482,7 @@ index 9980e7dbc..000000000
 -include $(BUILD_PACKAGE)
 diff --git a/opengl/tests/testViewport/AndroidManifest.xml b/opengl/tests/testViewport/AndroidManifest.xml
 deleted file mode 100644
-index ba178bb18..000000000
+index ba178bb182..0000000000
 --- a/opengl/tests/testViewport/AndroidManifest.xml
 +++ /dev/null
 @@ -1,33 +0,0 @@
@@ -18521,7 +18521,7 @@ index ba178bb18..000000000
 -</manifest>
 diff --git a/opengl/tests/testViewport/README b/opengl/tests/testViewport/README
 deleted file mode 100644
-index c06abc940..000000000
+index c06abc9405..0000000000
 --- a/opengl/tests/testViewport/README
 +++ /dev/null
 @@ -1,28 +0,0 @@
@@ -18555,7 +18555,7 @@ index c06abc940..000000000
 -call (which means it is called before every draw), the program runs correctly.
 diff --git a/opengl/tests/testViewport/res/values/strings.xml b/opengl/tests/testViewport/res/values/strings.xml
 deleted file mode 100644
-index c037a7cbb..000000000
+index c037a7cbbe..0000000000
 --- a/opengl/tests/testViewport/res/values/strings.xml
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -18586,7 +18586,7 @@ index c037a7cbb..000000000
 -
 diff --git a/opengl/tests/testViewport/src/com/android/test/TestActivity.java b/opengl/tests/testViewport/src/com/android/test/TestActivity.java
 deleted file mode 100644
-index cc7e4500d..000000000
+index cc7e4500d6..0000000000
 --- a/opengl/tests/testViewport/src/com/android/test/TestActivity.java
 +++ /dev/null
 @@ -1,46 +0,0 @@
@@ -18638,7 +18638,7 @@ index cc7e4500d..000000000
 -}
 diff --git a/opengl/tests/testViewport/src/com/android/test/TestView.java b/opengl/tests/testViewport/src/com/android/test/TestView.java
 deleted file mode 100644
-index 23cc37d1f..000000000
+index 23cc37d1f1..0000000000
 --- a/opengl/tests/testViewport/src/com/android/test/TestView.java
 +++ /dev/null
 @@ -1,262 +0,0 @@
@@ -18906,7 +18906,7 @@ index 23cc37d1f..000000000
 -
 diff --git a/opengl/tests/textures/Android.mk b/opengl/tests/textures/Android.mk
 deleted file mode 100644
-index 629a2d2a7..000000000
+index 629a2d2a78..0000000000
 --- a/opengl/tests/textures/Android.mk
 +++ /dev/null
 @@ -1,26 +0,0 @@
@@ -18938,7 +18938,7 @@ index 629a2d2a7..000000000
 -include $(BUILD_EXECUTABLE)
 diff --git a/opengl/tests/textures/textures.cpp b/opengl/tests/textures/textures.cpp
 deleted file mode 100644
-index bdb5c8283..000000000
+index bdb5c8283a..0000000000
 --- a/opengl/tests/textures/textures.cpp
 +++ /dev/null
 @@ -1,115 +0,0 @@
@@ -19059,7 +19059,7 @@ index bdb5c8283..000000000
 -}
 diff --git a/opengl/tests/tritex/Android.mk b/opengl/tests/tritex/Android.mk
 deleted file mode 100644
-index 7055afab5..000000000
+index 7055afab55..0000000000
 --- a/opengl/tests/tritex/Android.mk
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -19090,7 +19090,7 @@ index 7055afab5..000000000
 -include $(BUILD_EXECUTABLE)
 diff --git a/opengl/tests/tritex/tritex.cpp b/opengl/tests/tritex/tritex.cpp
 deleted file mode 100644
-index c00800363..000000000
+index c008003636..0000000000
 --- a/opengl/tests/tritex/tritex.cpp
 +++ /dev/null
 @@ -1,274 +0,0 @@
@@ -19369,7 +19369,7 @@ index c00800363..000000000
 -}
 -
 diff --git a/opengl/tools/glgen/stubs/egl/EGL14cHeader.cpp b/opengl/tools/glgen/stubs/egl/EGL14cHeader.cpp
-index f90e3ec59..f6813fdc0 100644
+index f90e3ec590..f6813fdc03 100644
 --- a/opengl/tools/glgen/stubs/egl/EGL14cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/egl/EGL14cHeader.cpp
 @@ -17,10 +17,11 @@
@@ -19386,7 +19386,7 @@ index f90e3ec59..f6813fdc0 100644
  #include <android_runtime/android_view_Surface.h>
  #include <android_runtime/android_graphics_SurfaceTexture.h>
 diff --git a/opengl/tools/glgen/stubs/egl/EGLExtcHeader.cpp b/opengl/tools/glgen/stubs/egl/EGLExtcHeader.cpp
-index 12b96f40d..4df61d312 100644
+index 12b96f40d7..4df61d3126 100644
 --- a/opengl/tools/glgen/stubs/egl/EGLExtcHeader.cpp
 +++ b/opengl/tools/glgen/stubs/egl/EGLExtcHeader.cpp
 @@ -17,10 +17,11 @@
@@ -19403,7 +19403,7 @@ index 12b96f40d..4df61d312 100644
  #include <android_runtime/android_view_Surface.h>
  #include <android_runtime/android_graphics_SurfaceTexture.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES10ExtcHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES10ExtcHeader.cpp
-index dd17ca458..1fa92758a 100644
+index dd17ca458a..1fa92758ad 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES10ExtcHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES10ExtcHeader.cpp
 @@ -18,6 +18,7 @@
@@ -19415,7 +19415,7 @@ index dd17ca458..1fa92758a 100644
  
  #include <GLES/gl.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES10cHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES10cHeader.cpp
-index dd17ca458..1fa92758a 100644
+index dd17ca458a..1fa92758ad 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES10cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES10cHeader.cpp
 @@ -18,6 +18,7 @@
@@ -19427,7 +19427,7 @@ index dd17ca458..1fa92758a 100644
  
  #include <GLES/gl.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES11ExtcHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES11ExtcHeader.cpp
-index dd17ca458..1fa92758a 100644
+index dd17ca458a..1fa92758ad 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES11ExtcHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES11ExtcHeader.cpp
 @@ -18,6 +18,7 @@
@@ -19439,7 +19439,7 @@ index dd17ca458..1fa92758a 100644
  
  #include <GLES/gl.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES11cHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES11cHeader.cpp
-index dd17ca458..1fa92758a 100644
+index dd17ca458a..1fa92758ad 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES11cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES11cHeader.cpp
 @@ -18,6 +18,7 @@
@@ -19451,7 +19451,7 @@ index dd17ca458..1fa92758a 100644
  
  #include <GLES/gl.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES20cHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES20cHeader.cpp
-index b2bbdf6fe..4004a7dfc 100644
+index b2bbdf6fe9..4004a7dfcf 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES20cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES20cHeader.cpp
 @@ -18,6 +18,7 @@
@@ -19463,7 +19463,7 @@ index b2bbdf6fe..4004a7dfc 100644
  
  #include <GLES2/gl2.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES30cHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES30cHeader.cpp
-index b039bc9a8..c5bdf323f 100644
+index b039bc9a83..c5bdf323fc 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES30cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES30cHeader.cpp
 @@ -18,6 +18,7 @@
@@ -19475,7 +19475,7 @@ index b039bc9a8..c5bdf323f 100644
  
  #include <GLES3/gl3.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES31ExtcHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES31ExtcHeader.cpp
-index dd00e9205..2260a80bb 100644
+index dd00e9205c..2260a80bb4 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES31ExtcHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES31ExtcHeader.cpp
 @@ -17,6 +17,7 @@
@@ -19487,7 +19487,7 @@ index dd00e9205..2260a80bb 100644
  
  #include <GLES3/gl31.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES31cHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES31cHeader.cpp
-index 88e00bef6..130612d7c 100644
+index 88e00bef6e..130612d7cc 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES31cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES31cHeader.cpp
 @@ -17,6 +17,7 @@
@@ -19499,7 +19499,7 @@ index 88e00bef6..130612d7c 100644
  
  #include <stdint.h>
 diff --git a/opengl/tools/glgen/stubs/gles11/GLES32cHeader.cpp b/opengl/tools/glgen/stubs/gles11/GLES32cHeader.cpp
-index 3e7ec8b2d..e9c5fc769 100644
+index 3e7ec8b2de..e9c5fc7696 100644
 --- a/opengl/tools/glgen/stubs/gles11/GLES32cHeader.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/GLES32cHeader.cpp
 @@ -17,7 +17,8 @@
@@ -19514,7 +19514,7 @@ index 3e7ec8b2d..e9c5fc769 100644
 +#include <GLES3/gl32.h>
 \ No newline at end of file
 diff --git a/opengl/tools/glgen/stubs/gles11/common.cpp b/opengl/tools/glgen/stubs/gles11/common.cpp
-index 2163d7600..7062c5751 100644
+index 2163d7600d..7062c5751f 100644
 --- a/opengl/tools/glgen/stubs/gles11/common.cpp
 +++ b/opengl/tools/glgen/stubs/gles11/common.cpp
 @@ -1,5 +1,5 @@
@@ -19525,7 +19525,7 @@ index 2163d7600..7062c5751 100644
  #include <utils/misc.h>
  #include <assert.h>
 diff --git a/opengl/tools/glgen/stubs/jsr239/GLCHeader.cpp b/opengl/tools/glgen/stubs/jsr239/GLCHeader.cpp
-index 29296ff6a..026cb371a 100644
+index 29296ff6a9..026cb371aa 100644
 --- a/opengl/tools/glgen/stubs/jsr239/GLCHeader.cpp
 +++ b/opengl/tools/glgen/stubs/jsr239/GLCHeader.cpp
 @@ -17,10 +17,11 @@

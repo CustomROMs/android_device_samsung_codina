@@ -1,0 +1,248 @@
+From 05d6f97c80eb68e069bf10c11e42ce9399d1ecc4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 15:02:25 +0300
+Subject: [PATCH 25/45] surfaceflinger: reset to lineage-15.1 [2]
+
+Change-Id: I730a5c03efd8da1f052bff5c022bcb04f4945990
+---
+ .../DisplayHardware/ComposerHal.cpp              | 10 +++++++---
+ .../surfaceflinger/DisplayHardware/ComposerHal.h |  2 +-
+ .../DisplayHardware/FramebufferSurface.cpp       |  7 +------
+ .../DisplayHardware/FramebufferSurface.h         |  7 -------
+ services/surfaceflinger/DisplayHardware/HWC2.cpp |  4 ++--
+ services/surfaceflinger/DisplayHardware/HWC2.h   |  7 ++++---
+ .../DisplayHardware/HWComposer.cpp               | 16 +++++-----------
+ .../surfaceflinger/DisplayHardware/HWComposer.h  |  7 ++++---
+ .../surfaceflinger/RenderEngine/Description.cpp  |  1 -
+ .../RenderEngine/GLES20RenderEngine.cpp          |  8 ++++----
+ .../surfaceflinger/RenderEngine/RenderEngine.h   |  2 +-
+ 11 files changed, 29 insertions(+), 42 deletions(-)
+
+diff --git a/services/surfaceflinger/DisplayHardware/ComposerHal.cpp b/services/surfaceflinger/DisplayHardware/ComposerHal.cpp
+index 7d6d9886f6..cf01ad0d62 100644
+--- a/services/surfaceflinger/DisplayHardware/ComposerHal.cpp
++++ b/services/surfaceflinger/DisplayHardware/ComposerHal.cpp
+@@ -157,11 +157,15 @@ void Composer::CommandWriter::writeBufferMetadata(
+     write64(metadata.usage);
+ }
+ 
+-Composer::Composer(const std::string& serviceName)
++Composer::Composer(bool useVrComposer)
+     : mWriter(kWriterInitialSize),
+-      mIsUsingVrComposer(serviceName == std::string("vr"))
++      mIsUsingVrComposer(useVrComposer)
+ {
+-    mComposer = IComposer::getService(serviceName);
++    if (mIsUsingVrComposer) {
++        mComposer = IComposer::getService("vr");
++    } else {
++        mComposer = IComposer::getService(); // use default name
++    }
+ 
+     if (mComposer == nullptr) {
+         LOG_ALWAYS_FATAL("failed to get hwcomposer service");
+diff --git a/services/surfaceflinger/DisplayHardware/ComposerHal.h b/services/surfaceflinger/DisplayHardware/ComposerHal.h
+index 31a3c1d785..533509be35 100644
+--- a/services/surfaceflinger/DisplayHardware/ComposerHal.h
++++ b/services/surfaceflinger/DisplayHardware/ComposerHal.h
+@@ -136,7 +136,7 @@ private:
+ // Composer is a wrapper to IComposer, a proxy to server-side composer.
+ class Composer {
+ public:
+-    Composer(const std::string& serviceName);
++    Composer(bool useVrComposer);
+ 
+     std::vector<IComposer::Capability> getCapabilities();
+     std::string dumpDebugInfo();
+diff --git a/services/surfaceflinger/DisplayHardware/FramebufferSurface.cpp b/services/surfaceflinger/DisplayHardware/FramebufferSurface.cpp
+index 93c6d5486f..1ac21c6210 100644
+--- a/services/surfaceflinger/DisplayHardware/FramebufferSurface.cpp
++++ b/services/surfaceflinger/DisplayHardware/FramebufferSurface.cpp
+@@ -34,7 +34,6 @@
+ #include <gui/BufferQueue.h>
+ #include <gui/Surface.h>
+ 
+-#include <ui/DebugUtils.h>
+ #include <ui/GraphicBuffer.h>
+ #include <ui/Rect.h>
+ 
+@@ -104,7 +103,6 @@ status_t FramebufferSurface::advanceFrame() {
+     sp<Fence> acquireFence(Fence::NO_FENCE);
+     android_dataspace_t dataspace = HAL_DATASPACE_UNKNOWN;
+     status_t result = nextBuffer(slot, buf, acquireFence, dataspace);
+-    mDataSpace = dataspace;
+     if (result != NO_ERROR) {
+         ALOGE("error latching next FramebufferSurface buffer: %s (%d)",
+                 strerror(-result), result);
+@@ -251,10 +249,7 @@ status_t FramebufferSurface::compositionComplete()
+ #endif
+ 
+ void FramebufferSurface::dumpAsString(String8& result) const {
+-    Mutex::Autolock lock(mMutex);
+-    result.appendFormat("FramebufferSurface: dataspace: %s(%d)\n",
+-                        dataspaceDetails(mDataSpace).c_str(), mDataSpace);
+-    ConsumerBase::dumpLocked(result, "");
++    ConsumerBase::dumpState(result);
+ }
+ 
+ void FramebufferSurface::dumpLocked(String8& result, const char* prefix) const
+diff --git a/services/surfaceflinger/DisplayHardware/FramebufferSurface.h b/services/surfaceflinger/DisplayHardware/FramebufferSurface.h
+index a1756ca3c2..69a72d7ede 100644
+--- a/services/surfaceflinger/DisplayHardware/FramebufferSurface.h
++++ b/services/surfaceflinger/DisplayHardware/FramebufferSurface.h
+@@ -83,13 +83,6 @@ private:
+     // or the buffer is not associated with a slot.
+     int mCurrentBufferSlot;
+ 
+-    // mDataSpace is the dataspace of the current composition buffer for
+-    // this FramebufferSurface. It will be 0 when HWC is doing the
+-    // compositing. Otherwise it will display the dataspace of the buffer
+-    // use for compositing which can change as wide-color content is
+-    // on/off.
+-    android_dataspace mDataSpace;
+-
+     // mCurrentBuffer is the current buffer or NULL to indicate that there is
+     // no current buffer.
+     sp<GraphicBuffer> mCurrentBuffer;
+diff --git a/services/surfaceflinger/DisplayHardware/HWC2.cpp b/services/surfaceflinger/DisplayHardware/HWC2.cpp
+index 78c0c8567a..ae44ae0e83 100644
+--- a/services/surfaceflinger/DisplayHardware/HWC2.cpp
++++ b/services/surfaceflinger/DisplayHardware/HWC2.cpp
+@@ -98,8 +98,8 @@ private:
+ 
+ // Device methods
+ 
+-Device::Device(const std::string& serviceName)
+-  : mComposer(std::make_unique<Hwc2::Composer>(serviceName)),
++Device::Device(bool useVrComposer)
++  : mComposer(std::make_unique<Hwc2::Composer>(useVrComposer)),
+     mCapabilities(),
+     mDisplays(),
+     mRegisteredCallback(false)
+diff --git a/services/surfaceflinger/DisplayHardware/HWC2.h b/services/surfaceflinger/DisplayHardware/HWC2.h
+index fbe4c7ebed..949f0e3f82 100644
+--- a/services/surfaceflinger/DisplayHardware/HWC2.h
++++ b/services/surfaceflinger/DisplayHardware/HWC2.h
+@@ -79,9 +79,10 @@ class ComposerCallback {
+ class Device
+ {
+ public:
+-    // Service name is expected to be 'default' or 'vr' for normal use.
+-    // 'vr' will slightly modify the behavior of the mComposer.
+-    Device(const std::string& serviceName);
++    // useVrComposer is passed to the composer HAL. When true, the composer HAL
++    // will use the vr composer service, otherwise it uses the real hardware
++    // composer.
++    Device(bool useVrComposer);
+ 
+     void registerCallback(ComposerCallback* callback, int32_t sequenceId);
+ 
+diff --git a/services/surfaceflinger/DisplayHardware/HWComposer.cpp b/services/surfaceflinger/DisplayHardware/HWComposer.cpp
+index a16c040bc2..3f3c67b1e6 100644
+--- a/services/surfaceflinger/DisplayHardware/HWComposer.cpp
++++ b/services/surfaceflinger/DisplayHardware/HWComposer.cpp
+@@ -59,7 +59,7 @@ namespace android {
+ 
+ // ---------------------------------------------------------------------------
+ 
+-HWComposer::HWComposer(const std::string& serviceName)
++HWComposer::HWComposer(bool useVrComposer)
+     : mHwcDevice(),
+       mDisplayData(2),
+       mFreeDisplaySlots(),
+@@ -73,7 +73,7 @@ HWComposer::HWComposer(const std::string& serviceName)
+         mVSyncCounts[i] = 0;
+     }
+ 
+-    mHwcDevice = std::make_unique<HWC2::Device>(serviceName);
++    mHwcDevice = std::make_unique<HWC2::Device>(useVrComposer);
+     mRemainingHwcVirtualDisplays = mHwcDevice->getMaxVirtualDisplayCount();
+ }
+ 
+@@ -444,16 +444,10 @@ status_t HWComposer::prepare(DisplayDevice& displayDevice) {
+ 
+     HWC2::Error error = HWC2::Error::None;
+ 
+-    // First try to skip validate altogether when there is no client
+-    // composition.  When there is client composition, since we haven't
+-    // rendered to the client target yet, we should not attempt to skip
+-    // validate.
+-    //
+-    // displayData.hasClientComposition hasn't been updated for this frame.
+-    // The check below is incorrect.  We actually rely on HWC here to fall
+-    // back to validate when there is any client layer.
++    // First try to skip validate altogether if the HWC supports it.
+     displayData.validateWasSkipped = false;
+-    if (!displayData.hasClientComposition) {
++    if (hasCapability(HWC2::Capability::SkipValidate) &&
++            !displayData.hasClientComposition) {
+         sp<android::Fence> outPresentFence;
+         uint32_t state = UINT32_MAX;
+         error = hwcDisplay->presentOrValidate(&numTypes, &numRequests, &outPresentFence , &state);
+diff --git a/services/surfaceflinger/DisplayHardware/HWComposer.h b/services/surfaceflinger/DisplayHardware/HWComposer.h
+index 3640bb5a98..e25dee1de3 100644
+--- a/services/surfaceflinger/DisplayHardware/HWComposer.h
++++ b/services/surfaceflinger/DisplayHardware/HWComposer.h
+@@ -65,9 +65,10 @@ class String8;
+ class HWComposer
+ {
+ public:
+-    // Uses the named composer service. Valid choices for normal use
+-    // are 'default' and 'vr'.
+-    HWComposer(const std::string& serviceName);
++    // useVrComposer is passed to the composer HAL. When true, the composer HAL
++    // will use the vr composer service, otherwise it uses the real hardware
++    // composer.
++    HWComposer(bool useVrComposer);
+ 
+     ~HWComposer();
+ 
+diff --git a/services/surfaceflinger/RenderEngine/Description.cpp b/services/surfaceflinger/RenderEngine/Description.cpp
+index d44288d153..effd3191c8 100644
+--- a/services/surfaceflinger/RenderEngine/Description.cpp
++++ b/services/surfaceflinger/RenderEngine/Description.cpp
+@@ -32,7 +32,6 @@ Description::Description() {
+     mOpaque = true;
+     mTextureEnabled = false;
+     mColorMatrixEnabled = false;
+-    mIsWideGamut = false;
+ 
+     memset(mColor, 0, sizeof(mColor));
+ }
+diff --git a/services/surfaceflinger/RenderEngine/GLES20RenderEngine.cpp b/services/surfaceflinger/RenderEngine/GLES20RenderEngine.cpp
+index 9c0af8b2ed..37a530b33a 100644
+--- a/services/surfaceflinger/RenderEngine/GLES20RenderEngine.cpp
++++ b/services/surfaceflinger/RenderEngine/GLES20RenderEngine.cpp
+@@ -166,12 +166,12 @@ void GLES20RenderEngine::setViewportAndProjection(
+         size_t vpw, size_t vph, Rect sourceCrop, size_t hwh, bool yswap,
+         Transform::orientation_flags rotation) {
+ 
+-    int32_t l = sourceCrop.left;
+-    int32_t r = sourceCrop.right;
++    size_t l = sourceCrop.left;
++    size_t r = sourceCrop.right;
+ 
+     // In GL, (0, 0) is the bottom-left corner, so flip y coordinates
+-    int32_t t = hwh - sourceCrop.top;
+-    int32_t b = hwh - sourceCrop.bottom;
++    size_t t = hwh - sourceCrop.top;
++    size_t b = hwh - sourceCrop.bottom;
+ 
+     mat4 m;
+     if (yswap) {
+diff --git a/services/surfaceflinger/RenderEngine/RenderEngine.h b/services/surfaceflinger/RenderEngine/RenderEngine.h
+index 954457946e..ebcf15ed35 100644
+--- a/services/surfaceflinger/RenderEngine/RenderEngine.h
++++ b/services/surfaceflinger/RenderEngine/RenderEngine.h
+@@ -26,7 +26,7 @@
+ #include <math/mat4.h>
+ #include <Transform.h>
+ 
+-#define EGL_NO_CONFIG ((EGLConfig)0)
++#define EGL_NO_CONFIG ((EGLConfig)-1)
+ 
+ // ---------------------------------------------------------------------------
+ namespace android {
+-- 
+2.17.0
+

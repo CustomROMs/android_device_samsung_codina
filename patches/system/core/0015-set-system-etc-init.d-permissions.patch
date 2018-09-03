@@ -1,7 +1,7 @@
 From 510e94e270fac9dd3e9197826966e28e246f2bf1 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Micha=C3=ABl=20Burtin?= <bukington@gmail.com>
 Date: Sun, 5 Feb 2012 00:55:17 +0100
-Subject: [PATCH 15/42] set /system/etc/init.d/* permissions
+Subject: [PATCH 15/44] set /system/etc/init.d/* permissions
 
 ported from CM7
 

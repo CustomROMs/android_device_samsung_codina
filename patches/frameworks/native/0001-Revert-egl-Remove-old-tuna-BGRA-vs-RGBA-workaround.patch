@@ -1,7 +1,7 @@
 From 4df08933bd5b527c5dd2befb2f36519b842c649d Mon Sep 17 00:00:00 2001
 From: Ethan Chen <intervigil@gmail.com>
 Date: Thu, 15 Oct 2015 13:50:10 -0700
-Subject: [PATCH 01/24] Revert "egl: Remove old tuna BGRA vs RGBA workaround."
+Subject: [PATCH 01/45] Revert "egl: Remove old tuna BGRA vs RGBA workaround."
 
 This reverts commit 733a80754786d39cdc0fee09509b194472c320bc.
 and updated for Android O.
@@ -13,7 +13,7 @@ Change-Id: Ifb41720ed020489892a667914ea3bd3f1ac6504e
  2 files changed, 18 insertions(+)
 
 diff --git a/opengl/libs/Android.bp b/opengl/libs/Android.bp
-index 32c2d7e0d..435d00cae 100644
+index 32c2d7e0d5..435d00cae8 100644
 --- a/opengl/libs/Android.bp
 +++ b/opengl/libs/Android.bp
 @@ -124,6 +124,13 @@ cc_library_static {
@@ -31,7 +31,7 @@ index 32c2d7e0d..435d00cae 100644
      srcs: [
          "EGL/egl_tls.cpp",
 diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
-index 94dfe6a9d..37891cbe0 100644
+index 94dfe6a9de..37891cbe07 100644
 --- a/opengl/libs/EGL/eglApi.cpp
 +++ b/opengl/libs/EGL/eglApi.cpp
 @@ -615,6 +615,16 @@ void getNativePixelFormat(EGLDisplay dpy, egl_connection_t* cnx, EGLConfig confi

@@ -1,7 +1,7 @@
 From 11c4d45ad612b5481e95cb9911e4ff752c4ebad6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 11:24:34 +0300
-Subject: [PATCH 18/24] surfaceflinger: switch to FramebufferNativeWindow
+Subject: [PATCH 18/45] surfaceflinger: switch to FramebufferNativeWindow
 
 Change-Id: I1471c4f002a77dfa7ce6a6e5100a3f52ccc7e1ac
 ---
@@ -10,7 +10,7 @@ Change-Id: I1471c4f002a77dfa7ce6a6e5100a3f52ccc7e1ac
  2 files changed, 14 insertions(+)
 
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-index edec08764..c47df9102 100755
+index edec087645..c47df91021 100755
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -30,6 +30,9 @@
@@ -50,7 +50,7 @@ index edec08764..c47df9102 100755
      eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
      eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index c054feb1d..ec63db0c9 100644
+index c054feb1d8..ec63db0c9a 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
 @@ -218,7 +218,9 @@ private:

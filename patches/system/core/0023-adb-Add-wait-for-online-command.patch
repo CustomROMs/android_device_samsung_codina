@@ -1,7 +1,7 @@
 From b1bcbca4870ee41319903a8681ff3bf47cf8cb7c Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Sun, 11 Sep 2016 03:36:59 -0700
-Subject: [PATCH 23/42] adb: Add wait-for-online command
+Subject: [PATCH 23/44] adb: Add wait-for-online command
 
  * Add the pseudo-state "online" which means either "device" or
    "recovery". This is used by our tooling.

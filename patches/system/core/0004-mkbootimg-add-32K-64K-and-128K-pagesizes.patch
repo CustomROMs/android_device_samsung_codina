@@ -1,7 +1,7 @@
 From 2553e210f14e0478a1ccf0ab265faa7ad09a7d76 Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mikeioannina@gmail.com>
 Date: Sun, 4 Sep 2016 13:48:49 +0300
-Subject: [PATCH 04/42] mkbootimg: add 32K 64K and 128K pagesizes
+Subject: [PATCH 04/44] mkbootimg: add 32K 64K and 128K pagesizes
 
 Change-Id: I392fe860b51a8c022ffdace45b8eeb46618d6ec6
 ---

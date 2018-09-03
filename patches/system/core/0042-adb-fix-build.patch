@@ -1,7 +1,7 @@
 From 9739a0ac19495c7c5bec4ba35255f23cb1612efe Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 04:51:56 +0300
-Subject: [PATCH 42/42] adb: fix build
+Subject: [PATCH 42/44] adb: fix build
 
 Change-Id: I711d898fd2ef7142d6fb5a2b18663976a90ea4a2
 ---

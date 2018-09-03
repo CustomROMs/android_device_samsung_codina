@@ -1,7 +1,7 @@
 From 932f5436452893874664e0c6e5a359a5d4476171 Mon Sep 17 00:00:00 2001
 From: Scott Mertz <scott@cyngn.com>
 Date: Sat, 21 Mar 2015 17:33:47 -0700
-Subject: [PATCH 18/42] healthd: allow custom charger images
+Subject: [PATCH 18/44] healthd: allow custom charger images
 
 Change-Id: I1380bea300bfaa6819d50bdc813329c93050286a
 (cherry picked from commit b6ebd65cd36d06daa5cf33f031d7e03b0bd674c6)

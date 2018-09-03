@@ -1,7 +1,7 @@
 From 9a56b9e62db34bfd71f3399f7fa706b74148d03f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 20/24] libui: GraphicBuffer: revert to 32-bit usage
+Subject: [PATCH 20/45] libui: GraphicBuffer: revert to 32-bit usage
 
 Change-Id: I82e9f43e37177d6f30ef16bde30b0093df3a051c
 ---
@@ -12,7 +12,7 @@ Change-Id: I82e9f43e37177d6f30ef16bde30b0093df3a051c
  4 files changed, 46 insertions(+), 74 deletions(-)
 
 diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
-index c829c4d25..654088d39 100644
+index c829c4d251..654088d394 100644
 --- a/libs/ui/GraphicBuffer.cpp
 +++ b/libs/ui/GraphicBuffer.cpp
 @@ -51,7 +51,6 @@ GraphicBuffer::GraphicBuffer()
@@ -267,7 +267,7 @@ index c829c4d25..654088d39 100644
          }
      }
 diff --git a/libs/ui/include/ui/GraphicBuffer.h b/libs/ui/include/ui/GraphicBuffer.h
-index 0c93ffd31..a54c0552c 100644
+index 0c93ffd312..a54c0552c4 100644
 --- a/libs/ui/include/ui/GraphicBuffer.h
 +++ b/libs/ui/include/ui/GraphicBuffer.h
 @@ -81,7 +81,7 @@ public:
@@ -328,7 +328,7 @@ index 0c93ffd31..a54c0552c 100644
      void free_handle();
  
 diff --git a/libs/ui/include/ui/GraphicBufferAllocator.h b/libs/ui/include/ui/GraphicBufferAllocator.h
-index 1811d10c7..279b93a33 100644
+index 1811d10c7d..279b93a336 100644
 --- a/libs/ui/include/ui/GraphicBufferAllocator.h
 +++ b/libs/ui/include/ui/GraphicBufferAllocator.h
 @@ -79,7 +79,7 @@ private:
@@ -341,7 +341,7 @@ index 1811d10c7..279b93a33 100644
      };
  
 diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
-index 1de5e48cb..72fc58e24 100644
+index 1de5e48cb9..72fc58e246 100644
 --- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
 +++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
 @@ -376,10 +376,10 @@ status_t VirtualDisplaySurface::dequeueBuffer(Source source,

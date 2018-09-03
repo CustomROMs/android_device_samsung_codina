@@ -1,7 +1,7 @@
 From 11731ce6d0b0419cacbb96c3e1e0cda2245cd17c Mon Sep 17 00:00:00 2001
 From: Simon Shields <keepcalm444@gmail.com>
 Date: Thu, 3 Dec 2015 20:34:15 +1100
-Subject: [PATCH 02/24] libbinder: allow devices to disable ashmem size
+Subject: [PATCH 02/45] libbinder: allow devices to disable ashmem size
  tracking
 
 The addition of ashmem size tracking has resulted in a broken ABI
@@ -15,7 +15,7 @@ Change-Id: Ife8514be1ba639c4061de38b59794c46bcc2d7f8
  3 files changed, 35 insertions(+)
 
 diff --git a/libs/binder/Android.bp b/libs/binder/Android.bp
-index 715c1c1dc..4a7d8bc04 100644
+index 715c1c1dca..4a7d8bc049 100644
 --- a/libs/binder/Android.bp
 +++ b/libs/binder/Android.bp
 @@ -87,6 +87,11 @@ cc_library {
@@ -31,7 +31,7 @@ index 715c1c1dc..4a7d8bc04 100644
  
      shared_libs: [
 diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
-index a8c2e03d5..90718e4b2 100644
+index a8c2e03d55..90718e4b23 100644
 --- a/libs/binder/Parcel.cpp
 +++ b/libs/binder/Parcel.cpp
 @@ -541,7 +541,11 @@ status_t Parcel::appendFrom(const Parcel *parcel, size_t offset, size_t len)
@@ -116,7 +116,7 @@ index a8c2e03d5..90718e4b2 100644
  
  // --- Parcel::Blob ---
 diff --git a/libs/binder/include/binder/Parcel.h b/libs/binder/include/binder/Parcel.h
-index b9a3ae6ce..bc76d6b41 100644
+index b9a3ae6cec..bc76d6b41f 100644
 --- a/libs/binder/include/binder/Parcel.h
 +++ b/libs/binder/include/binder/Parcel.h
 @@ -561,8 +561,10 @@ public:

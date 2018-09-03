@@ -1,7 +1,7 @@
 From 38cc3510ab84783de3018f8997d4da9e1e6516b7 Mon Sep 17 00:00:00 2001
 From: Rashed Abdel-Tawab <rashed@linux.com>
 Date: Mon, 13 Aug 2018 18:47:35 -0700
-Subject: [PATCH 25/42] Revert "debuggerd: Resolve tombstoned missing O_CREAT
+Subject: [PATCH 25/44] Revert "debuggerd: Resolve tombstoned missing O_CREAT
  mode"
 
 I merged this without it being ready. My bad...

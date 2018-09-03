@@ -1,7 +1,7 @@
 From 21ed930d3186f207a5dbccb90c75545f58b420ae Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Thu, 28 Jul 2016 12:17:40 -0700
-Subject: [PATCH 12/42] healthd: Add DASH charger type
+Subject: [PATCH 12/44] healthd: Add DASH charger type
 
 Change-Id: Ie1ca5018c465f6b2c15cbc00bdf3bb866d98ddef
 ---

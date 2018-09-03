@@ -1,7 +1,7 @@
 From e6ee5c67ec1f0a840e1bbaab92b8e94cc37cb383 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 05:01:00 +0300
-Subject: [PATCH 40/42] libsuspend: fix build
+Subject: [PATCH 40/44] libsuspend: fix build
 
 Change-Id: I985151b05bf1c08d6d04fc6f51fb5063942601fa
 ---

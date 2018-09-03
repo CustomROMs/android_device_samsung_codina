@@ -1,7 +1,7 @@
 From 4f1c41e17631ba50161cf6b778a04aa2e7cd002b Mon Sep 17 00:00:00 2001
 From: "Christopher N. Hesse" <raymanfx@gmail.com>
 Date: Sun, 4 Sep 2016 12:26:32 +0200
-Subject: [PATCH 14/42] utils: Threads: Handle empty thread names
+Subject: [PATCH 14/44] utils: Threads: Handle empty thread names
 
 * Fixes camera for Samsung Exynos devices:
 

@@ -1,7 +1,7 @@
 From 306bd844565617474f037c01455f45b6cbb7c22c Mon Sep 17 00:00:00 2001
 From: Scott Mertz <scott@cyngn.com>
 Date: Wed, 25 May 2016 15:47:42 -0700
-Subject: [PATCH 20/42] debuggerd: add Lineage version to tombstones
+Subject: [PATCH 20/44] debuggerd: add Lineage version to tombstones
 
 Change-Id: I7822a2e133a2f326ad2d8da8f79b0064344d59bf
 

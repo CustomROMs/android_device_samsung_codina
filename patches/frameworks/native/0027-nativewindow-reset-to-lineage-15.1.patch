@@ -1,0 +1,430 @@
+From 43fbafdfd3eacc12ea4eeff23efc523f8094722a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:41:20 +0300
+Subject: [PATCH 27/45] nativewindow: reset to lineage-15.1
+
+Change-Id: I34d5aa63cb9a0b17c3afd14df9528bee7c33beca
+---
+ libs/gui/Android.bp                           |  1 -
+ libs/nativewindow/AHardwareBuffer.cpp         | 33 +---------
+ libs/nativewindow/Android.bp                  | 13 +---
+ .../include/android/hardware_buffer.h         | 23 +++----
+ .../include/android/native_window.h           | 22 ++++---
+ .../private/android/AHardwareBufferHelpers.h  | 60 +++++++++++++++++++
+ .../include/vndk/hardware_buffer.h            | 22 -------
+ libs/nativewindow/libnativewindow.map.txt     | 19 ++----
+ 8 files changed, 88 insertions(+), 105 deletions(-)
+ create mode 100644 libs/nativewindow/include/private/android/AHardwareBufferHelpers.h
+
+diff --git a/libs/gui/Android.bp b/libs/gui/Android.bp
+index 08cf747474..935c1be4c2 100644
+--- a/libs/gui/Android.bp
++++ b/libs/gui/Android.bp
+@@ -23,7 +23,6 @@ cc_library_shared {
+     vndk: {
+         enabled: true,
+     },
+-    double_loadable: true,
+ 
+     clang: true,
+     cppflags: [
+diff --git a/libs/nativewindow/AHardwareBuffer.cpp b/libs/nativewindow/AHardwareBuffer.cpp
+index cf4d9d9ac7..5912738a05 100644
+--- a/libs/nativewindow/AHardwareBuffer.cpp
++++ b/libs/nativewindow/AHardwareBuffer.cpp
+@@ -279,35 +279,6 @@ const native_handle_t* AHardwareBuffer_getNativeHandle(
+     return gbuffer->handle;
+ }
+ 
+-int AHardwareBuffer_createFromHandle(const AHardwareBuffer_Desc* desc,
+-                                     const native_handle_t* handle, int32_t method,
+-                                     AHardwareBuffer** outBuffer) {
+-    static_assert(static_cast<int32_t>(AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER) ==
+-                  static_cast<int32_t>(GraphicBuffer::TAKE_UNREGISTERED_HANDLE));
+-    static_assert(static_cast<int32_t>(AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE) ==
+-                  static_cast<int32_t>(GraphicBuffer::CLONE_HANDLE));
+-
+-    if (!desc || !handle || !outBuffer) return BAD_VALUE;
+-    if (!(method == AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER ||
+-          method == AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE))
+-        return BAD_VALUE;
+-    if (desc->rfu0 != 0 || desc->rfu1 != 0) return BAD_VALUE;
+-    if (desc->format == AHARDWAREBUFFER_FORMAT_BLOB && desc->height != 1) return BAD_VALUE;
+-
+-    const int format = AHardwareBuffer_convertToPixelFormat(desc->format);
+-    const uint64_t usage = AHardwareBuffer_convertToGrallocUsageBits(desc->usage);
+-    const auto wrapMethod = static_cast<GraphicBuffer::HandleWrapMethod>(method);
+-    sp<GraphicBuffer> gbuffer(new GraphicBuffer(handle, wrapMethod, desc->width, desc->height,
+-                                                format, desc->layers, usage, desc->stride));
+-    status_t err = gbuffer->initCheck();
+-    if (err != 0 || gbuffer->handle == 0) return err;
+-
+-    *outBuffer = AHardwareBuffer_from_GraphicBuffer(gbuffer.get());
+-    // Ensure the buffer doesn't get destroyed when the sp<> goes away.
+-    AHardwareBuffer_acquire(*outBuffer);
+-
+-    return NO_ERROR;
+-}
+ 
+ // ----------------------------------------------------------------------------
+ // Helpers implementation
+@@ -321,9 +292,9 @@ struct UsageMaskMapping {
+     uint64_t grallocMask;
+ };
+ 
+-static inline bool containsBits(uint64_t mask, uint64_t bitsToCheck) {
++/*static inline bool containsBits(uint64_t mask, uint64_t bitsToCheck) {
+     return (mask & bitsToCheck) == bitsToCheck && bitsToCheck;
+-}
++}*/
+ 
+ bool AHardwareBuffer_isValidPixelFormat(uint32_t format) {
+     static_assert(HAL_PIXEL_FORMAT_RGBA_8888 == AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM,
+diff --git a/libs/nativewindow/Android.bp b/libs/nativewindow/Android.bp
+index 29555fde9d..e61fbd6e8b 100644
+--- a/libs/nativewindow/Android.bp
++++ b/libs/nativewindow/Android.bp
+@@ -30,25 +30,14 @@ ndk_library {
+ 
+ cc_library {
+     name: "libnativewindow",
+-    export_include_dirs: [
+-        "include",
+-        "include-private",
+-    ],
++    export_include_dirs: ["include"],
+ 
+     clang: true,
+ 
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wno-unused-function",
+-    ],
+-
+     cppflags: [
+         "-std=c++1z"
+     ],
+ 
+-    version_script: "libnativewindow.map.txt",
+-
+     srcs: [
+         "AHardwareBuffer.cpp",
+         "ANativeWindow.cpp",
+diff --git a/libs/nativewindow/include/android/hardware_buffer.h b/libs/nativewindow/include/android/hardware_buffer.h
+index 277560b15b..52440a5b79 100644
+--- a/libs/nativewindow/include/android/hardware_buffer.h
++++ b/libs/nativewindow/include/android/hardware_buffer.h
+@@ -14,11 +14,6 @@
+  * limitations under the License.
+  */
+ 
+-/**
+- * @addtogroup NativeActivity Native Activity
+- * @{
+- */
+-
+ /**
+  * @file hardware_buffer.h
+  */
+@@ -162,25 +157,25 @@ typedef struct AHardwareBuffer AHardwareBuffer;
+  * any reason.
+  */
+ int AHardwareBuffer_allocate(const AHardwareBuffer_Desc* desc,
+-        AHardwareBuffer** outBuffer) __INTRODUCED_IN(26);
++        AHardwareBuffer** outBuffer);
+ /**
+  * Acquire a reference on the given AHardwareBuffer object.  This prevents the
+  * object from being deleted until the last reference is removed.
+  */
+-void AHardwareBuffer_acquire(AHardwareBuffer* buffer) __INTRODUCED_IN(26);
++void AHardwareBuffer_acquire(AHardwareBuffer* buffer);
+ 
+ /**
+  * Remove a reference that was previously acquired with
+  * AHardwareBuffer_acquire().
+  */
+-void AHardwareBuffer_release(AHardwareBuffer* buffer) __INTRODUCED_IN(26);
++void AHardwareBuffer_release(AHardwareBuffer* buffer);
+ 
+ /**
+  * Return a description of the AHardwareBuffer in the passed
+  * AHardwareBuffer_Desc struct.
+  */
+ void AHardwareBuffer_describe(const AHardwareBuffer* buffer,
+-        AHardwareBuffer_Desc* outDesc) __INTRODUCED_IN(26);
++        AHardwareBuffer_Desc* outDesc);
+ 
+ /*
+  * Lock the AHardwareBuffer for reading or writing, depending on the usage flags
+@@ -216,7 +211,7 @@ void AHardwareBuffer_describe(const AHardwareBuffer* buffer,
+  * number of the lock fails for any reason.
+  */
+ int AHardwareBuffer_lock(AHardwareBuffer* buffer, uint64_t usage,
+-        int32_t fence, const ARect* rect, void** outVirtualAddress) __INTRODUCED_IN(26);
++        int32_t fence, const ARect* rect, void** outVirtualAddress);
+ 
+ /*
+  * Unlock the AHardwareBuffer; must be called after all changes to the buffer
+@@ -228,7 +223,7 @@ int AHardwareBuffer_lock(AHardwareBuffer* buffer, uint64_t usage,
+  * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL, or an error
+  * number of the lock fails for any reason.
+  */
+-int AHardwareBuffer_unlock(AHardwareBuffer* buffer, int32_t* fence) __INTRODUCED_IN(26);
++int AHardwareBuffer_unlock(AHardwareBuffer* buffer, int32_t* fence);
+ 
+ /*
+  * Send the AHardwareBuffer to an AF_UNIX socket.
+@@ -236,7 +231,7 @@ int AHardwareBuffer_unlock(AHardwareBuffer* buffer, int32_t* fence) __INTRODUCED
+  * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL, or an error
+  * number of the lock fails for any reason.
+  */
+-int AHardwareBuffer_sendHandleToUnixSocket(const AHardwareBuffer* buffer, int socketFd) __INTRODUCED_IN(26);
++int AHardwareBuffer_sendHandleToUnixSocket(const AHardwareBuffer* buffer, int socketFd);
+ 
+ /*
+  * Receive the AHardwareBuffer from an AF_UNIX socket.
+@@ -244,10 +239,8 @@ int AHardwareBuffer_sendHandleToUnixSocket(const AHardwareBuffer* buffer, int so
+  * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL, or an error
+  * number of the lock fails for any reason.
+  */
+-int AHardwareBuffer_recvHandleFromUnixSocket(int socketFd, AHardwareBuffer** outBuffer) __INTRODUCED_IN(26);
++int AHardwareBuffer_recvHandleFromUnixSocket(int socketFd, AHardwareBuffer** outBuffer);
+ 
+ __END_DECLS
+ 
+ #endif // ANDROID_HARDWARE_BUFFER_H
+-
+-/** @} */
+diff --git a/libs/nativewindow/include/android/native_window.h b/libs/nativewindow/include/android/native_window.h
+index fd5d8b5821..5290dd51cd 100644
+--- a/libs/nativewindow/include/android/native_window.h
++++ b/libs/nativewindow/include/android/native_window.h
+@@ -108,33 +108,33 @@ typedef struct ANativeWindow_Buffer {
+  * Acquire a reference on the given {@link ANativeWindow} object. This prevents the object
+  * from being deleted until the reference is removed.
+  */
+-void ANativeWindow_acquire(ANativeWindow* window) __INTRODUCED_IN(26);
++void ANativeWindow_acquire(ANativeWindow* window);
+ 
+ /**
+  * Remove a reference that was previously acquired with {@link ANativeWindow_acquire()}.
+  */
+-void ANativeWindow_release(ANativeWindow* window) __INTRODUCED_IN(26);
++void ANativeWindow_release(ANativeWindow* window);
+ 
+ /**
+  * Return the current width in pixels of the window surface.
+  *
+  * \return negative value on error.
+  */
+-int32_t ANativeWindow_getWidth(ANativeWindow* window) __INTRODUCED_IN(26);
++int32_t ANativeWindow_getWidth(ANativeWindow* window);
+ 
+ /**
+  * Return the current height in pixels of the window surface.
+  *
+  * \return a negative value on error.
+  */
+-int32_t ANativeWindow_getHeight(ANativeWindow* window) __INTRODUCED_IN(26);
++int32_t ANativeWindow_getHeight(ANativeWindow* window);
+ 
+ /**
+  * Return the current pixel format (AHARDWAREBUFFER_FORMAT_*) of the window surface.
+  *
+  * \return a negative value on error.
+  */
+-int32_t ANativeWindow_getFormat(ANativeWindow* window) __INTRODUCED_IN(26);
++int32_t ANativeWindow_getFormat(ANativeWindow* window);
+ 
+ /**
+  * Change the format and size of the window buffers.
+@@ -154,7 +154,7 @@ int32_t ANativeWindow_getFormat(ANativeWindow* window) __INTRODUCED_IN(26);
+  * \return 0 for success, or a negative value on error.
+  */
+ int32_t ANativeWindow_setBuffersGeometry(ANativeWindow* window,
+-        int32_t width, int32_t height, int32_t format) __INTRODUCED_IN(26);
++        int32_t width, int32_t height, int32_t format);
+ 
+ /**
+  * Lock the window's next drawing surface for writing.
+@@ -167,7 +167,7 @@ int32_t ANativeWindow_setBuffersGeometry(ANativeWindow* window,
+  * \return 0 for success, or a negative value on error.
+  */
+ int32_t ANativeWindow_lock(ANativeWindow* window, ANativeWindow_Buffer* outBuffer,
+-        ARect* inOutDirtyBounds) __INTRODUCED_IN(26);
++        ARect* inOutDirtyBounds);
+ 
+ /**
+  * Unlock the window's drawing surface after previously locking it,
+@@ -175,7 +175,9 @@ int32_t ANativeWindow_lock(ANativeWindow* window, ANativeWindow_Buffer* outBuffe
+  *
+  * \return 0 for success, or a negative value on error.
+  */
+-int32_t ANativeWindow_unlockAndPost(ANativeWindow* window) __INTRODUCED_IN(26);
++int32_t ANativeWindow_unlockAndPost(ANativeWindow* window);
++
++#if __ANDROID_API__ >= __ANDROID_API_O__
+ 
+ /**
+  * Set a transform that will be applied to future buffers posted to the window.
+@@ -183,7 +185,9 @@ int32_t ANativeWindow_unlockAndPost(ANativeWindow* window) __INTRODUCED_IN(26);
+  * \param transform combination of {@link ANativeWindowTransform} flags
+  * \return 0 for success, or -EINVAL if \p transform is invalid
+  */
+-int32_t ANativeWindow_setBuffersTransform(ANativeWindow* window, int32_t transform) __INTRODUCED_IN(26);
++int32_t ANativeWindow_setBuffersTransform(ANativeWindow* window, int32_t transform);
++
++#endif // __ANDROID_API__ >= __ANDROID_API_O__
+ 
+ #ifdef __cplusplus
+ };
+diff --git a/libs/nativewindow/include/private/android/AHardwareBufferHelpers.h b/libs/nativewindow/include/private/android/AHardwareBufferHelpers.h
+new file mode 100644
+index 0000000000..71f563467d
+--- /dev/null
++++ b/libs/nativewindow/include/private/android/AHardwareBufferHelpers.h
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_PRIVATE_NATIVE_AHARDWARE_BUFFER_HELPERS_H
++#define ANDROID_PRIVATE_NATIVE_AHARDWARE_BUFFER_HELPERS_H
++
++/*
++ * This file contains utility functions related to AHardwareBuffer, mostly to
++ * convert to/from HAL formats.
++ *
++ * These are PRIVATE methods, so this file can NEVER appear in a public NDK
++ * header. They are used by higher level libraries such as core/jni.
++ */
++
++#include <stdint.h>
++
++struct AHardwareBuffer;
++struct ANativeWindowBuffer;
++
++namespace android {
++
++// whether this AHardwareBuffer format is valid
++bool AHardwareBuffer_isValidPixelFormat(uint32_t ahardwarebuffer_format);
++
++// convert AHardwareBuffer format to HAL format (note: this is a no-op)
++uint32_t AHardwareBuffer_convertFromPixelFormat(uint32_t format);
++
++// convert HAL format to AHardwareBuffer format (note: this is a no-op)
++uint32_t AHardwareBuffer_convertToPixelFormat(uint32_t format);
++
++// convert AHardwareBuffer usage bits to HAL usage bits (note: this is a no-op)
++uint64_t AHardwareBuffer_convertFromGrallocUsageBits(uint64_t usage);
++
++// convert HAL usage bits to AHardwareBuffer usage bits  (note: this is a no-op)
++uint64_t AHardwareBuffer_convertToGrallocUsageBits(uint64_t usage);
++
++class GraphicBuffer;
++const GraphicBuffer* AHardwareBuffer_to_GraphicBuffer(const AHardwareBuffer* buffer);
++GraphicBuffer* AHardwareBuffer_to_GraphicBuffer(AHardwareBuffer* buffer);
++
++const ANativeWindowBuffer* AHardwareBuffer_to_ANativeWindowBuffer(const AHardwareBuffer* buffer);
++ANativeWindowBuffer* AHardwareBuffer_to_ANativeWindowBuffer(AHardwareBuffer* buffer);
++
++AHardwareBuffer* AHardwareBuffer_from_GraphicBuffer(GraphicBuffer* buffer);
++} // namespace android
++
++#endif // ANDROID_PRIVATE_NATIVE_AHARDWARE_BUFFER_HELPERS_H
+diff --git a/libs/nativewindow/include/vndk/hardware_buffer.h b/libs/nativewindow/include/vndk/hardware_buffer.h
+index 9b06475946..802edcc17d 100644
+--- a/libs/nativewindow/include/vndk/hardware_buffer.h
++++ b/libs/nativewindow/include/vndk/hardware_buffer.h
+@@ -26,28 +26,6 @@ __BEGIN_DECLS
+ 
+ const native_handle_t* AHardwareBuffer_getNativeHandle(const AHardwareBuffer* buffer);
+ 
+-enum CreateFromHandleMethod {
+-    // enum values chosen to match internal GraphicBuffer::HandleWrapMethod
+-    AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER = 2,
+-    AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE = 3,
+-};
+-
+-/**
+- * Create a AHardwareBuffer from a native handle.
+- *
+- * This function wraps a native handle in a AHardwareBuffer suitable for use by applications or
+- * other parts of the system. The contents of desc will be returned by AHardwareBuffer_describe().
+- *
+- * If method is AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER, the handle is assumed to be
+- * unregistered, and it will be registered/imported before being wrapped in the AHardwareBuffer.
+- * If successful, the AHardwareBuffer will own the handle.
+- *
+- * If method is AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE, the handle will be cloned and the
+- * clone registered. The AHardwareBuffer will own the cloned handle but not the original.
+- */
+-int AHardwareBuffer_createFromHandle(const AHardwareBuffer_Desc* desc,
+-                                     const native_handle_t* handle, int32_t method,
+-                                     AHardwareBuffer** outBuffer);
+ 
+ /**
+  * Buffer pixel formats.
+diff --git a/libs/nativewindow/libnativewindow.map.txt b/libs/nativewindow/libnativewindow.map.txt
+index fd06ec422f..58045be03e 100644
+--- a/libs/nativewindow/libnativewindow.map.txt
++++ b/libs/nativewindow/libnativewindow.map.txt
+@@ -2,13 +2,14 @@ LIBNATIVEWINDOW {
+   global:
+     AHardwareBuffer_acquire;
+     AHardwareBuffer_allocate;
+-    AHardwareBuffer_createFromHandle; # vndk
+     AHardwareBuffer_describe;
++    AHardwareBuffer_fromHardwareBuffer;
+     AHardwareBuffer_getNativeHandle; # vndk
+     AHardwareBuffer_lock;
+     AHardwareBuffer_recvHandleFromUnixSocket;
+     AHardwareBuffer_release;
+     AHardwareBuffer_sendHandleToUnixSocket;
++    AHardwareBuffer_toHardwareBuffer;
+     AHardwareBuffer_unlock;
+     ANativeWindowBuffer_getHardwareBuffer; # vndk
+     ANativeWindow_OemStorageGet; # vndk
+@@ -16,6 +17,8 @@ LIBNATIVEWINDOW {
+     ANativeWindow_acquire;
+     ANativeWindow_cancelBuffer; # vndk
+     ANativeWindow_dequeueBuffer; # vndk
++    ANativeWindow_fromSurface;
++    ANativeWindow_fromSurfaceTexture;
+     ANativeWindow_getFormat;
+     ANativeWindow_getHeight;
+     ANativeWindow_getWidth;
+@@ -39,17 +42,3 @@ LIBNATIVEWINDOW {
+   local:
+     *;
+ };
+-
+-LIBNATIVEWINDOW_PLATFORM {
+-  global:
+-    extern "C++" {
+-      android::AHardwareBuffer_isValidPixelFormat*;
+-      android::AHardwareBuffer_convertFromPixelFormat*;
+-      android::AHardwareBuffer_convertToPixelFormat*;
+-      android::AHardwareBuffer_convertFromGrallocUsageBits*;
+-      android::AHardwareBuffer_convertToGrallocUsageBits*;
+-      android::AHardwareBuffer_to_GraphicBuffer*;
+-      android::AHardwareBuffer_to_ANativeWindowBuffer*;
+-      android::AHardwareBuffer_from_GraphicBuffer*;
+-    };
+-} LIBNATIVEWINDOW;
+-- 
+2.17.0
+

@@ -1,7 +1,7 @@
 From 24f38b78091a731fb716038e2f5cfae8443cb61b Mon Sep 17 00:00:00 2001
 From: xyyx <xyyx@mail.ru>
 Date: Tue, 7 Aug 2018 08:38:17 +0800
-Subject: [PATCH 33/42] Allow run services without selinux domain
+Subject: [PATCH 33/44] Allow run services without selinux domain
 
 Change-Id: Id1bd6fc9b389ec5a4fdfd834a6cf7903a72b6476
 ---

@@ -1,7 +1,7 @@
 From 54654c4783c0f312a8e8e3eb17932e768746ffc0 Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm.code@gmail.com>
 Date: Thu, 7 Sep 2017 22:31:50 +0000
-Subject: [PATCH 08/42] libsysutils: Allow building static library
+Subject: [PATCH 08/44] libsysutils: Allow building static library
 
  * Needed by minivold
 

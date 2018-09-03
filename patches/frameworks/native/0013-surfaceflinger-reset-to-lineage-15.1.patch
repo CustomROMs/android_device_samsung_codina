@@ -1,7 +1,7 @@
 From c01cd4bbc83ab379ff45f7d4ce878b46434939cc Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 11:05:46 +0300
-Subject: [PATCH 13/24] surfaceflinger: reset to lineage-15.1
+Subject: [PATCH 13/45] surfaceflinger: reset to lineage-15.1
 
 Change-Id: Ic4ba559e0d6f8d8773fc5c9983b9bc548e7602fe
 ---
@@ -150,7 +150,7 @@ Change-Id: Ic4ba559e0d6f8d8773fc5c9983b9bc548e7602fe
  delete mode 100644 services/surfaceflinger/tests/waitforvsync/waitforvsync.cpp
 
 diff --git a/libs/gui/ISurfaceComposer.cpp b/libs/gui/ISurfaceComposer.cpp
-index 8e7f81431..0a0d112af 100644
+index 8e7f814313..0a0d112af6 100644
 --- a/libs/gui/ISurfaceComposer.cpp
 +++ b/libs/gui/ISurfaceComposer.cpp
 @@ -28,7 +28,6 @@
@@ -217,7 +217,7 @@ index 8e7f81431..0a0d112af 100644
              return BBinder::onTransact(code, data, reply, flags);
          }
 diff --git a/libs/gui/include/gui/ISurfaceComposer.h b/libs/gui/include/gui/ISurfaceComposer.h
-index b2267426a..4b924e186 100644
+index b2267426a8..4b924e186c 100644
 --- a/libs/gui/include/gui/ISurfaceComposer.h
 +++ b/libs/gui/include/gui/ISurfaceComposer.h
 @@ -196,12 +196,6 @@ public:
@@ -235,7 +235,7 @@ index b2267426a..4b924e186 100644
  // ----------------------------------------------------------------------------
 diff --git a/libs/gui/tests/Android.bp b/libs/gui/tests/Android.bp
 deleted file mode 100644
-index 908959ce1..000000000
+index 908959ce1a..0000000000
 --- a/libs/gui/tests/Android.bp
 +++ /dev/null
 @@ -1,51 +0,0 @@
@@ -292,7 +292,7 @@ index 908959ce1..000000000
 -}
 diff --git a/libs/gui/tests/AndroidTest.xml b/libs/gui/tests/AndroidTest.xml
 deleted file mode 100644
-index c02e020be..000000000
+index c02e020be6..0000000000
 --- a/libs/gui/tests/AndroidTest.xml
 +++ /dev/null
 @@ -1,26 +0,0 @@
@@ -325,7 +325,7 @@ index c02e020be..000000000
 \ No newline at end of file
 diff --git a/libs/gui/tests/BufferItemConsumer_test.cpp b/libs/gui/tests/BufferItemConsumer_test.cpp
 deleted file mode 100644
-index b87cbbdec..000000000
+index b87cbbdec8..0000000000
 --- a/libs/gui/tests/BufferItemConsumer_test.cpp
 +++ /dev/null
 @@ -1,206 +0,0 @@
@@ -537,7 +537,7 @@ index b87cbbdec..000000000
 -}  // namespace android
 diff --git a/libs/gui/tests/BufferQueue_test.cpp b/libs/gui/tests/BufferQueue_test.cpp
 deleted file mode 100644
-index 9a208593a..000000000
+index 9a208593ab..0000000000
 --- a/libs/gui/tests/BufferQueue_test.cpp
 +++ /dev/null
 @@ -1,1195 +0,0 @@
@@ -1738,7 +1738,7 @@ index 9a208593a..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/CpuConsumer_test.cpp b/libs/gui/tests/CpuConsumer_test.cpp
 deleted file mode 100644
-index 588e54142..000000000
+index 588e54142f..0000000000
 --- a/libs/gui/tests/CpuConsumer_test.cpp
 +++ /dev/null
 @@ -1,746 +0,0 @@
@@ -2490,7 +2490,7 @@ index 588e54142..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/DisconnectWaiter.h b/libs/gui/tests/DisconnectWaiter.h
 deleted file mode 100644
-index 6e6915b29..000000000
+index 6e6915b299..0000000000
 --- a/libs/gui/tests/DisconnectWaiter.h
 +++ /dev/null
 @@ -1,80 +0,0 @@
@@ -2576,7 +2576,7 @@ index 6e6915b29..000000000
 -#endif
 diff --git a/libs/gui/tests/DummyConsumer.h b/libs/gui/tests/DummyConsumer.h
 deleted file mode 100644
-index 502bdf981..000000000
+index 502bdf981b..0000000000
 --- a/libs/gui/tests/DummyConsumer.h
 +++ /dev/null
 @@ -1,27 +0,0 @@
@@ -2609,7 +2609,7 @@ index 502bdf981..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/FillBuffer.cpp b/libs/gui/tests/FillBuffer.cpp
 deleted file mode 100644
-index ccd674fcb..000000000
+index ccd674fcb8..0000000000
 --- a/libs/gui/tests/FillBuffer.cpp
 +++ /dev/null
 @@ -1,108 +0,0 @@
@@ -2723,7 +2723,7 @@ index ccd674fcb..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/FillBuffer.h b/libs/gui/tests/FillBuffer.h
 deleted file mode 100644
-index b58417931..000000000
+index b584179318..0000000000
 --- a/libs/gui/tests/FillBuffer.h
 +++ /dev/null
 @@ -1,43 +0,0 @@
@@ -2772,7 +2772,7 @@ index b58417931..000000000
 -#endif
 diff --git a/libs/gui/tests/FrameWaiter.h b/libs/gui/tests/FrameWaiter.h
 deleted file mode 100644
-index f78fa001c..000000000
+index f78fa001cc..0000000000
 --- a/libs/gui/tests/FrameWaiter.h
 +++ /dev/null
 @@ -1,52 +0,0 @@
@@ -2830,7 +2830,7 @@ index f78fa001c..000000000
 -#endif
 diff --git a/libs/gui/tests/GLTest.cpp b/libs/gui/tests/GLTest.cpp
 deleted file mode 100644
-index 1739d9c7c..000000000
+index 1739d9c7ca..0000000000
 --- a/libs/gui/tests/GLTest.cpp
 +++ /dev/null
 @@ -1,339 +0,0 @@
@@ -3175,7 +3175,7 @@ index 1739d9c7c..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/GLTest.h b/libs/gui/tests/GLTest.h
 deleted file mode 100644
-index f0d27a8a3..000000000
+index f0d27a8a34..0000000000
 --- a/libs/gui/tests/GLTest.h
 +++ /dev/null
 @@ -1,72 +0,0 @@
@@ -3253,7 +3253,7 @@ index f0d27a8a3..000000000
 -#endif
 diff --git a/libs/gui/tests/IGraphicBufferProducer_test.cpp b/libs/gui/tests/IGraphicBufferProducer_test.cpp
 deleted file mode 100644
-index dd23bd4cb..000000000
+index dd23bd4cb2..0000000000
 --- a/libs/gui/tests/IGraphicBufferProducer_test.cpp
 +++ /dev/null
 @@ -1,735 +0,0 @@
@@ -3994,7 +3994,7 @@ index dd23bd4cb..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/Malicious.cpp b/libs/gui/tests/Malicious.cpp
 deleted file mode 100644
-index bb6b8a59f..000000000
+index bb6b8a59fe..0000000000
 --- a/libs/gui/tests/Malicious.cpp
 +++ /dev/null
 @@ -1,207 +0,0 @@
@@ -4207,7 +4207,7 @@ index bb6b8a59f..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/MultiTextureConsumer_test.cpp b/libs/gui/tests/MultiTextureConsumer_test.cpp
 deleted file mode 100644
-index 3a25ac59c..000000000
+index 3a25ac59ca..0000000000
 --- a/libs/gui/tests/MultiTextureConsumer_test.cpp
 +++ /dev/null
 @@ -1,126 +0,0 @@
@@ -4339,7 +4339,7 @@ index 3a25ac59c..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/StreamSplitter_test.cpp b/libs/gui/tests/StreamSplitter_test.cpp
 deleted file mode 100644
-index ad6e05168..000000000
+index ad6e051684..0000000000
 --- a/libs/gui/tests/StreamSplitter_test.cpp
 +++ /dev/null
 @@ -1,239 +0,0 @@
@@ -4584,7 +4584,7 @@ index ad6e05168..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/SurfaceTextureClient_test.cpp b/libs/gui/tests/SurfaceTextureClient_test.cpp
 deleted file mode 100644
-index d5b2f004e..000000000
+index d5b2f004ed..0000000000
 --- a/libs/gui/tests/SurfaceTextureClient_test.cpp
 +++ /dev/null
 @@ -1,811 +0,0 @@
@@ -5401,7 +5401,7 @@ index d5b2f004e..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/SurfaceTextureFBO.h b/libs/gui/tests/SurfaceTextureFBO.h
 deleted file mode 100644
-index 7f1ae84c4..000000000
+index 7f1ae84c48..0000000000
 --- a/libs/gui/tests/SurfaceTextureFBO.h
 +++ /dev/null
 @@ -1,75 +0,0 @@
@@ -5482,7 +5482,7 @@ index 7f1ae84c4..000000000
 -#endif
 diff --git a/libs/gui/tests/SurfaceTextureFBO_test.cpp b/libs/gui/tests/SurfaceTextureFBO_test.cpp
 deleted file mode 100644
-index 0134273a0..000000000
+index 0134273a07..0000000000
 --- a/libs/gui/tests/SurfaceTextureFBO_test.cpp
 +++ /dev/null
 @@ -1,91 +0,0 @@
@@ -5579,7 +5579,7 @@ index 0134273a0..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/SurfaceTextureGL.h b/libs/gui/tests/SurfaceTextureGL.h
 deleted file mode 100644
-index 53eb68cad..000000000
+index 53eb68cad8..0000000000
 --- a/libs/gui/tests/SurfaceTextureGL.h
 +++ /dev/null
 @@ -1,74 +0,0 @@
@@ -5659,7 +5659,7 @@ index 53eb68cad..000000000
 -#endif
 diff --git a/libs/gui/tests/SurfaceTextureGLThreadToGL.h b/libs/gui/tests/SurfaceTextureGLThreadToGL.h
 deleted file mode 100644
-index 2ce20eb2b..000000000
+index 2ce20eb2b1..0000000000
 --- a/libs/gui/tests/SurfaceTextureGLThreadToGL.h
 +++ /dev/null
 @@ -1,183 +0,0 @@
@@ -5848,7 +5848,7 @@ index 2ce20eb2b..000000000
 -#endif
 diff --git a/libs/gui/tests/SurfaceTextureGLThreadToGL_test.cpp b/libs/gui/tests/SurfaceTextureGLThreadToGL_test.cpp
 deleted file mode 100644
-index c4d0aaa4b..000000000
+index c4d0aaa4bb..0000000000
 --- a/libs/gui/tests/SurfaceTextureGLThreadToGL_test.cpp
 +++ /dev/null
 @@ -1,194 +0,0 @@
@@ -6048,7 +6048,7 @@ index c4d0aaa4b..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/SurfaceTextureGLToGL.h b/libs/gui/tests/SurfaceTextureGLToGL.h
 deleted file mode 100644
-index 5d43a4889..000000000
+index 5d43a48898..0000000000
 --- a/libs/gui/tests/SurfaceTextureGLToGL.h
 +++ /dev/null
 @@ -1,67 +0,0 @@
@@ -6121,7 +6121,7 @@ index 5d43a4889..000000000
 -#endif
 diff --git a/libs/gui/tests/SurfaceTextureGLToGL_test.cpp b/libs/gui/tests/SurfaceTextureGLToGL_test.cpp
 deleted file mode 100644
-index c28b4d141..000000000
+index c28b4d141c..0000000000
 --- a/libs/gui/tests/SurfaceTextureGLToGL_test.cpp
 +++ /dev/null
 @@ -1,526 +0,0 @@
@@ -6653,7 +6653,7 @@ index c28b4d141..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/SurfaceTextureGL_test.cpp b/libs/gui/tests/SurfaceTextureGL_test.cpp
 deleted file mode 100644
-index 56392867e..000000000
+index 56392867ea..0000000000
 --- a/libs/gui/tests/SurfaceTextureGL_test.cpp
 +++ /dev/null
 @@ -1,737 +0,0 @@
@@ -7396,7 +7396,7 @@ index 56392867e..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/SurfaceTextureMultiContextGL.h b/libs/gui/tests/SurfaceTextureMultiContextGL.h
 deleted file mode 100644
-index 3cca035f2..000000000
+index 3cca035f27..0000000000
 --- a/libs/gui/tests/SurfaceTextureMultiContextGL.h
 +++ /dev/null
 @@ -1,85 +0,0 @@
@@ -7487,7 +7487,7 @@ index 3cca035f2..000000000
 -#endif
 diff --git a/libs/gui/tests/SurfaceTextureMultiContextGL_test.cpp b/libs/gui/tests/SurfaceTextureMultiContextGL_test.cpp
 deleted file mode 100644
-index 5b02dcf53..000000000
+index 5b02dcf539..0000000000
 --- a/libs/gui/tests/SurfaceTextureMultiContextGL_test.cpp
 +++ /dev/null
 @@ -1,461 +0,0 @@
@@ -7954,7 +7954,7 @@ index 5b02dcf53..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/Surface_test.cpp b/libs/gui/tests/Surface_test.cpp
 deleted file mode 100644
-index ca43c68f9..000000000
+index ca43c68f92..0000000000
 --- a/libs/gui/tests/Surface_test.cpp
 +++ /dev/null
 @@ -1,1587 +0,0 @@
@@ -9547,7 +9547,7 @@ index ca43c68f9..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/TextureRenderer.cpp b/libs/gui/tests/TextureRenderer.cpp
 deleted file mode 100644
-index e822e6eaf..000000000
+index e822e6eaf8..0000000000
 --- a/libs/gui/tests/TextureRenderer.cpp
 +++ /dev/null
 @@ -1,117 +0,0 @@
@@ -9670,7 +9670,7 @@ index e822e6eaf..000000000
 -} // namespace android
 diff --git a/libs/gui/tests/TextureRenderer.h b/libs/gui/tests/TextureRenderer.h
 deleted file mode 100644
-index 37b2b47b4..000000000
+index 37b2b47b41..0000000000
 --- a/libs/gui/tests/TextureRenderer.h
 +++ /dev/null
 @@ -1,46 +0,0 @@
@@ -9721,7 +9721,7 @@ index 37b2b47b4..000000000
 -
 -#endif
 diff --git a/services/surfaceflinger/Android.bp b/services/surfaceflinger/Android.bp
-index 4775e4ef5..cc9310554 100644
+index 4775e4ef54..cc93105543 100644
 --- a/services/surfaceflinger/Android.bp
 +++ b/services/surfaceflinger/Android.bp
 @@ -2,5 +2,3 @@ cc_library_static {
@@ -9732,7 +9732,7 @@ index 4775e4ef5..cc9310554 100644
 -subdirs = ["tests/fakehwc"]
 \ No newline at end of file
 diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
-index 4c9701588..9e9b3b28f 100644
+index 4c9701588b..9e9b3b28f5 100644
 --- a/services/surfaceflinger/Android.mk
 +++ b/services/surfaceflinger/Android.mk
 @@ -69,13 +69,13 @@ LOCAL_STATIC_LIBRARIES := \
@@ -9752,7 +9752,7 @@ index 4c9701588..9e9b3b28f 100644
      liblog \
      libdl \
 diff --git a/services/surfaceflinger/DispSync.cpp b/services/surfaceflinger/DispSync.cpp
-index bef12ea50..abf4aaee5 100644
+index bef12ea50f..abf4aaee58 100644
 --- a/services/surfaceflinger/DispSync.cpp
 +++ b/services/surfaceflinger/DispSync.cpp
 @@ -25,6 +25,7 @@
@@ -9781,7 +9781,7 @@ index bef12ea50..abf4aaee5 100644
      reset();
      beginResync();
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-index a91d1df71..edec08764 100755
+index a91d1df714..edec087645 100755
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -407,14 +407,6 @@ const Vector< sp<Layer> >& DisplayDevice::getVisibleLayersSortedByZ() const {
@@ -9800,7 +9800,7 @@ index a91d1df71..edec08764 100755
      Region dirty;
      if (repaintEverything) {
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index 82a72352a..c054feb1d 100644
+index 82a72352a5..c054feb1d8 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
 @@ -124,8 +124,6 @@ public:
@@ -9822,7 +9822,7 @@ index 82a72352a..c054feb1d 100644
      /*
       * Transaction state
 diff --git a/services/surfaceflinger/EventThread.cpp b/services/surfaceflinger/EventThread.cpp
-index f647742e2..1d5149d08 100644
+index f647742e2c..1d5149d08b 100644
 --- a/services/surfaceflinger/EventThread.cpp
 +++ b/services/surfaceflinger/EventThread.cpp
 @@ -20,6 +20,7 @@
@@ -9865,7 +9865,7 @@ index f647742e2..1d5149d08 100644
          }
  
 diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
-index e92565fd9..038ece2e0 100755
+index e92565fd9c..038ece2e05 100755
 --- a/services/surfaceflinger/Layer.cpp
 +++ b/services/surfaceflinger/Layer.cpp
 @@ -40,7 +40,6 @@
@@ -9991,7 +9991,7 @@ index e92565fd9..038ece2e0 100755
  
  #ifdef USE_HWC2
 diff --git a/services/surfaceflinger/Layer.h b/services/surfaceflinger/Layer.h
-index f7b82e4fb..c34d8a093 100644
+index f7b82e4fb7..c34d8a0930 100644
 --- a/services/surfaceflinger/Layer.h
 +++ b/services/surfaceflinger/Layer.h
 @@ -60,7 +60,6 @@ class Colorizer;
@@ -10033,7 +10033,7 @@ index f7b82e4fb..c34d8a093 100644
  
      // -----------------------------------------------------------------------
 diff --git a/services/surfaceflinger/MessageQueue.cpp b/services/surfaceflinger/MessageQueue.cpp
-index bca343079..0b1199c2d 100644
+index bca3430794..0b1199c2d0 100644
 --- a/services/surfaceflinger/MessageQueue.cpp
 +++ b/services/surfaceflinger/MessageQueue.cpp
 @@ -91,6 +91,14 @@ void MessageQueue::init(const sp<SurfaceFlinger>& flinger)
@@ -10052,7 +10052,7 @@ index bca343079..0b1199c2d 100644
      mEvents = eventThread->createEventConnection();
      mEvents->stealReceiveChannel(&mEventTube);
 diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
-index 224f1fdbc..a548ffe3b 100644
+index 224f1fdbc9..a548ffe3b3 100644
 --- a/services/surfaceflinger/SurfaceFlinger.h
 +++ b/services/surfaceflinger/SurfaceFlinger.h
 @@ -313,7 +313,6 @@ private:
@@ -10152,7 +10152,7 @@ index 224f1fdbc..a548ffe3b 100644
  }; // namespace android
  
 diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
-index 2aaba00e1..647eb4bc5 100644
+index 2aaba00e16..647eb4bc58 100644
 --- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
 @@ -28,6 +28,7 @@
@@ -10224,7 +10224,7 @@ index 2aaba00e1..647eb4bc5 100644
  
      /*
 diff --git a/services/surfaceflinger/Transform.cpp b/services/surfaceflinger/Transform.cpp
-index 073accaba..6be9ae2c5 100644
+index 073accaba9..6be9ae2c5f 100644
 --- a/services/surfaceflinger/Transform.cpp
 +++ b/services/surfaceflinger/Transform.cpp
 @@ -224,27 +224,6 @@ Rect Transform::transform(const Rect& bounds, bool roundOutwards) const
@@ -10256,7 +10256,7 @@ index 073accaba..6be9ae2c5 100644
  {
      Region out;
 diff --git a/services/surfaceflinger/Transform.h b/services/surfaceflinger/Transform.h
-index 2b4788779..6640a1383 100644
+index 2b4788779c..6640a13839 100644
 --- a/services/surfaceflinger/Transform.h
 +++ b/services/surfaceflinger/Transform.h
 @@ -80,7 +80,6 @@ public:
@@ -10268,7 +10268,7 @@ index 2b4788779..6640a1383 100644
              // assumes the last row is < 0 , 0 , 1 >
              vec2 transform(const vec2& v) const;
 diff --git a/services/surfaceflinger/main_surfaceflinger.cpp b/services/surfaceflinger/main_surfaceflinger.cpp
-index e50f3ce1f..36f0b2017 100644
+index e50f3ce1f9..36f0b20173 100644
 --- a/services/surfaceflinger/main_surfaceflinger.cpp
 +++ b/services/surfaceflinger/main_surfaceflinger.cpp
 @@ -111,11 +111,13 @@ int main(int, char**) {
@@ -10287,7 +10287,7 @@ index e50f3ce1f..36f0b2017 100644
      flinger->run();
 diff --git a/services/surfaceflinger/tests/Android.mk b/services/surfaceflinger/tests/Android.mk
 deleted file mode 100644
-index 43e22a0bd..000000000
+index 43e22a0bd6..0000000000
 --- a/services/surfaceflinger/tests/Android.mk
 +++ /dev/null
 @@ -1,44 +0,0 @@
@@ -10337,7 +10337,7 @@ index 43e22a0bd..000000000
 -endif
 diff --git a/services/surfaceflinger/tests/AndroidTest.xml b/services/surfaceflinger/tests/AndroidTest.xml
 deleted file mode 100644
-index 8315037b9..000000000
+index 8315037b94..0000000000
 --- a/services/surfaceflinger/tests/AndroidTest.xml
 +++ /dev/null
 @@ -1,26 +0,0 @@
@@ -10369,7 +10369,7 @@ index 8315037b9..000000000
 -</configuration>
 diff --git a/services/surfaceflinger/tests/Stress_test.cpp b/services/surfaceflinger/tests/Stress_test.cpp
 deleted file mode 100644
-index 33dd2f55d..000000000
+index 33dd2f55d3..0000000000
 --- a/services/surfaceflinger/tests/Stress_test.cpp
 +++ /dev/null
 @@ -1,50 +0,0 @@
@@ -10425,7 +10425,7 @@ index 33dd2f55d..000000000
 -}
 diff --git a/services/surfaceflinger/tests/SurfaceFlinger_test.filter b/services/surfaceflinger/tests/SurfaceFlinger_test.filter
 deleted file mode 100644
-index 6be708ad1..000000000
+index 6be708ad1c..0000000000
 --- a/services/surfaceflinger/tests/SurfaceFlinger_test.filter
 +++ /dev/null
 @@ -1,5 +0,0 @@
@@ -10437,7 +10437,7 @@ index 6be708ad1..000000000
 \ No newline at end of file
 diff --git a/services/surfaceflinger/tests/SurfaceInterceptor_test.cpp b/services/surfaceflinger/tests/SurfaceInterceptor_test.cpp
 deleted file mode 100644
-index 0cc763c74..000000000
+index 0cc763c740..0000000000
 --- a/services/surfaceflinger/tests/SurfaceInterceptor_test.cpp
 +++ /dev/null
 @@ -1,864 +0,0 @@
@@ -11307,7 +11307,7 @@ index 0cc763c74..000000000
 -}
 diff --git a/services/surfaceflinger/tests/Transaction_test.cpp b/services/surfaceflinger/tests/Transaction_test.cpp
 deleted file mode 100644
-index 4ce14f8d3..000000000
+index 4ce14f8d3a..0000000000
 --- a/services/surfaceflinger/tests/Transaction_test.cpp
 +++ /dev/null
 @@ -1,1126 +0,0 @@
@@ -12439,7 +12439,7 @@ index 4ce14f8d3..000000000
 -}
 diff --git a/services/surfaceflinger/tests/fakehwc/Android.bp b/services/surfaceflinger/tests/fakehwc/Android.bp
 deleted file mode 100644
-index f4a9b9929..000000000
+index f4a9b99298..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/Android.bp
 +++ /dev/null
 @@ -1,34 +0,0 @@
@@ -12480,7 +12480,7 @@ index f4a9b9929..000000000
 \ No newline at end of file
 diff --git a/services/surfaceflinger/tests/fakehwc/FakeComposerClient.cpp b/services/surfaceflinger/tests/fakehwc/FakeComposerClient.cpp
 deleted file mode 100644
-index 07b8cc0b0..000000000
+index 07b8cc0b0d..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/FakeComposerClient.cpp
 +++ /dev/null
 @@ -1,617 +0,0 @@
@@ -13103,7 +13103,7 @@ index 07b8cc0b0..000000000
 -}
 diff --git a/services/surfaceflinger/tests/fakehwc/FakeComposerClient.h b/services/surfaceflinger/tests/fakehwc/FakeComposerClient.h
 deleted file mode 100644
-index dd384c082..000000000
+index dd384c0829..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/FakeComposerClient.h
 +++ /dev/null
 @@ -1,148 +0,0 @@
@@ -13257,7 +13257,7 @@ index dd384c082..000000000
 -} // namespace sftest
 diff --git a/services/surfaceflinger/tests/fakehwc/FakeComposerService.cpp b/services/surfaceflinger/tests/fakehwc/FakeComposerService.cpp
 deleted file mode 100644
-index c41160458..000000000
+index c411604587..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/FakeComposerService.cpp
 +++ /dev/null
 @@ -1,54 +0,0 @@
@@ -13317,7 +13317,7 @@ index c41160458..000000000
 -} // namespace sftest
 diff --git a/services/surfaceflinger/tests/fakehwc/FakeComposerService.h b/services/surfaceflinger/tests/fakehwc/FakeComposerService.h
 deleted file mode 100644
-index 520408496..000000000
+index 520408496f..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/FakeComposerService.h
 +++ /dev/null
 @@ -1,40 +0,0 @@
@@ -13363,7 +13363,7 @@ index 520408496..000000000
 -} // namespace sftest
 diff --git a/services/surfaceflinger/tests/fakehwc/FakeComposerUtils.cpp b/services/surfaceflinger/tests/fakehwc/FakeComposerUtils.cpp
 deleted file mode 100644
-index 51956ec97..000000000
+index 51956ec970..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/FakeComposerUtils.cpp
 +++ /dev/null
 @@ -1,183 +0,0 @@
@@ -13552,7 +13552,7 @@ index 51956ec97..000000000
 -} // namespace sftest
 diff --git a/services/surfaceflinger/tests/fakehwc/FakeComposerUtils.h b/services/surfaceflinger/tests/fakehwc/FakeComposerUtils.h
 deleted file mode 100644
-index 74dc0e51b..000000000
+index 74dc0e51bb..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/FakeComposerUtils.h
 +++ /dev/null
 @@ -1,119 +0,0 @@
@@ -13677,7 +13677,7 @@ index 74dc0e51b..000000000
 -} // namespace sftest
 diff --git a/services/surfaceflinger/tests/fakehwc/RenderState.h b/services/surfaceflinger/tests/fakehwc/RenderState.h
 deleted file mode 100644
-index 0059289d4..000000000
+index 0059289d4f..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/RenderState.h
 +++ /dev/null
 @@ -1,44 +0,0 @@
@@ -13727,7 +13727,7 @@ index 0059289d4..000000000
 -} // namespace sftest
 diff --git a/services/surfaceflinger/tests/fakehwc/SFFakeHwc_test.cpp b/services/surfaceflinger/tests/fakehwc/SFFakeHwc_test.cpp
 deleted file mode 100644
-index 68fefea13..000000000
+index 68fefea135..0000000000
 --- a/services/surfaceflinger/tests/fakehwc/SFFakeHwc_test.cpp
 +++ /dev/null
 @@ -1,1306 +0,0 @@
@@ -15039,7 +15039,7 @@ index 68fefea13..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Android.mk b/services/surfaceflinger/tests/hwc2/Android.mk
 deleted file mode 100644
-index 203ced5c3..000000000
+index 203ced5c3a..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Android.mk
 +++ /dev/null
 @@ -1,54 +0,0 @@
@@ -15099,7 +15099,7 @@ index 203ced5c3..000000000
 -include $(BUILD_NATIVE_TEST)
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2Test.cpp b/services/surfaceflinger/tests/hwc2/Hwc2Test.cpp
 deleted file mode 100644
-index 4055527b1..000000000
+index 4055527b13..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2Test.cpp
 +++ /dev/null
 @@ -1,4559 +0,0 @@
@@ -19664,7 +19664,7 @@ index 4055527b1..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestBuffer.cpp b/services/surfaceflinger/tests/hwc2/Hwc2TestBuffer.cpp
 deleted file mode 100644
-index 1d3a1d38a..000000000
+index 1d3a1d38ac..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestBuffer.cpp
 +++ /dev/null
 @@ -1,695 +0,0 @@
@@ -20365,7 +20365,7 @@ index 1d3a1d38a..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestBuffer.h b/services/surfaceflinger/tests/hwc2/Hwc2TestBuffer.h
 deleted file mode 100644
-index b2b3a6696..000000000
+index b2b3a6696a..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestBuffer.h
 +++ /dev/null
 @@ -1,74 +0,0 @@
@@ -20445,7 +20445,7 @@ index b2b3a6696..000000000
 -#endif /* ifndef _HWC2_TEST_BUFFER_H */
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestClientTarget.cpp b/services/surfaceflinger/tests/hwc2/Hwc2TestClientTarget.cpp
 deleted file mode 100644
-index 69254921d..000000000
+index 69254921d4..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestClientTarget.cpp
 +++ /dev/null
 @@ -1,102 +0,0 @@
@@ -20553,7 +20553,7 @@ index 69254921d..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestClientTarget.h b/services/surfaceflinger/tests/hwc2/Hwc2TestClientTarget.h
 deleted file mode 100644
-index 3b47978be..000000000
+index 3b47978bef..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestClientTarget.h
 +++ /dev/null
 @@ -1,69 +0,0 @@
@@ -20628,7 +20628,7 @@ index 3b47978be..000000000
 -#endif /* ifndef _HWC2_TEST_CLIENT_TARGET_H */
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestLayer.cpp b/services/surfaceflinger/tests/hwc2/Hwc2TestLayer.cpp
 deleted file mode 100644
-index 937fce28f..000000000
+index 937fce28fb..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestLayer.cpp
 +++ /dev/null
 @@ -1,249 +0,0 @@
@@ -20883,7 +20883,7 @@ index 937fce28f..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestLayer.h b/services/surfaceflinger/tests/hwc2/Hwc2TestLayer.h
 deleted file mode 100644
-index 0e7dd228f..000000000
+index 0e7dd228fb..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestLayer.h
 +++ /dev/null
 @@ -1,103 +0,0 @@
@@ -20992,7 +20992,7 @@ index 0e7dd228f..000000000
 -#endif /* ifndef _HWC2_TEST_LAYER_H */
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestLayers.cpp b/services/surfaceflinger/tests/hwc2/Hwc2TestLayers.cpp
 deleted file mode 100644
-index 495ef7960..000000000
+index 495ef79609..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestLayers.cpp
 +++ /dev/null
 @@ -1,281 +0,0 @@
@@ -21279,7 +21279,7 @@ index 495ef7960..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestLayers.h b/services/surfaceflinger/tests/hwc2/Hwc2TestLayers.h
 deleted file mode 100644
-index d95a91f48..000000000
+index d95a91f485..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestLayers.h
 +++ /dev/null
 @@ -1,86 +0,0 @@
@@ -21371,7 +21371,7 @@ index d95a91f48..000000000
 -#endif /* ifndef _HWC2_TEST_LAYERS_H */
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestProperties.cpp b/services/surfaceflinger/tests/hwc2/Hwc2TestProperties.cpp
 deleted file mode 100644
-index b5522de3a..000000000
+index b5522de3a5..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestProperties.cpp
 +++ /dev/null
 @@ -1,782 +0,0 @@
@@ -22159,7 +22159,7 @@ index b5522de3a..000000000
 -}};
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestProperties.h b/services/surfaceflinger/tests/hwc2/Hwc2TestProperties.h
 deleted file mode 100644
-index c2029aba0..000000000
+index c2029aba04..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestProperties.h
 +++ /dev/null
 @@ -1,384 +0,0 @@
@@ -22549,7 +22549,7 @@ index c2029aba0..000000000
 -#endif /* ifndef _HWC2_TEST_PROPERTIES_H */
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestVirtualDisplay.cpp b/services/surfaceflinger/tests/hwc2/Hwc2TestVirtualDisplay.cpp
 deleted file mode 100644
-index d0fbc0b5a..000000000
+index d0fbc0b5ad..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestVirtualDisplay.cpp
 +++ /dev/null
 @@ -1,61 +0,0 @@
@@ -22616,7 +22616,7 @@ index d0fbc0b5a..000000000
 -}
 diff --git a/services/surfaceflinger/tests/hwc2/Hwc2TestVirtualDisplay.h b/services/surfaceflinger/tests/hwc2/Hwc2TestVirtualDisplay.h
 deleted file mode 100644
-index 09420ef62..000000000
+index 09420ef629..0000000000
 --- a/services/surfaceflinger/tests/hwc2/Hwc2TestVirtualDisplay.h
 +++ /dev/null
 @@ -1,49 +0,0 @@
@@ -22671,7 +22671,7 @@ index 09420ef62..000000000
 -#endif /* ifndef _HWC2_TEST_VIRTUAL_DISPLAY_H */
 diff --git a/services/surfaceflinger/tests/vsync/Android.mk b/services/surfaceflinger/tests/vsync/Android.mk
 deleted file mode 100644
-index 8e41617f7..000000000
+index 8e41617f7b..0000000000
 --- a/services/surfaceflinger/tests/vsync/Android.mk
 +++ /dev/null
 @@ -1,20 +0,0 @@
@@ -22697,7 +22697,7 @@ index 8e41617f7..000000000
 -include $(BUILD_EXECUTABLE)
 diff --git a/services/surfaceflinger/tests/vsync/vsync.cpp b/services/surfaceflinger/tests/vsync/vsync.cpp
 deleted file mode 100644
-index a1b45e6ad..000000000
+index a1b45e6adb..0000000000
 --- a/services/surfaceflinger/tests/vsync/vsync.cpp
 +++ /dev/null
 @@ -1,84 +0,0 @@
@@ -22787,7 +22787,7 @@ index a1b45e6ad..000000000
 -}
 diff --git a/services/surfaceflinger/tests/waitforvsync/Android.mk b/services/surfaceflinger/tests/waitforvsync/Android.mk
 deleted file mode 100644
-index 932d2be13..000000000
+index 932d2be133..0000000000
 --- a/services/surfaceflinger/tests/waitforvsync/Android.mk
 +++ /dev/null
 @@ -1,16 +0,0 @@
@@ -22809,7 +22809,7 @@ index 932d2be13..000000000
 -include $(BUILD_EXECUTABLE)
 diff --git a/services/surfaceflinger/tests/waitforvsync/waitforvsync.cpp b/services/surfaceflinger/tests/waitforvsync/waitforvsync.cpp
 deleted file mode 100644
-index 65eaae58b..000000000
+index 65eaae58b7..0000000000
 --- a/services/surfaceflinger/tests/waitforvsync/waitforvsync.cpp
 +++ /dev/null
 @@ -1,46 +0,0 @@

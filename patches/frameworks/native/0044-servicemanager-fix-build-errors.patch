@@ -1,0 +1,27 @@
+From 556418883e1a25b8cbe4eeb7f6650cf4059e0d27 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 05:26:23 +0300
+Subject: [PATCH 44/45] servicemanager: fix build errors
+
+Change-Id: I5e38a23672ec92db03198606cf6ae0e95d12c0eb
+---
+ cmds/servicemanager/service_manager.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/cmds/servicemanager/service_manager.c b/cmds/servicemanager/service_manager.c
+index c4b1768730..0b4ccb6b77 100644
+--- a/cmds/servicemanager/service_manager.c
++++ b/cmds/servicemanager/service_manager.c
+@@ -13,6 +13,9 @@
+ 
+ #include "binder.h"
+ 
++#pragma GCC diagnostic ignored "-Wunused-parameter"
++#pragma GCC diagnostic ignored "-Wunused-function"
++
+ #ifdef VENDORSERVICEMANAGER
+ #define LOG_TAG "VendorServiceManager"
+ #else
+-- 
+2.17.0
+

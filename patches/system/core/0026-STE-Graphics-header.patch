@@ -1,7 +1,7 @@
 From c2d08ee31371eaecdf0b80880e68e8ef85d9a03b Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 26/42] STE Graphics header
+Subject: [PATCH 26/44] STE Graphics header
 
 ---
  libsystem/include/system/graphics-base.h | 18 ++++++++++++++++++

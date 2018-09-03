@@ -1,7 +1,7 @@
 From c1be7f0423c919f370e0b3ef1b8d8c173467aeb2 Mon Sep 17 00:00:00 2001
 From: Ricardo Cerqueira <ricardo@cyngn.com>
 Date: Wed, 26 Nov 2014 21:49:52 +0000
-Subject: [PATCH 16/42] Update permissions to the superuser binary
+Subject: [PATCH 16/44] Update permissions to the superuser binary
 
 Change-Id: Ia382c74854cfbe625653b8b6b016b37f93132658
 ---

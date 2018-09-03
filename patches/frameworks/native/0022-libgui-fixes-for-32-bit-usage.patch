@@ -1,7 +1,7 @@
 From 85d733df10d19054f9e6e31e8147171b837975d7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 30 Oct 2017 18:10:11 -0700
-Subject: [PATCH 22/24] libgui: fixes for 32-bit usage
+Subject: [PATCH 22/45] libgui: fixes for 32-bit usage
 
 Change-Id: Ie82477872b4caeceb7326df446a3e343b9c5278d
 ---
@@ -32,7 +32,7 @@ Change-Id: Ie82477872b4caeceb7326df446a3e343b9c5278d
  24 files changed, 277 insertions(+), 140 deletions(-)
 
 diff --git a/libs/gui/BufferQueueConsumer.cpp b/libs/gui/BufferQueueConsumer.cpp
-index 31eb29b8f..6a4ade409 100644
+index 31eb29b8f6..6a4ade4093 100644
 --- a/libs/gui/BufferQueueConsumer.cpp
 +++ b/libs/gui/BufferQueueConsumer.cpp
 @@ -704,9 +704,9 @@ status_t BufferQueueConsumer::setDefaultBufferDataSpace(
@@ -48,7 +48,7 @@ index 31eb29b8f..6a4ade409 100644
      mCore->mConsumerUsageBits = usage;
      return NO_ERROR;
 diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
-index 1b33b1adc..f87fed10c 100644
+index 1b33b1adc5..f87fed10c8 100644
 --- a/libs/gui/BufferQueueProducer.cpp
 +++ b/libs/gui/BufferQueueProducer.cpp
 @@ -349,7 +349,7 @@ status_t BufferQueueProducer::waitForFreeSlotThenRelock(FreeSlotCaller caller,
@@ -153,7 +153,7 @@ index 1b33b1adc..f87fed10c 100644
 +
  } // namespace android
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index 5099e5e8d..0e8d430e8 100644
+index 5099e5e8d0..0e8d430e8d 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
 @@ -21,8 +21,6 @@
@@ -175,7 +175,7 @@ index 5099e5e8d..0e8d430e8 100644
              buffer->getUsage(), buffer->getPixelFormat());
          return UNKNOWN_ERROR;
 diff --git a/libs/gui/IGraphicBufferConsumer.cpp b/libs/gui/IGraphicBufferConsumer.cpp
-index c705d3926..a573bee65 100644
+index c705d3926d..a573bee651 100644
 --- a/libs/gui/IGraphicBufferConsumer.cpp
 +++ b/libs/gui/IGraphicBufferConsumer.cpp
 @@ -132,7 +132,7 @@ public:
@@ -188,7 +188,7 @@ index c705d3926..a573bee65 100644
          return callRemote<Signature>(Tag::SET_CONSUMER_USAGE_BITS, usage);
      }
 diff --git a/libs/gui/IGraphicBufferProducer.cpp b/libs/gui/IGraphicBufferProducer.cpp
-index fc2d86b6f..1e2fd85c9 100644
+index fc2d86b6fe..1e2fd85c92 100644
 --- a/libs/gui/IGraphicBufferProducer.cpp
 +++ b/libs/gui/IGraphicBufferProducer.cpp
 @@ -62,7 +62,8 @@ enum {
@@ -330,7 +330,7 @@ index fc2d86b6f..1e2fd85c9 100644
      return BBinder::onTransact(code, data, reply, flags);
  }
 diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
-index 0ef239c32..7a0ebcf40 100644
+index 0ef239c320..7a0ebcf40b 100644
 --- a/libs/gui/Surface.cpp
 +++ b/libs/gui/Surface.cpp
 @@ -20,8 +20,6 @@
@@ -433,7 +433,7 @@ index 0ef239c32..7a0ebcf40 100644
      Mutex::Autolock lock(mMutex);
      return mLastDequeueStartTime;
 diff --git a/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp b/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
-index 4a023a642..a3b9c0ca8 100644
+index 4a023a6425..a3b9c0ca8d 100644
 --- a/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
 +++ b/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
 @@ -21,6 +21,8 @@
@@ -503,7 +503,7 @@ index 4a023a642..a3b9c0ca8 100644
  }  // namespace V1_0
  }  // namespace bufferqueue
 diff --git a/libs/gui/include/gui/BufferQueueConsumer.h b/libs/gui/include/gui/BufferQueueConsumer.h
-index d10812077..f194bdf75 100644
+index d108120777..f194bdf758 100644
 --- a/libs/gui/include/gui/BufferQueueConsumer.h
 +++ b/libs/gui/include/gui/BufferQueueConsumer.h
 @@ -121,12 +121,13 @@ public:
@@ -523,7 +523,7 @@ index d10812077..f194bdf75 100644
      // setConsumerIsProtected will turn on an internal bit that indicates whether
      // the consumer can handle protected gralloc buffers (i.e. with
 diff --git a/libs/gui/include/gui/BufferQueueCore.h b/libs/gui/include/gui/BufferQueueCore.h
-index 537c95774..dd8b992ce 100644
+index 537c957746..dd8b992ce1 100644
 --- a/libs/gui/include/gui/BufferQueueCore.h
 +++ b/libs/gui/include/gui/BufferQueueCore.h
 @@ -170,7 +170,7 @@ private:
@@ -536,7 +536,7 @@ index 537c95774..dd8b992ce 100644
      // mConsumerIsProtected indicates the consumer is ready to handle protected
      // buffer.
 diff --git a/libs/gui/include/gui/BufferQueueProducer.h b/libs/gui/include/gui/BufferQueueProducer.h
-index d6f215e2c..e0de42430 100644
+index d6f215e2c6..e0de424303 100644
 --- a/libs/gui/include/gui/BufferQueueProducer.h
 +++ b/libs/gui/include/gui/BufferQueueProducer.h
 @@ -81,7 +81,7 @@ public:
@@ -568,7 +568,7 @@ index d6f215e2c..e0de42430 100644
      // This is required by the IBinder::DeathRecipient interface
      virtual void binderDied(const wp<IBinder>& who);
 diff --git a/libs/gui/include/gui/IGraphicBufferConsumer.h b/libs/gui/include/gui/IGraphicBufferConsumer.h
-index 9fb758091..3d069dfe4 100644
+index 9fb7580912..3d069dfe48 100644
 --- a/libs/gui/include/gui/IGraphicBufferConsumer.h
 +++ b/libs/gui/include/gui/IGraphicBufferConsumer.h
 @@ -241,7 +241,7 @@ public:
@@ -581,7 +581,7 @@ index 9fb758091..3d069dfe4 100644
      // setConsumerIsProtected will turn on an internal bit that indicates whether
      // the consumer can handle protected gralloc buffers (i.e. with
 diff --git a/libs/gui/include/gui/IGraphicBufferProducer.h b/libs/gui/include/gui/IGraphicBufferProducer.h
-index f231f951e..e49fec142 100644
+index f231f951e7..e49fec1429 100644
 --- a/libs/gui/include/gui/IGraphicBufferProducer.h
 +++ b/libs/gui/include/gui/IGraphicBufferProducer.h
 @@ -195,7 +195,7 @@ public:
@@ -616,7 +616,7 @@ index f231f951e..e49fec142 100644
  
  // ----------------------------------------------------------------------------
 diff --git a/libs/gui/include/gui/Surface.h b/libs/gui/include/gui/Surface.h
-index 60eac0cf9..4439d1ccd 100644
+index 60eac0cf92..4439d1ccdb 100644
 --- a/libs/gui/include/gui/Surface.h
 +++ b/libs/gui/include/gui/Surface.h
 @@ -159,6 +159,7 @@ public:
@@ -664,7 +664,7 @@ index 60eac0cf9..4439d1ccd 100644
      // mTimestamp is the timestamp that will be used for the next buffer queue
      // operation. It defaults to NATIVE_WINDOW_TIMESTAMP_AUTO, which means that
 diff --git a/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h b/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
-index c1c3ae730..be6e11ffc 100644
+index c1c3ae730d..be6e11ffcb 100644
 --- a/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
 +++ b/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
 @@ -65,7 +65,7 @@ struct H2BGraphicBufferProducer : public ::android::H2BConverter<
@@ -694,7 +694,7 @@ index c1c3ae730..be6e11ffc 100644
  
  }  // namespace utils
 diff --git a/libs/nativebase/include/nativebase/nativebase.h b/libs/nativebase/include/nativebase/nativebase.h
-index 66f9a6868..6bf5c7658 100644
+index 66f9a68681..6bf5c76585 100644
 --- a/libs/nativebase/include/nativebase/nativebase.h
 +++ b/libs/nativebase/include/nativebase/nativebase.h
 @@ -87,18 +87,14 @@ typedef struct ANativeWindowBuffer
@@ -719,7 +719,7 @@ index 66f9a6868..6bf5c7658 100644
  
  typedef struct ANativeWindowBuffer ANativeWindowBuffer;
 diff --git a/libs/nativewindow/ANativeWindow.cpp b/libs/nativewindow/ANativeWindow.cpp
-index c6994c30b..9224df604 100644
+index c6994c30b4..9224df604a 100644
 --- a/libs/nativewindow/ANativeWindow.cpp
 +++ b/libs/nativewindow/ANativeWindow.cpp
 @@ -190,7 +190,8 @@ int ANativeWindow_cancelBuffer(ANativeWindow* window, ANativeWindowBuffer* buffe
@@ -733,7 +733,7 @@ index c6994c30b..9224df604 100644
  
  int ANativeWindow_setBufferCount(ANativeWindow* window, size_t bufferCount) {
 diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
-index c080038fa..40a951559 100644
+index c080038faa..40a951559a 100644
 --- a/libs/nativewindow/include/system/window.h
 +++ b/libs/nativewindow/include/system/window.h
 @@ -115,7 +115,7 @@ enum {
@@ -911,7 +911,7 @@ index c080038fa..40a951559 100644
  
  __END_DECLS
 diff --git a/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp b/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
-index 1a6afb1e5..04d879f54 100644
+index 1a6afb1e55..04d879f547 100644
 --- a/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
 +++ b/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
 @@ -131,9 +131,9 @@ status_t BufferHubQueueProducer::setAsyncMode(bool async) {
@@ -951,7 +951,7 @@ index 1a6afb1e5..04d879f54 100644
                                                  uint32_t layer_count,
                                                  PixelFormat format,
 diff --git a/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h b/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
-index 5c8761da1..9251910b9 100644
+index 5c8761da1b..9251910b9f 100644
 --- a/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
 +++ b/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
 @@ -42,7 +42,7 @@ class BufferHubQueueProducer : public BnGraphicBufferProducer {
@@ -983,7 +983,7 @@ index 5c8761da1..9251910b9 100644
    using LocalHandle = pdx::LocalHandle;
  
 diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
-index b4f9ecd2e..3dd8c91b5 100644
+index b4f9ecd2e8..3dd8c91b55 100644
 --- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
 +++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
 @@ -16,9 +16,6 @@
@@ -1044,7 +1044,7 @@ index b4f9ecd2e..3dd8c91b5 100644
          QueueBufferOutput&& qbo) {
      mQueueBufferOutput = std::move(qbo);
 diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
-index ac200caea..591b96e14 100644
+index ac200caea5..591b96e14a 100644
 --- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
 +++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
 @@ -105,7 +105,7 @@ private:
@@ -1090,7 +1090,7 @@ index ac200caea..591b96e14 100644
      // Since we present a single producer interface to the GLES driver, but
      // are internally muxing between the sink and scratch producers, we have
 diff --git a/services/surfaceflinger/MonitoredProducer.cpp b/services/surfaceflinger/MonitoredProducer.cpp
-index d1038202d..97d0123f5 100644
+index d1038202d4..97d0123f57 100644
 --- a/services/surfaceflinger/MonitoredProducer.cpp
 +++ b/services/surfaceflinger/MonitoredProducer.cpp
 @@ -69,7 +69,7 @@ status_t MonitoredProducer::setAsyncMode(bool async) {
@@ -1123,7 +1123,7 @@ index d1038202d..97d0123f5 100644
      return this;
  }
 diff --git a/services/surfaceflinger/MonitoredProducer.h b/services/surfaceflinger/MonitoredProducer.h
-index ff7f0f0e8..c09c0ffa9 100644
+index ff7f0f0e8c..c09c0ffa90 100644
 --- a/services/surfaceflinger/MonitoredProducer.h
 +++ b/services/surfaceflinger/MonitoredProducer.h
 @@ -40,7 +40,7 @@ public:
@@ -1153,7 +1153,7 @@ index ff7f0f0e8..c09c0ffa9 100644
      // The Layer which created this producer, and on which queued Buffer's will be displayed.
      sp<Layer> getLayer() const;
 diff --git a/vulkan/libvulkan/swapchain.cpp b/vulkan/libvulkan/swapchain.cpp
-index 03e6ee087..b06a9e5a3 100644
+index 03e6ee0870..b06a9e5a37 100644
 --- a/vulkan/libvulkan/swapchain.cpp
 +++ b/vulkan/libvulkan/swapchain.cpp
 @@ -1091,14 +1091,8 @@ VkResult CreateSwapchainKHR(VkDevice device,

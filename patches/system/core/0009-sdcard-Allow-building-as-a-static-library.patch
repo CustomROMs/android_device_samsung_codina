@@ -1,7 +1,7 @@
 From 31662ecb0fd83962e1d6991fd20e5232fefbbf6c Mon Sep 17 00:00:00 2001
 From: Steve Kondik <shade@chemlab.org>
 Date: Fri, 23 Aug 2013 21:12:12 -0700
-Subject: [PATCH 09/42] sdcard: Allow building as a static library
+Subject: [PATCH 09/44] sdcard: Allow building as a static library
 
  * Split main() out in order to allow linking with a multi-call
    executable such as recovery.

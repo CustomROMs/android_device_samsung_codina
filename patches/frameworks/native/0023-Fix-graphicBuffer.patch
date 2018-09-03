@@ -1,14 +1,14 @@
 From f77892b9d8827a1562baca0f5cbc902e83021841 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 23/24] Fix graphicBuffer
+Subject: [PATCH 23/45] Fix graphicBuffer
 
 ---
  libs/gui/BufferQueueProducer.cpp | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
-index f87fed10c..db5d19ad8 100644
+index f87fed10c8..db5d19ad81 100644
 --- a/libs/gui/BufferQueueProducer.cpp
 +++ b/libs/gui/BufferQueueProducer.cpp
 @@ -513,7 +513,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou

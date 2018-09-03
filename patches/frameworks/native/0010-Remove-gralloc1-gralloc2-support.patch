@@ -1,7 +1,7 @@
 From 2cf2dfee1b23711e0c51bb884fe371aa95756cd2 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 10/24] Remove gralloc1/gralloc2 support
+Subject: [PATCH 10/45] Remove gralloc1/gralloc2 support
 
 Change-Id: I9e56263c35f87e95a5b9ac12b4a683a2744d8b68
 ---
@@ -17,7 +17,7 @@ Change-Id: I9e56263c35f87e95a5b9ac12b4a683a2744d8b68
  9 files changed, 194 insertions(+), 443 deletions(-)
 
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index 59e78cc6b..fe117e6d7 100644
+index 59e78cc6bf..fe117e6d7a 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
 @@ -350,8 +350,7 @@ sp<GraphicBuffer> GLConsumer::getDebugTexImageBuffer() {
@@ -31,7 +31,7 @@ index 59e78cc6b..fe117e6d7 100644
          buffer->lock(GraphicBuffer::USAGE_SW_WRITE_RARELY, reinterpret_cast<void**>(&bits));
          uint32_t stride = buffer->getStride();
 diff --git a/libs/nativewindow/AHardwareBuffer.cpp b/libs/nativewindow/AHardwareBuffer.cpp
-index 203816284..cf4d9d9ac 100644
+index 2038162841..cf4d9d9ac7 100644
 --- a/libs/nativewindow/AHardwareBuffer.cpp
 +++ b/libs/nativewindow/AHardwareBuffer.cpp
 @@ -127,7 +127,7 @@ int AHardwareBuffer_lock(AHardwareBuffer* buffer, uint64_t usage,
@@ -44,7 +44,7 @@ index 203816284..cf4d9d9ac 100644
  
  int AHardwareBuffer_unlock(AHardwareBuffer* buffer, int32_t* fence) {
 diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
-index 17cd19aca..86df887a4 100644
+index 17cd19acac..86df887a4e 100644
 --- a/libs/ui/Android.bp
 +++ b/libs/ui/Android.bp
 @@ -57,9 +57,6 @@ cc_library_shared {
@@ -58,7 +58,7 @@ index 17cd19aca..86df887a4 100644
          "GraphicBufferAllocator.cpp",
          "GraphicBufferMapper.cpp",
 diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
-index e2ba3e17e..c829c4d25 100644
+index e2ba3e17e2..c829c4d251 100644
 --- a/libs/ui/GraphicBuffer.cpp
 +++ b/libs/ui/GraphicBuffer.cpp
 @@ -69,7 +69,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
@@ -155,7 +155,7 @@ index e2ba3e17e..c829c4d25 100644
              width = height = stride = format = usage_deprecated = 0;
              layerCount = 0;
 diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
-index 32eee0d9f..e685462c8 100644
+index 32eee0d9f4..e685462c85 100644
 --- a/libs/ui/GraphicBufferAllocator.cpp
 +++ b/libs/ui/GraphicBufferAllocator.cpp
 @@ -29,7 +29,6 @@
@@ -390,7 +390,7 @@ index 32eee0d9f..e685462c8 100644
  
  // ---------------------------------------------------------------------------
 diff --git a/libs/ui/GraphicBufferMapper.cpp b/libs/ui/GraphicBufferMapper.cpp
-index 6b25c84d8..0f458a62a 100644
+index 6b25c84d83..0f458a62ad 100644
 --- a/libs/ui/GraphicBufferMapper.cpp
 +++ b/libs/ui/GraphicBufferMapper.cpp
 @@ -16,7 +16,6 @@
@@ -850,7 +850,7 @@ index 6b25c84d8..0f458a62a 100644
  
  // ---------------------------------------------------------------------------
 diff --git a/libs/ui/include/ui/GraphicBuffer.h b/libs/ui/include/ui/GraphicBuffer.h
-index 935068c9e..0c93ffd31 100644
+index 935068c9ed..0c93ffd312 100644
 --- a/libs/ui/include/ui/GraphicBuffer.h
 +++ b/libs/ui/include/ui/GraphicBuffer.h
 @@ -178,8 +178,10 @@ public:
@@ -874,7 +874,7 @@ index 935068c9e..0c93ffd31 100644
      status_t initWithHandle(const native_handle_t* handle,
              HandleWrapMethod method, uint32_t width, uint32_t height,
 diff --git a/libs/ui/include/ui/GraphicBufferAllocator.h b/libs/ui/include/ui/GraphicBufferAllocator.h
-index 83e14b595..1811d10c7 100644
+index 83e14b595c..1811d10c7d 100644
 --- a/libs/ui/include/ui/GraphicBufferAllocator.h
 +++ b/libs/ui/include/ui/GraphicBufferAllocator.h
 @@ -26,18 +26,16 @@
@@ -966,7 +966,7 @@ index 83e14b595..1811d10c7 100644
  
  // ---------------------------------------------------------------------------
 diff --git a/libs/ui/include/ui/GraphicBufferMapper.h b/libs/ui/include/ui/GraphicBufferMapper.h
-index dbdd704a2..78eb9c645 100644
+index dbdd704a2b..78eb9c6452 100644
 --- a/libs/ui/include/ui/GraphicBufferMapper.h
 +++ b/libs/ui/include/ui/GraphicBufferMapper.h
 @@ -22,8 +22,6 @@

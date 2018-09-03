@@ -1,7 +1,7 @@
 From 72199e982e2403f0e40e931da55659e75e14a3d7 Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm.code@gmail.com>
 Date: Wed, 23 Aug 2017 22:11:03 +0000
-Subject: [PATCH 07/42] adb: Look for executables in alternate places
+Subject: [PATCH 07/44] adb: Look for executables in alternate places
 
  * Restore global variable recovery_mode.  This is set based on the
    commandline parameter --banner.

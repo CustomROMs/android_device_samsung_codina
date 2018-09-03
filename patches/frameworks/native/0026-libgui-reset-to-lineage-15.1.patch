@@ -1,0 +1,1535 @@
+From 663118a7184df25583c74e4b58eb039bbbd0204d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 15:02:36 +0300
+Subject: [PATCH 26/45] libgui: reset to lineage-15.1
+
+Change-Id: Ia9f38c1233289a0971454deaf80a8121332bad07
+---
+ libs/gui/Android.bp                         |   5 -
+ libs/gui/BufferItem.cpp                     |  16 +--
+ libs/gui/BufferItemConsumer.cpp             |   4 +-
+ libs/gui/BufferQueue.cpp                    |  20 +--
+ libs/gui/BufferQueueConsumer.cpp            |  24 ++--
+ libs/gui/BufferQueueProducer.cpp            |  68 ++++++----
+ libs/gui/ConsumerBase.cpp                   |  12 +-
+ libs/gui/CpuConsumer.cpp                    |   8 +-
+ libs/gui/DisplayEventReceiver.cpp           |  14 +-
+ libs/gui/GLConsumer.cpp                     |  24 ++--
+ libs/gui/IGraphicBufferProducer.cpp         |  18 +--
+ libs/gui/LayerDebugInfo.cpp                 | 136 --------------------
+ libs/gui/StreamSplitter.cpp                 |   6 +-
+ libs/gui/Surface.cpp                        |  43 +++----
+ libs/gui/SurfaceComposerClient.cpp          |  20 +--
+ libs/gui/SurfaceControl.cpp                 |  10 +-
+ libs/gui/SyncFeatures.cpp                   |   2 +-
+ libs/gui/include/gui/BufferQueue.h          |   4 +
+ libs/gui/include/gui/DisplayEventReceiver.h |  11 +-
+ libs/gui/include/gui/ISurfaceComposer.h     |   2 -
+ libs/gui/include/gui/LayerDebugInfo.h       |  73 -----------
+ libs/gui/include/gui/SurfaceControl.h       |  10 --
+ libs/ui/GraphicBufferAllocator.cpp          |   4 +-
+ vulkan/libvulkan/swapchain.cpp              |   2 +-
+ 24 files changed, 165 insertions(+), 371 deletions(-)
+ delete mode 100644 libs/gui/LayerDebugInfo.cpp
+ delete mode 100644 libs/gui/include/gui/LayerDebugInfo.h
+
+diff --git a/libs/gui/Android.bp b/libs/gui/Android.bp
+index 02d29a3e69..08cf747474 100644
+--- a/libs/gui/Android.bp
++++ b/libs/gui/Android.bp
+@@ -26,10 +26,6 @@ cc_library_shared {
+     double_loadable: true,
+ 
+     clang: true,
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-    ],
+     cppflags: [
+         "-Weverything",
+ 
+@@ -97,7 +93,6 @@ cc_library_shared {
+         "IProducerListener.cpp",
+         "ISurfaceComposer.cpp",
+         "ISurfaceComposerClient.cpp",
+-        "LayerDebugInfo.cpp",
+         "LayerState.cpp",
+         "OccupancyTracker.cpp",
+         "StreamSplitter.cpp",
+diff --git a/libs/gui/BufferItem.cpp b/libs/gui/BufferItem.cpp
+index 9da4ea80e0..69b5962441 100644
+--- a/libs/gui/BufferItem.cpp
++++ b/libs/gui/BufferItem.cpp
+@@ -39,8 +39,8 @@ static inline constexpr T to64(const uint32_t lo, const uint32_t hi) {
+ }
+ 
+ BufferItem::BufferItem() :
+-    mGraphicBuffer(nullptr),
+-    mFence(nullptr),
++    mGraphicBuffer(NULL),
++    mFence(NULL),
+     mCrop(Rect::INVALID_RECT),
+     mTransform(0),
+     mScalingMode(NATIVE_WINDOW_SCALING_MODE_FREEZE),
+@@ -89,11 +89,11 @@ size_t BufferItem::getPodSize() const {
+ 
+ size_t BufferItem::getFlattenedSize() const {
+     size_t size = sizeof(uint32_t); // Flags
+-    if (mGraphicBuffer != nullptr) {
++    if (mGraphicBuffer != 0) {
+         size += mGraphicBuffer->getFlattenedSize();
+         size = FlattenableUtils::align<4>(size);
+     }
+-    if (mFence != nullptr) {
++    if (mFence != 0) {
+         size += mFence->getFlattenedSize();
+         size = FlattenableUtils::align<4>(size);
+     }
+@@ -104,10 +104,10 @@ size_t BufferItem::getFlattenedSize() const {
+ 
+ size_t BufferItem::getFdCount() const {
+     size_t count = 0;
+-    if (mGraphicBuffer != nullptr) {
++    if (mGraphicBuffer != 0) {
+         count += mGraphicBuffer->getFdCount();
+     }
+-    if (mFence != nullptr) {
++    if (mFence != 0) {
+         count += mFence->getFdCount();
+     }
+     return count;
+@@ -134,13 +134,13 @@ status_t BufferItem::flatten(
+     FlattenableUtils::advance(buffer, size, sizeof(uint32_t));
+ 
+     flags = 0;
+-    if (mGraphicBuffer != nullptr) {
++    if (mGraphicBuffer != 0) {
+         status_t err = mGraphicBuffer->flatten(buffer, size, fds, count);
+         if (err) return err;
+         size -= FlattenableUtils::align<4>(buffer);
+         flags |= 1;
+     }
+-    if (mFence != nullptr) {
++    if (mFence != 0) {
+         status_t err = mFence->flatten(buffer, size, fds, count);
+         if (err) return err;
+         size -= FlattenableUtils::align<4>(buffer);
+diff --git a/libs/gui/BufferItemConsumer.cpp b/libs/gui/BufferItemConsumer.cpp
+index 9225e181c3..eb077c3053 100644
+--- a/libs/gui/BufferItemConsumer.cpp
++++ b/libs/gui/BufferItemConsumer.cpp
+@@ -112,10 +112,12 @@ status_t BufferItemConsumer::releaseBuffer(const BufferItem &item,
+ 
+ void BufferItemConsumer::freeBufferLocked(int slotIndex) {
+     sp<BufferFreedListener> listener = mBufferFreedListener.promote();
+-    if (listener != nullptr && mSlots[slotIndex].mGraphicBuffer != nullptr) {
++    if (listener != NULL && mSlots[slotIndex].mGraphicBuffer != NULL) {
+         // Fire callback if we have a listener registered and the buffer being freed is valid.
+         BI_LOGV("actually calling onBufferFreed");
++#ifndef STE_HARDWARE
+         listener->onBufferFreed(mSlots[slotIndex].mGraphicBuffer);
++#endif
+     }
+     ConsumerBase::freeBufferLocked(slotIndex);
+ }
+diff --git a/libs/gui/BufferQueue.cpp b/libs/gui/BufferQueue.cpp
+index 7da4db4d3f..41512127f2 100644
+--- a/libs/gui/BufferQueue.cpp
++++ b/libs/gui/BufferQueue.cpp
+@@ -33,7 +33,7 @@ BufferQueue::ProxyConsumerListener::~ProxyConsumerListener() {}
+ 
+ void BufferQueue::ProxyConsumerListener::onDisconnect() {
+     sp<ConsumerListener> listener(mConsumerListener.promote());
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onDisconnect();
+     }
+ }
+@@ -41,7 +41,7 @@ void BufferQueue::ProxyConsumerListener::onDisconnect() {
+ void BufferQueue::ProxyConsumerListener::onFrameAvailable(
+         const BufferItem& item) {
+     sp<ConsumerListener> listener(mConsumerListener.promote());
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onFrameAvailable(item);
+     }
+ }
+@@ -49,21 +49,21 @@ void BufferQueue::ProxyConsumerListener::onFrameAvailable(
+ void BufferQueue::ProxyConsumerListener::onFrameReplaced(
+         const BufferItem& item) {
+     sp<ConsumerListener> listener(mConsumerListener.promote());
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onFrameReplaced(item);
+     }
+ }
+ 
+ void BufferQueue::ProxyConsumerListener::onBuffersReleased() {
+     sp<ConsumerListener> listener(mConsumerListener.promote());
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+     }
+ }
+ 
+ void BufferQueue::ProxyConsumerListener::onSidebandStreamChanged() {
+     sp<ConsumerListener> listener(mConsumerListener.promote());
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onSidebandStreamChanged();
+     }
+ }
+@@ -80,21 +80,21 @@ void BufferQueue::ProxyConsumerListener::addAndGetFrameTimestamps(
+ void BufferQueue::createBufferQueue(sp<IGraphicBufferProducer>* outProducer,
+         sp<IGraphicBufferConsumer>* outConsumer,
+         bool consumerIsSurfaceFlinger) {
+-    LOG_ALWAYS_FATAL_IF(outProducer == nullptr,
++    LOG_ALWAYS_FATAL_IF(outProducer == NULL,
+             "BufferQueue: outProducer must not be NULL");
+-    LOG_ALWAYS_FATAL_IF(outConsumer == nullptr,
++    LOG_ALWAYS_FATAL_IF(outConsumer == NULL,
+             "BufferQueue: outConsumer must not be NULL");
+ 
+     sp<BufferQueueCore> core(new BufferQueueCore());
+-    LOG_ALWAYS_FATAL_IF(core == nullptr,
++    LOG_ALWAYS_FATAL_IF(core == NULL,
+             "BufferQueue: failed to create BufferQueueCore");
+ 
+     sp<IGraphicBufferProducer> producer(new BufferQueueProducer(core, consumerIsSurfaceFlinger));
+-    LOG_ALWAYS_FATAL_IF(producer == nullptr,
++    LOG_ALWAYS_FATAL_IF(producer == NULL,
+             "BufferQueue: failed to create BufferQueueProducer");
+ 
+     sp<IGraphicBufferConsumer> consumer(new BufferQueueConsumer(core));
+-    LOG_ALWAYS_FATAL_IF(consumer == nullptr,
++    LOG_ALWAYS_FATAL_IF(consumer == NULL,
+             "BufferQueue: failed to create BufferQueueConsumer");
+ 
+     *outProducer = producer;
+diff --git a/libs/gui/BufferQueueConsumer.cpp b/libs/gui/BufferQueueConsumer.cpp
+index 6a4ade4093..6e49712452 100644
+--- a/libs/gui/BufferQueueConsumer.cpp
++++ b/libs/gui/BufferQueueConsumer.cpp
+@@ -253,7 +253,7 @@ status_t BufferQueueConsumer::acquireBuffer(BufferItem* outBuffer,
+         // mGraphicBuffer to NULL to avoid unnecessarily remapping this buffer
+         // on the consumer side
+         if (outBuffer->mAcquireCalled) {
+-            outBuffer->mGraphicBuffer = nullptr;
++            outBuffer->mGraphicBuffer = NULL;
+         }
+ 
+         mCore->mQueue.erase(front);
+@@ -270,7 +270,7 @@ status_t BufferQueueConsumer::acquireBuffer(BufferItem* outBuffer,
+         VALIDATE_CONSISTENCY();
+     }
+ 
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         for (int i = 0; i < numDroppedBuffers; ++i) {
+             listener->onBufferReleased();
+         }
+@@ -319,10 +319,10 @@ status_t BufferQueueConsumer::attachBuffer(int* outSlot,
+         const sp<android::GraphicBuffer>& buffer) {
+     ATRACE_CALL();
+ 
+-    if (outSlot == nullptr) {
++    if (outSlot == NULL) {
+         BQ_LOGE("attachBuffer: outSlot must not be NULL");
+         return BAD_VALUE;
+-    } else if (buffer == nullptr) {
++    } else if (buffer == NULL) {
+         BQ_LOGE("attachBuffer: cannot attach NULL buffer");
+         return BAD_VALUE;
+     }
+@@ -411,7 +411,7 @@ status_t BufferQueueConsumer::releaseBuffer(int slot, uint64_t frameNumber,
+     ATRACE_BUFFER_INDEX(slot);
+ 
+     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS ||
+-            releaseFence == nullptr) {
++            releaseFence == NULL) {
+         BQ_LOGE("releaseBuffer: slot %d out of range or fence %p NULL", slot,
+                 releaseFence.get());
+         return BAD_VALUE;
+@@ -463,7 +463,7 @@ status_t BufferQueueConsumer::releaseBuffer(int slot, uint64_t frameNumber,
+     } // Autolock scope
+ 
+     // Call back without lock held
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBufferReleased();
+     }
+ 
+@@ -474,7 +474,7 @@ status_t BufferQueueConsumer::connect(
+         const sp<IConsumerListener>& consumerListener, bool controlledByApp) {
+     ATRACE_CALL();
+ 
+-    if (consumerListener == nullptr) {
++    if (consumerListener == NULL) {
+         BQ_LOGE("connect: consumerListener may not be NULL");
+         return BAD_VALUE;
+     }
+@@ -502,13 +502,13 @@ status_t BufferQueueConsumer::disconnect() {
+ 
+     Mutex::Autolock lock(mCore->mMutex);
+ 
+-    if (mCore->mConsumerListener == nullptr) {
++    if (mCore->mConsumerListener == NULL) {
+         BQ_LOGE("disconnect: no consumer is connected");
+         return BAD_VALUE;
+     }
+ 
+     mCore->mIsAbandoned = true;
+-    mCore->mConsumerListener = nullptr;
++    mCore->mConsumerListener = NULL;
+     mCore->mQueue.clear();
+     mCore->freeAllBuffersLocked();
+     mCore->mSharedBufferSlot = BufferQueueCore::INVALID_BUFFER_SLOT;
+@@ -519,7 +519,7 @@ status_t BufferQueueConsumer::disconnect() {
+ status_t BufferQueueConsumer::getReleasedBuffers(uint64_t *outSlotMask) {
+     ATRACE_CALL();
+ 
+-    if (outSlotMask == nullptr) {
++    if (outSlotMask == NULL) {
+         BQ_LOGE("getReleasedBuffers: outSlotMask may not be NULL");
+         return BAD_VALUE;
+     }
+@@ -671,7 +671,7 @@ status_t BufferQueueConsumer::setMaxAcquiredBufferCount(
+         }
+     }
+     // Call back without lock held
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+     }
+ 
+@@ -764,7 +764,7 @@ status_t BufferQueueConsumer::dumpState(const String8& prefix, String8* outResul
+         outResult->appendFormat("Permission Denial: can't dump BufferQueueConsumer "
+                 "from pid=%d, uid=%d\n", pid, uid);
+         android_errorWriteWithInfoLog(0x534e4554, "27046057",
+-                static_cast<int32_t>(uid), nullptr, 0);
++                static_cast<int32_t>(uid), NULL, 0);
+         return PERMISSION_DENIED;
+     }
+ 
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index c5b84133c2..4f56880beb 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -166,7 +166,7 @@ status_t BufferQueueProducer::setMaxDequeuedBufferCount(
+     } // Autolock scope
+ 
+     // Call back without lock held
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+     }
+ 
+@@ -221,7 +221,7 @@ status_t BufferQueueProducer::setAsyncMode(bool async) {
+     } // Autolock scope
+ 
+     // Call back without lock held
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+     }
+     return NO_ERROR;
+@@ -387,7 +387,9 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
+         if (format == 0) {
+             format = mCore->mDefaultBufferFormat;
+         }
+-
++        if (format == 0x7FA00000) {
++            format = HAL_PIXEL_FORMAT_YCBCR42XMBN;
++        }
+         // Enable the usage bits the consumer requested
+         usage |= mCore->mConsumerUsageBits;
+ 
+@@ -454,11 +456,11 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
+ 
+         mSlots[found].mBufferState.dequeue();
+ 
+-        if ((buffer == nullptr) ||
++        if ((buffer == NULL) ||
+                 buffer->needsReallocation(width, height, format, BQ_LAYER_COUNT, usage))
+         {
+             mSlots[found].mAcquireCalled = false;
+-            mSlots[found].mGraphicBuffer = nullptr;
++            mSlots[found].mGraphicBuffer = NULL;
+             mSlots[found].mRequestBufferCalled = false;
+             mSlots[found].mEglDisplay = EGL_NO_DISPLAY;
+             mSlots[found].mEglFence = EGL_NO_SYNC_KHR;
+@@ -477,7 +479,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
+         BQ_LOGV("dequeueBuffer: setting buffer age to %" PRIu64,
+                 mCore->mBufferAge);
+ 
+-        if (CC_UNLIKELY(mSlots[found].mFence == nullptr)) {
++        if (CC_UNLIKELY(mSlots[found].mFence == NULL)) {
+             BQ_LOGE("dequeueBuffer: about to return a NULL fence - "
+                     "slot=%d w=%d h=%d format=%u",
+                     found, buffer->width, buffer->height, buffer->format);
+@@ -618,7 +620,7 @@ status_t BufferQueueProducer::detachBuffer(int slot) {
+         listener = mCore->mConsumerListener;
+     }
+ 
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+     }
+ 
+@@ -629,10 +631,10 @@ status_t BufferQueueProducer::detachNextBuffer(sp<GraphicBuffer>* outBuffer,
+         sp<Fence>* outFence) {
+     ATRACE_CALL();
+ 
+-    if (outBuffer == nullptr) {
++    if (outBuffer == NULL) {
+         BQ_LOGE("detachNextBuffer: outBuffer must not be NULL");
+         return BAD_VALUE;
+-    } else if (outFence == nullptr) {
++    } else if (outFence == NULL) {
+         BQ_LOGE("detachNextBuffer: outFence must not be NULL");
+         return BAD_VALUE;
+     }
+@@ -676,7 +678,7 @@ status_t BufferQueueProducer::detachNextBuffer(sp<GraphicBuffer>* outBuffer,
+         listener = mCore->mConsumerListener;
+     }
+ 
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+     }
+ 
+@@ -687,10 +689,10 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
+         const sp<android::GraphicBuffer>& buffer) {
+     ATRACE_CALL();
+ 
+-    if (outSlot == nullptr) {
++    if (outSlot == NULL) {
+         BQ_LOGE("attachBuffer: outSlot must not be NULL");
+         return BAD_VALUE;
+-    } else if (buffer == nullptr) {
++    } else if (buffer == NULL) {
+         BQ_LOGE("attachBuffer: cannot attach NULL buffer");
+         return BAD_VALUE;
+     }
+@@ -769,9 +771,9 @@ status_t BufferQueueProducer::queueBuffer(int slot,
+     input.deflate(&requestedPresentTimestamp, &isAutoTimestamp, &dataSpace,
+             &crop, &scalingMode, &transform, &acquireFence, &stickyTransform,
+             &getFrameTimestamps);
+-    const Region& surfaceDamage = input.getSurfaceDamage();
++    Region surfaceDamage = input.getSurfaceDamage();
+ 
+-    if (acquireFence == nullptr) {
++    if (acquireFence == NULL) {
+         BQ_LOGE("queueBuffer: fence is NULL");
+         return BAD_VALUE;
+     }
+@@ -974,9 +976,9 @@ status_t BufferQueueProducer::queueBuffer(int slot,
+             mCallbackCondition.wait(mCallbackMutex);
+         }
+ 
+-        if (frameAvailableListener != nullptr) {
++        if (frameAvailableListener != NULL) {
+             frameAvailableListener->onFrameAvailable(item);
+-        } else if (frameReplacedListener != nullptr) {
++        } else if (frameReplacedListener != NULL) {
+             frameReplacedListener->onFrameReplaced(item);
+         }
+ 
+@@ -1045,7 +1047,7 @@ status_t BufferQueueProducer::cancelBuffer(int slot, const sp<Fence>& fence) {
+         BQ_LOGE("cancelBuffer: slot %d is not owned by the producer "
+                 "(state = %s)", slot, mSlots[slot].mBufferState.string());
+         return BAD_VALUE;
+-    } else if (fence == nullptr) {
++    } else if (fence == NULL) {
+         BQ_LOGE("cancelBuffer: fence is NULL");
+         return BAD_VALUE;
+     }
+@@ -1075,7 +1077,7 @@ int BufferQueueProducer::query(int what, int *outValue) {
+     ATRACE_CALL();
+     Mutex::Autolock lock(mCore->mMutex);
+ 
+-    if (outValue == nullptr) {
++    if (outValue == NULL) {
+         BQ_LOGE("query: outValue was NULL");
+         return BAD_VALUE;
+     }
+@@ -1147,12 +1149,12 @@ status_t BufferQueueProducer::connect(const sp<IProducerListener>& listener,
+         return NO_INIT;
+     }
+ 
+-    if (mCore->mConsumerListener == nullptr) {
++    if (mCore->mConsumerListener == NULL) {
+         BQ_LOGE("connect: BufferQueue has no consumer");
+         return NO_INIT;
+     }
+ 
+-    if (output == nullptr) {
++    if (output == NULL) {
+         BQ_LOGE("connect: output was NULL");
+         return BAD_VALUE;
+     }
+@@ -1190,10 +1192,10 @@ status_t BufferQueueProducer::connect(const sp<IProducerListener>& listener,
+             output->nextFrameNumber = mCore->mFrameCounter + 1;
+             output->bufferReplaced = false;
+ 
+-            if (listener != nullptr) {
++            if (listener != NULL) {
+                 // Set up a death notification so that we can disconnect
+                 // automatically if the remote producer dies
+-                if (IInterface::asBinder(listener)->remoteBinder() != nullptr) {
++                if (IInterface::asBinder(listener)->remoteBinder() != NULL) {
+                     status = IInterface::asBinder(listener)->linkToDeath(
+                             static_cast<IBinder::DeathRecipient*>(this));
+                     if (status != NO_ERROR) {
+@@ -1270,7 +1272,7 @@ status_t BufferQueueProducer::disconnect(int api, DisconnectMode mode) {
+                     mCore->freeAllBuffersLocked();
+ 
+                     // Remove our death notification callback if we have one
+-                    if (mCore->mLinkedToDeath != nullptr) {
++                    if (mCore->mLinkedToDeath != NULL) {
+                         sp<IBinder> token =
+                                 IInterface::asBinder(mCore->mLinkedToDeath);
+                         // This can fail if we're here because of the death
+@@ -1280,8 +1282,8 @@ status_t BufferQueueProducer::disconnect(int api, DisconnectMode mode) {
+                     }
+                     mCore->mSharedBufferSlot =
+                             BufferQueueCore::INVALID_BUFFER_SLOT;
+-                    mCore->mLinkedToDeath = nullptr;
+-                    mCore->mConnectedProducerListener = nullptr;
++                    mCore->mLinkedToDeath = NULL;
++                    mCore->mConnectedProducerListener = NULL;
+                     mCore->mConnectedApi = BufferQueueCore::NO_CONNECTED_API;
+                     mCore->mConnectedPid = -1;
+                     mCore->mSidebandStream.clear();
+@@ -1304,7 +1306,7 @@ status_t BufferQueueProducer::disconnect(int api, DisconnectMode mode) {
+     } // Autolock scope
+ 
+     // Call back without lock held
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onBuffersReleased();
+         listener->onDisconnect();
+     }
+@@ -1320,7 +1322,7 @@ status_t BufferQueueProducer::setSidebandStream(const sp<NativeHandle>& stream)
+         listener = mCore->mConsumerListener;
+     } // Autolock scope
+ 
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->onSidebandStreamChanged();
+     }
+     return NO_ERROR;
+@@ -1355,6 +1357,13 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
+             allocFormat = format != 0 ? format : mCore->mDefaultBufferFormat;
+             allocUsage = usage | mCore->mConsumerUsageBits;
+ 
++            // If mTransformHint is set, the EGL implementation will request buffers
++            // with pre-rotated size. So here we need to swap the width and height
++            // to avoid the buffers being freed and reallocated when dequeueBuffer()
++            // gets called later.
++            if (mCore->mTransformHint != 0) {
++                std::swap(allocWidth, allocHeight);
++            }
+             mCore->mIsAllocating = true;
+         } // Autolock scope
+ 
+@@ -1381,6 +1390,9 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
+             Mutex::Autolock lock(mCore->mMutex);
+             uint32_t checkWidth = width > 0 ? width : mCore->mDefaultWidth;
+             uint32_t checkHeight = height > 0 ? height : mCore->mDefaultHeight;
++            if (mCore->mTransformHint != 0) {
++                std::swap(checkWidth, checkHeight);
++            }
+             PixelFormat checkFormat = format != 0 ?
+                     format : mCore->mDefaultBufferFormat;
+             uint32_t checkUsage = usage | mCore->mConsumerUsageBits;
+@@ -1534,7 +1546,7 @@ void BufferQueueProducer::addAndGetFrameTimestamps(
+         Mutex::Autolock lock(mCore->mMutex);
+         listener = mCore->mConsumerListener;
+     }
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         listener->addAndGetFrameTimestamps(newTimestamps, outDelta);
+     }
+ }
+diff --git a/libs/gui/ConsumerBase.cpp b/libs/gui/ConsumerBase.cpp
+index 2a9d742fc9..7aa7872513 100644
+--- a/libs/gui/ConsumerBase.cpp
++++ b/libs/gui/ConsumerBase.cpp
+@@ -96,7 +96,7 @@ void ConsumerBase::onLastStrongRef(const void* id __attribute__((unused))) {
+ 
+ void ConsumerBase::freeBufferLocked(int slotIndex) {
+     CB_LOGV("freeBufferLocked: slotIndex=%d", slotIndex);
+-    mSlots[slotIndex].mGraphicBuffer = nullptr;
++    mSlots[slotIndex].mGraphicBuffer = 0;
+     mSlots[slotIndex].mFence = Fence::NO_FENCE;
+     mSlots[slotIndex].mFrameNumber = 0;
+ }
+@@ -110,7 +110,7 @@ void ConsumerBase::onFrameAvailable(const BufferItem& item) {
+         listener = mFrameAvailableListener.promote();
+     }
+ 
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         CB_LOGV("actually calling onFrameAvailable");
+         listener->onFrameAvailable(item);
+     }
+@@ -125,7 +125,7 @@ void ConsumerBase::onFrameReplaced(const BufferItem &item) {
+         listener = mFrameAvailableListener.promote();
+     }
+ 
+-    if (listener != nullptr) {
++    if (listener != NULL) {
+         CB_LOGV("actually calling onFrameReplaced");
+         listener->onFrameReplaced(item);
+     }
+@@ -298,8 +298,8 @@ status_t ConsumerBase::acquireBufferLocked(BufferItem *item,
+         return err;
+     }
+ 
+-    if (item->mGraphicBuffer != nullptr) {
+-        if (mSlots[item->mSlot].mGraphicBuffer != nullptr) {
++    if (item->mGraphicBuffer != NULL) {
++        if (mSlots[item->mSlot].mGraphicBuffer != NULL) {
+             freeBufferLocked(item->mSlot);
+         }
+         mSlots[item->mSlot].mGraphicBuffer = item->mGraphicBuffer;
+@@ -414,7 +414,7 @@ bool ConsumerBase::stillTracking(int slot,
+     if (slot < 0 || slot >= BufferQueue::NUM_BUFFER_SLOTS) {
+         return false;
+     }
+-    return (mSlots[slot].mGraphicBuffer != nullptr &&
++    return (mSlots[slot].mGraphicBuffer != NULL &&
+             mSlots[slot].mGraphicBuffer->handle == graphicBuffer->handle);
+ }
+ 
+diff --git a/libs/gui/CpuConsumer.cpp b/libs/gui/CpuConsumer.cpp
+index 9f09e0c0d4..ae7c65c441 100644
+--- a/libs/gui/CpuConsumer.cpp
++++ b/libs/gui/CpuConsumer.cpp
+@@ -114,7 +114,7 @@ status_t CpuConsumer::lockNextBuffer(LockedBuffer *nativeBuffer) {
+ 
+     int slot = b.mSlot;
+ 
+-    void *bufferPointer = nullptr;
++    void *bufferPointer = NULL;
+     android_ycbcr ycbcr = android_ycbcr();
+ 
+     PixelFormat format = mSlots[slot].mGraphicBuffer->getPixelFormat();
+@@ -145,7 +145,7 @@ status_t CpuConsumer::lockNextBuffer(LockedBuffer *nativeBuffer) {
+         }
+     }
+ 
+-    if (bufferPointer == nullptr) { // not flexible YUV
++    if (bufferPointer == NULL) { // not flexible YUV
+         if (b.mFence.get()) {
+             err = mSlots[slot].mGraphicBuffer->lockAsync(
+                 GraphicBuffer::USAGE_SW_READ_OFTEN,
+@@ -185,7 +185,7 @@ status_t CpuConsumer::lockNextBuffer(LockedBuffer *nativeBuffer) {
+     nativeBuffer->height = mSlots[slot].mGraphicBuffer->getHeight();
+     nativeBuffer->format = format;
+     nativeBuffer->flexFormat = flexFormat;
+-    nativeBuffer->stride = (ycbcr.y != nullptr) ?
++    nativeBuffer->stride = (ycbcr.y != NULL) ?
+             static_cast<uint32_t>(ycbcr.ystride) :
+             mSlots[slot].mGraphicBuffer->getStride();
+ 
+@@ -253,7 +253,7 @@ status_t CpuConsumer::releaseAcquiredBufferLocked(size_t lockedIdx) {
+ 
+     AcquiredBuffer &ab = mAcquiredBuffers.editItemAt(lockedIdx);
+     ab.mSlot = BufferQueue::INVALID_BUFFER_SLOT;
+-    ab.mBufferPointer = nullptr;
++    ab.mBufferPointer = NULL;
+     ab.mGraphicBuffer.clear();
+ 
+     mCurrentLockedBuffers--;
+diff --git a/libs/gui/DisplayEventReceiver.cpp b/libs/gui/DisplayEventReceiver.cpp
+index f5cf1c4d5a..73c2361809 100644
+--- a/libs/gui/DisplayEventReceiver.cpp
++++ b/libs/gui/DisplayEventReceiver.cpp
+@@ -32,11 +32,13 @@ namespace android {
+ 
+ // ---------------------------------------------------------------------------
+ 
++DisplayEventReceiver::DisplayEventReceiver() : DisplayEventReceiver(ISurfaceComposer::eVsyncSourceApp) {}
++
+ DisplayEventReceiver::DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSource) {
+     sp<ISurfaceComposer> sf(ComposerService::getComposerService());
+-    if (sf != nullptr) {
++    if (sf != NULL) {
+         mEventConnection = sf->createDisplayEventConnection(vsyncSource);
+-        if (mEventConnection != nullptr) {
++        if (mEventConnection != NULL) {
+             mDataChannel = std::make_unique<gui::BitTube>();
+             mEventConnection->stealReceiveChannel(mDataChannel.get());
+         }
+@@ -47,13 +49,13 @@ DisplayEventReceiver::~DisplayEventReceiver() {
+ }
+ 
+ status_t DisplayEventReceiver::initCheck() const {
+-    if (mDataChannel != nullptr)
++    if (mDataChannel != NULL)
+         return NO_ERROR;
+     return NO_INIT;
+ }
+ 
+ int DisplayEventReceiver::getFd() const {
+-    if (mDataChannel == nullptr)
++    if (mDataChannel == NULL)
+         return NO_INIT;
+ 
+     return mDataChannel->getFd();
+@@ -63,7 +65,7 @@ status_t DisplayEventReceiver::setVsyncRate(uint32_t count) {
+     if (int32_t(count) < 0)
+         return BAD_VALUE;
+ 
+-    if (mEventConnection != nullptr) {
++    if (mEventConnection != NULL) {
+         mEventConnection->setVsyncRate(count);
+         return NO_ERROR;
+     }
+@@ -71,7 +73,7 @@ status_t DisplayEventReceiver::setVsyncRate(uint32_t count) {
+ }
+ 
+ status_t DisplayEventReceiver::requestNextVsync() {
+-    if (mEventConnection != nullptr) {
++    if (mEventConnection != NULL) {
+         mEventConnection->requestNextVsync();
+         return NO_ERROR;
+     }
+diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
+index 0e8d430e8d..95e6e6f1f9 100644
+--- a/libs/gui/GLConsumer.cpp
++++ b/libs/gui/GLConsumer.cpp
+@@ -313,7 +313,7 @@ status_t GLConsumer::releaseTexImage() {
+             return err;
+         }
+ 
+-        if (mReleasedTexImage == nullptr) {
++        if (mReleasedTexImage == NULL) {
+             mReleasedTexImage = new EglImage(getDebugTexImageBuffer());
+         }
+ 
+@@ -343,7 +343,7 @@ status_t GLConsumer::releaseTexImage() {
+ 
+ sp<GraphicBuffer> GLConsumer::getDebugTexImageBuffer() {
+     Mutex::Autolock _l(sStaticInitLock);
+-    if (CC_UNLIKELY(sReleasedTexImageBuffer == nullptr)) {
++    if (CC_UNLIKELY(sReleasedTexImageBuffer == NULL)) {
+         // The first time, create the debug texture in case the application
+         // continues to use it.
+         sp<GraphicBuffer> buffer = new GraphicBuffer(
+@@ -378,7 +378,7 @@ status_t GLConsumer::acquireBufferLocked(BufferItem *item,
+     // If item->mGraphicBuffer is not null, this buffer has not been acquired
+     // before, so any prior EglImage created is using a stale buffer. This
+     // replaces any old EglImage with a new one (using the new buffer).
+-    if (item->mGraphicBuffer != nullptr) {
++    if (item->mGraphicBuffer != NULL) {
+         int slot = item->mSlot;
+         mEglSlots[slot].mEglImage = new EglImage(item->mGraphicBuffer);
+     }
+@@ -452,7 +452,7 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferItem& item,
+ 
+     GLC_LOGV("updateAndRelease: (slot=%d buf=%p) -> (slot=%d buf=%p)",
+             mCurrentTexture, mCurrentTextureImage != NULL ?
+-                    mCurrentTextureImage->graphicBufferHandle() : nullptr,
++                    mCurrentTextureImage->graphicBufferHandle() : 0,
+             slot, mSlots[slot].mGraphicBuffer->handle);
+ 
+     // Hang onto the pointer so that it isn't freed in the call to
+@@ -512,7 +512,7 @@ status_t GLConsumer::bindTextureImageLocked() {
+ 
+     glBindTexture(mTexTarget, mTexName);
+     if (mCurrentTexture == BufferQueue::INVALID_BUFFER_SLOT &&
+-            mCurrentTextureImage == nullptr) {
++            mCurrentTextureImage == NULL) {
+         GLC_LOGE("bindTextureImage: no currently-bound texture");
+         return NO_INIT;
+     }
+@@ -676,7 +676,7 @@ status_t GLConsumer::attachToContext(uint32_t tex) {
+     mTexName = tex;
+     mAttached = true;
+ 
+-    if (mCurrentTextureImage != nullptr) {
++    if (mCurrentTextureImage != NULL) {
+         // This may wait for a buffer a second time. This is likely required if
+         // this is a different context, since otherwise the wait could be skipped
+         // by bouncing through another context. For the same context the extra
+@@ -697,7 +697,7 @@ status_t GLConsumer::syncForReleaseLocked(EGLDisplay dpy) {
+     if (mCurrentTexture != BufferQueue::INVALID_BUFFER_SLOT) {
+         if (SyncFeatures::getInstance().useNativeFenceSync()) {
+             EGLSyncKHR sync = eglCreateSyncKHR(dpy,
+-                    EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr);
++                    EGL_SYNC_NATIVE_FENCE_ANDROID, NULL);
+             if (sync == EGL_NO_SYNC_KHR) {
+                 GLC_LOGE("syncForReleaseLocked: error creating EGL fence: %#x",
+                         eglGetError());
+@@ -741,7 +741,7 @@ status_t GLConsumer::syncForReleaseLocked(EGLDisplay dpy) {
+ 
+             // Create a fence for the outstanding accesses in the current
+             // OpenGL ES context.
+-            fence = eglCreateSyncKHR(dpy, EGL_SYNC_FENCE_KHR, nullptr);
++            fence = eglCreateSyncKHR(dpy, EGL_SYNC_FENCE_KHR, NULL);
+             if (fence == EGL_NO_SYNC_KHR) {
+                 GLC_LOGE("syncForReleaseLocked: error creating fence: %#x",
+                         eglGetError());
+@@ -792,11 +792,11 @@ void GLConsumer::setFilteringEnabled(bool enabled) {
+     bool needsRecompute = mFilteringEnabled != enabled;
+     mFilteringEnabled = enabled;
+ 
+-    if (needsRecompute && mCurrentTextureImage==nullptr) {
++    if (needsRecompute && mCurrentTextureImage==NULL) {
+         GLC_LOGD("setFilteringEnabled called with mCurrentTextureImage == NULL");
+     }
+ 
+-    if (needsRecompute && mCurrentTextureImage != nullptr) {
++    if (needsRecompute && mCurrentTextureImage != NULL) {
+         computeCurrentTransformMatrixLocked();
+     }
+ }
+@@ -937,7 +937,7 @@ sp<GraphicBuffer> GLConsumer::getCurrentBuffer(int* outSlot) const {
+     }
+ 
+     return (mCurrentTextureImage == nullptr) ?
+-            nullptr : mCurrentTextureImage->graphicBuffer();
++            NULL : mCurrentTextureImage->graphicBuffer();
+ }
+ 
+ Rect GLConsumer::getCurrentCrop() const {
+@@ -1264,7 +1264,7 @@ EGLImageKHR GLConsumer::EglImage::createImage(EGLDisplay dpy,
+         attrs[3] = attrs[11];
+         attrs[4] = EGL_NONE;
+     }
+-    eglInitialize(dpy, nullptr, nullptr);
++    eglInitialize(dpy, 0, 0);
+     EGLImageKHR image = eglCreateImageKHR(dpy, EGL_NO_CONTEXT,
+             EGL_NATIVE_BUFFER_ANDROID, cbuf, attrs);
+     if (image == EGL_NO_IMAGE_KHR) {
+diff --git a/libs/gui/IGraphicBufferProducer.cpp b/libs/gui/IGraphicBufferProducer.cpp
+index 1e2fd85c92..e8f89bb396 100644
+--- a/libs/gui/IGraphicBufferProducer.cpp
++++ b/libs/gui/IGraphicBufferProducer.cpp
+@@ -187,10 +187,10 @@ public:
+ 
+     virtual status_t detachNextBuffer(sp<GraphicBuffer>* outBuffer,
+             sp<Fence>* outFence) {
+-        if (outBuffer == nullptr) {
++        if (outBuffer == NULL) {
+             ALOGE("detachNextBuffer: outBuffer must not be NULL");
+             return BAD_VALUE;
+-        } else if (outFence == nullptr) {
++        } else if (outFence == NULL) {
+             ALOGE("detachNextBuffer: outFence must not be NULL");
+             return BAD_VALUE;
+         }
+@@ -298,7 +298,7 @@ public:
+             int api, bool producerControlledByApp, QueueBufferOutput* output) {
+         Parcel data, reply;
+         data.writeInterfaceToken(IGraphicBufferProducer::getInterfaceDescriptor());
+-        if (listener != nullptr) {
++        if (listener != NULL) {
+             data.writeInt32(1);
+             data.writeStrongBinder(IInterface::asBinder(listener));
+         } else {
+@@ -662,8 +662,8 @@ status_t BnGraphicBufferProducer::onTransact(
+             int bufferIdx   = data.readInt32();
+             sp<GraphicBuffer> buffer;
+             int result = requestBuffer(bufferIdx, &buffer);
+-            reply->writeInt32(buffer != nullptr);
+-            if (buffer != nullptr) {
++            reply->writeInt32(buffer != 0);
++            if (buffer != 0) {
+                 reply->write(*buffer);
+             }
+             reply->writeInt32(result);
+@@ -721,12 +721,12 @@ status_t BnGraphicBufferProducer::onTransact(
+             int32_t result = detachNextBuffer(&buffer, &fence);
+             reply->writeInt32(result);
+             if (result == NO_ERROR) {
+-                reply->writeInt32(buffer != nullptr);
+-                if (buffer != nullptr) {
++                reply->writeInt32(buffer != NULL);
++                if (buffer != NULL) {
+                     reply->write(*buffer);
+                 }
+-                reply->writeInt32(fence != nullptr);
+-                if (fence != nullptr) {
++                reply->writeInt32(fence != NULL);
++                if (fence != NULL) {
+                     reply->write(*fence);
+                 }
+             }
+diff --git a/libs/gui/LayerDebugInfo.cpp b/libs/gui/LayerDebugInfo.cpp
+deleted file mode 100644
+index 57ddde075a..0000000000
+--- a/libs/gui/LayerDebugInfo.cpp
++++ /dev/null
+@@ -1,136 +0,0 @@
+-/*
+- * Copyright (C) 2017 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#include <gui/LayerDebugInfo.h>
+-
+-#include <ui/DebugUtils.h>
+-
+-#include <binder/Parcel.h>
+-
+-#include <utils/String8.h>
+-
+-using namespace android;
+-
+-#define RETURN_ON_ERROR(X) do {status_t res = (X); if (res != NO_ERROR) return res;} while(false)
+-
+-namespace android {
+-
+-status_t LayerDebugInfo::writeToParcel(Parcel* parcel) const {
+-    RETURN_ON_ERROR(parcel->writeCString(mName.c_str()));
+-    RETURN_ON_ERROR(parcel->writeCString(mParentName.c_str()));
+-    RETURN_ON_ERROR(parcel->writeCString(mType.c_str()));
+-    RETURN_ON_ERROR(parcel->write(mTransparentRegion));
+-    RETURN_ON_ERROR(parcel->write(mVisibleRegion));
+-    RETURN_ON_ERROR(parcel->write(mSurfaceDamageRegion));
+-    RETURN_ON_ERROR(parcel->writeUint32(mLayerStack));
+-    RETURN_ON_ERROR(parcel->writeFloat(mX));
+-    RETURN_ON_ERROR(parcel->writeFloat(mY));
+-    RETURN_ON_ERROR(parcel->writeUint32(mZ));
+-    RETURN_ON_ERROR(parcel->writeInt32(mWidth));
+-    RETURN_ON_ERROR(parcel->writeInt32(mHeight));
+-    RETURN_ON_ERROR(parcel->write(mCrop));
+-    RETURN_ON_ERROR(parcel->write(mFinalCrop));
+-    RETURN_ON_ERROR(parcel->writeFloat(mAlpha));
+-    RETURN_ON_ERROR(parcel->writeUint32(mFlags));
+-    RETURN_ON_ERROR(parcel->writeInt32(mPixelFormat));
+-    RETURN_ON_ERROR(parcel->writeUint32(static_cast<uint32_t>(mDataSpace)));
+-    for (size_t index = 0; index < 4; index++) {
+-        RETURN_ON_ERROR(parcel->writeFloat(mMatrix[index / 2][index % 2]));
+-    }
+-    RETURN_ON_ERROR(parcel->writeInt32(mActiveBufferWidth));
+-    RETURN_ON_ERROR(parcel->writeInt32(mActiveBufferHeight));
+-    RETURN_ON_ERROR(parcel->writeInt32(mActiveBufferStride));
+-    RETURN_ON_ERROR(parcel->writeInt32(mActiveBufferFormat));
+-    RETURN_ON_ERROR(parcel->writeInt32(mNumQueuedFrames));
+-    RETURN_ON_ERROR(parcel->writeBool(mRefreshPending));
+-    RETURN_ON_ERROR(parcel->writeBool(mIsOpaque));
+-    RETURN_ON_ERROR(parcel->writeBool(mContentDirty));
+-    return NO_ERROR;
+-}
+-
+-status_t LayerDebugInfo::readFromParcel(const Parcel* parcel) {
+-    mName = parcel->readCString();
+-    RETURN_ON_ERROR(parcel->errorCheck());
+-    mParentName = parcel->readCString();
+-    RETURN_ON_ERROR(parcel->errorCheck());
+-    mType = parcel->readCString();
+-    RETURN_ON_ERROR(parcel->errorCheck());
+-    RETURN_ON_ERROR(parcel->read(mTransparentRegion));
+-    RETURN_ON_ERROR(parcel->read(mVisibleRegion));
+-    RETURN_ON_ERROR(parcel->read(mSurfaceDamageRegion));
+-    RETURN_ON_ERROR(parcel->readUint32(&mLayerStack));
+-    RETURN_ON_ERROR(parcel->readFloat(&mX));
+-    RETURN_ON_ERROR(parcel->readFloat(&mY));
+-    RETURN_ON_ERROR(parcel->readUint32(&mZ));
+-    RETURN_ON_ERROR(parcel->readInt32(&mWidth));
+-    RETURN_ON_ERROR(parcel->readInt32(&mHeight));
+-    RETURN_ON_ERROR(parcel->read(mCrop));
+-    RETURN_ON_ERROR(parcel->read(mFinalCrop));
+-    RETURN_ON_ERROR(parcel->readFloat(&mAlpha));
+-    RETURN_ON_ERROR(parcel->readUint32(&mFlags));
+-    RETURN_ON_ERROR(parcel->readInt32(&mPixelFormat));
+-    // \todo [2017-07-25 kraita]: Static casting mDataSpace pointer to an uint32 does work. Better ways?
+-    mDataSpace = static_cast<android_dataspace>(parcel->readUint32());
+-    RETURN_ON_ERROR(parcel->errorCheck());
+-    for (size_t index = 0; index < 4; index++) {
+-        RETURN_ON_ERROR(parcel->readFloat(&mMatrix[index / 2][index % 2]));
+-    }
+-    RETURN_ON_ERROR(parcel->readInt32(&mActiveBufferWidth));
+-    RETURN_ON_ERROR(parcel->readInt32(&mActiveBufferHeight));
+-    RETURN_ON_ERROR(parcel->readInt32(&mActiveBufferStride));
+-    RETURN_ON_ERROR(parcel->readInt32(&mActiveBufferFormat));
+-    RETURN_ON_ERROR(parcel->readInt32(&mNumQueuedFrames));
+-    RETURN_ON_ERROR(parcel->readBool(&mRefreshPending));
+-    RETURN_ON_ERROR(parcel->readBool(&mIsOpaque));
+-    RETURN_ON_ERROR(parcel->readBool(&mContentDirty));
+-    return NO_ERROR;
+-}
+-
+-std::string to_string(const LayerDebugInfo& info) {
+-    String8 result;
+-
+-    result.appendFormat("+ %s (%s)\n", info.mType.c_str(), info.mName.c_str());
+-    info.mTransparentRegion.dump(result, "TransparentRegion");
+-    info.mVisibleRegion.dump(result, "VisibleRegion");
+-    info.mSurfaceDamageRegion.dump(result, "SurfaceDamageRegion");
+-
+-    result.appendFormat("      layerStack=%4d, z=%9d, pos=(%g,%g), size=(%4d,%4d), ",
+-            info.mLayerStack, info.mZ, static_cast<double>(info.mX), static_cast<double>(info.mY),
+-            info.mWidth, info.mHeight);
+-
+-    result.appendFormat("crop=%s, finalCrop=%s, ",
+-            to_string(info.mCrop).c_str(), to_string(info.mFinalCrop).c_str());
+-    result.appendFormat("isOpaque=%1d, invalidate=%1d, ", info.mIsOpaque, info.mContentDirty);
+-    result.appendFormat("dataspace=%s, ", dataspaceDetails(info.mDataSpace).c_str());
+-    result.appendFormat("pixelformat=%s, ", decodePixelFormat(info.mPixelFormat).c_str());
+-    result.appendFormat("alpha=%.3f, flags=0x%08x, ",
+-            static_cast<double>(info.mAlpha), info.mFlags);
+-    result.appendFormat("tr=[%.2f, %.2f][%.2f, %.2f]",
+-            static_cast<double>(info.mMatrix[0][0]), static_cast<double>(info.mMatrix[0][1]),
+-            static_cast<double>(info.mMatrix[1][0]), static_cast<double>(info.mMatrix[1][1]));
+-    result.append("\n");
+-    result.appendFormat("      parent=%s\n", info.mParentName.c_str());
+-    result.appendFormat("      activeBuffer=[%4ux%4u:%4u,%s],",
+-            info.mActiveBufferWidth, info.mActiveBufferHeight,
+-            info.mActiveBufferStride,
+-            decodePixelFormat(info.mActiveBufferFormat).c_str());
+-    result.appendFormat(" queued-frames=%d, mRefreshPending=%d",
+-            info.mNumQueuedFrames, info.mRefreshPending);
+-    result.append("\n");
+-    return std::string(result.c_str());
+-}
+-
+-} // android
+diff --git a/libs/gui/StreamSplitter.cpp b/libs/gui/StreamSplitter.cpp
+index 2f8e104ea0..52c906775e 100644
+--- a/libs/gui/StreamSplitter.cpp
++++ b/libs/gui/StreamSplitter.cpp
+@@ -38,11 +38,11 @@ namespace android {
+ status_t StreamSplitter::createSplitter(
+         const sp<IGraphicBufferConsumer>& inputQueue,
+         sp<StreamSplitter>* outSplitter) {
+-    if (inputQueue == nullptr) {
++    if (inputQueue == NULL) {
+         ALOGE("createSplitter: inputQueue must not be NULL");
+         return BAD_VALUE;
+     }
+-    if (outSplitter == nullptr) {
++    if (outSplitter == NULL) {
+         ALOGE("createSplitter: outSplitter must not be NULL");
+         return BAD_VALUE;
+     }
+@@ -74,7 +74,7 @@ StreamSplitter::~StreamSplitter() {
+ 
+ status_t StreamSplitter::addOutput(
+         const sp<IGraphicBufferProducer>& outputQueue) {
+-    if (outputQueue == nullptr) {
++    if (outputQueue == NULL) {
+         ALOGE("addOutput: outputQueue must not be NULL");
+         return BAD_VALUE;
+     }
+diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
+index 7a0ebcf40b..e6fe54dc6d 100644
+--- a/libs/gui/Surface.cpp
++++ b/libs/gui/Surface.cpp
+@@ -151,10 +151,7 @@ status_t Surface::getDisplayRefreshCycleDuration(nsecs_t* outRefreshDuration) {
+     ATRACE_CALL();
+ 
+     DisplayStatInfo stats;
+-    status_t result = composerService()->getDisplayStats(nullptr, &stats);
+-    if (result != NO_ERROR) {
+-        return result;
+-    }
++    //status_t err = composerService()->getDisplayStats(NULL, &stats);
+ 
+     *outRefreshDuration = stats.vsyncPeriod;
+ 
+@@ -492,7 +489,7 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
+         if (mSharedBufferMode && mAutoRefresh && mSharedBufferSlot !=
+                 BufferItem::INVALID_BUFFER_SLOT) {
+             sp<GraphicBuffer>& gbuf(mSlots[mSharedBufferSlot].buffer);
+-            if (gbuf != nullptr) {
++            if (gbuf != NULL) {
+                 *buffer = gbuf.get();
+                 *fenceFd = -1;
+                 return OK;
+@@ -532,7 +529,7 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
+     sp<GraphicBuffer>& gbuf(mSlots[buf].buffer);
+ 
+     // this should never happen
+-    ALOGE_IF(fence == nullptr, "Surface::dequeueBuffer: received null Fence! buf=%d", buf);
++    ALOGE_IF(fence == NULL, "Surface::dequeueBuffer: received null Fence! buf=%d", buf);
+ 
+     if (result & IGraphicBufferProducer::RELEASE_ALL_BUFFERS) {
+         freeAllBuffers();
+@@ -610,7 +607,7 @@ int Surface::cancelBuffer(android_native_buffer_t* buffer,
+ int Surface::getSlotFromBufferLocked(
+         android_native_buffer_t* buffer) const {
+     for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
+-        if (mSlots[i].buffer != nullptr &&
++        if (mSlots[i].buffer != NULL &&
+                 mSlots[i].buffer->handle == buffer->handle) {
+             return i;
+         }
+@@ -872,10 +869,6 @@ int Surface::query(int what, int* value) const {
+                 *value = mFrameTimestampsSupportsPresent ? 1 : 0;
+                 return NO_ERROR;
+             }
+-            case NATIVE_WINDOW_IS_VALID: {
+-                *value = mGraphicBufferProducer != nullptr ? 1 : 0;
+-                return NO_ERROR;
+-            }
+         }
+     }
+     return mGraphicBufferProducer->query(what, value);
+@@ -1226,7 +1219,7 @@ int Surface::detachNextBuffer(sp<GraphicBuffer>* outBuffer,
+     ATRACE_CALL();
+     ALOGV("Surface::detachNextBuffer");
+ 
+-    if (outBuffer == nullptr || outFence == nullptr) {
++    if (outBuffer == NULL || outFence == NULL) {
+         return BAD_VALUE;
+     }
+ 
+@@ -1235,8 +1228,8 @@ int Surface::detachNextBuffer(sp<GraphicBuffer>* outBuffer,
+         mRemovedBuffers.clear();
+     }
+ 
+-    sp<GraphicBuffer> buffer(nullptr);
+-    sp<Fence> fence(nullptr);
++    sp<GraphicBuffer> buffer(NULL);
++    sp<Fence> fence(NULL);
+     status_t result = mGraphicBufferProducer->detachNextBuffer(
+             &buffer, &fence);
+     if (result != NO_ERROR) {
+@@ -1244,19 +1237,19 @@ int Surface::detachNextBuffer(sp<GraphicBuffer>* outBuffer,
+     }
+ 
+     *outBuffer = buffer;
+-    if (fence != nullptr && fence->isValid()) {
++    if (fence != NULL && fence->isValid()) {
+         *outFence = fence;
+     } else {
+         *outFence = Fence::NO_FENCE;
+     }
+ 
+     for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
+-        if (mSlots[i].buffer != nullptr &&
++        if (mSlots[i].buffer != NULL &&
+                 mSlots[i].buffer->getId() == buffer->getId()) {
+             if (mReportRemovedBuffers) {
+                 mRemovedBuffers.push_back(mSlots[i].buffer);
+             }
+-            mSlots[i].buffer = nullptr;
++            mSlots[i].buffer = NULL;
+         }
+     }
+ 
+@@ -1308,7 +1301,7 @@ int Surface::setCrop(Rect const* rect)
+     ATRACE_CALL();
+ 
+     Rect realRect(Rect::EMPTY_RECT);
+-    if (rect == nullptr || rect->isEmpty()) {
++    if (rect == NULL || rect->isEmpty()) {
+         realRect.clear();
+     } else {
+         realRect = *rect;
+@@ -1505,7 +1498,7 @@ int Surface::setBuffersDataSpace(android_dataspace dataSpace)
+ 
+ void Surface::freeAllBuffers() {
+     for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
+-        mSlots[i].buffer = nullptr;
++        mSlots[i].buffer = 0;
+     }
+ }
+ 
+@@ -1545,12 +1538,12 @@ static status_t copyBlt(
+     // src and dst with, height and format must be identical. no verification
+     // is done here.
+     status_t err;
+-    uint8_t* src_bits = nullptr;
++    uint8_t* src_bits = NULL;
+     err = src->lock(GRALLOC_USAGE_SW_READ_OFTEN, reg.bounds(),
+             reinterpret_cast<void**>(&src_bits));
+     ALOGE_IF(err, "error locking src buffer %s", strerror(-err));
+ 
+-    uint8_t* dst_bits = nullptr;
++    uint8_t* dst_bits = NULL;
+     err = dst->lockAsync(GRALLOC_USAGE_SW_WRITE_OFTEN, reg.bounds(),
+             reinterpret_cast<void**>(&dst_bits), *dstFenceFd);
+     ALOGE_IF(err, "error locking dst buffer %s", strerror(-err));
+@@ -1598,7 +1591,7 @@ static status_t copyBlt(
+ status_t Surface::lock(
+         ANativeWindow_Buffer* outBuffer, ARect* inOutDirtyBounds)
+ {
+-    if (mLockedBuffer != nullptr) {
++    if (mLockedBuffer != 0) {
+         ALOGE("Surface::lock failed, already locked");
+         return INVALID_OPERATION;
+     }
+@@ -1630,7 +1623,7 @@ status_t Surface::lock(
+ 
+         // figure out if we can copy the frontbuffer back
+         const sp<GraphicBuffer>& frontBuffer(mPostedBuffer);
+-        const bool canCopyBack = (frontBuffer != nullptr &&
++        const bool canCopyBack = (frontBuffer != 0 &&
+                 backBuffer->width  == frontBuffer->width &&
+                 backBuffer->height == frontBuffer->height &&
+                 backBuffer->format == frontBuffer->format);
+@@ -1692,7 +1685,7 @@ status_t Surface::lock(
+ 
+ status_t Surface::unlockAndPost()
+ {
+-    if (mLockedBuffer == nullptr) {
++    if (mLockedBuffer == 0) {
+         ALOGE("Surface::unlockAndPost failed, no locked buffer");
+         return INVALID_OPERATION;
+     }
+@@ -1706,7 +1699,7 @@ status_t Surface::unlockAndPost()
+             mLockedBuffer->handle, strerror(-err));
+ 
+     mPostedBuffer = mLockedBuffer;
+-    mLockedBuffer = nullptr;
++    mLockedBuffer = 0;
+     return err;
+ }
+ 
+diff --git a/libs/gui/SurfaceComposerClient.cpp b/libs/gui/SurfaceComposerClient.cpp
+index 053b9afb86..7ae2672249 100644
+--- a/libs/gui/SurfaceComposerClient.cpp
++++ b/libs/gui/SurfaceComposerClient.cpp
+@@ -80,7 +80,7 @@ void ComposerService::connectLocked() {
+ /*static*/ sp<ISurfaceComposer> ComposerService::getComposerService() {
+     ComposerService& instance = ComposerService::getInstance();
+     Mutex::Autolock _l(instance.mLock);
+-    if (instance.mComposerService == nullptr) {
++    if (instance.mComposerService == NULL) {
+         ComposerService::getInstance().connectLocked();
+         assert(instance.mComposerService != NULL);
+         ALOGD("ComposerService reconnected");
+@@ -91,8 +91,8 @@ void ComposerService::connectLocked() {
+ void ComposerService::composerServiceDied()
+ {
+     Mutex::Autolock _l(mLock);
+-    mComposerService = nullptr;
+-    mDeathObserver = nullptr;
++    mComposerService = NULL;
++    mDeathObserver = NULL;
+ }
+ 
+ // ---------------------------------------------------------------------------
+@@ -621,12 +621,12 @@ SurfaceComposerClient::SurfaceComposerClient(const sp<IGraphicBufferProducer>& r
+ 
+ void SurfaceComposerClient::onFirstRef() {
+     sp<ISurfaceComposer> sm(ComposerService::getComposerService());
+-    if (sm != nullptr) {
++    if (sm != 0) {
+         auto rootProducer = mParent.promote();
+         sp<ISurfaceComposerClient> conn;
+         conn = (rootProducer != nullptr) ? sm->createScopedConnection(rootProducer) :
+                 sm->createConnection();
+-        if (conn != nullptr) {
++        if (conn != 0) {
+             mClient = conn;
+             mStatus = NO_ERROR;
+         }
+@@ -656,7 +656,7 @@ void SurfaceComposerClient::dispose() {
+     // this can be called more than once.
+     sp<ISurfaceComposerClient> client;
+     Mutex::Autolock _lm(mLock);
+-    if (mClient != nullptr) {
++    if (mClient != 0) {
+         client = mClient; // hold ref while lock is held
+         mClient.clear();
+     }
+@@ -946,7 +946,7 @@ status_t ScreenshotClient::capture(
+         Rect sourceCrop, uint32_t reqWidth, uint32_t reqHeight,
+         int32_t minLayerZ, int32_t maxLayerZ, bool useIdentityTransform) {
+     sp<ISurfaceComposer> s(ComposerService::getComposerService());
+-    if (s == nullptr) return NO_INIT;
++    if (s == NULL) return NO_INIT;
+     return s->captureScreen(display, producer, sourceCrop,
+             reqWidth, reqHeight, minLayerZ, maxLayerZ, useIdentityTransform);
+ }
+@@ -957,7 +957,7 @@ status_t ScreenshotClient::captureToBuffer(const sp<IBinder>& display,
+         uint32_t rotation,
+         sp<GraphicBuffer>* outBuffer) {
+     sp<ISurfaceComposer> s(ComposerService::getComposerService());
+-    if (s == nullptr) return NO_INIT;
++    if (s == NULL) return NO_INIT;
+ 
+     sp<IGraphicBufferConsumer> gbpConsumer;
+     sp<IGraphicBufferProducer> producer;
+@@ -988,7 +988,7 @@ ScreenshotClient::~ScreenshotClient() {
+ }
+ 
+ sp<CpuConsumer> ScreenshotClient::getCpuConsumer() const {
+-    if (mCpuConsumer == nullptr) {
++    if (mCpuConsumer == NULL) {
+         sp<IGraphicBufferConsumer> consumer;
+         BufferQueue::createBufferQueue(&mProducer, &consumer);
+         mCpuConsumer = new CpuConsumer(consumer, 1);
+@@ -1002,7 +1002,7 @@ status_t ScreenshotClient::update(const sp<IBinder>& display,
+         int32_t minLayerZ, int32_t maxLayerZ,
+         bool useIdentityTransform, uint32_t rotation) {
+     sp<ISurfaceComposer> s(ComposerService::getComposerService());
+-    if (s == nullptr) return NO_INIT;
++    if (s == NULL) return NO_INIT;
+     sp<CpuConsumer> cpuConsumer = getCpuConsumer();
+ 
+     if (mHaveBuffer) {
+diff --git a/libs/gui/SurfaceControl.cpp b/libs/gui/SurfaceControl.cpp
+index 08e3b60f6c..58bd273de6 100644
+--- a/libs/gui/SurfaceControl.cpp
++++ b/libs/gui/SurfaceControl.cpp
+@@ -83,7 +83,7 @@ void SurfaceControl::clear()
+ }
+ 
+ void SurfaceControl::disconnect() {
+-    if (mGraphicBufferProducer != nullptr) {
++    if (mGraphicBufferProducer != NULL) {
+         mGraphicBufferProducer->disconnect(
+                 BufferQueueCore::CURRENTLY_CONNECTED_API);
+     }
+@@ -92,7 +92,7 @@ void SurfaceControl::disconnect() {
+ bool SurfaceControl::isSameSurface(
+         const sp<SurfaceControl>& lhs, const sp<SurfaceControl>& rhs)
+ {
+-    if (lhs == nullptr || rhs == nullptr)
++    if (lhs == 0 || rhs == 0)
+         return false;
+     return lhs->mHandle == rhs->mHandle;
+ }
+@@ -219,7 +219,7 @@ status_t SurfaceControl::getLayerFrameStats(FrameStats* outStats) const {
+ 
+ status_t SurfaceControl::validate() const
+ {
+-    if (mHandle==nullptr || mClient==nullptr) {
++    if (mHandle==0 || mClient==0) {
+         ALOGE("invalid handle (%p) or client (%p)",
+                 mHandle.get(), mClient.get());
+         return NO_INIT;
+@@ -231,7 +231,7 @@ status_t SurfaceControl::writeSurfaceToParcel(
+         const sp<SurfaceControl>& control, Parcel* parcel)
+ {
+     sp<IGraphicBufferProducer> bp;
+-    if (control != nullptr) {
++    if (control != NULL) {
+         bp = control->mGraphicBufferProducer;
+     }
+     return parcel->writeStrongBinder(IInterface::asBinder(bp));
+@@ -249,7 +249,7 @@ sp<Surface> SurfaceControl::generateSurfaceLocked() const
+ sp<Surface> SurfaceControl::getSurface() const
+ {
+     Mutex::Autolock _l(mLock);
+-    if (mSurfaceData == nullptr) {
++    if (mSurfaceData == 0) {
+         return generateSurfaceLocked();
+     }
+     return mSurfaceData;
+diff --git a/libs/gui/SyncFeatures.cpp b/libs/gui/SyncFeatures.cpp
+index fcae05c8ad..afa15c5cda 100644
+--- a/libs/gui/SyncFeatures.cpp
++++ b/libs/gui/SyncFeatures.cpp
+@@ -41,7 +41,7 @@ SyncFeatures::SyncFeatures() : Singleton<SyncFeatures>(),
+     // This can only be called after EGL has been initialized; otherwise the
+     // check below will abort.
+     const char* exts = eglQueryStringImplementationANDROID(dpy, EGL_EXTENSIONS);
+-    LOG_ALWAYS_FATAL_IF(exts == nullptr, "eglQueryStringImplementationANDROID failed");
++    LOG_ALWAYS_FATAL_IF(exts == NULL, "eglQueryStringImplementationANDROID failed");
+     if (strstr(exts, "EGL_ANDROID_native_fence_sync")) {
+         // This makes GLConsumer use the EGL_ANDROID_native_fence_sync
+         // extension to create Android native fences to signal when all
+diff --git a/libs/gui/include/gui/BufferQueue.h b/libs/gui/include/gui/BufferQueue.h
+index ba5cbf7eb4..c4221b0781 100644
+--- a/libs/gui/include/gui/BufferQueue.h
++++ b/libs/gui/include/gui/BufferQueue.h
+@@ -38,6 +38,10 @@ public:
+         PRESENT_LATER = IGraphicBufferConsumer::PRESENT_LATER,
+     };
+ 
++#ifdef STE_HARDWARE
++    enum { NUM_BLIT_BUFFER_SLOTS = 2 };
++#endif
++
+     // When in async mode we reserve two slots in order to guarantee that the
+     // producer and consumer can run asynchronously.
+     enum { MAX_MAX_ACQUIRED_BUFFERS = NUM_BUFFER_SLOTS - 2 };
+diff --git a/libs/gui/include/gui/DisplayEventReceiver.h b/libs/gui/include/gui/DisplayEventReceiver.h
+index 32ce59a765..2e1e9a5f98 100644
+--- a/libs/gui/include/gui/DisplayEventReceiver.h
++++ b/libs/gui/include/gui/DisplayEventReceiver.h
+@@ -84,8 +84,15 @@ public:
+      * or requestNextVsync to receive them.
+      * Other events start being delivered immediately.
+      */
+-    DisplayEventReceiver(
+-            ISurfaceComposer::VsyncSource vsyncSource = ISurfaceComposer::eVsyncSourceApp);
++    DisplayEventReceiver();
++
++    /*
++     * DisplayEventReceiver creates and registers an event connection with
++     * SurfaceFlinger. VSync events are disabled by default. Call setVSyncRate
++     * or requestNextVsync to receive them.
++     * Other events start being delivered immediately.
++     */
++    DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSource);
+ 
+     /*
+      * ~DisplayEventReceiver severs the connection with SurfaceFlinger, new events
+diff --git a/libs/gui/include/gui/ISurfaceComposer.h b/libs/gui/include/gui/ISurfaceComposer.h
+index 4b924e186c..f80ba000b4 100644
+--- a/libs/gui/include/gui/ISurfaceComposer.h
++++ b/libs/gui/include/gui/ISurfaceComposer.h
+@@ -39,7 +39,6 @@ struct ComposerState;
+ struct DisplayState;
+ struct DisplayInfo;
+ struct DisplayStatInfo;
+-class LayerDebugInfo;
+ class HdrCapabilities;
+ class IDisplayEventConnection;
+ class IGraphicBufferProducer;
+@@ -230,7 +229,6 @@ public:
+         SET_ACTIVE_COLOR_MODE,
+         ENABLE_VSYNC_INJECTIONS,
+         INJECT_VSYNC,
+-        GET_LAYER_DEBUG_INFO,
+         CREATE_SCOPED_CONNECTION
+     };
+ 
+diff --git a/libs/gui/include/gui/LayerDebugInfo.h b/libs/gui/include/gui/LayerDebugInfo.h
+deleted file mode 100644
+index 8453e043ef..0000000000
+--- a/libs/gui/include/gui/LayerDebugInfo.h
++++ /dev/null
+@@ -1,73 +0,0 @@
+-/*
+- * Copyright (C) 2017 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#include <binder/Parcelable.h>
+-
+-#include <ui/PixelFormat.h>
+-#include <ui/Region.h>
+-
+-#include <string>
+-
+-namespace android {
+-
+-/* Class for transporting debug info from SurfaceFlinger to authorized
+- * recipients.  The class is intended to be a data container. There are
+- * no getters or setters.
+- */
+-class LayerDebugInfo : public Parcelable {
+-public:
+-    LayerDebugInfo() = default;
+-    LayerDebugInfo(const LayerDebugInfo&) = default;
+-    virtual ~LayerDebugInfo() = default;
+-
+-    virtual status_t writeToParcel(Parcel* parcel) const;
+-    virtual status_t readFromParcel(const Parcel* parcel);
+-
+-    std::string mName = std::string("NOT FILLED");
+-    std::string mParentName = std::string("NOT FILLED");
+-    std::string mType = std::string("NOT FILLED");
+-    Region mTransparentRegion = Region::INVALID_REGION;
+-    Region mVisibleRegion = Region::INVALID_REGION;
+-    Region mSurfaceDamageRegion = Region::INVALID_REGION;
+-    uint32_t mLayerStack = 0;
+-    float mX = 0.f;
+-    float mY = 0.f;
+-    uint32_t mZ = 0 ;
+-    int32_t mWidth = -1;
+-    int32_t mHeight = -1;
+-    Rect mCrop = Rect::INVALID_RECT;
+-    Rect mFinalCrop = Rect::INVALID_RECT;
+-    float mAlpha = 0.f;
+-    uint32_t mFlags = 0;
+-    PixelFormat mPixelFormat = PIXEL_FORMAT_NONE;
+-    android_dataspace mDataSpace = HAL_DATASPACE_UNKNOWN;
+-    // Row-major transform matrix (SurfaceControl::setMatrix())
+-    float mMatrix[2][2] = {{0.f, 0.f}, {0.f, 0.f}};
+-    int32_t mActiveBufferWidth = -1;
+-    int32_t mActiveBufferHeight = -1;
+-    int32_t mActiveBufferStride = 0;
+-    PixelFormat mActiveBufferFormat = PIXEL_FORMAT_NONE;
+-    int32_t mNumQueuedFrames = -1;
+-    bool mRefreshPending = false;
+-    bool mIsOpaque = false;
+-    bool mContentDirty = false;
+-};
+-
+-std::string to_string(const LayerDebugInfo& info);
+-
+-} // namespace android
+diff --git a/libs/gui/include/gui/SurfaceControl.h b/libs/gui/include/gui/SurfaceControl.h
+index c15209d32c..8bb705cf77 100644
+--- a/libs/gui/include/gui/SurfaceControl.h
++++ b/libs/gui/include/gui/SurfaceControl.h
+@@ -90,16 +90,6 @@ public:
+     status_t    setFlags(uint32_t flags, uint32_t mask);
+     status_t    setTransparentRegionHint(const Region& transparent);
+     status_t    setAlpha(float alpha=1.0f);
+-
+-    // Experimentarily it appears that the matrix transforms the
+-    // on-screen rectangle and it's contents before the position is
+-    // applied.
+-    //
+-    // TODO: Test with other combinations to find approximate transformation rules.
+-    //
+-    // For example:
+-    // Layer sized (W,H) set to position (x,y) with matrix M=[-1, 0, 0, 1] (Horizontal flip) gives
+-    // [((0, 0), (W, H)) x M] + (x,y) = ((-W, 0), (0, H)) + (x,y) = ((-W + x, y), (x, H+y))
+     status_t    setMatrix(float dsdx, float dtdx, float dtdy, float dsdy);
+     status_t    setCrop(const Rect& crop);
+     status_t    setFinalCrop(const Rect& crop);
+diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
+index e685462c85..a816c6e0a1 100644
+--- a/libs/ui/GraphicBufferAllocator.cpp
++++ b/libs/ui/GraphicBufferAllocator.cpp
+@@ -69,13 +69,13 @@ void GraphicBufferAllocator::dump(String8& result) const
+     for (size_t i=0 ; i<c ; i++) {
+         const alloc_rec_t& rec(list.valueAt(i));
+         if (rec.size) {
+-            snprintf(buffer, SIZE, "%10p: %7.2f KiB | %4u (%4u) x %4u | %4u | %8X | 0x%" PRIx64
++            snprintf(buffer, SIZE, "%10p: %7.2f KiB | %4u (%4u) x %4u | %4u | %8X | 0x%" PRIx32
+                     "\n",
+                     list.keyAt(i), rec.size/1024.0,
+                     rec.width, rec.stride, rec.height, rec.layerCount, rec.format,
+                     rec.usage);
+         } else {
+-            snprintf(buffer, SIZE, "%10p: unknown     | %4u (%4u) x %4u | %4u | %8X | 0x%" PRIx64
++            snprintf(buffer, SIZE, "%10p: unknown     | %4u (%4u) x %4u | %4u | %8X | 0x%" PRIx32
+                     "\n",
+                     list.keyAt(i),
+                     rec.width, rec.stride, rec.height, rec.layerCount, rec.format,
+diff --git a/vulkan/libvulkan/swapchain.cpp b/vulkan/libvulkan/swapchain.cpp
+index b06a9e5a37..2aa0b95fa4 100644
+--- a/vulkan/libvulkan/swapchain.cpp
++++ b/vulkan/libvulkan/swapchain.cpp
+@@ -1140,7 +1140,7 @@ VkResult CreateSwapchainKHR(VkDevice device,
+         .samples = VK_SAMPLE_COUNT_1_BIT,
+         .tiling = VK_IMAGE_TILING_OPTIMAL,
+         .usage = create_info->imageUsage,
+-        .flags = createProtectedSwapchain ? VK_IMAGE_CREATE_PROTECTED_BIT : 0u,
++        .flags = 0,
+         .sharingMode = create_info->imageSharingMode,
+         .queueFamilyIndexCount = create_info->queueFamilyIndexCount,
+         .pQueueFamilyIndices = create_info->pQueueFamilyIndices,
+-- 
+2.17.0
+

@@ -1,0 +1,107 @@
+From 95abfce64c1d765cce7a6dbca98106c26a87ef20 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Thu, 1 Sep 2016 22:10:07 -0700
+Subject: [PATCH 32/45] libgui: Provide M-compatible sensors ABI
+
+ * Enable with -DCOMPAT_SENSORS_M
+---
+ libs/sensor/Android.bp                     |  3 +++
+ libs/sensor/SensorManager.cpp              | 14 ++++++++++++--
+ libs/sensor/include/sensor/SensorManager.h | 16 ++++++++++++++++
+ 3 files changed, 31 insertions(+), 2 deletions(-)
+
+diff --git a/libs/sensor/Android.bp b/libs/sensor/Android.bp
+index 940ff5afbc..ec76d6f30c 100644
+--- a/libs/sensor/Android.bp
++++ b/libs/sensor/Android.bp
+@@ -37,6 +37,9 @@ cc_library_shared {
+ 
+         // Don't warn about struct padding
+         "-Wno-padded",
++
++        // M-compatible sensors ABI
++        "-DCOMPAT_SENSORS_M",
+     ],
+ 
+     srcs: [
+diff --git a/libs/sensor/SensorManager.cpp b/libs/sensor/SensorManager.cpp
+index 6fe72a13ba..d5f64d87c4 100644
+--- a/libs/sensor/SensorManager.cpp
++++ b/libs/sensor/SensorManager.cpp
+@@ -131,7 +131,12 @@ void SensorManager::sensorManagerDied() {
+     mSensors.clear();
+ }
+ 
+-status_t SensorManager::assertStateLocked() {
++#ifdef COMPAT_SENSORS_M
++status_t SensorManager::assertStateLocked() const
++#else
++status_t SensorManager::assertStateLocked()
++#endif
++{
+     bool initSensorManager = false;
+     if (mSensorServer == NULL) {
+         initSensorManager = true;
+@@ -173,7 +178,12 @@ status_t SensorManager::assertStateLocked() {
+     return NO_ERROR;
+ }
+ 
+-ssize_t SensorManager::getSensorList(Sensor const* const** list) {
++#ifdef COMPAT_SENSORS_M
++ssize_t SensorManager::getSensorList(Sensor const* const** list) const
++#else
++ssize_t SensorManager::getSensorList(Sensor const* const** list)
++#endif
++{
+     Mutex::Autolock _l(mLock);
+     status_t err = assertStateLocked();
+     if (err < 0) {
+diff --git a/libs/sensor/include/sensor/SensorManager.h b/libs/sensor/include/sensor/SensorManager.h
+index 23f7a918bb..4c098967a1 100644
+--- a/libs/sensor/include/sensor/SensorManager.h
++++ b/libs/sensor/include/sensor/SensorManager.h
+@@ -56,7 +56,11 @@ public:
+     static SensorManager& getInstanceForPackage(const String16& packageName);
+     ~SensorManager();
+ 
++#ifdef COMPAT_SENSORS_M
++    ssize_t getSensorList(Sensor const* const** list) const;
++#else
+     ssize_t getSensorList(Sensor const* const** list);
++#endif
+     ssize_t getDynamicSensorList(Vector<Sensor>& list);
+     Sensor const* getDefaultSensor(int type);
+     sp<SensorEventQueue> createEventQueue(String8 packageName = String8(""), int mode = 0);
+@@ -72,17 +76,29 @@ private:
+     static status_t waitForSensorService(sp<ISensorServer> *server);
+ 
+     SensorManager(const String16& opPackageName);
++#ifdef COMPAT_SENSORS_M
++    status_t assertStateLocked() const;
++#else
+     status_t assertStateLocked();
++#endif
+ 
+ private:
+     static Mutex sLock;
+     static std::map<String16, SensorManager*> sPackageInstances;
+ 
++#ifdef COMPAT_SENSORS_M
++    mutable Mutex mLock;
++    mutable sp<ISensorServer> mSensorServer;
++    mutable Sensor const** mSensorList;
++    mutable Vector<Sensor> mSensors;
++    mutable sp<IBinder::DeathRecipient> mDeathObserver;
++#else
+     Mutex mLock;
+     sp<ISensorServer> mSensorServer;
+     Sensor const** mSensorList;
+     Vector<Sensor> mSensors;
+     sp<IBinder::DeathRecipient> mDeathObserver;
++#endif
+     const String16 mOpPackageName;
+     std::unordered_map<int, sp<ISensorEventConnection>> mDirectConnection;
+     int32_t mDirectConnectionHandle;
+-- 
+2.17.0
+

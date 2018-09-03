@@ -1,7 +1,7 @@
 From 9f7ecf51378efa70ceaacc19e616a4d5910969d9 Mon Sep 17 00:00:00 2001
 From: M1cha <sigmaepsilon92@gmail.com>
 Date: Fri, 26 Aug 2016 06:32:25 +0200
-Subject: [PATCH 03/42] mkbootimg: add support for --dt
+Subject: [PATCH 03/44] mkbootimg: add support for --dt
 
 Change-Id: I19f149fac693420cf1f630b51293bbd3650a1b59
 ---

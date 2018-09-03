@@ -1,7 +1,7 @@
 From 832d179a44fe2be4fc508e683ba417f6ff2ba6ec Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <dan.pasanen@gmail.com>
 Date: Fri, 29 Dec 2017 11:08:39 -0600
-Subject: [PATCH 11/42] init: always allow local.prop overrides
+Subject: [PATCH 11/44] init: always allow local.prop overrides
 
 * Many people use this for more than just debugging. Let's allow
   it to work in non-debuggable situations too.

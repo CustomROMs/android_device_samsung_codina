@@ -1,7 +1,7 @@
 From 02b0b1b01137e67471551681aa9862649f1bd39d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 10:23:23 +0300
-Subject: [PATCH 12/24] 1
+Subject: [PATCH 12/45] 1
 
 Change-Id: I33485379065253fa308cb739b8e528aa7c71b94b
 ---
@@ -15,7 +15,7 @@ Change-Id: I33485379065253fa308cb739b8e528aa7c71b94b
  7 files changed, 115 insertions(+), 62 deletions(-)
 
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-index 18e308ca7..a91d1df71 100755
+index 18e308ca7b..a91d1df714 100755
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -169,6 +169,24 @@ DisplayDevice::DisplayDevice(
@@ -86,7 +86,7 @@ index 18e308ca7..a91d1df71 100755
                          mVisibleLayersSortedByZ.size());
      result.appendFormat("   v:[%d,%d,%d,%d], f:[%d,%d,%d,%d], s:[%d,%d,%d,%d],"
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index e8a5929ee..82a72352a 100644
+index e8a5929ee0..82a72352a5 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
 @@ -249,7 +249,7 @@ private:
@@ -108,7 +108,7 @@ index e8a5929ee..82a72352a 100644
      // current active color mode
      android_color_mode_t mActiveColorMode;
 diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
-index 97c56b354..e92565fd9 100755
+index 97c56b3542..e92565fd9c 100755
 --- a/services/surfaceflinger/Layer.cpp
 +++ b/services/surfaceflinger/Layer.cpp
 @@ -70,7 +70,7 @@ Layer::Layer(SurfaceFlinger* flinger, const sp<Client>& client,
@@ -260,7 +260,7 @@ index 97c56b354..e92565fd9 100755
          if (relative->getZ() < 0) {
              break;
 diff --git a/services/surfaceflinger/Layer.h b/services/surfaceflinger/Layer.h
-index 56f508b60..f7b82e4fb 100644
+index 56f508b60b..f7b82e4fb7 100644
 --- a/services/surfaceflinger/Layer.h
 +++ b/services/surfaceflinger/Layer.h
 @@ -27,7 +27,6 @@
@@ -292,7 +292,7 @@ index 56f508b60..f7b82e4fb 100644
  
      bool hasHwcLayer(int32_t hwcId) {
 diff --git a/services/surfaceflinger/LayerVector.cpp b/services/surfaceflinger/LayerVector.cpp
-index d0f8fbea2..2233e78c2 100644
+index d0f8fbea22..2233e78c2b 100644
 --- a/services/surfaceflinger/LayerVector.cpp
 +++ b/services/surfaceflinger/LayerVector.cpp
 @@ -35,17 +35,14 @@ int LayerVector::do_compare(const void* lhs, const void* rhs) const
@@ -317,7 +317,7 @@ index d0f8fbea2..2233e78c2 100644
  
  void LayerVector::traverseInZOrder(StateSet stateSet, const Visitor& visitor) const {
 diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
-index e32fa58bc..224f1fdbc 100644
+index e32fa58bc7..224f1fdbc9 100644
 --- a/services/surfaceflinger/SurfaceFlinger.h
 +++ b/services/surfaceflinger/SurfaceFlinger.h
 @@ -627,6 +627,9 @@ private:
@@ -331,7 +331,7 @@ index e32fa58bc..224f1fdbc 100644
       * Attributes
       */
 diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
-index ee938eff9..2aaba00e1 100644
+index ee938eff9e..2aaba00e16 100644
 --- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
 @@ -97,6 +97,20 @@

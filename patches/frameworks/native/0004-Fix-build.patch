@@ -1,7 +1,7 @@
 From 456ba5948cb8fd4e4e971b728b9d838e2b04da57 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 1 Sep 2018 23:45:07 +0300
-Subject: [PATCH 04/24] Fix build
+Subject: [PATCH 04/45] Fix build
 
 Change-Id: I8d48772aad0cefb97cfef6f3d5c341adbe2ec66e
 ---
@@ -11,7 +11,7 @@ Change-Id: I8d48772aad0cefb97cfef6f3d5c341adbe2ec66e
  3 files changed, 4 insertions(+), 21 deletions(-)
 
 diff --git a/libs/binder/Android.bp b/libs/binder/Android.bp
-index 4a7d8bc04..1fa158e25 100644
+index 4a7d8bc049..1fa158e257 100644
 --- a/libs/binder/Android.bp
 +++ b/libs/binder/Android.bp
 @@ -82,15 +82,11 @@ cc_library {
@@ -33,7 +33,7 @@ index 4a7d8bc04..1fa158e25 100644
      },
  
 diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
-index 8d80b368e..7120772a1 100644
+index 8d80b368e8..7120772a1a 100644
 --- a/libs/ui/Android.bp
 +++ b/libs/ui/Android.bp
 @@ -45,6 +45,7 @@ cc_library_shared {
@@ -60,7 +60,7 @@ index 8d80b368e..7120772a1 100644
      shared_libs: [
          "android.hardware.graphics.allocator@2.0",
 diff --git a/opengl/libs/Android.bp b/opengl/libs/Android.bp
-index 435d00cae..625ac3d9a 100644
+index 435d00cae8..625ac3d9ae 100644
 --- a/opengl/libs/Android.bp
 +++ b/opengl/libs/Android.bp
 @@ -124,13 +124,7 @@ cc_library_static {

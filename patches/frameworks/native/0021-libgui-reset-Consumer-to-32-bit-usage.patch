@@ -1,7 +1,7 @@
 From e025a7505858e6000da67825adb5bc939ead55fe Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 21/24] libgui: reset Consumer to 32-bit usage
+Subject: [PATCH 21/45] libgui: reset Consumer to 32-bit usage
 
 Change-Id: Ia6bc172b1e98cfa426eb137a5743359cc8eea5a5
 ---
@@ -27,7 +27,7 @@ Change-Id: Ia6bc172b1e98cfa426eb137a5743359cc8eea5a5
  19 files changed, 11 insertions(+), 126 deletions(-)
 
 diff --git a/libs/gui/BufferItemConsumer.cpp b/libs/gui/BufferItemConsumer.cpp
-index 3aa4e449c..9225e181c 100644
+index 3aa4e449cc..9225e181c3 100644
 --- a/libs/gui/BufferItemConsumer.cpp
 +++ b/libs/gui/BufferItemConsumer.cpp
 @@ -19,8 +19,6 @@
@@ -56,7 +56,7 @@ index 3aa4e449c..9225e181c 100644
          err = mConsumer->setMaxAcquiredBufferCount(bufferCount);
          LOG_ALWAYS_FATAL_IF(err != OK,
 diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
-index 0c7b7e20d..1b33b1adc 100644
+index 0c7b7e20db..1b33b1adc5 100644
 --- a/libs/gui/BufferQueueProducer.cpp
 +++ b/libs/gui/BufferQueueProducer.cpp
 @@ -1102,7 +1102,6 @@ int BufferQueueProducer::query(int what, int *outValue) {
@@ -81,7 +81,7 @@ index 0c7b7e20d..1b33b1adc 100644
 -
  } // namespace android
 diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
-index fe117e6d7..5099e5e8d 100644
+index fe117e6d7a..5099e5e8d0 100644
 --- a/libs/gui/GLConsumer.cpp
 +++ b/libs/gui/GLConsumer.cpp
 @@ -1114,7 +1114,7 @@ status_t GLConsumer::setDefaultBufferDataSpace(
@@ -94,7 +94,7 @@ index fe117e6d7..5099e5e8d 100644
      if (mAbandoned) {
          GLC_LOGE("setConsumerUsageBits: GLConsumer is abandoned!");
 diff --git a/libs/gui/IGraphicBufferProducer.cpp b/libs/gui/IGraphicBufferProducer.cpp
-index 23e9ddc01..fc2d86b6f 100644
+index 23e9ddc014..fc2d86b6fe 100644
 --- a/libs/gui/IGraphicBufferProducer.cpp
 +++ b/libs/gui/IGraphicBufferProducer.cpp
 @@ -62,8 +62,7 @@ enum {
@@ -166,7 +166,7 @@ index 23e9ddc01..fc2d86b6f 100644
      return BBinder::onTransact(code, data, reply, flags);
  }
 diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
-index e55e6e415..0ef239c32 100644
+index e55e6e415a..0ef239c320 100644
 --- a/libs/gui/Surface.cpp
 +++ b/libs/gui/Surface.cpp
 @@ -977,9 +977,6 @@ int Surface::perform(int operation, va_list args)
@@ -204,7 +204,7 @@ index e55e6e415..0ef239c32 100644
      Mutex::Autolock lock(mMutex);
      return mLastDequeueStartTime;
 diff --git a/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp b/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
-index 3b89291dc..4a023a642 100644
+index 3b89291dc8..4a023a6425 100644
 --- a/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
 +++ b/libs/gui/bufferqueue/1.0/H2BGraphicBufferProducer.cpp
 @@ -21,8 +21,6 @@
@@ -236,7 +236,7 @@ index 3b89291dc..4a023a642 100644
  }  // namespace V1_0
  }  // namespace bufferqueue
 diff --git a/libs/gui/include/gui/BufferItemConsumer.h b/libs/gui/include/gui/BufferItemConsumer.h
-index d9c57757f..217fe6ad8 100644
+index d9c57757f5..217fe6ad81 100644
 --- a/libs/gui/include/gui/BufferItemConsumer.h
 +++ b/libs/gui/include/gui/BufferItemConsumer.h
 @@ -52,7 +52,7 @@ class BufferItemConsumer: public ConsumerBase
@@ -249,7 +249,7 @@ index d9c57757f..217fe6ad8 100644
  
      ~BufferItemConsumer() override;
 diff --git a/libs/gui/include/gui/BufferQueueProducer.h b/libs/gui/include/gui/BufferQueueProducer.h
-index 5c7ffb416..d6f215e2c 100644
+index 5c7ffb416d..d6f215e2c6 100644
 --- a/libs/gui/include/gui/BufferQueueProducer.h
 +++ b/libs/gui/include/gui/BufferQueueProducer.h
 @@ -183,9 +183,6 @@ public:
@@ -263,7 +263,7 @@ index 5c7ffb416..d6f215e2c 100644
      // This is required by the IBinder::DeathRecipient interface
      virtual void binderDied(const wp<IBinder>& who);
 diff --git a/libs/gui/include/gui/GLConsumer.h b/libs/gui/include/gui/GLConsumer.h
-index 75f2ccaae..2cf6162fd 100644
+index 75f2ccaaea..2cf6162fd8 100644
 --- a/libs/gui/include/gui/GLConsumer.h
 +++ b/libs/gui/include/gui/GLConsumer.h
 @@ -210,7 +210,7 @@ public:
@@ -285,7 +285,7 @@ index 75f2ccaae..2cf6162fd 100644
      // mCurrentTextureImage is the EglImage/buffer of the current texture. It's
      // possible that this buffer is not associated with any buffer slot, so we
 diff --git a/libs/gui/include/gui/IGraphicBufferProducer.h b/libs/gui/include/gui/IGraphicBufferProducer.h
-index 039dc0d65..f231f951e 100644
+index 039dc0d657..f231f951e7 100644
 --- a/libs/gui/include/gui/IGraphicBufferProducer.h
 +++ b/libs/gui/include/gui/IGraphicBufferProducer.h
 @@ -593,12 +593,6 @@ public:
@@ -302,7 +302,7 @@ index 039dc0d65..f231f951e 100644
  
  // ----------------------------------------------------------------------------
 diff --git a/libs/gui/include/gui/Surface.h b/libs/gui/include/gui/Surface.h
-index 55dd6bf06..60eac0cf9 100644
+index 55dd6bf067..60eac0cf92 100644
 --- a/libs/gui/include/gui/Surface.h
 +++ b/libs/gui/include/gui/Surface.h
 @@ -159,7 +159,6 @@ public:
@@ -322,7 +322,7 @@ index 55dd6bf06..60eac0cf9 100644
  protected:
      virtual int dequeueBuffer(ANativeWindowBuffer** buffer, int* fenceFd);
 diff --git a/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h b/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
-index 74850b487..c1c3ae730 100644
+index 74850b4879..c1c3ae730d 100644
 --- a/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
 +++ b/libs/gui/include/gui/bufferqueue/1.0/H2BGraphicBufferProducer.h
 @@ -94,7 +94,6 @@ struct H2BGraphicBufferProducer : public ::android::H2BConverter<
@@ -334,7 +334,7 @@ index 74850b487..c1c3ae730 100644
  
  }  // namespace utils
 diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
-index 55d3aac7a..c080038fa 100644
+index 55d3aac7aa..c080038faa 100644
 --- a/libs/nativewindow/include/system/window.h
 +++ b/libs/nativewindow/include/system/window.h
 @@ -115,7 +115,7 @@ enum {
@@ -377,7 +377,7 @@ index 55d3aac7a..c080038fa 100644
  
  __END_DECLS
 diff --git a/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp b/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
-index 221bc4f9d..1a6afb1e5 100644
+index 221bc4f9d2..1a6afb1e55 100644
 --- a/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
 +++ b/libs/vr/libbufferhubqueue/buffer_hub_queue_producer.cpp
 @@ -609,14 +609,6 @@ status_t BufferHubQueueProducer::getUniqueId(uint64_t* out_id) const {
@@ -396,7 +396,7 @@ index 221bc4f9d..1a6afb1e5 100644
                                                  uint32_t layer_count,
                                                  PixelFormat format,
 diff --git a/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h b/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
-index 7ed55fb53..5c8761da1 100644
+index 7ed55fb533..5c8761da1b 100644
 --- a/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
 +++ b/libs/vr/libbufferhubqueue/include/private/dvr/buffer_hub_queue_producer.h
 @@ -112,9 +112,6 @@ class BufferHubQueueProducer : public BnGraphicBufferProducer {
@@ -410,7 +410,7 @@ index 7ed55fb53..5c8761da1 100644
    using LocalHandle = pdx::LocalHandle;
  
 diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
-index 72fc58e24..b4f9ecd2e 100644
+index 72fc58e246..b4f9ecd2e8 100644
 --- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
 +++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
 @@ -627,10 +627,6 @@ status_t VirtualDisplaySurface::getUniqueId(uint64_t* /*outId*/) const {
@@ -425,7 +425,7 @@ index 72fc58e24..b4f9ecd2e 100644
          QueueBufferOutput&& qbo) {
      mQueueBufferOutput = std::move(qbo);
 diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
-index 1671aba1d..ac200caea 100644
+index 1671aba1d8..ac200caea5 100644
 --- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
 +++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.h
 @@ -130,7 +130,6 @@ private:
@@ -437,7 +437,7 @@ index 1671aba1d..ac200caea 100644
      //
      // Utility methods
 diff --git a/services/surfaceflinger/MonitoredProducer.cpp b/services/surfaceflinger/MonitoredProducer.cpp
-index 1a5a85e07..d1038202d 100644
+index 1a5a85e079..d1038202d4 100644
 --- a/services/surfaceflinger/MonitoredProducer.cpp
 +++ b/services/surfaceflinger/MonitoredProducer.cpp
 @@ -158,10 +158,6 @@ status_t MonitoredProducer::getUniqueId(uint64_t* outId) const {
@@ -452,7 +452,7 @@ index 1a5a85e07..d1038202d 100644
      return this;
  }
 diff --git a/services/surfaceflinger/MonitoredProducer.h b/services/surfaceflinger/MonitoredProducer.h
-index 1246d142f..ff7f0f0e8 100644
+index 1246d142f3..ff7f0f0e8c 100644
 --- a/services/surfaceflinger/MonitoredProducer.h
 +++ b/services/surfaceflinger/MonitoredProducer.h
 @@ -68,7 +68,6 @@ public:

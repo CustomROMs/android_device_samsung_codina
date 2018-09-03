@@ -1,7 +1,7 @@
 From 7df3e3c17dbccf89728ee6eff75bcb3882f8f356 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 35/42] libsuspend: Bring back earlysuspend
+Subject: [PATCH 35/44] libsuspend: Bring back earlysuspend
 
 Commit 021d60be98ca2eb72b2c63e3b1fea2169b7c2b69 removed support
 for earlysuspend that's needed for 3.4 kernels. Bring it back,

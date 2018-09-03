@@ -1,7 +1,7 @@
 From 274e801e4b0b2f9b35e9aa76e2e5727ce2911a27 Mon Sep 17 00:00:00 2001
 From: Dave Burke <daveburke@google.com>
 Date: Wed, 24 Oct 2012 17:30:31 -0700
-Subject: [PATCH 29/42] Revert "Revert "put back the unused virtuals in
+Subject: [PATCH 29/44] Revert "Revert "put back the unused virtuals in
  Vector<>""
 
 Conditionally Revert "put back the unused virtuals in Vector<>"

@@ -1,7 +1,7 @@
 From 4264c3b57974bb3cb1bcccba22f2488145b6b3fe Mon Sep 17 00:00:00 2001
 From: Andrew Dodd <atd7@cornell.edu>
 Date: Mon, 10 Dec 2012 08:26:54 -0500
-Subject: [PATCH 16/24] DisplayDevice: Backwards compatibility with old EGL
+Subject: [PATCH 16/45] DisplayDevice: Backwards compatibility with old EGL
 
 From 4.1 to 4.2, the display subsystem was reworked to
 use SurfaceTextureClient/BufferQueue instead of
@@ -25,7 +25,7 @@ not limited to:
  2 files changed, 3 insertions(+), 6 deletions(-)
 
 diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
-index de5bf52f3..3a2b1b3d2 100644
+index de5bf52f3f..3a2b1b3d25 100644
 --- a/libs/ui/FramebufferNativeWindow.cpp
 +++ b/libs/ui/FramebufferNativeWindow.cpp
 @@ -29,9 +29,7 @@
@@ -39,7 +39,7 @@ index de5bf52f3..3a2b1b3d2 100644
  
  #include <EGL/egl.h>
 diff --git a/libs/ui/include/ui/FramebufferNativeWindow.h b/libs/ui/include/ui/FramebufferNativeWindow.h
-index 97137c3b6..3c2e70574 100644
+index 97137c3b6f..3c2e705748 100644
 --- a/libs/ui/include/ui/FramebufferNativeWindow.h
 +++ b/libs/ui/include/ui/FramebufferNativeWindow.h
 @@ -14,10 +14,6 @@

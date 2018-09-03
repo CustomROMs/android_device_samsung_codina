@@ -1,7 +1,7 @@
 From 293ef4f48a5408d9160f8157aaf5db6187bcd68b Mon Sep 17 00:00:00 2001
 From: Abhijeet Dharmapurikar <adharmap@codeaurora.org>
 Date: Mon, 14 Sep 2015 16:35:26 -0700
-Subject: [PATCH 13/42] healthd: Add support for HVDCP_3 chargers
+Subject: [PATCH 13/44] healthd: Add support for HVDCP_3 chargers
 
 HVDCP_3 is a high voltage DCP charger where the charger's voltage
 can be changed by issuing pulses on the D+/D- lines. Add support to

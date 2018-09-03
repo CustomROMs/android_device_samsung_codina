@@ -1,7 +1,7 @@
 From 7e066d2009f6bcb656824046dc1c360ae60403e5 Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <dan.pasanen@gmail.com>
 Date: Wed, 28 Jan 2015 14:36:24 -0800
-Subject: [PATCH 10/42] fs_mgr: Add fs_mgr_get_entry_for_mount_point_after to
+Subject: [PATCH 10/44] fs_mgr: Add fs_mgr_get_entry_for_mount_point_after to
  header
 
 * Add this function for recovery to use

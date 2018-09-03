@@ -1,0 +1,121 @@
+From 882a74ecc3efd38ae7e82db81d0048d748b876f4 Mon Sep 17 00:00:00 2001
+From: "Konstantin Sharlaimov (DigitalEntity)"
+ <konstantin.sharlaimov@gmail.com>
+Date: Tue, 15 Dec 2015 12:05:02 +1000
+Subject: [PATCH 33/45] Keep compaitibility to gpsd
+
+---
+ libs/gui/Android.bp                        |  1 +
+ libs/sensor/SensorManager.cpp              | 20 ++++++++++++++++++++
+ libs/sensor/include/sensor/SensorManager.h | 19 ++++++++++++++++++-
+ 3 files changed, 39 insertions(+), 1 deletion(-)
+
+diff --git a/libs/gui/Android.bp b/libs/gui/Android.bp
+index 430d94d296..9384aab2bc 100644
+--- a/libs/gui/Android.bp
++++ b/libs/gui/Android.bp
+@@ -110,6 +110,7 @@ cc_library_shared {
+         "libcutils",
+         "libEGL",
+         "libGLESv2",
++        "libsensor",
+         "libui",
+         "libutils",
+         "libnativewindow",
+diff --git a/libs/sensor/SensorManager.cpp b/libs/sensor/SensorManager.cpp
+index d5f64d87c4..3564816bfc 100644
+--- a/libs/sensor/SensorManager.cpp
++++ b/libs/sensor/SensorManager.cpp
+@@ -41,6 +41,10 @@ namespace android {
+ Mutex SensorManager::sLock;
+ std::map<String16, SensorManager*> SensorManager::sPackageInstances;
+ 
++#ifdef STE_HARDWARE
++ANDROID_SINGLETON_STATIC_INSTANCE(SensorManager)
++#endif
++
+ SensorManager& SensorManager::getInstanceForPackage(const String16& packageName) {
+     waitForSensorService(nullptr);
+ 
+@@ -97,6 +101,15 @@ SensorManager::SensorManager(const String16& opPackageName)
+     assertStateLocked();
+ }
+ 
++#ifdef STE_HARDWARE
++SensorManager::SensorManager()
++    : mSensorList(0), mOpPackageName(String16(""))
++{
++    // okay we're not locked here, but it's not needed during construction
++    assertStateLocked();
++}
++#endif
++
+ SensorManager::~SensorManager() {
+     free(mSensorList);
+ }
+@@ -234,6 +247,13 @@ Sensor const* SensorManager::getDefaultSensor(int type)
+     return NULL;
+ }
+ 
++#ifdef STE_HARDWARE
++sp<SensorEventQueue> SensorManager::createEventQueue()
++{
++    return createEventQueue(String8(""), 0);
++}
++#endif
++
+ sp<SensorEventQueue> SensorManager::createEventQueue(String8 packageName, int mode) {
+     sp<SensorEventQueue> queue;
+ 
+diff --git a/libs/sensor/include/sensor/SensorManager.h b/libs/sensor/include/sensor/SensorManager.h
+index 4c098967a1..10616f0fe0 100644
+--- a/libs/sensor/include/sensor/SensorManager.h
++++ b/libs/sensor/include/sensor/SensorManager.h
+@@ -29,6 +29,7 @@
+ 
+ #include <utils/Errors.h>
+ #include <utils/StrongPointer.h>
++#include <utils/Singleton.h>
+ #include <utils/Vector.h>
+ #include <utils/String8.h>
+ 
+@@ -50,11 +51,22 @@ class Sensor;
+ class SensorEventQueue;
+ // ----------------------------------------------------------------------------
+ 
+-class SensorManager : public ASensorManager
++class SensorManager :
++#ifdef STE_HARDWARE
++    public ASensorManager,
++    public Singleton<SensorManager>
++#else
++    public ASensorManager
++#endif
+ {
+ public:
+     static SensorManager& getInstanceForPackage(const String16& packageName);
++#ifdef STE_HARDWARE
++    SensorManager();
++    ~SensorManager();
++#else
+     ~SensorManager();
++#endif
+ 
+ #ifdef COMPAT_SENSORS_M
+     ssize_t getSensorList(Sensor const* const** list) const;
+@@ -63,7 +75,12 @@ public:
+ #endif
+     ssize_t getDynamicSensorList(Vector<Sensor>& list);
+     Sensor const* getDefaultSensor(int type);
++#ifdef STE_HARDWARE
++    sp<SensorEventQueue> createEventQueue();
++    sp<SensorEventQueue> createEventQueue(String8 packageName, int mode = 0);
++#else
+     sp<SensorEventQueue> createEventQueue(String8 packageName = String8(""), int mode = 0);
++#endif
+     bool isDataInjectionEnabled();
+     int createDirectChannel(size_t size, int channelType, const native_handle_t *channelData);
+     void destroyDirectChannel(int channelNativeHandle);
+-- 
+2.17.0
+

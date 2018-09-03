@@ -1,7 +1,7 @@
 From de61f044bba7ad32a1fec80caa3bc1a1718fef2d Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mkbestas@lineageos.org>
 Date: Sat, 24 Mar 2018 21:31:02 +0200
-Subject: [PATCH 21/42] init: Don't run update_sys_usb_config if /data isn't
+Subject: [PATCH 21/44] init: Don't run update_sys_usb_config if /data isn't
  mounted
 
 * When /data is not mounted / not yet decrypted,

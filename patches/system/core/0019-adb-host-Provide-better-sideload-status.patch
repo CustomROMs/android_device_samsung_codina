@@ -1,7 +1,7 @@
 From 410a101050ca0fc03c8e06d99c340dd1ab8e54c9 Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm@cyngn.com>
 Date: Thu, 18 Dec 2014 14:18:47 -0800
-Subject: [PATCH 19/42] adb: host: Provide better sideload status
+Subject: [PATCH 19/44] adb: host: Provide better sideload status
 
  * Show data transfer in MB and in multiple of the file size.
 

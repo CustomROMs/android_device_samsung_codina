@@ -1,7 +1,7 @@
 From ac679c992fa23ae6953c71b4f76ad25e58ea7c76 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 15/24] native:Fix buffering on Samsung STE devices
+Subject: [PATCH 15/45] native:Fix buffering on Samsung STE devices
 
 We need to define the number of framebuffers this
 way we eliminate any rip or screen tearing that
@@ -12,7 +12,7 @@ might occur.
  2 files changed, 16 insertions(+)
 
 diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
-index 59db15750..de5bf52f3 100644
+index 59db157506..de5bf52f3f 100644
 --- a/libs/ui/FramebufferNativeWindow.cpp
 +++ b/libs/ui/FramebufferNativeWindow.cpp
 @@ -93,12 +93,16 @@ FramebufferNativeWindow::FramebufferNativeWindow()
@@ -45,7 +45,7 @@ index 59db15750..de5bf52f3 100644
      }
      ALOG_ASSERT(self->buffers[index] != self->front, "");
 diff --git a/libs/ui/include/ui/FramebufferNativeWindow.h b/libs/ui/include/ui/FramebufferNativeWindow.h
-index 4092e1cc4..97137c3b6 100644
+index 4092e1cc4f..97137c3b6f 100644
 --- a/libs/ui/include/ui/FramebufferNativeWindow.h
 +++ b/libs/ui/include/ui/FramebufferNativeWindow.h
 @@ -32,8 +32,12 @@

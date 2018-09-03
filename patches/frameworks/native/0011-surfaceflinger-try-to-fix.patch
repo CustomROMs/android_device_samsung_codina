@@ -1,7 +1,7 @@
 From 48f9ce18a5dcdd56eb3dfda1a28922bf53b0172c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 10:00:29 +0300
-Subject: [PATCH 11/24] surfaceflinger: try to fix
+Subject: [PATCH 11/45] surfaceflinger: try to fix
 
 Change-Id: I398c8b7a5048bd6048c40c5fe0136fde5afcfefd
 ---
@@ -13,7 +13,7 @@ Change-Id: I398c8b7a5048bd6048c40c5fe0136fde5afcfefd
  mode change 100644 => 100755 services/surfaceflinger/DisplayDevice.cpp
 
 diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
-index 86df887a4..25f06431d 100644
+index 86df887a4e..25f06431d1 100644
 --- a/libs/ui/Android.bp
 +++ b/libs/ui/Android.bp
 @@ -21,12 +21,8 @@ cc_library_shared {
@@ -31,7 +31,7 @@ index 86df887a4..25f06431d 100644
          // introduce significant overheads
          "-Wno-exit-time-destructors",
 diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
-index 19a44d856..4c9701588 100644
+index 19a44d8562..4c9701588b 100644
 --- a/services/surfaceflinger/Android.mk
 +++ b/services/surfaceflinger/Android.mk
 @@ -105,7 +105,7 @@ LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
@@ -64,7 +64,7 @@ index 19a44d856..4c9701588 100644
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
 old mode 100644
 new mode 100755
-index b8a0a5a21..18e308ca7
+index b8a0a5a219..18e308ca7b
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
 @@ -65,7 +65,7 @@ using namespace android::hardware::configstore;
@@ -89,7 +89,7 @@ index b8a0a5a21..18e308ca7
  
  DisplayDevice::~DisplayDevice() {
 diff --git a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
-index dcb29135b..fb750ca38 100644
+index dcb29135b9..fb750ca386 100644
 --- a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
 +++ b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
 @@ -1262,7 +1262,7 @@ void HWComposer::dump(String8& result) const {

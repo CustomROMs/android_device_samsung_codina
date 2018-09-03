@@ -1,7 +1,7 @@
 From 8d1f7373f8b50146128fbb5b700b307ca434af18 Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Thu, 5 Nov 2015 04:09:22 -0800
-Subject: [PATCH 22/42] camera: Add L-compatible camera feature enums
+Subject: [PATCH 22/44] camera: Add L-compatible camera feature enums
 
  * These QC-specific features have been renumbered in M, so add
    a compilation flag to permit using the old versions in case we

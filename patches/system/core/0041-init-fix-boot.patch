@@ -1,7 +1,7 @@
 From ef31d4899a427d7f9254dd5919fac8a41dd90c77 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 05:01:21 +0300
-Subject: [PATCH 41/42] init: fix boot
+Subject: [PATCH 41/44] init: fix boot
 
 Change-Id: I17897c7334bbd5ff1f9319834293039fa1d319ba
 ---
