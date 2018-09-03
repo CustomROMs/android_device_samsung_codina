@@ -1,0 +1,68 @@
+From 11c4d45ad612b5481e95cb9911e4ff752c4ebad6 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 11:24:34 +0300
+Subject: [PATCH 18/24] surfaceflinger: switch to FramebufferNativeWindow
+
+Change-Id: I1471c4f002a77dfa7ce6a6e5100a3f52ccc7e1ac
+---
+ services/surfaceflinger/DisplayDevice.cpp | 12 ++++++++++++
+ services/surfaceflinger/DisplayDevice.h   |  2 ++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+index edec08764..c47df9102 100755
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -30,6 +30,9 @@
+ 
+ #include <ui/DisplayInfo.h>
+ #include <ui/PixelFormat.h>
++#ifdef STE_HARDWARE
++#include <ui/FramebufferNativeWindow.h>
++#endif
+ 
+ #include <gui/Surface.h>
+ 
+@@ -117,8 +120,12 @@ DisplayDevice::DisplayDevice(
+ {
+     // clang-format on
+     Surface* surface;
++#ifdef STE_HARDWARE
++    ANativeWindow* const window = new FramebufferNativeWindow();
++#else
+     mNativeWindow = surface = new Surface(producer, false);
+     ANativeWindow* const window = mNativeWindow.get();
++#endif
+ 
+ #ifdef USE_HWC2
+     mActiveColorMode = HAL_COLOR_MODE_NATIVE;
+@@ -527,7 +534,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
+ 
+     mDisplaySurface->resizeBuffers(newWidth, newHeight);
+ 
++#ifdef STE_HARDWARE
++    ANativeWindow* const window = new FramebufferNativeWindow();
++#else
++    mNativeWindow = new Surface(producer, false);
+     ANativeWindow* const window = mNativeWindow.get();
++#endif
+     mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
+     eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
+     eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
+diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
+index c054feb1d..ec63db0c9 100644
+--- a/services/surfaceflinger/DisplayDevice.h
++++ b/services/surfaceflinger/DisplayDevice.h
+@@ -218,7 +218,9 @@ private:
+     wp<IBinder> mDisplayToken;
+ 
+     // ANativeWindow this display is rendering into
++#ifndef STE_HARDWARE
+     sp<ANativeWindow> mNativeWindow;
++#endif
+     sp<DisplaySurface> mDisplaySurface;
+ 
+     EGLConfig       mConfig;
+-- 
+2.17.0
+

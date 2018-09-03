@@ -1,0 +1,27 @@
+From 9882145d30f911d86056bb3caac09391529b611f Mon Sep 17 00:00:00 2001
+From: Steve Kondik <shade@chemlab.org>
+Date: Sun, 18 May 2014 15:34:30 -0700
+Subject: [PATCH 17/90] build: Include vendor/extra/BoardConfigExtra.mk if
+ available
+
+Change-Id: Icd0db0852ceee5cb5c701c9a40b829e1f3ebd69e
+---
+ core/config.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/config.mk b/core/config.mk
+index df73c56ec..ac3637f78 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -239,6 +239,8 @@ include $(BUILD_SYSTEM)/envsetup.mk
+ # See envsetup.mk for a description of SCAN_EXCLUDE_DIRS
+ FIND_LEAVES_EXCLUDES := $(addprefix --prune=, $(SCAN_EXCLUDE_DIRS) .repo .git)
+ 
++-include vendor/extra/BoardConfigExtra.mk
++
+ # The build system exposes several variables for where to find the kernel
+ # headers:
+ #   TARGET_DEVICE_KERNEL_HEADERS is automatically created for the current
+-- 
+2.17.0
+

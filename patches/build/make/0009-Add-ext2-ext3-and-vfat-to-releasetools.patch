@@ -1,0 +1,31 @@
+From 5e8fc6f6dc4ec694ce109b181bec5b585879b2a2 Mon Sep 17 00:00:00 2001
+From: Brandon Bennett <bennetb@gmail.com>
+Date: Sat, 19 Nov 2011 16:02:04 -0700
+Subject: [PATCH 09/90] Add ext2, ext3, and vfat to releasetools
+
+Support some non-standard partition that may be found in recovery.fstab
+
+Change-Id: I0026a1d3ae5d432db10150d1a15f7bc8e7a6054b
+---
+ tools/releasetools/common.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 364d6ac08..7d1e2ae9e 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1817,7 +1817,10 @@ PARTITION_TYPES = {
+     "ext4": "EMMC",
+     "emmc": "EMMC",
+     "f2fs": "EMMC",
+-    "squashfs": "EMMC"
++    "squashfs": "EMMC",
++    "ext2": "EMMC",
++    "ext3": "EMMC",
++    "vfat": "EMMC"
+ }
+ 
+ def GetTypeAndDevice(mount_point, info):
+-- 
+2.17.0
+

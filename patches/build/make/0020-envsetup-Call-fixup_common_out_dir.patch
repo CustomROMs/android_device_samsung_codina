@@ -1,0 +1,26 @@
+From 044d3905f4f7202d5d67be2eba84be9534518b5d Mon Sep 17 00:00:00 2001
+From: Luca Stefani <luca020400@lineageos.org>
+Date: Fri, 18 Aug 2017 10:17:00 +0200
+Subject: [PATCH 20/90] envsetup: Call fixup_common_out_dir
+
+Change-Id: I84e16b0df5822cfd8514c46d709109a13c20f86e
+---
+ envsetup.sh | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/envsetup.sh b/envsetup.sh
+index df4f21e7d..0ca57aff4 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -640,6 +640,8 @@ function lunch()
+ 
+     echo
+ 
++    fixup_common_out_dir
++
+     set_stuff_for_environment
+     printconfig
+     destroy_build_var_cache
+-- 
+2.17.0
+

@@ -1,0 +1,30 @@
+From 8290c83d9f46d08949f9718cc228d1db4fd96961 Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Wed, 23 Aug 2017 08:32:09 -0500
+Subject: [PATCH 01/16] soong: use absolute path for OUT_DIR
+
+* This is needed for tasks like inline kernel building. If
+  OUT_DIR_COMMON_BASE (which will be an absolute path) is not
+  set, prepend TOP to "out" in order to always use a full path.
+
+Change-Id: I5f955c42854922425268f4cd54dec8cf0a531195
+---
+ ui/build/config.go | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/ui/build/config.go b/ui/build/config.go
+index 1f7656ee..4f230ef1 100644
+--- a/ui/build/config.go
++++ b/ui/build/config.go
+@@ -80,6 +80,8 @@ func NewConfig(ctx Context, args ...string) Config {
+ 			} else {
+ 				outDir = filepath.Join(baseDir, filepath.Base(wd))
+ 			}
++		} else {
++			outDir = filepath.Join(os.Getenv("TOP"), outDir)
+ 		}
+ 		ret.environ.Set("OUT_DIR", outDir)
+ 	}
+-- 
+2.17.0
+

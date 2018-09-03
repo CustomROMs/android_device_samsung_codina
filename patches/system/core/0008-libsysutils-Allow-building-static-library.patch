@@ -1,0 +1,25 @@
+From 54654c4783c0f312a8e8e3eb17932e768746ffc0 Mon Sep 17 00:00:00 2001
+From: Tom Marshall <tdm.code@gmail.com>
+Date: Thu, 7 Sep 2017 22:31:50 +0000
+Subject: [PATCH 08/42] libsysutils: Allow building static library
+
+ * Needed by minivold
+
+Change-Id: I63079a10ae76b4b1591cab2aa095a7a77e67864c
+---
+ libsysutils/Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libsysutils/Android.bp b/libsysutils/Android.bp
+index 3a1229228..a6a8c5cce 100644
+--- a/libsysutils/Android.bp
++++ b/libsysutils/Android.bp
+@@ -1,4 +1,4 @@
+-cc_library_shared {
++cc_library {
+     name: "libsysutils",
+     vendor_available: true,
+     vndk: {
+-- 
+2.17.0
+

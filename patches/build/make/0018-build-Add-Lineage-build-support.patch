@@ -1,0 +1,141 @@
+From f5c5e988d06e212c1685875f509a817a5f377d35 Mon Sep 17 00:00:00 2001
+From: Luca Stefani <luca020400@lineageos.org>
+Date: Thu, 17 Aug 2017 21:21:23 +0200
+Subject: [PATCH 18/90] build: Add Lineage build support
+
+Squashed also with the following changes:
+
+  Author: Luca Stefani <luca020400@lineageos.org>
+  Date:   Thu Aug 17 22:22:13 2017 +0200
+
+    core: Include Lineage pathmap
+
+  Change-Id: Ie25dee383cc5bc9bb6390cff2cb2460d526d80b6
+
+  Author: Simon Shields <simon@lineageos.org>
+  Date:   Fri Mar 2 12:55:47 2018 +1100
+
+    build: unconditionally use lineage pathmap
+
+    even if we're not building a lineage target, we need to
+    use the lineage pathmap to make things like recovery and ril
+    happy
+
+  Change-Id: I974c30ad10d4ff5b7805c3df9c22010f1e002bf1
+
+Change-Id: Iab8b2ef8b644a7bea10bfd28b99d9e69539b1357
+---
+ core/Makefile      |  1 +
+ core/clear_vars.mk |  3 +++
+ core/config.mk     | 12 ++++++++++++
+ core/pathmap.mk    |  2 ++
+ envsetup.sh        | 10 ++++++++++
+ tools/buildinfo.sh |  2 ++
+ 6 files changed, 30 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 9c165cc01..3642c530c 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -333,6 +333,7 @@ endif
+ 	$(hide) TARGET_BUILD_TYPE="$(TARGET_BUILD_VARIANT)" \
+ 			TARGET_BUILD_FLAVOR="$(TARGET_BUILD_FLAVOR)" \
+ 			TARGET_DEVICE="$(TARGET_DEVICE)" \
++			LINEAGE_DEVICE="$(TARGET_DEVICE)" \
+ 			PRODUCT_NAME="$(TARGET_PRODUCT)" \
+ 			PRODUCT_BRAND="$(PRODUCT_BRAND)" \
+ 			PRODUCT_DEFAULT_LOCALE="$(call get-default-product-locale,$(PRODUCT_LOCALES))" \
+diff --git a/core/clear_vars.mk b/core/clear_vars.mk
+index 5051ef701..bfc45635a 100644
+--- a/core/clear_vars.mk
++++ b/core/clear_vars.mk
+@@ -473,6 +473,9 @@ LOCAL_IS_AUX_MODULE :=
+ 
+ full_android_manifest :=
+ 
++# Include any vendor specific clear_vars.mk file
++-include vendor/*/build/core/clear_vars.mk
++
+ # Trim MAKEFILE_LIST so that $(call my-dir) doesn't need to
+ # iterate over thousands of entries every time.
+ # Leave the current makefile to make sure we don't break anything
+diff --git a/core/config.mk b/core/config.mk
+index ac3637f78..39e365cf8 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -240,6 +240,9 @@ include $(BUILD_SYSTEM)/envsetup.mk
+ FIND_LEAVES_EXCLUDES := $(addprefix --prune=, $(SCAN_EXCLUDE_DIRS) .repo .git)
+ 
+ -include vendor/extra/BoardConfigExtra.mk
++ifneq ($(LINEAGE_BUILD),)
++include vendor/lineage/config/BoardConfigLineage.mk
++endif
+ 
+ # The build system exposes several variables for where to find the kernel
+ # headers:
+@@ -1102,4 +1105,13 @@ include $(BUILD_SYSTEM)/ninja_config.mk
+ include $(BUILD_SYSTEM)/soong_config.mk
+ endif
+ 
++ifneq ($(LINEAGE_BUILD),)
++## We need to be sure the global selinux policies are included
++## last, to avoid accidental resetting by device configs
++$(eval include device/lineage/sepolicy/common/sepolicy.mk)
++endif
++
++# Include any vendor specific config.mk file
++-include vendor/*/build/core/config.mk
++
+ include $(BUILD_SYSTEM)/dumpvar.mk
+diff --git a/core/pathmap.mk b/core/pathmap.mk
+index af33f5de3..e622cee02 100644
+--- a/core/pathmap.mk
++++ b/core/pathmap.mk
+@@ -93,3 +93,5 @@ FRAMEWORKS_BASE_SUBDIRS := \
+ #
+ FRAMEWORKS_BASE_JAVA_SRC_DIRS := \
+ 	$(addprefix frameworks/base/,$(FRAMEWORKS_BASE_SUBDIRS))
++
++-include vendor/lineage/build/core/pathmap.mk
+diff --git a/envsetup.sh b/envsetup.sh
+index 9472b58ba..df4f21e7d 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -137,6 +137,14 @@ function check_product()
+         echo "Couldn't locate the top of the tree.  Try setting TOP." >&2
+         return
+     fi
++    if (echo -n $1 | grep -q -e "^lineage_") ; then
++        LINEAGE_BUILD=$(echo -n $1 | sed -e 's/^lineage_//g')
++        export BUILD_NUMBER=$( (date +%s%N ; echo $LINEAGE_BUILD; hostname) | openssl sha1 | sed -e 's/.*=//g; s/ //g' | cut -c1-10 )
++    else
++        LINEAGE_BUILD=
++    fi
++    export LINEAGE_BUILD
++
+         TARGET_PRODUCT=$1 \
+         TARGET_BUILD_VARIANT= \
+         TARGET_BUILD_TYPE= \
+@@ -610,6 +618,8 @@ function lunch()
+         return 1
+     fi
+ 
++    check_product $product
++
+     TARGET_PRODUCT=$product \
+     TARGET_BUILD_VARIANT=$variant \
+     TARGET_PLATFORM_VERSION=$version \
+diff --git a/tools/buildinfo.sh b/tools/buildinfo.sh
+index d214aabbe..8f5594292 100755
+--- a/tools/buildinfo.sh
++++ b/tools/buildinfo.sh
+@@ -60,4 +60,6 @@ if [ -n "$BUILD_THUMBPRINT" ] ; then
+ fi
+ echo "ro.build.characteristics=$TARGET_AAPT_CHARACTERISTICS"
+ 
++echo "ro.lineage.device=$LINEAGE_DEVICE"
++
+ echo "# end build properties"
+-- 
+2.17.0
+

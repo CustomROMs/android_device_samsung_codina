@@ -1,0 +1,36 @@
+From 4dbb310e58ef1431065f56ee009021ad792a182f Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Fri, 31 Aug 2012 22:45:52 +0200
+Subject: [PATCH 25/90] build: Remove wallpapers from full_base.
+
+They are already in Lineage's common config for the full phone.
+
+Change-Id: I02fc0ea73e92ae8b19931d05e6783e3cfa166af2
+---
+ target/product/full_base.mk | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/target/product/full_base.mk b/target/product/full_base.mk
+index 777d6c7b9..798ac3bce 100644
+--- a/target/product/full_base.mk
++++ b/target/product/full_base.mk
+@@ -27,16 +27,6 @@ PRODUCT_PACKAGES := \
+     libwnndict \
+     WAPPushManager
+ 
+-PRODUCT_PACKAGES += \
+-    Galaxy4 \
+-    HoloSpiralWallpaper \
+-    LiveWallpapers \
+-    LiveWallpapersPicker \
+-    MagicSmokeWallpapers \
+-    NoiseField \
+-    PhaseBeam \
+-    PhotoTable
+-
+ # Bluetooth:
+ #   audio.a2dp.default is a system module. Generic system image includes
+ #   audio.a2dp.default to support A2DP if board has the capability.
+-- 
+2.17.0
+

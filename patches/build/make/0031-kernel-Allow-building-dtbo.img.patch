@@ -1,0 +1,51 @@
+From a0673c69bc931f56a49d2bbd59f07d2d0d16b9d8 Mon Sep 17 00:00:00 2001
+From: Christian Oder <myself5@carbonrom.org>
+Date: Sat, 25 Nov 2017 16:52:17 +0100
+Subject: [PATCH 31/90] kernel: Allow building dtbo.img
+
+taimen uses the dtbo.img as an DTB Overlay in order to use the same defconfig for both, taimen and wahoo.
+The dtbo.img is built with "make dtbo.img". Allow automatically building it when setting TARGET_NEEDS_DTBOIMAGE to true, or by manually calling make dtboimage.
+
+Thanks to luca020400 for help with the kernel.mk logic
+
+Change-Id: Iff63b8e17756f8ee524ed429ec73b66cdc3c3052
+---
+ core/Makefile | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 1cea7b3f4..f83575584 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2281,6 +2281,10 @@ endif
+ 
+ endif
+ 
++ifdef TARGET_NEEDS_DTBOIMAGE
++INSTALLED_DTBOIMAGE_TARGET := $(PRODUCT_OUT)/dtbo.img
++endif
++
+ # -----------------------------------------------------------------
+ # vbmeta image
+ ifeq ($(BOARD_AVB_ENABLE),true)
+@@ -2969,7 +2973,7 @@ ifdef BOARD_PREBUILT_BOOTIMAGE
+ 	$(hide) mkdir -p $(zip_root)/IMAGES
+ 	$(hide) cp $(INSTALLED_BOOTIMAGE_TARGET) $(zip_root)/IMAGES/
+ endif
+-ifdef BOARD_PREBUILT_DTBOIMAGE
++ifdef INSTALLED_DTBOIMAGE_TARGET
+ 	$(hide) mkdir -p $(zip_root)/PREBUILT_IMAGES
+ 	$(hide) cp $(INSTALLED_DTBOIMAGE_TARGET) $(zip_root)/PREBUILT_IMAGES/
+ 	$(hide) echo "has_dtbo=true" >> $(zip_root)/META/misc_info.txt
+@@ -2983,7 +2987,7 @@ ifdef BOARD_AVB_DTBO_KEY_PATH
+ 	    >> $(zip_root)/META/misc_info.txt
+ endif # BOARD_AVB_DTBO_KEY_PATH
+ endif # BOARD_AVB_ENABLE
+-endif # BOARD_PREBUILT_DTBOIMAGE
++endif # INSTALLED_DTBOIMAGE_TARGET
+ 	@# The radio images in BOARD_PACK_RADIOIMAGES will be additionally copied from RADIO/ into
+ 	@# IMAGES/, which then will be added into <product>-img.zip. Such images must be listed in
+ 	@# INSTALLED_RADIOIMAGE_TARGET.
+-- 
+2.17.0
+

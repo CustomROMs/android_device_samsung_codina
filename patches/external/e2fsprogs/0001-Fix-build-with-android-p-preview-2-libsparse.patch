@@ -1,0 +1,29 @@
+From 8131e845fc02d8e7df01b044d7d01e89cf81fa56 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bernhard=20Rosenkr=C3=A4nzer?= <bero@lindev.ch>
+Date: Fri, 11 May 2018 00:16:34 +0200
+Subject: [PATCH] Fix build with android-p-preview-2 libsparse
+
+Fix sparse_import_segment function signature to match
+android-p-preview-2's libsparse
+
+Signed-off-by: Bernhard Rosenkraenzer <bero@lindev.ch>
+---
+ lib/ext2fs/sparse_io.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/ext2fs/sparse_io.c b/lib/ext2fs/sparse_io.c
+index 1b39b2ec4..d0828a810 100644
+--- a/lib/ext2fs/sparse_io.c
++++ b/lib/ext2fs/sparse_io.c
+@@ -67,7 +67,7 @@ static void free_sparse_blocks(struct sparse_map *sm)
+ 	sm->blocks = NULL;
+ }
+ 
+-static int sparse_import_segment(void *priv, const void *data, int len,
++static int sparse_import_segment(void *priv, const void *data, size_t len,
+ 				 unsigned int block, unsigned int nr_blocks)
+ {
+ 	struct sparse_map *sm = priv;
+-- 
+2.17.0
+

@@ -1,0 +1,57 @@
+From 082e973a99c55cc2fe4958d4de0ec97cb9fde6c9 Mon Sep 17 00:00:00 2001
+From: Koushik Dutta <koushd@gmail.com>
+Date: Sat, 26 Jun 2010 22:53:55 -0700
+Subject: [PATCH 06/90] add support for overriding build.prop settings.
+
+Change-Id: Ie4224d608b7bcb0c2087bd77bc954f8f5f9b6495
+---
+ core/Makefile          | 1 +
+ core/product.mk        | 1 +
+ core/product_config.mk | 7 +++++++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 1f28934a7..a6cddb44c 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -362,6 +362,7 @@ endif
+ 			TARGET_CPU_ABI="$(TARGET_CPU_ABI)" \
+ 			TARGET_CPU_ABI2="$(TARGET_CPU_ABI2)" \
+ 			TARGET_AAPT_CHARACTERISTICS="$(TARGET_AAPT_CHARACTERISTICS)" \
++			$(PRODUCT_BUILD_PROP_OVERRIDES) \
+ 	        bash $(BUILDINFO_SH) >> $@
+ 	$(hide) $(foreach file,$(system_prop_file), \
+ 		if [ -f "$(file)" ]; then \
+diff --git a/core/product.mk b/core/product.mk
+index 51b376a68..c1ee5873a 100644
+--- a/core/product.mk
++++ b/core/product.mk
+@@ -111,6 +111,7 @@ endef
+ #
+ 
+ _product_var_list := \
++    PRODUCT_BUILD_PROP_OVERRIDES \
+     PRODUCT_NAME \
+     PRODUCT_MODEL \
+     PRODUCT_LOCALES \
+diff --git a/core/product_config.mk b/core/product_config.mk
+index 8425b0925..094ec89e1 100644
+--- a/core/product_config.mk
++++ b/core/product_config.mk
+@@ -373,6 +373,13 @@ PRODUCT_PRODUCT_PROPERTIES := \
+     $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_PRODUCT_PROPERTIES))
+ .KATI_READONLY := PRODUCT_PRODUCT_PROPERTIES
+ 
++# A list of property assignments, like "key = value", with zero or more
++# whitespace characters on either side of the '='.
++# used for overriding properties in build.prop
++PRODUCT_BUILD_PROP_OVERRIDES := \
++    $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_BUILD_PROP_OVERRIDES))
++.KATI_READONLY := PRODUCT_BUILD_PROP_OVERRIDES
++
+ # Should we use the default resources or add any product specific overlays
+ PRODUCT_PACKAGE_OVERLAYS := \
+     $(strip $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_PACKAGE_OVERLAYS))
+-- 
+2.17.0
+

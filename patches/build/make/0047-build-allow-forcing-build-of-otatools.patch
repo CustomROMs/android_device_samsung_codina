@@ -1,0 +1,27 @@
+From f3328c898c7d5a7d084abe6f767f72ff1fa7f5a2 Mon Sep 17 00:00:00 2001
+From: Simon Shields <simon@lineageos.org>
+Date: Thu, 12 Apr 2018 11:32:39 +1000
+Subject: [PATCH 47/90] build: allow forcing build of otatools
+
+Change-Id: I1bfbc15b2bc2d0547a02336623be99fa031eb1c7
+---
+ core/Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index fb013f357..d89bec3da 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2523,6 +2523,9 @@ endif
+ ifeq ($(TARGET_BUILD_PDK),true)
+ build_ota_package := false
+ endif
++ifeq ($(TARGET_FORCE_OTA_PACKAGE),true)
++build_ota_package := true
++endif
+ 
+ ifeq ($(build_ota_package),true)
+ OTATOOLS :=  $(HOST_OUT_EXECUTABLES)/minigzip \
+-- 
+2.17.0
+

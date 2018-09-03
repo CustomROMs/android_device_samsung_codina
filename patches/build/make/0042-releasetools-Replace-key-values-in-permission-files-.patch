@@ -1,0 +1,36 @@
+From 324c55a94f1393fe87ea223030a21ad9b047e208 Mon Sep 17 00:00:00 2001
+From: "Brint E. Kriebel" <bekit@cyngn.com>
+Date: Thu, 4 Feb 2016 13:48:13 -0800
+Subject: [PATCH 42/90] releasetools: Replace key values in permission files
+ during re-signing
+
+Permission files may grant permissions based on signatures in the same
+way mac_permissions grants selinux permissions. In order to have this
+work properly with dev-key and production key signed builds, allow these
+files to be re-written during the signing process to replace the value
+of the keys in production signed builds.
+
+Change-Id: Id0311e49f8bba5a9f71b2fa49b480cb74779c853
+Ticket: CYNGNOS-1877, RM-179
+---
+ tools/releasetools/sign_target_files_apks.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/tools/releasetools/sign_target_files_apks.py b/tools/releasetools/sign_target_files_apks.py
+index 393c33d4d..6b9c6d2e3 100755
+--- a/tools/releasetools/sign_target_files_apks.py
++++ b/tools/releasetools/sign_target_files_apks.py
+@@ -362,6 +362,10 @@ def ProcessTargetFiles(input_tf_zip, output_tf_zip, misc_info,
+       print("Rewriting %s with new keys." % (filename,))
+       new_data = ReplaceCerts(data)
+       common.ZipWriteStr(output_tf_zip, out_info, new_data)
++    elif info.filename.startswith("SYSTEM/etc/permissions/"):
++      print("rewriting %s with new keys." % info.filename)
++      new_data = ReplaceCerts(data)
++      common.ZipWriteStr(output_tf_zip, out_info, new_data)
+ 
+     # Ask add_img_to_target_files to rebuild the recovery patch if needed.
+     elif filename in ("SYSTEM/recovery-from-boot.p",
+-- 
+2.17.0
+

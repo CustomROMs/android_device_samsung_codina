@@ -1,0 +1,89 @@
+From 4b7e94bf956d64f9f2bfb1474132b3c430c69c02 Mon Sep 17 00:00:00 2001
+From: Christian Oder <myself5@carbonrom.org>
+Date: Thu, 15 Mar 2018 22:32:35 +0100
+Subject: [PATCH 50/90] build: Allow building disabled vbmeta images in signing
+ process
+
+If we sign builds out of tree there's no way to create a disabled vbmeta.img
+
+Tests: Set
+BOARD_AVB_ENABLE := false
+BOARD_BUILD_DISABLED_VBMETAIMAGE := true
+for taimen and follow https://source.android.com/devices/tech/ota/sign_builds
+Result: signing will no longer fail due to missing vbmeta.img
+
+Change-Id: If93182d0339d5fbc310373059716a56114d68d89
+---
+ core/Makefile                                 |  3 +++
+ tools/releasetools/add_img_to_target_files.py | 21 +++++++++++++++++++
+ tools/releasetools/build_image.py             |  1 +
+ 3 files changed, 25 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index d89bec3da..6b5f6d74c 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2940,6 +2940,9 @@ ifdef BOARD_AVB_RECOVERY_KEY_PATH
+ 	$(hide) echo "avb_recovery_rollback_index_location=$(BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION)" >> $(zip_root)/META/misc_info.txt
+ endif # BOARD_AVB_RECOVERY_KEY_PATH
+ endif # BOARD_AVB_ENABLE
++ifeq ($(BOARD_BUILD_DISABLED_VBMETAIMAGE),true)
++	$(hide) echo "avb_disabled_vbmeta=true" >> $(zip_root)/META/misc_info.txt
++endif # BOARD_BUILD_DISABLED_VBMETAIMAGE
+ ifdef BOARD_BPT_INPUT_FILES
+ 	$(hide) echo "board_bpt_enable=true" >> $(zip_root)/META/misc_info.txt
+ 	$(hide) echo "board_bpt_make_table_args=$(BOARD_BPT_MAKE_TABLE_ARGS)" >> $(zip_root)/META/misc_info.txt
+diff --git a/tools/releasetools/add_img_to_target_files.py b/tools/releasetools/add_img_to_target_files.py
+index 8ac039f62..72384eb29 100755
+--- a/tools/releasetools/add_img_to_target_files.py
++++ b/tools/releasetools/add_img_to_target_files.py
+@@ -421,6 +421,23 @@ def AddVBMeta(output_zip, partitions):
+       "avbtool make_vbmeta_image failed:\n{}".format(stdoutdata)
+   img.Write()
+ 
++def AddDisabledVBMeta(output_zip):
++  """Creates a disabled VBMeta image and store it in output_zip.
++
++  Args:
++    output_zip: The output zip file, which needs to be already open.
++  """
++  img = OutputFile(output_zip, OPTIONS.input_tmp, "IMAGES", "vbmeta.img")
++  if os.path.exists(img.input_name):
++    print("vbmeta.img already exists; not rebuilding...")
++    return img.input_name
++  avbtool = os.getenv('AVBTOOL') or OPTIONS.info_dict["avb_avbtool"]
++  cmd = [avbtool, "make_vbmeta_image", "--flag", "2", "--padding_size", "4096", "--output", img.name]
++
++  p = common.Run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
++  p.communicate()
++  assert p.returncode == 0, "avbtool make_vbmeta_image failed"
++  img.Write()
+ 
+ def AddPartitionTable(output_zip):
+   """Create a partition table image and store it in output_zip."""
+@@ -736,6 +753,10 @@ def AddImagesToTargetFiles(filename):
+     banner("vbmeta")
+     AddVBMeta(output_zip, partitions)
+ 
++  if OPTIONS.info_dict.get("avb_disabled_vbmeta") == "true":
++    banner("vbmeta")
++    AddDisabledVBMeta(output_zip)
++
+   banner("radio")
+   ab_partitions_txt = os.path.join(OPTIONS.input_tmp, "META",
+                                    "ab_partitions.txt")
+diff --git a/tools/releasetools/build_image.py b/tools/releasetools/build_image.py
+index 8e2085983..d12fa31b7 100755
+--- a/tools/releasetools/build_image.py
++++ b/tools/releasetools/build_image.py
+@@ -766,6 +766,7 @@ def ImagePropFromGlobalDict(glob_dict, mount_point):
+       "verity_fec",
+       "verity_disable",
+       "avb_enable",
++      "avb_disabled_vbmeta",
+       "avb_avbtool",
+       "avb_salt",
+       "use_logical_partitions",
+-- 
+2.17.0
+

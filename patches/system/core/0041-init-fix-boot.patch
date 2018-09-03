@@ -1,0 +1,57 @@
+From ef31d4899a427d7f9254dd5919fac8a41dd90c77 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 27 Aug 2018 05:01:21 +0300
+Subject: [PATCH 41/42] init: fix boot
+
+Change-Id: I17897c7334bbd5ff1f9319834293039fa1d319ba
+---
+ init/security.cpp | 4 ++--
+ init/selinux.cpp  | 5 ++---
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/init/security.cpp b/init/security.cpp
+index a3494a280..12ec800f9 100644
+--- a/init/security.cpp
++++ b/init/security.cpp
+@@ -176,8 +176,8 @@ Result<Success> SetMmapRndBitsAction(const BuiltinArguments&) {
+     LOG(ERROR) << "Unknown architecture";
+ #endif
+ 
+-    LOG(FATAL) << "Unable to set adequate mmap entropy value!";
+-    return Error();
++    LOG(ERROR) << "Unable to set adequate mmap entropy value!";
++    return Success();
+ }
+ 
+ #define KPTR_RESTRICT_PATH "/proc/sys/kernel/kptr_restrict"
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 3a7ecee8c..6447b7fe9 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -74,7 +74,7 @@ namespace {
+ selabel_handle* sehandle = nullptr;
+ 
+ enum EnforcingStatus { SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+-
++/*
+ EnforcingStatus StatusFromCmdline() {
+     EnforcingStatus status = SELINUX_ENFORCING;
+ 
+@@ -87,13 +87,12 @@ EnforcingStatus StatusFromCmdline() {
+ 
+     return status;
+ }
+-
+ bool IsEnforcing() {
+     if (ALLOW_PERMISSIVE_SELINUX) {
+         return StatusFromCmdline() == SELINUX_ENFORCING;
+     }
+     return true;
+-}
++}*/
+ 
+ // Forks, executes the provided program in the child, and waits for the completion in the parent.
+ // Child's stderr is captured and logged using LOG(ERROR).
+-- 
+2.17.0
+

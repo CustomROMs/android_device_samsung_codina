@@ -1,0 +1,83 @@
+From 456ba5948cb8fd4e4e971b728b9d838e2b04da57 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 1 Sep 2018 23:45:07 +0300
+Subject: [PATCH 04/24] Fix build
+
+Change-Id: I8d48772aad0cefb97cfef6f3d5c341adbe2ec66e
+---
+ libs/binder/Android.bp | 8 ++------
+ libs/ui/Android.bp     | 9 +--------
+ opengl/libs/Android.bp | 8 +-------
+ 3 files changed, 4 insertions(+), 21 deletions(-)
+
+diff --git a/libs/binder/Android.bp b/libs/binder/Android.bp
+index 4a7d8bc04..1fa158e25 100644
+--- a/libs/binder/Android.bp
++++ b/libs/binder/Android.bp
+@@ -82,15 +82,11 @@ cc_library {
+         "-Wall",
+         "-Wextra",
+         "-Werror",
++        "-DDISABLE_ASHMEM_TRACKING",
+     ],
+     product_variables: {
+         binder32bit: {
+-            cflags: ["-DBINDER_IPC_32BIT=1"],
+-        },
+-        lineage: {
+-            disable_ashmem_tracking: {
+-                cflags: ["-DDISABLE_ASHMEM_TRACKING"],
+-            },
++            cflags: ["-DBINDER_IPC_32BIT=1"]
+         },
+     },
+ 
+diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
+index 8d80b368e..7120772a1 100644
+--- a/libs/ui/Android.bp
++++ b/libs/ui/Android.bp
+@@ -45,6 +45,7 @@ cc_library_shared {
+ 
+         // Don't warn about struct padding
+         "-Wno-padded",
++        "-DEGL_NEEDS_HANDLE",
+     ],
+ 
+     sanitize: {
+@@ -71,14 +72,6 @@ cc_library_shared {
+     include_dirs: [
+         "frameworks/native/include",
+     ],
+-    product_variables: {
+-        lineage: {
+-	    egl_needs_handle: {
+-	        cppflags: ["-DEGL_NEEDS_HANDLE"],
+-	    },
+-        },
+-    },
+-
+ 
+     shared_libs: [
+         "android.hardware.graphics.allocator@2.0",
+diff --git a/opengl/libs/Android.bp b/opengl/libs/Android.bp
+index 435d00cae..625ac3d9a 100644
+--- a/opengl/libs/Android.bp
++++ b/opengl/libs/Android.bp
+@@ -124,13 +124,7 @@ cc_library_static {
+ 
+ cc_library_shared {
+     name: "libEGL",
+-    product_variables: {
+-        lineage: {
+-            egl_workaround_bug_10194508: {
+-                cppflags: ["-DWORKAROUND_BUG_10194508"],
+-            },
+-        },
+-    },
++    cppflags: ["-DWORKAROUND_BUG_10194508"],
+     defaults: ["egl_libs_defaults"],
+     srcs: [
+         "EGL/egl_tls.cpp",
+-- 
+2.17.0
+

@@ -1,0 +1,30 @@
+From 9739a0ac19495c7c5bec4ba35255f23cb1612efe Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 04:51:56 +0300
+Subject: [PATCH 42/42] adb: fix build
+
+Change-Id: I711d898fd2ef7142d6fb5a2b18663976a90ea4a2
+---
+ adb/daemon/shell_service.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/adb/daemon/shell_service.cpp b/adb/daemon/shell_service.cpp
+index 820f3913c..d8a7518f7 100644
+--- a/adb/daemon/shell_service.cpp
++++ b/adb/daemon/shell_service.cpp
+@@ -380,10 +380,11 @@ bool Subprocess::ForkAndExec(std::string* error) {
+             LOG(FATAL) << "Failed to get SELinux context";
+         }
+ #endif
++        std::string sh_path = get_sh_path();
+ 
+         if (command_.empty()) {
+             // Spawn a login shell if we don't have a command.
+-            execle(_PATH_BSHELL, "-" _PATH_BSHELL, nullptr, cenv.data());
++            execle(sh_path.c_str(), sh_path.c_str(), nullptr, cenv.data());
+         } else {
+             execle(sh_path.c_str(), sh_path.c_str(), "-c", command_.c_str(), nullptr, cenv.data());
+         }
+-- 
+2.17.0
+

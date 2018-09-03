@@ -1,0 +1,43 @@
+From 953b5316c57cc2bc923eae8d420742bc6c0780d2 Mon Sep 17 00:00:00 2001
+From: Scott Mertz <scott@cyngn.com>
+Date: Wed, 1 Jun 2016 13:40:25 -0700
+Subject: [PATCH 05/90] build: add kernel header dependency if module uses
+ kernel headers
+
+Many of the QCOM components use kernel headers, but don't declare
+the dependency on them.  This is fine in CAF because of the way they
+build the boot.img before anything else.  In CM, we don't build the
+boot.img the same, so we run into a race between the kernel build &
+these modules... and the modules lose.
+
+Warn about modules that have this missing dependency, and add it for
+them so we don't have to modify each Android.mk.
+
+Change-Id: I95f1e47b5ef440f6f5d8f64a0c3f38d9572e839e
+---
+ core/binary.mk | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 60f78ddb9..d0014e78a 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -34,6 +34,15 @@ endif
+ 
+ my_soong_problems :=
+ 
++# Many qcom modules don't correctly set a dependency on the kernel headers. Fix it for them,
++# but warn the user.
++ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,$(LOCAL_C_INCLUDES)))
++  ifeq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr,$(LOCAL_ADDITIONAL_DEPENDENCIES)))
++    $(warning $(LOCAL_MODULE) uses kernel headers, but does not depend on them!)
++    LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
++  endif
++endif
++
+ # The following LOCAL_ variables will be modified in this file.
+ # Because the same LOCAL_ variables may be used to define modules for both 1st arch and 2nd arch,
+ # we can't modify them in place.
+-- 
+2.17.0
+

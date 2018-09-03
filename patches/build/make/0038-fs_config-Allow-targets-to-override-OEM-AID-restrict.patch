@@ -1,0 +1,170 @@
+From 22b7e2f23b028aa3c549c824d283da4acc6b58f0 Mon Sep 17 00:00:00 2001
+From: Ethan Chen <intervigil@gmail.com>
+Date: Sun, 19 Nov 2017 15:38:24 -0800
+Subject: [PATCH 38/90] fs_config: Allow targets to override OEM AID
+ restrictions
+
+* Some legacy devices set OEM AIDs that fall outside the Android O OEM
+  AID ranges. Since legacy devices cannot necessarily change AIDs for
+  their binaries easily, allow bypassing the AID restrictions if needed.
+
+Change-Id: I13a7bc2036272b43f9424708aaacd894c8b1a65e
+---
+ tools/fs_config/Android.mk             | 14 ++++++---
+ tools/fs_config/fs_config_generator.py | 40 ++++++++++++++++++++++----
+ 2 files changed, 45 insertions(+), 9 deletions(-)
+
+diff --git a/tools/fs_config/Android.mk b/tools/fs_config/Android.mk
+index cb32b9e35..c5428a0e4 100644
+--- a/tools/fs_config/Android.mk
++++ b/tools/fs_config/Android.mk
+@@ -65,6 +65,12 @@ endif
+ 
+ system_android_filesystem_config := system/core/include/private/android_filesystem_config.h
+ 
++ifneq ($(TARGET_FS_CONFIG_GEN),)
++ifeq ($(TARGET_ALLOW_LEGACY_AIDS),true)
++allow_legacy_aids := --allow-legacy-aids
++endif
++endif
++
+ ##################################
+ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := fs_config_generate.c
+@@ -79,7 +85,7 @@ oem := $(local-generated-sources-dir)/generated_oem_aid.h
+ $(oem): PRIVATE_LOCAL_PATH := $(LOCAL_PATH)
+ $(oem): PRIVATE_TARGET_FS_CONFIG_GEN := $(TARGET_FS_CONFIG_GEN)
+ $(oem): PRIVATE_ANDROID_FS_HDR := $(system_android_filesystem_config)
+-$(oem): PRIVATE_CUSTOM_TOOL = $(PRIVATE_LOCAL_PATH)/fs_config_generator.py oemaid --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
++$(oem): PRIVATE_CUSTOM_TOOL = $(PRIVATE_LOCAL_PATH)/fs_config_generator.py oemaid --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(allow_legacy_aids) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
+ $(oem): $(TARGET_FS_CONFIG_GEN) $(LOCAL_PATH)/fs_config_generator.py
+ 	$(transform-generated-source)
+ 
+@@ -88,7 +94,7 @@ gen := $(local-generated-sources-dir)/$(ANDROID_FS_CONFIG_H)
+ $(gen): PRIVATE_LOCAL_PATH := $(LOCAL_PATH)
+ $(gen): PRIVATE_TARGET_FS_CONFIG_GEN := $(TARGET_FS_CONFIG_GEN)
+ $(gen): PRIVATE_ANDROID_FS_HDR := $(system_android_filesystem_config)
+-$(gen): PRIVATE_CUSTOM_TOOL = $(PRIVATE_LOCAL_PATH)/fs_config_generator.py fsconfig --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
++$(gen): PRIVATE_CUSTOM_TOOL = $(PRIVATE_LOCAL_PATH)/fs_config_generator.py fsconfig --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(allow_legacy_aids) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
+ $(gen): $(TARGET_FS_CONFIG_GEN) $(system_android_filesystem_config) $(LOCAL_PATH)/fs_config_generator.py
+ 	$(transform-generated-source)
+ 
+@@ -316,7 +322,7 @@ endif
+ $(LOCAL_BUILT_MODULE): PRIVATE_ANDROID_FS_HDR := $(system_android_filesystem_config)
+ $(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/fs_config_generator.py $(TARGET_FS_CONFIG_GEN) $(system_android_filesystem_config)
+ 	@mkdir -p $(dir $@)
+-	$(hide) $< passwd --required-prefix=vendor_ --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
++	$(hide) $< passwd --required-prefix=vendor_ --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(allow_legacy_aids) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
+ 
+ ##################################
+ # Generate the vendor/etc/group text file for the target
+@@ -338,7 +344,7 @@ endif
+ $(LOCAL_BUILT_MODULE): PRIVATE_ANDROID_FS_HDR := $(system_android_filesystem_config)
+ $(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/fs_config_generator.py $(TARGET_FS_CONFIG_GEN) $(system_android_filesystem_config)
+ 	@mkdir -p $(dir $@)
+-	$(hide) $< group --required-prefix=vendor_ --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
++	$(hide) $< group --required-prefix=vendor_ --aid-header=$(PRIVATE_ANDROID_FS_HDR) $(allow_legacy_aids) $(PRIVATE_TARGET_FS_CONFIG_GEN) > $@
+ 
+ system_android_filesystem_config :=
+ 
+diff --git a/tools/fs_config/fs_config_generator.py b/tools/fs_config/fs_config_generator.py
+index cd534ec24..db574f5f1 100755
+--- a/tools/fs_config/fs_config_generator.py
++++ b/tools/fs_config/fs_config_generator.py
+@@ -536,7 +536,7 @@ class FSConfigFileParser(object):
+     _SECTIONS = [('_handle_aid', ('value',)),
+                  ('_handle_path', ('mode', 'user', 'group', 'caps'))]
+ 
+-    def __init__(self, config_files, oem_ranges):
++    def __init__(self, config_files, oem_ranges, warn_only=False):
+         """
+         Args:
+             config_files ([str]): The list of config.fs files to parse.
+@@ -544,6 +544,7 @@ class FSConfigFileParser(object):
+             oem_ranges ([(),()]): range tuples indicating reserved OEM ranges.
+         """
+ 
++        self._warn_only = warn_only
+         self._files = []
+         self._dirs = []
+         self._aids = []
+@@ -658,7 +659,10 @@ class FSConfigFileParser(object):
+         if not Utils.in_any_range(int(aid.value, 0), self._oem_ranges):
+             emsg = '"value" not in valid range %s, got: %s'
+             emsg = emsg % (str(self._oem_ranges), value)
+-            sys.exit(error_message(emsg))
++            if self._warn_only:
++                sys.stderr.write(error_message(emsg))
++            else:
++                sys.exit(error_message(emsg))
+ 
+         # use the normalized int value in the dict and detect
+         # duplicate definitions of the same value
+@@ -955,11 +959,19 @@ class FSConfigGen(BaseGenerator):
+             help='An android_filesystem_config.h file'
+             ' to parse AIDs and OEM Ranges from')
+ 
++        opt_group.add_argument(
++            '--allow-legacy-aids',
++            action="store_true",
++            required=False,
++            default=False,
++            help='Allow legacy AIDs that fall outside allowed OEM ranges')
++
+     def __call__(self, args):
+ 
+         self._base_parser = AIDHeaderParser(args['aid_header'])
+         self._oem_parser = FSConfigFileParser(args['fsconfig'],
+-                                              self._base_parser.oem_ranges)
++                                              self._base_parser.oem_ranges,
++                                              args['allow_legacy_aids'])
+         base_aids = self._base_parser.aids
+         oem_aids = self._oem_parser.aids
+ 
+@@ -1183,11 +1195,20 @@ class OEMAidGen(BaseGenerator):
+             help='An android_filesystem_config.h file'
+             'to parse AIDs and OEM Ranges from')
+ 
++        opt_group.add_argument(
++            '--allow-legacy-aids',
++            action="store_true",
++            required=False,
++            default=False,
++            help='Allow legacy AIDs that fall outside allowed OEM ranges')
++
+     def __call__(self, args):
+ 
+         hdr_parser = AIDHeaderParser(args['aid_header'])
+ 
+-        parser = FSConfigFileParser(args['fsconfig'], hdr_parser.oem_ranges)
++        parser = FSConfigFileParser(args['fsconfig'],
++                                    hdr_parser.oem_ranges,
++                                    args['allow_legacy_aids'])
+ 
+         print OEMAidGen._GENERATED
+ 
+@@ -1239,11 +1260,20 @@ class PasswdGen(BaseGenerator):
+             required=False,
+             help='A prefix that the names are required to contain.')
+ 
++        opt_group.add_argument(
++            '--allow-legacy-aids',
++            action="store_true",
++            required=False,
++            default=False,
++            help='Allow legacy AIDs that fall outside allowed OEM ranges')
++
+     def __call__(self, args):
+ 
+         hdr_parser = AIDHeaderParser(args['aid_header'])
+ 
+-        parser = FSConfigFileParser(args['fsconfig'], hdr_parser.oem_ranges)
++        parser = FSConfigFileParser(args['fsconfig'],
++                                    hdr_parser.oem_ranges,
++                                    args['allow_legacy_aids'])
+ 
+         required_prefix = args['required_prefix']
+ 
+-- 
+2.17.0
+

@@ -1,0 +1,42 @@
+From 75417ae12ed0dd988885b67692a8e9c6977bbe10 Mon Sep 17 00:00:00 2001
+From: Tobias Tefke <tobias.tefke@gmail.com>
+Date: Sat, 3 Mar 2018 13:57:36 +0100
+Subject: [PATCH 82/90] Fix config Android Go
+
+Change-Id: I033cc6ea455374d4352b916300b8992134b07e7f
+---
+ target/board/go_defaults_common.prop | 5 -----
+ target/product/go_defaults_common.mk | 4 ----
+ 2 files changed, 9 deletions(-)
+
+diff --git a/target/board/go_defaults_common.prop b/target/board/go_defaults_common.prop
+index 5ebcb474c..f37bca08b 100644
+--- a/target/board/go_defaults_common.prop
++++ b/target/board/go_defaults_common.prop
+@@ -35,8 +35,3 @@ pm.dexopt.downgrade_after_inactive_days=10
+ # Some notable apps that will be affected by this are gms and chrome.
+ # b/65591595.
+ pm.dexopt.shared=quicken
+-
+-# Default heap sizes. Allow up to 256m for large heaps to make sure a single app
+-# doesn't take all of the RAM.
+-dalvik.vm.heapgrowthlimit=128m
+-dalvik.vm.heapsize=256m
+diff --git a/target/product/go_defaults_common.mk b/target/product/go_defaults_common.mk
+index 9cff21b80..f3d43b31c 100644
+--- a/target/product/go_defaults_common.mk
++++ b/target/product/go_defaults_common.mk
+@@ -17,10 +17,6 @@
+ # Sets Android Go recommended default product options.
+ 
+ 
+-# Set lowram options
+-PRODUCT_PROPERTY_OVERRIDES += \
+-     ro.config.low_ram=true \
+-
+ # Speed profile services and wifi-service to reduce RAM and storage.
+ PRODUCT_SYSTEM_SERVER_COMPILER_FILTER := speed-profile
+ 
+-- 
+2.17.0
+

@@ -1,0 +1,29 @@
+From 579a3a9083a930345889f8aa13376efdbae7873d Mon Sep 17 00:00:00 2001
+From: Paul Keith <javelinanddart@gmail.com>
+Date: Wed, 8 Feb 2017 16:25:09 -0600
+Subject: [PATCH 06/16] dumpvar: Dump RECOVERY_VARIANT if not empty
+
+* As more and more people are building twrp,
+  let's remind them what they are doing
+
+Change-Id: Ib9e5f037a56c7d6710a2ae0048f3a45c1c20b4ae
+Signed-off-by: Paul Keith <javelinanddart@gmail.com>
+---
+ ui/build/dumpvars.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/ui/build/dumpvars.go b/ui/build/dumpvars.go
+index b30ca4d4..c6ac4204 100644
+--- a/ui/build/dumpvars.go
++++ b/ui/build/dumpvars.go
+@@ -115,6 +115,7 @@ var BannerVars = []string{
+ 	"TARGET_BUILD_PDK",
+ 	"PDK_FUSION_PLATFORM_ZIP",
+ 	"PRODUCT_SOONG_NAMESPACES",
++	"RECOVERY_VARIANT",
+ 	"WITH_SU",
+ 	"WITH_GMS",
+ }
+-- 
+2.17.0
+

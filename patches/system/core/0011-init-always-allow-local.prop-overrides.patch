@@ -1,0 +1,29 @@
+From 832d179a44fe2be4fc508e683ba417f6ff2ba6ec Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Fri, 29 Dec 2017 11:08:39 -0600
+Subject: [PATCH 11/42] init: always allow local.prop overrides
+
+* Many people use this for more than just debugging. Let's allow
+  it to work in non-debuggable situations too.
+
+Change-Id: Ifb0d0e636c225ff8830154a49a182a034332056b
+---
+ init/Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/Android.bp b/init/Android.bp
+index 2ddaccea2..ed826d560 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -26,7 +26,7 @@ cc_defaults {
+         "-Wextra",
+         "-Wno-unused-parameter",
+         "-Werror",
+-        "-DALLOW_LOCAL_PROP_OVERRIDE=0",
++        "-DALLOW_LOCAL_PROP_OVERRIDE=1",
+         "-DALLOW_PERMISSIVE_SELINUX=0",
+         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
+         "-DWORLD_WRITABLE_KMSG=0",
+-- 
+2.17.0
+

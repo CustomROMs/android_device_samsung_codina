@@ -1,0 +1,31 @@
+From 3284f95aef8d0646c9192a5c985412613f1e8c2e Mon Sep 17 00:00:00 2001
+From: Adrian DC <radian.dc@gmail.com>
+Date: Tue, 7 Aug 2018 17:17:29 +0200
+Subject: [PATCH 24/42] debuggerd: Resolve tombstoned missing O_CREAT mode
+
+ debuggerd/tombstoned/tombstoned.cpp:115:92:
+  error: 'openat' has superfluous mode bits; missing O_CREAT?
+    unique_fd result(openat(dir_fd_, ".",
+    O_WRONLY | O_APPEND | O_TMPFILE | O_CLOEXEC, 0640));
+
+Change-Id: Iae787e477b7eab1f11c79f30c35fd6808959e38a
+---
+ debuggerd/tombstoned/tombstoned.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/debuggerd/tombstoned/tombstoned.cpp b/debuggerd/tombstoned/tombstoned.cpp
+index 15ae40624..e5d62b1b8 100644
+--- a/debuggerd/tombstoned/tombstoned.cpp
++++ b/debuggerd/tombstoned/tombstoned.cpp
+@@ -112,7 +112,7 @@ class CrashQueue {
+ 
+   std::pair<std::string, unique_fd> get_output() {
+     std::string path;
+-    unique_fd result(openat(dir_fd_, ".", O_WRONLY | O_APPEND | O_TMPFILE | O_CLOEXEC, 0640));
++    unique_fd result(openat(dir_fd_, ".", O_CREAT | O_WRONLY | O_APPEND | O_TMPFILE | O_CLOEXEC, 0640));
+     if (result == -1) {
+       // We might not have O_TMPFILE. Try creating with an arbitrary filename instead.
+       static size_t counter = 0;
+-- 
+2.17.0
+

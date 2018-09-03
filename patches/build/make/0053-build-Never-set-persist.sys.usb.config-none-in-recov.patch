@@ -1,0 +1,31 @@
+From 10e44d8cb1f52dfa8044e7d9500f0dc5f9546e91 Mon Sep 17 00:00:00 2001
+From: Rashed Abdel-Tawab <rashed@linux.com>
+Date: Thu, 19 Jul 2018 12:42:31 -0700
+Subject: [PATCH 53/90] build: Never set persist.sys.usb.config=none in
+ recovery
+
+This is the dirtiest of hacks, but I don't see any other way to
+have ro.adb.secure=1 in /system AND have ADB enabled in recovery
+on recovery-in-boot devices.
+
+Change-Id: I171185db8418b824c2ed586c7d521d99e838e96c
+---
+ core/Makefile | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index e81d3c7f1..156d27145 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1484,6 +1484,8 @@ define build-recoveryramdisk
+             >> $(TARGET_RECOVERY_ROOT_OUT)/prop.default)
+   $(hide) cat $(recovery_build_props) \
+           >> $(TARGET_RECOVERY_ROOT_OUT)/prop.default
++  # Never allow persist.sys.usb.config to be set to none in recovery
++  $(hide) sed -i 's/persist.sys.usb.config=none/persist.sys.usb.config=adb/g' $(TARGET_RECOVERY_ROOT_OUT)/prop.default
+   $(hide) ln -sf prop.default $(TARGET_RECOVERY_ROOT_OUT)/default.prop
+   $(BOARD_RECOVERY_IMAGE_PREPARE)
+   $(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
+-- 
+2.17.0
+

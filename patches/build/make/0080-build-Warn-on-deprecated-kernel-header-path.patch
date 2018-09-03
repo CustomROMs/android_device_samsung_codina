@@ -1,0 +1,57 @@
+From e331976883551e0fa3fd5494c4ea5e27305eb635 Mon Sep 17 00:00:00 2001
+From: Michael Bestas <mkbestas@lineageos.org>
+Date: Fri, 18 May 2018 18:04:45 +0300
+Subject: [PATCH 80/90] build: Warn on deprecated kernel header path
+
+The build is switching to the target INSTALLED_KERNEL_HEADERS to
+declare dependencies on kernel headers.  Warn when the build
+encounters the old style dependency $(KERNEL_OUT)/usr.
+
+Change-Id: Ifac717430274247bde66791bc323b04a6b35cd72
+---
+ core/Makefile  |  2 +-
+ core/binary.mk | 11 ++---------
+ 2 files changed, 3 insertions(+), 10 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index e35980c91..ba1041f4f 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2210,7 +2210,7 @@ INSTALLED_VENDORIMAGE_TARGET := $(BUILT_VENDORIMAGE_TARGET)
+ ifdef BUILT_VENDOR_MANIFEST
+ $(INSTALLED_VENDORIMAGE_TARGET): $(BUILT_ASSEMBLED_VENDOR_MANIFEST)
+ endif
+-$(INSTALLED_VENDORIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) $(INTERNAL_VENDORIMAGE_FILES) $(INSTALLED_FILES_FILE_VENDOR) $(BUILD_IMAGE_SRCS) $(DEPMOD) $(BOARD_VENDOR_KERNEL_MODULES) $(INSTALLED_KERNEL_TARGET)
++$(INSTALLED_VENDORIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) $(INTERNAL_VENDORIMAGE_FILES) $(INSTALLED_FILES_FILE_VENDOR) $(BUILD_IMAGE_SRCS) $(DEPMOD) $(BOARD_VENDOR_KERNEL_MODULES)
+ 	$(build-vendorimage-target)
+ 
+ .PHONY: vendorimage-nodeps vnod
+diff --git a/core/binary.mk b/core/binary.mk
+index 2aa075baa..1a0f3d83d 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -34,19 +34,12 @@ endif
+ 
+ my_soong_problems :=
+ 
+-# The proper dependency for kernel headers is INSTALLED_KERNEL_HEADERS.
+-# However, there are many instances of the old style dependencies in the
+-# source tree.  Fix them up and warn the user.
+-ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr,$(LOCAL_ADDITIONAL_DEPENDENCIES)))
+-  LOCAL_ADDITIONAL_DEPENDENCIES := $(patsubst $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr,INSTALLED_KERNEL_HEADERS,$(LOCAL_ADDITIONAL_DEPENDENCIES))
+-endif
+-
+ # Many qcom modules don't correctly set a dependency on the kernel headers. Fix it for them,
+ # but warn the user.
+ ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,$(LOCAL_C_INCLUDES)))
+-  ifeq (,$(findstring INSTALLED_KERNEL_HEADERS,$(LOCAL_ADDITIONAL_DEPENDENCIES)))
++  ifeq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr,$(LOCAL_ADDITIONAL_DEPENDENCIES)))
+     $(warning $(LOCAL_MODULE) uses kernel headers, but does not depend on them!)
+-    LOCAL_ADDITIONAL_DEPENDENCIES += INSTALLED_KERNEL_HEADERS
++    LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
+   endif
+ endif
+ 
+-- 
+2.17.0
+

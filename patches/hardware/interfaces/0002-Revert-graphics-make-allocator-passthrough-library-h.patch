@@ -1,0 +1,1251 @@
+From b56a466ce679459493ad032ebe914c8d237c4cf0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:03:22 +0300
+Subject: [PATCH 2/8] Revert "graphics: make allocator passthrough library
+ header-only"
+
+This reverts commit 422b94e002e2187dd3e313768ab8906be9ed1f9c.
+
+Change-Id: I63132b182f0ecc4d4cc585f0f3ad7d4c9e7552c5
+---
+ graphics/allocator/2.0/default/Android.bp     |   6 +-
+ .../hal/include/allocator-hal/2.0/Allocator.h |  10 +-
+ .../2.0/utils/passthrough/Android.bp          |   9 +-
+ .../2.0/utils/passthrough/Gralloc0Hal.cpp     | 141 ++++++++
+ .../2.0/utils/passthrough/Gralloc1Hal.cpp     | 323 ++++++++++++++++++
+ .../2.0/utils/passthrough/GrallocLoader.cpp   |  76 +++++
+ .../allocator-passthrough/2.0/Gralloc0Hal.h   | 123 +------
+ .../allocator-passthrough/2.0/Gralloc1Hal.h   | 300 +---------------
+ .../allocator-passthrough/2.0/GrallocLoader.h |  50 +--
+ 9 files changed, 589 insertions(+), 449 deletions(-)
+ create mode 100644 graphics/allocator/2.0/utils/passthrough/Gralloc0Hal.cpp
+ create mode 100644 graphics/allocator/2.0/utils/passthrough/Gralloc1Hal.cpp
+ create mode 100644 graphics/allocator/2.0/utils/passthrough/GrallocLoader.cpp
+
+diff --git a/graphics/allocator/2.0/default/Android.bp b/graphics/allocator/2.0/default/Android.bp
+index 9980ae0f2..ed2ecbb50 100644
+--- a/graphics/allocator/2.0/default/Android.bp
++++ b/graphics/allocator/2.0/default/Android.bp
+@@ -4,9 +4,12 @@ cc_library_shared {
+     vendor: true,
+     relative_install_path: "hw",
+     srcs: ["passthrough.cpp"],
+-    header_libs: [
++    static_libs: [
+         "android.hardware.graphics.allocator@2.0-passthrough",
+     ],
++    header_libs: [
++        "android.hardware.graphics.allocator@2.0-hal",
++    ],
+     shared_libs: [
+         "android.hardware.graphics.allocator@2.0",
+         "libbase",
+@@ -17,7 +20,6 @@ cc_library_shared {
+         "liblog",
+         "libutils",
+     ],
+-    cflags: ["-DLOG_TAG=\"AllocatorHal\""],
+ }
+ 
+ cc_binary {
+diff --git a/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h b/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h
+index 8ca820026..2f3022e44 100644
+--- a/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h
++++ b/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h
+@@ -39,11 +39,11 @@ using mapper::V2_0::Error;
+ 
+ namespace detail {
+ 
+-// AllocatorImpl implements V2_*::IAllocator on top of V2_*::hal::AllocatorHal
+-template <typename Interface, typename Hal>
+-class AllocatorImpl : public Interface {
++// AllocatorImpl implements IAllocator on top of AllocatorHal
++template <typename IALLOCATOR, typename ALLOCATOR_HAL>
++class AllocatorImpl : public IALLOCATOR {
+    public:
+-    bool init(std::unique_ptr<Hal> hal) {
++    bool init(std::unique_ptr<ALLOCATOR_HAL> hal) {
+         mHal = std::move(hal);
+         return true;
+     }
+@@ -74,7 +74,7 @@ class AllocatorImpl : public Interface {
+     }
+ 
+    protected:
+-    std::unique_ptr<Hal> mHal;
++    std::unique_ptr<ALLOCATOR_HAL> mHal;
+ };
+ 
+ }  // namespace detail
+diff --git a/graphics/allocator/2.0/utils/passthrough/Android.bp b/graphics/allocator/2.0/utils/passthrough/Android.bp
+index ff9280add..b95656572 100644
+--- a/graphics/allocator/2.0/utils/passthrough/Android.bp
++++ b/graphics/allocator/2.0/utils/passthrough/Android.bp
+@@ -1,7 +1,12 @@
+-cc_library_headers {
++cc_library_static {
+     name: "android.hardware.graphics.allocator@2.0-passthrough",
+     defaults: ["hidl_defaults"],
+     vendor: true,
++    srcs: [
++        "Gralloc0Hal.cpp",
++        "Gralloc1Hal.cpp",
++        "GrallocLoader.cpp",
++    ],
+     shared_libs: [
+         "android.hardware.graphics.allocator@2.0",
+         "android.hardware.graphics.mapper@2.0",
+@@ -18,7 +23,7 @@ cc_library_headers {
+     ],
+     export_header_lib_headers: [
+         "android.hardware.graphics.allocator@2.0-hal",
+-        "libgrallocmapperincludes",
+     ],
+     export_include_dirs: ["include"],
++    cflags: ["-DLOG_TAG=\"AllocatorHal\""],
+ }
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc0Hal.cpp b/graphics/allocator/2.0/utils/passthrough/Gralloc0Hal.cpp
+new file mode 100644
+index 000000000..8edb7dc50
+--- /dev/null
++++ b/graphics/allocator/2.0/utils/passthrough/Gralloc0Hal.cpp
+@@ -0,0 +1,141 @@
++/*
++ * Copyright 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <allocator-passthrough/2.0/Gralloc0Hal.h>
++
++#include <string.h>
++
++#include <GrallocBufferDescriptor.h>
++#include <hardware/gralloc.h>
++#include <log/log.h>
++
++namespace android {
++namespace hardware {
++namespace graphics {
++namespace allocator {
++namespace V2_0 {
++namespace passthrough {
++
++using mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
++
++Gralloc0Hal::~Gralloc0Hal() {
++    if (mDevice) {
++        gralloc_close(mDevice);
++    }
++}
++
++bool Gralloc0Hal::initWithModule(const hw_module_t* module) {
++    int result = gralloc_open(module, &mDevice);
++    if (result) {
++        ALOGE("failed to open gralloc0 device: %s", strerror(-result));
++        mDevice = nullptr;
++        return false;
++    }
++
++    return true;
++}
++
++std::string Gralloc0Hal::dumpDebugInfo() {
++    char buf[4096] = {};
++    if (mDevice->dump) {
++        mDevice->dump(mDevice, buf, sizeof(buf));
++        buf[sizeof(buf) - 1] = '\0';
++    }
++
++    return buf;
++}
++
++Error Gralloc0Hal::allocateBuffers(const BufferDescriptor& descriptor, uint32_t count,
++                                   uint32_t* outStride,
++                                   std::vector<const native_handle_t*>* outBuffers) {
++    mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo;
++    if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
++        return Error::BAD_DESCRIPTOR;
++    }
++
++    Error error = Error::NONE;
++    uint32_t stride = 0;
++    std::vector<const native_handle_t*> buffers;
++    buffers.reserve(count);
++
++    // allocate the buffers
++    for (uint32_t i = 0; i < count; i++) {
++        const native_handle_t* tmpBuffer;
++        uint32_t tmpStride;
++        error = allocateOneBuffer(descriptorInfo, &tmpBuffer, &tmpStride);
++        if (error != Error::NONE) {
++            break;
++        }
++
++        buffers.push_back(tmpBuffer);
++
++        if (stride == 0) {
++            stride = tmpStride;
++        } else if (stride != tmpStride) {
++            // non-uniform strides
++            error = Error::UNSUPPORTED;
++            break;
++        }
++    }
++
++    if (error != Error::NONE) {
++        freeBuffers(buffers);
++        return error;
++    }
++
++    *outStride = stride;
++    *outBuffers = std::move(buffers);
++
++    return Error::NONE;
++}
++
++void Gralloc0Hal::freeBuffers(const std::vector<const native_handle_t*>& buffers) {
++    for (auto buffer : buffers) {
++        int result = mDevice->free(mDevice, buffer);
++        if (result != 0) {
++            ALOGE("failed to free buffer %p: %d", buffer, result);
++        }
++    }
++}
++
++Error Gralloc0Hal::allocateOneBuffer(const mapper::V2_0::IMapper::BufferDescriptorInfo& info,
++                                     const native_handle_t** outBuffer, uint32_t* outStride) {
++    if (info.layerCount > 1 || (info.usage >> 32) != 0) {
++        return Error::BAD_VALUE;
++    }
++
++    const native_handle_t* buffer = nullptr;
++    int stride = 0;
++    int result = mDevice->alloc(mDevice, info.width, info.height, static_cast<int>(info.format),
++                                info.usage, &buffer, &stride);
++    switch (result) {
++        case 0:
++            *outBuffer = buffer;
++            *outStride = stride;
++            return Error::NONE;
++        case -EINVAL:
++            return Error::BAD_VALUE;
++        default:
++            return Error::NO_RESOURCES;
++    }
++}
++
++}  // namespace passthrough
++}  // namespace V2_0
++}  // namespace allocator
++}  // namespace graphics
++}  // namespace hardware
++}  // namespace android
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc1Hal.cpp b/graphics/allocator/2.0/utils/passthrough/Gralloc1Hal.cpp
+new file mode 100644
+index 000000000..e343ecd29
+--- /dev/null
++++ b/graphics/allocator/2.0/utils/passthrough/Gralloc1Hal.cpp
+@@ -0,0 +1,323 @@
++/*
++ * Copyright 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <allocator-passthrough/2.0/Gralloc1Hal.h>
++
++#include <string.h>
++
++#include <GrallocBufferDescriptor.h>
++#include <log/log.h>
++
++namespace android {
++namespace hardware {
++namespace graphics {
++namespace allocator {
++namespace V2_0 {
++namespace passthrough {
++
++using android::hardware::graphics::common::V1_0::BufferUsage;
++using mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
++
++Gralloc1Hal::~Gralloc1Hal() {
++    if (mDevice) {
++        gralloc1_close(mDevice);
++    }
++}
++
++bool Gralloc1Hal::initWithModule(const hw_module_t* module) {
++    int result = gralloc1_open(module, &mDevice);
++    if (result) {
++        ALOGE("failed to open gralloc1 device: %s", strerror(-result));
++        mDevice = nullptr;
++        return false;
++    }
++
++    initCapabilities();
++    if (!initDispatch()) {
++        gralloc1_close(mDevice);
++        mDevice = nullptr;
++        return false;
++    }
++
++    return true;
++}
++
++void Gralloc1Hal::initCapabilities() {
++    uint32_t count = 0;
++    mDevice->getCapabilities(mDevice, &count, nullptr);
++
++    std::vector<int32_t> capabilities(count);
++    mDevice->getCapabilities(mDevice, &count, capabilities.data());
++    capabilities.resize(count);
++
++    for (auto capability : capabilities) {
++        if (capability == GRALLOC1_CAPABILITY_LAYERED_BUFFERS) {
++            mCapabilities.layeredBuffers = true;
++            break;
++        }
++    }
++}
++
++gralloc1_function_pointer_t Gralloc1Hal::getDispatchFunction(
++    gralloc1_function_descriptor_t desc) const {
++    auto pfn = mDevice->getFunction(mDevice, desc);
++    if (!pfn) {
++        ALOGE("failed to get gralloc1 function %d", desc);
++        return nullptr;
++    }
++    return pfn;
++}
++
++bool Gralloc1Hal::initDispatch() {
++    if (!initDispatchFunction(GRALLOC1_FUNCTION_DUMP, &mDispatch.dump) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR, &mDispatch.createDescriptor) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR, &mDispatch.destroyDescriptor) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_SET_DIMENSIONS, &mDispatch.setDimensions) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_SET_FORMAT, &mDispatch.setFormat) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE, &mDispatch.setConsumerUsage) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE, &mDispatch.setProducerUsage) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_GET_STRIDE, &mDispatch.getStride) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_ALLOCATE, &mDispatch.allocate) ||
++        !initDispatchFunction(GRALLOC1_FUNCTION_RELEASE, &mDispatch.release)) {
++        return false;
++    }
++
++    if (mCapabilities.layeredBuffers) {
++        if (!initDispatchFunction(GRALLOC1_FUNCTION_SET_LAYER_COUNT, &mDispatch.setLayerCount)) {
++            return false;
++        }
++    }
++
++    return true;
++}
++
++std::string Gralloc1Hal::dumpDebugInfo() {
++    uint32_t len = 0;
++    mDispatch.dump(mDevice, &len, nullptr);
++
++    std::vector<char> buf(len + 1);
++    mDispatch.dump(mDevice, &len, buf.data());
++    buf.resize(len + 1);
++    buf[len] = '\0';
++
++    return buf.data();
++}
++
++Error Gralloc1Hal::allocateBuffers(const BufferDescriptor& descriptor, uint32_t count,
++                                   uint32_t* outStride,
++                                   std::vector<const native_handle_t*>* outBuffers) {
++    mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo;
++    if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
++        return Error::BAD_DESCRIPTOR;
++    }
++
++    gralloc1_buffer_descriptor_t desc;
++    Error error = createDescriptor(descriptorInfo, &desc);
++    if (error != Error::NONE) {
++        return error;
++    }
++
++    uint32_t stride = 0;
++    std::vector<const native_handle_t*> buffers;
++    buffers.reserve(count);
++
++    // allocate the buffers
++    for (uint32_t i = 0; i < count; i++) {
++        const native_handle_t* tmpBuffer;
++        uint32_t tmpStride;
++        error = allocateOneBuffer(desc, &tmpBuffer, &tmpStride);
++        if (error != Error::NONE) {
++            break;
++        }
++
++        buffers.push_back(tmpBuffer);
++
++        if (stride == 0) {
++            stride = tmpStride;
++        } else if (stride != tmpStride) {
++            // non-uniform strides
++            error = Error::UNSUPPORTED;
++            break;
++        }
++    }
++
++    mDispatch.destroyDescriptor(mDevice, desc);
++
++    if (error != Error::NONE) {
++        freeBuffers(buffers);
++        return error;
++    }
++
++    *outStride = stride;
++    *outBuffers = std::move(buffers);
++
++    return Error::NONE;
++}
++
++void Gralloc1Hal::freeBuffers(const std::vector<const native_handle_t*>& buffers) {
++    for (auto buffer : buffers) {
++        int32_t error = mDispatch.release(mDevice, buffer);
++        if (error != GRALLOC1_ERROR_NONE) {
++            ALOGE("failed to free buffer %p: %d", buffer, error);
++        }
++    }
++}
++
++Error Gralloc1Hal::toError(int32_t error) {
++    switch (error) {
++        case GRALLOC1_ERROR_NONE:
++            return Error::NONE;
++        case GRALLOC1_ERROR_BAD_DESCRIPTOR:
++            return Error::BAD_DESCRIPTOR;
++        case GRALLOC1_ERROR_BAD_HANDLE:
++            return Error::BAD_BUFFER;
++        case GRALLOC1_ERROR_BAD_VALUE:
++            return Error::BAD_VALUE;
++        case GRALLOC1_ERROR_NOT_SHARED:
++            return Error::NONE;  // this is fine
++        case GRALLOC1_ERROR_NO_RESOURCES:
++            return Error::NO_RESOURCES;
++        case GRALLOC1_ERROR_UNDEFINED:
++        case GRALLOC1_ERROR_UNSUPPORTED:
++        default:
++            return Error::UNSUPPORTED;
++    }
++}
++
++uint64_t Gralloc1Hal::toProducerUsage(uint64_t usage) {
++    // this is potentially broken as we have no idea which private flags
++    // should be filtered out
++    uint64_t producerUsage =
++        usage & ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
++                                       BufferUsage::GPU_DATA_BUFFER);
++
++    switch (usage & BufferUsage::CPU_WRITE_MASK) {
++        case static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY):
++            producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_WRITE;
++            break;
++        case static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN):
++            producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN;
++            break;
++        default:
++            break;
++    }
++
++    switch (usage & BufferUsage::CPU_READ_MASK) {
++        case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
++            producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_READ;
++            break;
++        case static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN):
++            producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_READ_OFTEN;
++            break;
++        default:
++            break;
++    }
++
++    // BufferUsage::GPU_DATA_BUFFER is always filtered out
++
++    return producerUsage;
++}
++
++uint64_t Gralloc1Hal::toConsumerUsage(uint64_t usage) {
++    // this is potentially broken as we have no idea which private flags
++    // should be filtered out
++    uint64_t consumerUsage =
++        usage &
++        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
++                               BufferUsage::SENSOR_DIRECT_DATA | BufferUsage::GPU_DATA_BUFFER);
++
++    switch (usage & BufferUsage::CPU_READ_MASK) {
++        case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
++            consumerUsage |= GRALLOC1_CONSUMER_USAGE_CPU_READ;
++            break;
++        case static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN):
++            consumerUsage |= GRALLOC1_CONSUMER_USAGE_CPU_READ_OFTEN;
++            break;
++        default:
++            break;
++    }
++
++    // BufferUsage::SENSOR_DIRECT_DATA is always filtered out
++
++    if (usage & BufferUsage::GPU_DATA_BUFFER) {
++        consumerUsage |= GRALLOC1_CONSUMER_USAGE_GPU_DATA_BUFFER;
++    }
++
++    return consumerUsage;
++}
++
++Error Gralloc1Hal::createDescriptor(const mapper::V2_0::IMapper::BufferDescriptorInfo& info,
++                                    gralloc1_buffer_descriptor_t* outDescriptor) {
++    gralloc1_buffer_descriptor_t descriptor;
++
++    int32_t error = mDispatch.createDescriptor(mDevice, &descriptor);
++
++    if (error == GRALLOC1_ERROR_NONE) {
++        error = mDispatch.setDimensions(mDevice, descriptor, info.width, info.height);
++    }
++    if (error == GRALLOC1_ERROR_NONE) {
++        error = mDispatch.setFormat(mDevice, descriptor, static_cast<int32_t>(info.format));
++    }
++    if (error == GRALLOC1_ERROR_NONE) {
++        if (mCapabilities.layeredBuffers) {
++            error = mDispatch.setLayerCount(mDevice, descriptor, info.layerCount);
++        } else if (info.layerCount > 1) {
++            error = GRALLOC1_ERROR_UNSUPPORTED;
++        }
++    }
++    if (error == GRALLOC1_ERROR_NONE) {
++        error = mDispatch.setProducerUsage(mDevice, descriptor, toProducerUsage(info.usage));
++    }
++    if (error == GRALLOC1_ERROR_NONE) {
++        error = mDispatch.setConsumerUsage(mDevice, descriptor, toConsumerUsage(info.usage));
++    }
++
++    if (error == GRALLOC1_ERROR_NONE) {
++        *outDescriptor = descriptor;
++    } else {
++        mDispatch.destroyDescriptor(mDevice, descriptor);
++    }
++
++    return toError(error);
++}
++
++Error Gralloc1Hal::allocateOneBuffer(gralloc1_buffer_descriptor_t descriptor,
++                                     const native_handle_t** outBuffer, uint32_t* outStride) {
++    const native_handle_t* buffer = nullptr;
++    int32_t error = mDispatch.allocate(mDevice, 1, &descriptor, &buffer);
++    if (error != GRALLOC1_ERROR_NONE && error != GRALLOC1_ERROR_NOT_SHARED) {
++        return toError(error);
++    }
++
++    uint32_t stride = 0;
++    error = mDispatch.getStride(mDevice, buffer, &stride);
++    if (error != GRALLOC1_ERROR_NONE && error != GRALLOC1_ERROR_UNDEFINED) {
++        mDispatch.release(mDevice, buffer);
++        return toError(error);
++    }
++
++    *outBuffer = buffer;
++    *outStride = stride;
++
++    return Error::NONE;
++}
++
++}  // namespace passthrough
++}  // namespace V2_0
++}  // namespace allocator
++}  // namespace graphics
++}  // namespace hardware
++}  // namespace android
+diff --git a/graphics/allocator/2.0/utils/passthrough/GrallocLoader.cpp b/graphics/allocator/2.0/utils/passthrough/GrallocLoader.cpp
+new file mode 100644
+index 000000000..dae7a78ca
+--- /dev/null
++++ b/graphics/allocator/2.0/utils/passthrough/GrallocLoader.cpp
+@@ -0,0 +1,76 @@
++/*
++ * Copyright 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <allocator-passthrough/2.0/GrallocLoader.h>
++
++#include <allocator-hal/2.0/Allocator.h>
++#include <allocator-hal/2.0/AllocatorHal.h>
++#include <allocator-passthrough/2.0/Gralloc0Hal.h>
++#include <allocator-passthrough/2.0/Gralloc1Hal.h>
++#include <hardware/gralloc.h>
++#include <hardware/hardware.h>
++#include <log/log.h>
++
++namespace android {
++namespace hardware {
++namespace graphics {
++namespace allocator {
++namespace V2_0 {
++namespace passthrough {
++
++const hw_module_t* GrallocLoader::loadModule() {
++    const hw_module_t* module;
++    int error = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
++    if (error) {
++        ALOGE("failed to get gralloc module");
++        return nullptr;
++    }
++
++    return module;
++}
++
++int GrallocLoader::getModuleMajorApiVersion(const hw_module_t* module) {
++    return (module->module_api_version >> 8) & 0xff;
++}
++
++std::unique_ptr<hal::AllocatorHal> GrallocLoader::createHal(const hw_module_t* module) {
++    int major = getModuleMajorApiVersion(module);
++    switch (major) {
++        case 1: {
++            auto hal = std::make_unique<Gralloc1Hal>();
++            return hal->initWithModule(module) ? std::move(hal) : nullptr;
++        }
++        case 0: {
++            auto hal = std::make_unique<Gralloc0Hal>();
++            return hal->initWithModule(module) ? std::move(hal) : nullptr;
++        }
++        default:
++            ALOGE("unknown gralloc module major version %d", major);
++            return nullptr;
++    }
++}
++
++IAllocator* GrallocLoader::createAllocator(std::unique_ptr<hal::AllocatorHal> hal) {
++    auto allocator = std::make_unique<hal::Allocator>();
++    return allocator->init(std::move(hal)) ? allocator.release() : nullptr;
++}
++
++}  // namespace passthrough
++}  // namespace V2_0
++}  // namespace allocator
++}  // namespace graphics
++}  // namespace hardware
++}  // namespace android
+diff --git a/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc0Hal.h b/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc0Hal.h
+index 2665b4003..8f433b0f5 100644
+--- a/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc0Hal.h
++++ b/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc0Hal.h
+@@ -16,16 +16,10 @@
+ 
+ #pragma once
+ 
+-#ifndef LOG_TAG
+-#warning "Gralloc0Hal.h included without LOG_TAG"
+-#endif
+-
+-#include <cstring>  // for strerror
+-
+-#include <GrallocBufferDescriptor.h>
+ #include <allocator-hal/2.0/AllocatorHal.h>
+-#include <hardware/gralloc.h>
+-#include <log/log.h>
++
++struct alloc_device_t;
++struct hw_module_t;
+ 
+ namespace android {
+ namespace hardware {
+@@ -34,125 +28,28 @@ namespace allocator {
+ namespace V2_0 {
+ namespace passthrough {
+ 
+-namespace detail {
+-
+ using mapper::V2_0::BufferDescriptor;
+ using mapper::V2_0::Error;
+-using mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
+ 
+-// Gralloc0HalImpl implements V2_*::hal::AllocatorHal on top of gralloc0
+-template <typename Hal>
+-class Gralloc0HalImpl : public Hal {
++class Gralloc0Hal : public virtual hal::AllocatorHal {
+    public:
+-    ~Gralloc0HalImpl() {
+-        if (mDevice) {
+-            gralloc_close(mDevice);
+-        }
+-    }
+-
+-    bool initWithModule(const hw_module_t* module) {
+-        int result = gralloc_open(module, &mDevice);
+-        if (result) {
+-            ALOGE("failed to open gralloc0 device: %s", strerror(-result));
+-            mDevice = nullptr;
+-            return false;
+-        }
++    ~Gralloc0Hal();
++    bool initWithModule(const hw_module_t* module);
+ 
+-        return true;
+-    }
+-
+-    std::string dumpDebugInfo() override {
+-        char buf[4096] = {};
+-        if (mDevice->dump) {
+-            mDevice->dump(mDevice, buf, sizeof(buf));
+-            buf[sizeof(buf) - 1] = '\0';
+-        }
+-
+-        return buf;
+-    }
++    std::string dumpDebugInfo() override;
+ 
+     Error allocateBuffers(const BufferDescriptor& descriptor, uint32_t count, uint32_t* outStride,
+-                          std::vector<const native_handle_t*>* outBuffers) override {
+-        mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo;
+-        if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
+-            return Error::BAD_DESCRIPTOR;
+-        }
+-
+-        Error error = Error::NONE;
+-        uint32_t stride = 0;
+-        std::vector<const native_handle_t*> buffers;
+-        buffers.reserve(count);
+-
+-        // allocate the buffers
+-        for (uint32_t i = 0; i < count; i++) {
+-            const native_handle_t* tmpBuffer;
+-            uint32_t tmpStride;
+-            error = allocateOneBuffer(descriptorInfo, &tmpBuffer, &tmpStride);
+-            if (error != Error::NONE) {
+-                break;
+-            }
++                          std::vector<const native_handle_t*>* outBuffers) override;
+ 
+-            buffers.push_back(tmpBuffer);
+-
+-            if (stride == 0) {
+-                stride = tmpStride;
+-            } else if (stride != tmpStride) {
+-                // non-uniform strides
+-                error = Error::UNSUPPORTED;
+-                break;
+-            }
+-        }
+-
+-        if (error != Error::NONE) {
+-            freeBuffers(buffers);
+-            return error;
+-        }
+-
+-        *outStride = stride;
+-        *outBuffers = std::move(buffers);
+-
+-        return Error::NONE;
+-    }
+-
+-    void freeBuffers(const std::vector<const native_handle_t*>& buffers) override {
+-        for (auto buffer : buffers) {
+-            int result = mDevice->free(mDevice, buffer);
+-            if (result != 0) {
+-                ALOGE("failed to free buffer %p: %d", buffer, result);
+-            }
+-        }
+-    }
++    void freeBuffers(const std::vector<const native_handle_t*>& buffers) override;
+ 
+    protected:
+     Error allocateOneBuffer(const mapper::V2_0::IMapper::BufferDescriptorInfo& info,
+-                            const native_handle_t** outBuffer, uint32_t* outStride) {
+-        if (info.layerCount > 1 || (info.usage >> 32) != 0) {
+-            return Error::BAD_VALUE;
+-        }
+-
+-        const native_handle_t* buffer = nullptr;
+-        int stride = 0;
+-        int result = mDevice->alloc(mDevice, info.width, info.height, static_cast<int>(info.format),
+-                                    info.usage, &buffer, &stride);
+-        switch (result) {
+-            case 0:
+-                *outBuffer = buffer;
+-                *outStride = stride;
+-                return Error::NONE;
+-            case -EINVAL:
+-                return Error::BAD_VALUE;
+-            default:
+-                return Error::NO_RESOURCES;
+-        }
+-    }
++                            const native_handle_t** outBuffer, uint32_t* outStride);
+ 
+     alloc_device_t* mDevice = nullptr;
+ };
+ 
+-}  // namespace detail
+-
+-using Gralloc0Hal = detail::Gralloc0HalImpl<hal::AllocatorHal>;
+-
+ }  // namespace passthrough
+ }  // namespace V2_0
+ }  // namespace allocator
+diff --git a/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc1Hal.h b/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc1Hal.h
+index 3979f0d76..3126e9150 100644
+--- a/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc1Hal.h
++++ b/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/Gralloc1Hal.h
+@@ -16,16 +16,8 @@
+ 
+ #pragma once
+ 
+-#ifndef LOG_TAG
+-#warning "Gralloc1Hal.h included without LOG_TAG"
+-#endif
+-
+-#include <cstring>  // for strerror
+-
+-#include <GrallocBufferDescriptor.h>
+ #include <allocator-hal/2.0/AllocatorHal.h>
+ #include <hardware/gralloc1.h>
+-#include <log/log.h>
+ 
+ namespace android {
+ namespace hardware {
+@@ -34,302 +26,46 @@ namespace allocator {
+ namespace V2_0 {
+ namespace passthrough {
+ 
+-namespace detail {
+-
+-using common::V1_0::BufferUsage;
+ using mapper::V2_0::BufferDescriptor;
+ using mapper::V2_0::Error;
+-using mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
+ 
+-// Gralloc1HalImpl implements V2_*::hal::AllocatorHal on top of gralloc1
+-template <typename Hal>
+-class Gralloc1HalImpl : public Hal {
++class Gralloc1Hal : public virtual hal::AllocatorHal {
+    public:
+-    ~Gralloc1HalImpl() {
+-        if (mDevice) {
+-            gralloc1_close(mDevice);
+-        }
+-    }
++    ~Gralloc1Hal();
++    bool initWithModule(const hw_module_t* module);
+ 
+-    bool initWithModule(const hw_module_t* module) {
+-        int result = gralloc1_open(module, &mDevice);
+-        if (result) {
+-            ALOGE("failed to open gralloc1 device: %s", strerror(-result));
+-            mDevice = nullptr;
+-            return false;
+-        }
+-
+-        initCapabilities();
+-        if (!initDispatch()) {
+-            gralloc1_close(mDevice);
+-            mDevice = nullptr;
+-            return false;
+-        }
+-
+-        return true;
+-    }
+-
+-    std::string dumpDebugInfo() override {
+-        uint32_t len = 0;
+-        mDispatch.dump(mDevice, &len, nullptr);
+-
+-        std::vector<char> buf(len + 1);
+-        mDispatch.dump(mDevice, &len, buf.data());
+-        buf.resize(len + 1);
+-        buf[len] = '\0';
+-
+-        return buf.data();
+-    }
++    std::string dumpDebugInfo() override;
+ 
+     Error allocateBuffers(const BufferDescriptor& descriptor, uint32_t count, uint32_t* outStride,
+-                          std::vector<const native_handle_t*>* outBuffers) override {
+-        mapper::V2_0::IMapper::BufferDescriptorInfo descriptorInfo;
+-        if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
+-            return Error::BAD_DESCRIPTOR;
+-        }
+-
+-        gralloc1_buffer_descriptor_t desc;
+-        Error error = createDescriptor(descriptorInfo, &desc);
+-        if (error != Error::NONE) {
+-            return error;
+-        }
+-
+-        uint32_t stride = 0;
+-        std::vector<const native_handle_t*> buffers;
+-        buffers.reserve(count);
+-
+-        // allocate the buffers
+-        for (uint32_t i = 0; i < count; i++) {
+-            const native_handle_t* tmpBuffer;
+-            uint32_t tmpStride;
+-            error = allocateOneBuffer(desc, &tmpBuffer, &tmpStride);
+-            if (error != Error::NONE) {
+-                break;
+-            }
++                          std::vector<const native_handle_t*>* outBuffers) override;
+ 
+-            buffers.push_back(tmpBuffer);
+-
+-            if (stride == 0) {
+-                stride = tmpStride;
+-            } else if (stride != tmpStride) {
+-                // non-uniform strides
+-                error = Error::UNSUPPORTED;
+-                break;
+-            }
+-        }
+-
+-        mDispatch.destroyDescriptor(mDevice, desc);
+-
+-        if (error != Error::NONE) {
+-            freeBuffers(buffers);
+-            return error;
+-        }
+-
+-        *outStride = stride;
+-        *outBuffers = std::move(buffers);
+-
+-        return Error::NONE;
+-    }
+-
+-    void freeBuffers(const std::vector<const native_handle_t*>& buffers) override {
+-        for (auto buffer : buffers) {
+-            int32_t error = mDispatch.release(mDevice, buffer);
+-            if (error != GRALLOC1_ERROR_NONE) {
+-                ALOGE("failed to free buffer %p: %d", buffer, error);
+-            }
+-        }
+-    }
++    void freeBuffers(const std::vector<const native_handle_t*>& buffers) override;
+ 
+    protected:
+-    virtual void initCapabilities() {
+-        uint32_t count = 0;
+-        mDevice->getCapabilities(mDevice, &count, nullptr);
+-
+-        std::vector<int32_t> capabilities(count);
+-        mDevice->getCapabilities(mDevice, &count, capabilities.data());
+-        capabilities.resize(count);
+-
+-        for (auto capability : capabilities) {
+-            if (capability == GRALLOC1_CAPABILITY_LAYERED_BUFFERS) {
+-                mCapabilities.layeredBuffers = true;
+-                break;
+-            }
+-        }
+-    }
+-
+     template <typename T>
+-    bool initDispatch(gralloc1_function_descriptor_t desc, T* outPfn) {
+-        auto pfn = mDevice->getFunction(mDevice, desc);
++    bool initDispatchFunction(gralloc1_function_descriptor_t desc, T* outPfn) {
++        auto pfn = getDispatchFunction(desc);
+         if (pfn) {
+             *outPfn = reinterpret_cast<T>(pfn);
+             return true;
+         } else {
+-            ALOGE("failed to get gralloc1 function %d", desc);
+             return false;
+         }
+     }
++    gralloc1_function_pointer_t getDispatchFunction(gralloc1_function_descriptor_t desc) const;
+ 
+-    virtual bool initDispatch() {
+-        if (!initDispatch(GRALLOC1_FUNCTION_DUMP, &mDispatch.dump) ||
+-            !initDispatch(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR, &mDispatch.createDescriptor) ||
+-            !initDispatch(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR, &mDispatch.destroyDescriptor) ||
+-            !initDispatch(GRALLOC1_FUNCTION_SET_DIMENSIONS, &mDispatch.setDimensions) ||
+-            !initDispatch(GRALLOC1_FUNCTION_SET_FORMAT, &mDispatch.setFormat) ||
+-            !initDispatch(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE, &mDispatch.setConsumerUsage) ||
+-            !initDispatch(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE, &mDispatch.setProducerUsage) ||
+-            !initDispatch(GRALLOC1_FUNCTION_GET_STRIDE, &mDispatch.getStride) ||
+-            !initDispatch(GRALLOC1_FUNCTION_ALLOCATE, &mDispatch.allocate) ||
+-            !initDispatch(GRALLOC1_FUNCTION_RELEASE, &mDispatch.release)) {
+-            return false;
+-        }
++    virtual void initCapabilities();
++    virtual bool initDispatch();
+ 
+-        if (mCapabilities.layeredBuffers) {
+-            if (!initDispatch(GRALLOC1_FUNCTION_SET_LAYER_COUNT, &mDispatch.setLayerCount)) {
+-                return false;
+-            }
+-        }
+-
+-        return true;
+-    }
+-
+-    static Error toError(int32_t error) {
+-        switch (error) {
+-            case GRALLOC1_ERROR_NONE:
+-                return Error::NONE;
+-            case GRALLOC1_ERROR_BAD_DESCRIPTOR:
+-                return Error::BAD_DESCRIPTOR;
+-            case GRALLOC1_ERROR_BAD_HANDLE:
+-                return Error::BAD_BUFFER;
+-            case GRALLOC1_ERROR_BAD_VALUE:
+-                return Error::BAD_VALUE;
+-            case GRALLOC1_ERROR_NOT_SHARED:
+-                return Error::NONE;  // this is fine
+-            case GRALLOC1_ERROR_NO_RESOURCES:
+-                return Error::NO_RESOURCES;
+-            case GRALLOC1_ERROR_UNDEFINED:
+-            case GRALLOC1_ERROR_UNSUPPORTED:
+-            default:
+-                return Error::UNSUPPORTED;
+-        }
+-    }
+-
+-    static uint64_t toProducerUsage(uint64_t usage) {
+-        // this is potentially broken as we have no idea which private flags
+-        // should be filtered out
+-        uint64_t producerUsage = usage & ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK |
+-                                                                BufferUsage::CPU_WRITE_MASK |
+-                                                                BufferUsage::GPU_DATA_BUFFER);
+-
+-        switch (usage & BufferUsage::CPU_WRITE_MASK) {
+-            case static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY):
+-                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_WRITE;
+-                break;
+-            case static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN):
+-                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN;
+-                break;
+-            default:
+-                break;
+-        }
+-
+-        switch (usage & BufferUsage::CPU_READ_MASK) {
+-            case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
+-                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_READ;
+-                break;
+-            case static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN):
+-                producerUsage |= GRALLOC1_PRODUCER_USAGE_CPU_READ_OFTEN;
+-                break;
+-            default:
+-                break;
+-        }
+-
+-        // BufferUsage::GPU_DATA_BUFFER is always filtered out
+-
+-        return producerUsage;
+-    }
+-
+-    static uint64_t toConsumerUsage(uint64_t usage) {
+-        // this is potentially broken as we have no idea which private flags
+-        // should be filtered out
+-        uint64_t consumerUsage =
+-            usage &
+-            ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+-                                   BufferUsage::SENSOR_DIRECT_DATA | BufferUsage::GPU_DATA_BUFFER);
+-
+-        switch (usage & BufferUsage::CPU_READ_MASK) {
+-            case static_cast<uint64_t>(BufferUsage::CPU_READ_RARELY):
+-                consumerUsage |= GRALLOC1_CONSUMER_USAGE_CPU_READ;
+-                break;
+-            case static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN):
+-                consumerUsage |= GRALLOC1_CONSUMER_USAGE_CPU_READ_OFTEN;
+-                break;
+-            default:
+-                break;
+-        }
+-
+-        // BufferUsage::SENSOR_DIRECT_DATA is always filtered out
+-
+-        if (usage & BufferUsage::GPU_DATA_BUFFER) {
+-            consumerUsage |= GRALLOC1_CONSUMER_USAGE_GPU_DATA_BUFFER;
+-        }
+-
+-        return consumerUsage;
+-    }
++    static Error toError(int32_t error);
++    static uint64_t toProducerUsage(uint64_t usage);
++    static uint64_t toConsumerUsage(uint64_t usage);
+ 
+     Error createDescriptor(const mapper::V2_0::IMapper::BufferDescriptorInfo& info,
+-                           gralloc1_buffer_descriptor_t* outDescriptor) {
+-        gralloc1_buffer_descriptor_t descriptor;
+-
+-        int32_t error = mDispatch.createDescriptor(mDevice, &descriptor);
+-
+-        if (error == GRALLOC1_ERROR_NONE) {
+-            error = mDispatch.setDimensions(mDevice, descriptor, info.width, info.height);
+-        }
+-        if (error == GRALLOC1_ERROR_NONE) {
+-            error = mDispatch.setFormat(mDevice, descriptor, static_cast<int32_t>(info.format));
+-        }
+-        if (error == GRALLOC1_ERROR_NONE) {
+-            if (mCapabilities.layeredBuffers) {
+-                error = mDispatch.setLayerCount(mDevice, descriptor, info.layerCount);
+-            } else if (info.layerCount > 1) {
+-                error = GRALLOC1_ERROR_UNSUPPORTED;
+-            }
+-        }
+-        if (error == GRALLOC1_ERROR_NONE) {
+-            error = mDispatch.setProducerUsage(mDevice, descriptor, toProducerUsage(info.usage));
+-        }
+-        if (error == GRALLOC1_ERROR_NONE) {
+-            error = mDispatch.setConsumerUsage(mDevice, descriptor, toConsumerUsage(info.usage));
+-        }
+-
+-        if (error == GRALLOC1_ERROR_NONE) {
+-            *outDescriptor = descriptor;
+-        } else {
+-            mDispatch.destroyDescriptor(mDevice, descriptor);
+-        }
+-
+-        return toError(error);
+-    }
++                           gralloc1_buffer_descriptor_t* outDescriptor);
+ 
+     Error allocateOneBuffer(gralloc1_buffer_descriptor_t descriptor,
+-                            const native_handle_t** outBuffer, uint32_t* outStride) {
+-        const native_handle_t* buffer = nullptr;
+-        int32_t error = mDispatch.allocate(mDevice, 1, &descriptor, &buffer);
+-        if (error != GRALLOC1_ERROR_NONE && error != GRALLOC1_ERROR_NOT_SHARED) {
+-            return toError(error);
+-        }
+-
+-        uint32_t stride = 0;
+-        error = mDispatch.getStride(mDevice, buffer, &stride);
+-        if (error != GRALLOC1_ERROR_NONE && error != GRALLOC1_ERROR_UNDEFINED) {
+-            mDispatch.release(mDevice, buffer);
+-            return toError(error);
+-        }
+-
+-        *outBuffer = buffer;
+-        *outStride = stride;
+-
+-        return Error::NONE;
+-    }
++                            const native_handle_t** outBuffer, uint32_t* outStride);
+ 
+     gralloc1_device_t* mDevice = nullptr;
+ 
+@@ -352,10 +88,6 @@ class Gralloc1HalImpl : public Hal {
+     } mDispatch = {};
+ };
+ 
+-}  // namespace detail
+-
+-using Gralloc1Hal = detail::Gralloc1HalImpl<hal::AllocatorHal>;
+-
+ }  // namespace passthrough
+ }  // namespace V2_0
+ }  // namespace allocator
+diff --git a/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/GrallocLoader.h b/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/GrallocLoader.h
+index 660099bb1..a0b9503c3 100644
+--- a/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/GrallocLoader.h
++++ b/graphics/allocator/2.0/utils/passthrough/include/allocator-passthrough/2.0/GrallocLoader.h
+@@ -16,18 +16,11 @@
+ 
+ #pragma once
+ 
+-#ifndef LOG_TAG
+-#warning "GrallocLoader.h included without LOG_TAG"
+-#endif
+-
+ #include <memory>
+ 
+-#include <allocator-hal/2.0/Allocator.h>
+-#include <allocator-passthrough/2.0/Gralloc0Hal.h>
+-#include <allocator-passthrough/2.0/Gralloc1Hal.h>
+-#include <hardware/gralloc.h>
+-#include <hardware/hardware.h>
+-#include <log/log.h>
++#include <allocator-hal/2.0/AllocatorHal.h>
++
++struct hw_module_t;
+ 
+ namespace android {
+ namespace hardware {
+@@ -51,45 +44,16 @@ class GrallocLoader {
+     }
+ 
+     // load the gralloc module
+-    static const hw_module_t* loadModule() {
+-        const hw_module_t* module;
+-        int error = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+-        if (error) {
+-            ALOGE("failed to get gralloc module");
+-            return nullptr;
+-        }
+-
+-        return module;
+-    }
++    static const hw_module_t* loadModule();
+ 
+     // return the major api version of the module
+-    static int getModuleMajorApiVersion(const hw_module_t* module) {
+-        return (module->module_api_version >> 8) & 0xff;
+-    }
++    static int getModuleMajorApiVersion(const hw_module_t* module);
+ 
+     // create an AllocatorHal instance
+-    static std::unique_ptr<hal::AllocatorHal> createHal(const hw_module_t* module) {
+-        int major = getModuleMajorApiVersion(module);
+-        switch (major) {
+-            case 1: {
+-                auto hal = std::make_unique<Gralloc1Hal>();
+-                return hal->initWithModule(module) ? std::move(hal) : nullptr;
+-            }
+-            case 0: {
+-                auto hal = std::make_unique<Gralloc0Hal>();
+-                return hal->initWithModule(module) ? std::move(hal) : nullptr;
+-            }
+-            default:
+-                ALOGE("unknown gralloc module major version %d", major);
+-                return nullptr;
+-        }
+-    }
++    static std::unique_ptr<hal::AllocatorHal> createHal(const hw_module_t* module);
+ 
+     // create an IAllocator instance
+-    static IAllocator* createAllocator(std::unique_ptr<hal::AllocatorHal> hal) {
+-        auto allocator = std::make_unique<hal::Allocator>();
+-        return allocator->init(std::move(hal)) ? allocator.release() : nullptr;
+-    }
++    static IAllocator* createAllocator(std::unique_ptr<hal::AllocatorHal> hal);
+ };
+ 
+ }  // namespace passthrough
+-- 
+2.17.0
+

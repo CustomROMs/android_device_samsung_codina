@@ -1,0 +1,28 @@
+From 7e066d2009f6bcb656824046dc1c360ae60403e5 Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Wed, 28 Jan 2015 14:36:24 -0800
+Subject: [PATCH 10/42] fs_mgr: Add fs_mgr_get_entry_for_mount_point_after to
+ header
+
+* Add this function for recovery to use
+
+Change-Id: I314c5452a337245ecac5c9628ad0568018e1cf7b
+---
+ fs_mgr/include_fstab/fstab/fstab.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fs_mgr/include_fstab/fstab/fstab.h b/fs_mgr/include_fstab/fstab/fstab.h
+index b1ee32885..dde7813d0 100644
+--- a/fs_mgr/include_fstab/fstab/fstab.h
++++ b/fs_mgr/include_fstab/fstab/fstab.h
+@@ -68,6 +68,7 @@ void fs_mgr_free_fstab(struct fstab* fstab);
+ int fs_mgr_add_entry(struct fstab* fstab, const char* mount_point, const char* fs_type,
+                      const char* blk_device);
+ struct fstab_rec* fs_mgr_get_entry_for_mount_point(struct fstab* fstab, const std::string& path);
++struct fstab_rec *fs_mgr_get_entry_for_mount_point_after(struct fstab_rec *start_rec, struct fstab *fstab, const std::string& path);
+ int fs_mgr_is_voldmanaged(const struct fstab_rec* fstab);
+ int fs_mgr_is_nonremovable(const struct fstab_rec* fstab);
+ int fs_mgr_is_verified(const struct fstab_rec* fstab);
+-- 
+2.17.0
+

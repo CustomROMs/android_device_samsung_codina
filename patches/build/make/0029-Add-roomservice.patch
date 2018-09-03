@@ -1,0 +1,99 @@
+From c7177c665728e9e3f1305f0d00a6a7ea2449605f Mon Sep 17 00:00:00 2001
+From: Koushik Dutta <koushd@gmail.com>
+Date: Wed, 23 Aug 2017 16:13:18 +0200
+Subject: [PATCH 29/90] Add roomservice
+
+Partial squash of:
+
+	From e33ba4c49ed461d608c65eb4e09d31ca81d167ff Mon Sep 17 00:00:00 2001
+	From: Jeff Brown <jeffbrown@google.com>
+	Date: Mon, 11 Jul 2011 22:11:46 -0700
+	Subject: [PATCH] Remove the simulator target from all makefiles. Bug: 5010576
+
+	From: Ying Wang <wangying@google.com>
+	Date: Thu, 3 Mar 2016 20:57:21 -0800
+	Subject: [PATCH] Speed up lunch/tapas/etc. shell utility functions.
+	1. Combined ~10 calls to the make build system to only one.
+	   We added a phony target "dump-many-vars" to the build system to dump
+	   "<var>=<value>" pairs. We then store the pairs as shell variables.
+	   With this cache get_build_var/get_abs_build_var can just return
+	   the shell variables instead of querying the build system.
+	2. Prune .git when we search for AndroidProduct.mks.
+	In internal source tree lunch time was reduced from ~15s to ~1.5s.
+	Bug: 27429759
+	(cherry picked from commit 08800fd905e70faf01d9392d00ff3f49d99097b7)
+	Change-Id: I862a0ec3c1aae97c552054dacec133e857042edf
+
+	From ec92ea8708f93f07099fd94e882140aa5991af9a Mon Sep 17 00:00:00 2001
+	From: Luca Stefani <luca.stefani.ge1@gmail.com>
+	Date: Sun, 1 Jan 2017 21:45:07 +0100
+	Subject: [PATCH] lunch: Use cd - instead of popd
+	* ZSH breaks a lot of things.
+	Change-Id: Idee8485bee673bebf6fe5857253306b20aa92eb5
+
+	From c2dcf4b1d2b3c6aa2209ce2b4bd8426a62fa9949 Mon Sep 17 00:00:00 2001
+	From: Luca Stefani <luca.stefani.ge1@gmail.com>
+	Date: Thu, 5 Jan 2017 16:30:15 +0100
+	Subject: [PATCH] build: Replace pushd with cd
+	* For consistency
+	Change-Id: I96711e3be7b73ebadd589f460e5c5e90d000a4f7
+
+	From 587463c7779d639c5866ebd6c49ac298ae602c33 Mon Sep 17 00:00:00 2001
+	From: Koushik Dutta <koushd@gmail.com>
+	Date: Sat, 26 Nov 2011 18:51:42 -0800
+	Subject: [PATCH] roomservice delivers you lunch combos from the CyanogenMod
+	 github.
+	fix roomservice formatting
+	support product names with _ in them
+	fix roomservice to handle pagination
+	Change-Id: I4923c2f768094dbad8e06a72d9f27d46414030ab
+
+Change-Id: I5bb07944f558e3e5551ab65c97ecfa303609be57
+---
+ envsetup.sh | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/envsetup.sh b/envsetup.sh
+index 0ca57aff4..cdc3022b9 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -619,6 +619,20 @@ function lunch()
+     fi
+ 
+     check_product $product
++    if [ $? -ne 0 ]
++    then
++        # if we can't find a product, try to grab it off the LineageOS GitHub
++        T=$(gettop)
++        cd $T > /dev/null
++        vendor/lineage/build/tools/roomservice.py $product
++        cd - > /dev/null
++        check_product $product
++    else
++        T=$(gettop)
++        cd $T > /dev/null
++        vendor/lineage/build/tools/roomservice.py $product true
++        cd - > /dev/null
++    fi
+ 
+     TARGET_PRODUCT=$product \
+     TARGET_BUILD_VARIANT=$variant \
+@@ -626,6 +640,15 @@ function lunch()
+     build_build_var_cache
+     if [ $? -ne 0 ]
+     then
++        echo
++        echo "** Don't have a product spec for: '$product'"
++        echo "** Do you have the right repo manifest?"
++        product=
++    fi
++
++    if [ -z "$product" -o -z "$variant" ]
++    then
++        echo
+         return 1
+     fi
+ 
+-- 
+2.17.0
+

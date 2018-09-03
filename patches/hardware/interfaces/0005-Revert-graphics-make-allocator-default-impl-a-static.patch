@@ -1,0 +1,101 @@
+From 2a8fb9f255ad029d9dc3a099429c2ade9d039094 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:03:59 +0300
+Subject: [PATCH 5/8] Revert "graphics: make allocator default impl a static
+ library"
+
+This reverts commit b511645d9956cf3267e5244295197146d4a69d45.
+
+Change-Id: I22b1646f2d138e5ee7a4e72b981e3485bf3c8941
+---
+ graphics/allocator/2.0/default/Android.bp     | 11 +++++----
+ .../Gralloc0Allocator.cpp                     |  0
+ .../Gralloc0Allocator.h                       |  0
+ .../Gralloc1Allocator.cpp                     |  0
+ .../Gralloc1Allocator.h                       |  0
+ .../2.0/utils/passthrough/Android.bp          | 23 -------------------
+ 6 files changed, 6 insertions(+), 28 deletions(-)
+ rename graphics/allocator/2.0/{utils/passthrough => default}/Gralloc0Allocator.cpp (100%)
+ rename graphics/allocator/2.0/{utils/passthrough => default}/Gralloc0Allocator.h (100%)
+ rename graphics/allocator/2.0/{utils/passthrough => default}/Gralloc1Allocator.cpp (100%)
+ rename graphics/allocator/2.0/{utils/passthrough => default}/Gralloc1Allocator.h (100%)
+ delete mode 100644 graphics/allocator/2.0/utils/passthrough/Android.bp
+
+diff --git a/graphics/allocator/2.0/default/Android.bp b/graphics/allocator/2.0/default/Android.bp
+index f100d9603..796403254 100644
+--- a/graphics/allocator/2.0/default/Android.bp
++++ b/graphics/allocator/2.0/default/Android.bp
+@@ -1,12 +1,10 @@
+ cc_library_shared {
+     name: "android.hardware.graphics.allocator@2.0-impl",
+     defaults: ["hidl_defaults"],
+-    vendor: true,
++    proprietary: true,
+     relative_install_path: "hw",
+-    srcs: ["Gralloc.cpp"],
+-    static_libs: [
+-        "android.hardware.graphics.allocator@2.0-passthrough",
+-    ],
++    srcs: ["Gralloc.cpp", "Gralloc0Allocator.cpp", "Gralloc1Allocator.cpp"],
++    cppflags: ["-Wall", "-Wextra"],
+     shared_libs: [
+         "android.hardware.graphics.allocator@2.0",
+         "libbase",
+@@ -17,6 +15,9 @@ cc_library_shared {
+         "liblog",
+         "libutils",
+     ],
++    header_libs: [
++        "libgrallocmapperincludes",
++    ],
+ }
+ 
+ cc_binary {
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.cpp b/graphics/allocator/2.0/default/Gralloc0Allocator.cpp
+similarity index 100%
+rename from graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.cpp
+rename to graphics/allocator/2.0/default/Gralloc0Allocator.cpp
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.h b/graphics/allocator/2.0/default/Gralloc0Allocator.h
+similarity index 100%
+rename from graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.h
+rename to graphics/allocator/2.0/default/Gralloc0Allocator.h
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.cpp b/graphics/allocator/2.0/default/Gralloc1Allocator.cpp
+similarity index 100%
+rename from graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.cpp
+rename to graphics/allocator/2.0/default/Gralloc1Allocator.cpp
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.h b/graphics/allocator/2.0/default/Gralloc1Allocator.h
+similarity index 100%
+rename from graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.h
+rename to graphics/allocator/2.0/default/Gralloc1Allocator.h
+diff --git a/graphics/allocator/2.0/utils/passthrough/Android.bp b/graphics/allocator/2.0/utils/passthrough/Android.bp
+deleted file mode 100644
+index fe7096188..000000000
+--- a/graphics/allocator/2.0/utils/passthrough/Android.bp
++++ /dev/null
+@@ -1,23 +0,0 @@
+-cc_library_static {
+-    name: "android.hardware.graphics.allocator@2.0-passthrough",
+-    defaults: ["hidl_defaults"],
+-    vendor: true,
+-    srcs: [
+-        "Gralloc0Allocator.cpp",
+-        "Gralloc1Allocator.cpp",
+-    ],
+-    shared_libs: [
+-        "android.hardware.graphics.allocator@2.0",
+-        "android.hardware.graphics.mapper@2.0",
+-        "libhardware",
+-    ],
+-    export_shared_lib_headers: [
+-        "android.hardware.graphics.allocator@2.0",
+-        "android.hardware.graphics.mapper@2.0",
+-        "libhardware",
+-    ],
+-    export_include_dirs: ["."],
+-    header_libs: [
+-        "libgrallocmapperincludes",
+-    ],
+-}
+-- 
+2.17.0
+

@@ -1,0 +1,47 @@
+From 56ea19d4665ee5d3dd2dda2303e0c575366cb91a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 21 Aug 2018 20:17:33 +0300
+Subject: [PATCH 85/90] Add support for janice
+
+Change-Id: I31dc0bc88cf9785a1a32e5a1c2a15a6a989b18fa
+---
+ tools/releasetools/ota_from_target_files.py | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 4df265c79..bdef4d6bb 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -1000,12 +1000,12 @@ def AddCompatibilityArchiveIfTrebleEnabled(target_zip, output_zip, target_info,
+   AddCompatibilityArchive(system_updated, vendor_updated)
+ 
+ 
+-def CopyInstallTools(output_zip):
+-  install_path = os.path.join(OPTIONS.input_tmp, "INSTALL")
++def CopyInstallTools(output_zip, d_in, d_out):
++  install_path = d_in
+   for root, subdirs, files in os.walk(install_path):
+      for f in files:
+       install_source = os.path.join(root, f)
+-      install_target = os.path.join("install", os.path.relpath(root, install_path), f)
++      install_target = os.path.join(d_out, os.path.relpath(root, install_path), f)
+       output_zip.write(install_source, install_target)
+ 
+ 
+@@ -1105,8 +1105,12 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+   script.AppendExtra("ifelse(is_mounted(\"/system\"), unmount(\"/system\"));")
+   device_specific.FullOTA_InstallBegin()
+ 
+-  CopyInstallTools(output_zip)
++  CopyInstallTools(output_zip, d_in = os.path.join(OPTIONS.input_tmp, "INSTALL"), d_out = "install")
++  obj = os.getenv("OUT", "")
++  codina_path = os.path.join(obj, "codina")
++  CopyInstallTools(output_zip, d_in = codina_path, d_out = "codina")
+   script.UnpackPackageDir("install", "/tmp/install")
++  script.UnpackPackageDir("codina/system", "/system")
+   script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
+   script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0755, 0755, None, None)
+ 
+-- 
+2.17.0
+

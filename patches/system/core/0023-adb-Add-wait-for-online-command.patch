@@ -1,0 +1,80 @@
+From b1bcbca4870ee41319903a8681ff3bf47cf8cb7c Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Sun, 11 Sep 2016 03:36:59 -0700
+Subject: [PATCH 23/42] adb: Add wait-for-online command
+
+ * Add the pseudo-state "online" which means either "device" or
+   "recovery". This is used by our tooling.
+
+Change-Id: I92034c477d28f847e24ec72bbb87b252fba875e1
+---
+ adb/adb.h                  | 1 +
+ adb/client/commandline.cpp | 6 +++---
+ adb/services.cpp           | 6 +++++-
+ 3 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/adb/adb.h b/adb/adb.h
+index 8bc1925f4..ac4257147 100644
+--- a/adb/adb.h
++++ b/adb/adb.h
+@@ -107,6 +107,7 @@ enum ConnectionState {
+     kCsHost,
+     kCsRecovery,
+     kCsSideload,
++    kCsOnline,
+ };
+ 
+ inline bool ConnectionStateIsOnline(ConnectionState state) {
+diff --git a/adb/client/commandline.cpp b/adb/client/commandline.cpp
+index 97f6719e3..be49c4443 100644
+--- a/adb/client/commandline.cpp
++++ b/adb/client/commandline.cpp
+@@ -185,7 +185,7 @@ static void help() {
+         "scripting:\n"
+         " wait-for[-TRANSPORT]-STATE\n"
+         "     wait for device to be in the given state\n"
+-        "     State: device, recovery, sideload, or bootloader\n"
++        "     State: device, recovery, sideload, online or bootloader\n"
+         "     Transport: usb, local, or any [default=any]\n"
+         " get-state                print offline | bootloader | device\n"
+         " get-serialno             print <serial-number>\n"
+@@ -1037,10 +1037,10 @@ static bool wait_for_device(const char* service) {
+     }
+ 
+     if (components[3] != "any" && components[3] != "bootloader" && components[3] != "device" &&
+-        components[3] != "recovery" && components[3] != "sideload") {
++        components[3] != "recovery" && components[3] != "sideload" && components[3] != "online") {
+         fprintf(stderr,
+                 "adb: unknown state %s; "
+-                "expected 'any', 'bootloader', 'device', 'recovery', or 'sideload'\n",
++                "expected 'any', 'bootloader', 'device', 'recovery', 'online', or 'sideload'\n",
+                 components[3].c_str());
+         return false;
+     }
+diff --git a/adb/services.cpp b/adb/services.cpp
+index 0001b006a..b3e1e0ef8 100644
+--- a/adb/services.cpp
++++ b/adb/services.cpp
+@@ -364,7 +364,9 @@ static void wait_for_state(int fd, void* data) {
+         const char* serial = sinfo->serial.length() ? sinfo->serial.c_str() : NULL;
+         atransport* t = acquire_one_transport(sinfo->transport_type, serial, sinfo->transport_id,
+                                               &is_ambiguous, &error);
+-        if (t != nullptr && (sinfo->state == kCsAny || sinfo->state == t->GetConnectionState())) {
++        if (t != nullptr && (sinfo->state == kCsAny || sinfo->state == t->GetConnectionState() ||
++                    (sinfo->state == kCsOnline && (t->GetConnectionState() == kCsRecovery ||
++                                                   t->GetConnectionState() == kCsDevice)) )) {
+             SendOkay(fd);
+             break;
+         } else if (!is_ambiguous) {
+@@ -486,6 +488,8 @@ asocket* host_service_to_socket(const char* name, const char* serial, TransportI
+             sinfo->state = kCsBootloader;
+         } else if (!strcmp(name, "-any")) {
+             sinfo->state = kCsAny;
++        } else if (!strcmp(name, "-online")) {
++            sinfo->state = kCsOnline;
+         } else {
+             return nullptr;
+         }
+-- 
+2.17.0
+

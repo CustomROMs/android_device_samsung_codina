@@ -1,0 +1,541 @@
+From 4f08c3f0114aa43869bf857afa5337d78b83ae6d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:40:49 +0300
+Subject: [PATCH 3/3] Revert graphics libs to lineage-15.1
+
+Change-Id: Iaa7533e4371b6691672bf6a5b91724736ad23cfd
+---
+ core/jni/android/graphics/Bitmap.cpp          |   2 +
+ core/jni/android/opengl/util.cpp              |   4 +-
+ core/jni/android_opengl_GLES20.cpp            | 148 +++++++++---------
+ libs/hwui/Android.bp                          |   7 +-
+ libs/hwui/Extensions.cpp                      |   1 -
+ libs/hwui/Extensions.h                        |   4 -
+ libs/hwui/OpenGLReadback.cpp                  |   3 +-
+ libs/hwui/ProgramCache.cpp                    |   2 +-
+ libs/hwui/TessellationCache.cpp               |   4 +-
+ libs/hwui/hwui/Typeface.cpp                   |   4 +
+ libs/hwui/renderthread/CanvasContext.cpp      |   6 +-
+ libs/hwui/renderthread/EglManager.cpp         |  13 +-
+ libs/hwui/renderthread/RenderProxy.cpp        |   8 +
+ native/graphics/jni/Android.bp                |  28 ----
+ opengl/java/android/opengl/GLSurfaceView.java |   4 +
+ 15 files changed, 112 insertions(+), 126 deletions(-)
+
+diff --git a/core/jni/android/graphics/Bitmap.cpp b/core/jni/android/graphics/Bitmap.cpp
+index ad05a5113df..108fdbce386 100755
+--- a/core/jni/android/graphics/Bitmap.cpp
++++ b/core/jni/android/graphics/Bitmap.cpp
+@@ -682,6 +682,8 @@ static jobject Bitmap_creator(JNIEnv* env, jobject, jintArray jColors,
+ 
+     sk_sp<Bitmap> nativeBitmap = Bitmap::allocateHeapBitmap(&bitmap);
+     if (!nativeBitmap) {
++        ALOGE("OOM allocating Bitmap with dimensions %i x %i", width, height);
++        doThrowOOME(env);
+         return NULL;
+     }
+ 
+diff --git a/core/jni/android/opengl/util.cpp b/core/jni/android/opengl/util.cpp
+index 1522c20dbe2..5f164d3655d 100644
+--- a/core/jni/android/opengl/util.cpp
++++ b/core/jni/android/opengl/util.cpp
+@@ -1030,8 +1030,8 @@ static jint etc1_getHeight(JNIEnv *env, jclass clazz,
+  */
+ 
+ static const JNINativeMethod gMatrixMethods[] = {
+-    { "multiplyMM", "([FI[FI[FI)V", (void*)util_multiplyMM },
+-    { "multiplyMV", "([FI[FI[FI)V", (void*)util_multiplyMV },
++    { "multiplyMM", "!([FI[FI[FI)V", (void*)util_multiplyMM },
++    { "multiplyMV", "!([FI[FI[FI)V", (void*)util_multiplyMV },
+ };
+ 
+ static const JNINativeMethod gVisibilityMethods[] = {
+diff --git a/core/jni/android_opengl_GLES20.cpp b/core/jni/android_opengl_GLES20.cpp
+index 99922cfe401..4d8439822a0 100644
+--- a/core/jni/android_opengl_GLES20.cpp
++++ b/core/jni/android_opengl_GLES20.cpp
+@@ -6481,14 +6481,14 @@ static const char *classPathName = "android/opengl/GLES20";
+ 
+ static const JNINativeMethod methods[] = {
+ {"_nativeClassInit", "()V", (void*)nativeClassInit },
+-{"glActiveTexture", "(I)V", (void *) android_glActiveTexture__I },
++{"glActiveTexture", "!(I)V", (void *) android_glActiveTexture__I },
+ {"glAttachShader", "(II)V", (void *) android_glAttachShader__II },
+ {"glBindAttribLocation", "(IILjava/lang/String;)V", (void *) android_glBindAttribLocation__IILjava_lang_String_2 },
+-{"glBindBuffer", "(II)V", (void *) android_glBindBuffer__II },
++{"glBindBuffer", "!(II)V", (void *) android_glBindBuffer__II },
+ {"glBindFramebuffer", "(II)V", (void *) android_glBindFramebuffer__II },
+ {"glBindRenderbuffer", "(II)V", (void *) android_glBindRenderbuffer__II },
+-{"glBindTexture", "(II)V", (void *) android_glBindTexture__II },
+-{"glBlendColor", "(FFFF)V", (void *) android_glBlendColor__FFFF },
++{"glBindTexture", "!(II)V", (void *) android_glBindTexture__II },
++{"glBlendColor", "!(FFFF)V", (void *) android_glBlendColor__FFFF },
+ {"glBlendEquation", "(I)V", (void *) android_glBlendEquation__I },
+ {"glBlendEquationSeparate", "(II)V", (void *) android_glBlendEquationSeparate__II },
+ {"glBlendFunc", "(II)V", (void *) android_glBlendFunc__II },
+@@ -6498,9 +6498,9 @@ static const JNINativeMethod methods[] = {
+ {"glCheckFramebufferStatus", "(I)I", (void *) android_glCheckFramebufferStatus__I },
+ {"glClear", "(I)V", (void *) android_glClear__I },
+ {"glClearColor", "(FFFF)V", (void *) android_glClearColor__FFFF },
+-{"glClearDepthf", "(F)V", (void *) android_glClearDepthf__F },
+-{"glClearStencil", "(I)V", (void *) android_glClearStencil__I },
+-{"glColorMask", "(ZZZZ)V", (void *) android_glColorMask__ZZZZ },
++{"glClearDepthf", "!(F)V", (void *) android_glClearDepthf__F },
++{"glClearStencil", "!(I)V", (void *) android_glClearStencil__I },
++{"glColorMask", "!(ZZZZ)V", (void *) android_glColorMask__ZZZZ },
+ {"glCompileShader", "(I)V", (void *) android_glCompileShader__I },
+ {"glCompressedTexImage2D", "(IIIIIIILjava/nio/Buffer;)V", (void *) android_glCompressedTexImage2D__IIIIIIILjava_nio_Buffer_2 },
+ {"glCompressedTexSubImage2D", "(IIIIIIIILjava/nio/Buffer;)V", (void *) android_glCompressedTexSubImage2D__IIIIIIIILjava_nio_Buffer_2 },
+@@ -6508,7 +6508,7 @@ static const JNINativeMethod methods[] = {
+ {"glCopyTexSubImage2D", "(IIIIIIII)V", (void *) android_glCopyTexSubImage2D__IIIIIIII },
+ {"glCreateProgram", "()I", (void *) android_glCreateProgram__ },
+ {"glCreateShader", "(I)I", (void *) android_glCreateShader__I },
+-{"glCullFace", "(I)V", (void *) android_glCullFace__I },
++{"glCullFace", "!(I)V", (void *) android_glCullFace__I },
+ {"glDeleteBuffers", "(I[II)V", (void *) android_glDeleteBuffers__I_3II },
+ {"glDeleteBuffers", "(ILjava/nio/IntBuffer;)V", (void *) android_glDeleteBuffers__ILjava_nio_IntBuffer_2 },
+ {"glDeleteFramebuffers", "(I[II)V", (void *) android_glDeleteFramebuffers__I_3II },
+@@ -6519,22 +6519,22 @@ static const JNINativeMethod methods[] = {
+ {"glDeleteShader", "(I)V", (void *) android_glDeleteShader__I },
+ {"glDeleteTextures", "(I[II)V", (void *) android_glDeleteTextures__I_3II },
+ {"glDeleteTextures", "(ILjava/nio/IntBuffer;)V", (void *) android_glDeleteTextures__ILjava_nio_IntBuffer_2 },
+-{"glDepthFunc", "(I)V", (void *) android_glDepthFunc__I },
+-{"glDepthMask", "(Z)V", (void *) android_glDepthMask__Z },
++{"glDepthFunc", "!(I)V", (void *) android_glDepthFunc__I },
++{"glDepthMask", "!(Z)V", (void *) android_glDepthMask__Z },
+ {"glDepthRangef", "(FF)V", (void *) android_glDepthRangef__FF },
+ {"glDetachShader", "(II)V", (void *) android_glDetachShader__II },
+-{"glDisable", "(I)V", (void *) android_glDisable__I },
+-{"glDisableVertexAttribArray", "(I)V", (void *) android_glDisableVertexAttribArray__I },
+-{"glDrawArrays", "(III)V", (void *) android_glDrawArrays__III },
+-{"glDrawElements", "(IIII)V", (void *) android_glDrawElements__IIII },
+-{"glDrawElements", "(IIILjava/nio/Buffer;)V", (void *) android_glDrawElements__IIILjava_nio_Buffer_2 },
+-{"glEnable", "(I)V", (void *) android_glEnable__I },
+-{"glEnableVertexAttribArray", "(I)V", (void *) android_glEnableVertexAttribArray__I },
++{"glDisable", "!(I)V", (void *) android_glDisable__I },
++{"glDisableVertexAttribArray", "!(I)V", (void *) android_glDisableVertexAttribArray__I },
++{"glDrawArrays", "!(III)V", (void *) android_glDrawArrays__III },
++{"glDrawElements", "!(IIII)V", (void *) android_glDrawElements__IIII },
++{"glDrawElements", "!(IIILjava/nio/Buffer;)V", (void *) android_glDrawElements__IIILjava_nio_Buffer_2 },
++{"glEnable", "!(I)V", (void *) android_glEnable__I },
++{"glEnableVertexAttribArray", "!(I)V", (void *) android_glEnableVertexAttribArray__I },
+ {"glFinish", "()V", (void *) android_glFinish__ },
+ {"glFlush", "()V", (void *) android_glFlush__ },
+ {"glFramebufferRenderbuffer", "(IIII)V", (void *) android_glFramebufferRenderbuffer__IIII },
+ {"glFramebufferTexture2D", "(IIIII)V", (void *) android_glFramebufferTexture2D__IIIII },
+-{"glFrontFace", "(I)V", (void *) android_glFrontFace__I },
++{"glFrontFace", "!(I)V", (void *) android_glFrontFace__I },
+ {"glGenBuffers", "(I[II)V", (void *) android_glGenBuffers__I_3II },
+ {"glGenBuffers", "(ILjava/nio/IntBuffer;)V", (void *) android_glGenBuffers__ILjava_nio_IntBuffer_2 },
+ {"glGenerateMipmap", "(I)V", (void *) android_glGenerateMipmap__I },
+@@ -6559,12 +6559,12 @@ static const JNINativeMethod methods[] = {
+ {"glGetBooleanv", "(ILjava/nio/IntBuffer;)V", (void *) android_glGetBooleanv__ILjava_nio_IntBuffer_2 },
+ {"glGetBufferParameteriv", "(II[II)V", (void *) android_glGetBufferParameteriv__II_3II },
+ {"glGetBufferParameteriv", "(IILjava/nio/IntBuffer;)V", (void *) android_glGetBufferParameteriv__IILjava_nio_IntBuffer_2 },
+-{"glGetError", "()I", (void *) android_glGetError__ },
+-{"glGetFloatv", "(I[FI)V", (void *) android_glGetFloatv__I_3FI },
++{"glGetError", "!()I", (void *) android_glGetError__ },
++{"glGetFloatv", "!(I[FI)V", (void *) android_glGetFloatv__I_3FI },
+ {"glGetFloatv", "(ILjava/nio/FloatBuffer;)V", (void *) android_glGetFloatv__ILjava_nio_FloatBuffer_2 },
+ {"glGetFramebufferAttachmentParameteriv", "(III[II)V", (void *) android_glGetFramebufferAttachmentParameteriv__III_3II },
+ {"glGetFramebufferAttachmentParameteriv", "(IIILjava/nio/IntBuffer;)V", (void *) android_glGetFramebufferAttachmentParameteriv__IIILjava_nio_IntBuffer_2 },
+-{"glGetIntegerv", "(I[II)V", (void *) android_glGetIntegerv__I_3II },
++{"glGetIntegerv", "!(I[II)V", (void *) android_glGetIntegerv__I_3II },
+ {"glGetIntegerv", "(ILjava/nio/IntBuffer;)V", (void *) android_glGetIntegerv__ILjava_nio_IntBuffer_2 },
+ {"glGetProgramiv", "(II[II)V", (void *) android_glGetProgramiv__II_3II },
+ {"glGetProgramiv", "(IILjava/nio/IntBuffer;)V", (void *) android_glGetProgramiv__IILjava_nio_IntBuffer_2 },
+@@ -6609,16 +6609,16 @@ static const JNINativeMethod methods[] = {
+ {"glReleaseShaderCompiler", "()V", (void *) android_glReleaseShaderCompiler__ },
+ {"glRenderbufferStorage", "(IIII)V", (void *) android_glRenderbufferStorage__IIII },
+ {"glSampleCoverage", "(FZ)V", (void *) android_glSampleCoverage__FZ },
+-{"glScissor", "(IIII)V", (void *) android_glScissor__IIII },
++{"glScissor", "!(IIII)V", (void *) android_glScissor__IIII },
+ {"glShaderBinary", "(I[IIILjava/nio/Buffer;I)V", (void *) android_glShaderBinary__I_3IIILjava_nio_Buffer_2I },
+ {"glShaderBinary", "(ILjava/nio/IntBuffer;ILjava/nio/Buffer;I)V", (void *) android_glShaderBinary__ILjava_nio_IntBuffer_2ILjava_nio_Buffer_2I },
+ {"glShaderSource", "(ILjava/lang/String;)V", (void *) android_glShaderSource },
+-{"glStencilFunc", "(III)V", (void *) android_glStencilFunc__III },
+-{"glStencilFuncSeparate", "(IIII)V", (void *) android_glStencilFuncSeparate__IIII },
+-{"glStencilMask", "(I)V", (void *) android_glStencilMask__I },
+-{"glStencilMaskSeparate", "(II)V", (void *) android_glStencilMaskSeparate__II },
+-{"glStencilOp", "(III)V", (void *) android_glStencilOp__III },
+-{"glStencilOpSeparate", "(IIII)V", (void *) android_glStencilOpSeparate__IIII },
++{"glStencilFunc", "!(III)V", (void *) android_glStencilFunc__III },
++{"glStencilFuncSeparate", "!(IIII)V", (void *) android_glStencilFuncSeparate__IIII },
++{"glStencilMask", "!(I)V", (void *) android_glStencilMask__I },
++{"glStencilMaskSeparate", "!(II)V", (void *) android_glStencilMaskSeparate__II },
++{"glStencilOp", "!(III)V", (void *) android_glStencilOp__III },
++{"glStencilOpSeparate", "!(IIII)V", (void *) android_glStencilOpSeparate__IIII },
+ {"glTexImage2D", "(IIIIIIIILjava/nio/Buffer;)V", (void *) android_glTexImage2D__IIIIIIIILjava_nio_Buffer_2 },
+ {"glTexParameterf", "(IIF)V", (void *) android_glTexParameterf__IIF },
+ {"glTexParameterfv", "(II[FI)V", (void *) android_glTexParameterfv__II_3FI },
+@@ -6627,53 +6627,53 @@ static const JNINativeMethod methods[] = {
+ {"glTexParameteriv", "(II[II)V", (void *) android_glTexParameteriv__II_3II },
+ {"glTexParameteriv", "(IILjava/nio/IntBuffer;)V", (void *) android_glTexParameteriv__IILjava_nio_IntBuffer_2 },
+ {"glTexSubImage2D", "(IIIIIIIILjava/nio/Buffer;)V", (void *) android_glTexSubImage2D__IIIIIIIILjava_nio_Buffer_2 },
+-{"glUniform1f", "(IF)V", (void *) android_glUniform1f__IF },
+-{"glUniform1fv", "(II[FI)V", (void *) android_glUniform1fv__II_3FI },
+-{"glUniform1fv", "(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform1fv__IILjava_nio_FloatBuffer_2 },
+-{"glUniform1i", "(II)V", (void *) android_glUniform1i__II },
+-{"glUniform1iv", "(II[II)V", (void *) android_glUniform1iv__II_3II },
+-{"glUniform1iv", "(IILjava/nio/IntBuffer;)V", (void *) android_glUniform1iv__IILjava_nio_IntBuffer_2 },
+-{"glUniform2f", "(IFF)V", (void *) android_glUniform2f__IFF },
+-{"glUniform2fv", "(II[FI)V", (void *) android_glUniform2fv__II_3FI },
+-{"glUniform2fv", "(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform2fv__IILjava_nio_FloatBuffer_2 },
+-{"glUniform2i", "(III)V", (void *) android_glUniform2i__III },
+-{"glUniform2iv", "(II[II)V", (void *) android_glUniform2iv__II_3II },
+-{"glUniform2iv", "(IILjava/nio/IntBuffer;)V", (void *) android_glUniform2iv__IILjava_nio_IntBuffer_2 },
+-{"glUniform3f", "(IFFF)V", (void *) android_glUniform3f__IFFF },
+-{"glUniform3fv", "(II[FI)V", (void *) android_glUniform3fv__II_3FI },
+-{"glUniform3fv", "(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform3fv__IILjava_nio_FloatBuffer_2 },
+-{"glUniform3i", "(IIII)V", (void *) android_glUniform3i__IIII },
+-{"glUniform3iv", "(II[II)V", (void *) android_glUniform3iv__II_3II },
+-{"glUniform3iv", "(IILjava/nio/IntBuffer;)V", (void *) android_glUniform3iv__IILjava_nio_IntBuffer_2 },
+-{"glUniform4f", "(IFFFF)V", (void *) android_glUniform4f__IFFFF },
+-{"glUniform4fv", "(II[FI)V", (void *) android_glUniform4fv__II_3FI },
+-{"glUniform4fv", "(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform4fv__IILjava_nio_FloatBuffer_2 },
+-{"glUniform4i", "(IIIII)V", (void *) android_glUniform4i__IIIII },
+-{"glUniform4iv", "(II[II)V", (void *) android_glUniform4iv__II_3II },
+-{"glUniform4iv", "(IILjava/nio/IntBuffer;)V", (void *) android_glUniform4iv__IILjava_nio_IntBuffer_2 },
+-{"glUniformMatrix2fv", "(IIZ[FI)V", (void *) android_glUniformMatrix2fv__IIZ_3FI },
+-{"glUniformMatrix2fv", "(IIZLjava/nio/FloatBuffer;)V", (void *) android_glUniformMatrix2fv__IIZLjava_nio_FloatBuffer_2 },
+-{"glUniformMatrix3fv", "(IIZ[FI)V", (void *) android_glUniformMatrix3fv__IIZ_3FI },
+-{"glUniformMatrix3fv", "(IIZLjava/nio/FloatBuffer;)V", (void *) android_glUniformMatrix3fv__IIZLjava_nio_FloatBuffer_2 },
+-{"glUniformMatrix4fv", "(IIZ[FI)V", (void *) android_glUniformMatrix4fv__IIZ_3FI },
+-{"glUniformMatrix4fv", "(IIZLjava/nio/FloatBuffer;)V", (void *) android_glUniformMatrix4fv__IIZLjava_nio_FloatBuffer_2 },
+-{"glUseProgram", "(I)V", (void *) android_glUseProgram__I },
++{"glUniform1f", "!(IF)V", (void *) android_glUniform1f__IF },
++{"glUniform1fv", "!(II[FI)V", (void *) android_glUniform1fv__II_3FI },
++{"glUniform1fv", "!(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform1fv__IILjava_nio_FloatBuffer_2 },
++{"glUniform1i", "!(II)V", (void *) android_glUniform1i__II },
++{"glUniform1iv", "!(II[II)V", (void *) android_glUniform1iv__II_3II },
++{"glUniform1iv", "!(IILjava/nio/IntBuffer;)V", (void *) android_glUniform1iv__IILjava_nio_IntBuffer_2 },
++{"glUniform2f", "!(IFF)V", (void *) android_glUniform2f__IFF },
++{"glUniform2fv", "!(II[FI)V", (void *) android_glUniform2fv__II_3FI },
++{"glUniform2fv", "!(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform2fv__IILjava_nio_FloatBuffer_2 },
++{"glUniform2i", "!(III)V", (void *) android_glUniform2i__III },
++{"glUniform2iv", "!(II[II)V", (void *) android_glUniform2iv__II_3II },
++{"glUniform2iv", "!(IILjava/nio/IntBuffer;)V", (void *) android_glUniform2iv__IILjava_nio_IntBuffer_2 },
++{"glUniform3f", "!(IFFF)V", (void *) android_glUniform3f__IFFF },
++{"glUniform3fv", "!(II[FI)V", (void *) android_glUniform3fv__II_3FI },
++{"glUniform3fv", "!(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform3fv__IILjava_nio_FloatBuffer_2 },
++{"glUniform3i", "!(IIII)V", (void *) android_glUniform3i__IIII },
++{"glUniform3iv", "!(II[II)V", (void *) android_glUniform3iv__II_3II },
++{"glUniform3iv", "!(IILjava/nio/IntBuffer;)V", (void *) android_glUniform3iv__IILjava_nio_IntBuffer_2 },
++{"glUniform4f", "!(IFFFF)V", (void *) android_glUniform4f__IFFFF },
++{"glUniform4fv", "!(II[FI)V", (void *) android_glUniform4fv__II_3FI },
++{"glUniform4fv", "!(IILjava/nio/FloatBuffer;)V", (void *) android_glUniform4fv__IILjava_nio_FloatBuffer_2 },
++{"glUniform4i", "!(IIIII)V", (void *) android_glUniform4i__IIIII },
++{"glUniform4iv", "!(II[II)V", (void *) android_glUniform4iv__II_3II },
++{"glUniform4iv", "!(IILjava/nio/IntBuffer;)V", (void *) android_glUniform4iv__IILjava_nio_IntBuffer_2 },
++{"glUniformMatrix2fv", "!(IIZ[FI)V", (void *) android_glUniformMatrix2fv__IIZ_3FI },
++{"glUniformMatrix2fv", "!(IIZLjava/nio/FloatBuffer;)V", (void *) android_glUniformMatrix2fv__IIZLjava_nio_FloatBuffer_2 },
++{"glUniformMatrix3fv", "!(IIZ[FI)V", (void *) android_glUniformMatrix3fv__IIZ_3FI },
++{"glUniformMatrix3fv", "!(IIZLjava/nio/FloatBuffer;)V", (void *) android_glUniformMatrix3fv__IIZLjava_nio_FloatBuffer_2 },
++{"glUniformMatrix4fv", "!(IIZ[FI)V", (void *) android_glUniformMatrix4fv__IIZ_3FI },
++{"glUniformMatrix4fv", "!(IIZLjava/nio/FloatBuffer;)V", (void *) android_glUniformMatrix4fv__IIZLjava_nio_FloatBuffer_2 },
++{"glUseProgram", "!(I)V", (void *) android_glUseProgram__I },
+ {"glValidateProgram", "(I)V", (void *) android_glValidateProgram__I },
+-{"glVertexAttrib1f", "(IF)V", (void *) android_glVertexAttrib1f__IF },
+-{"glVertexAttrib1fv", "(I[FI)V", (void *) android_glVertexAttrib1fv__I_3FI },
+-{"glVertexAttrib1fv", "(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib1fv__ILjava_nio_FloatBuffer_2 },
+-{"glVertexAttrib2f", "(IFF)V", (void *) android_glVertexAttrib2f__IFF },
+-{"glVertexAttrib2fv", "(I[FI)V", (void *) android_glVertexAttrib2fv__I_3FI },
+-{"glVertexAttrib2fv", "(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib2fv__ILjava_nio_FloatBuffer_2 },
+-{"glVertexAttrib3f", "(IFFF)V", (void *) android_glVertexAttrib3f__IFFF },
+-{"glVertexAttrib3fv", "(I[FI)V", (void *) android_glVertexAttrib3fv__I_3FI },
+-{"glVertexAttrib3fv", "(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib3fv__ILjava_nio_FloatBuffer_2 },
+-{"glVertexAttrib4f", "(IFFFF)V", (void *) android_glVertexAttrib4f__IFFFF },
+-{"glVertexAttrib4fv", "(I[FI)V", (void *) android_glVertexAttrib4fv__I_3FI },
+-{"glVertexAttrib4fv", "(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib4fv__ILjava_nio_FloatBuffer_2 },
+-{"glVertexAttribPointer", "(IIIZII)V", (void *) android_glVertexAttribPointer__IIIZII },
+-{"glVertexAttribPointerBounds", "(IIIZILjava/nio/Buffer;I)V", (void *) android_glVertexAttribPointerBounds__IIIZILjava_nio_Buffer_2I },
+-{"glViewport", "(IIII)V", (void *) android_glViewport__IIII },
++{"glVertexAttrib1f", "!(IF)V", (void *) android_glVertexAttrib1f__IF },
++{"glVertexAttrib1fv", "!(I[FI)V", (void *) android_glVertexAttrib1fv__I_3FI },
++{"glVertexAttrib1fv", "!(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib1fv__ILjava_nio_FloatBuffer_2 },
++{"glVertexAttrib2f", "!(IFF)V", (void *) android_glVertexAttrib2f__IFF },
++{"glVertexAttrib2fv", "!(I[FI)V", (void *) android_glVertexAttrib2fv__I_3FI },
++{"glVertexAttrib2fv", "!(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib2fv__ILjava_nio_FloatBuffer_2 },
++{"glVertexAttrib3f", "!(IFFF)V", (void *) android_glVertexAttrib3f__IFFF },
++{"glVertexAttrib3fv", "!(I[FI)V", (void *) android_glVertexAttrib3fv__I_3FI },
++{"glVertexAttrib3fv", "!(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib3fv__ILjava_nio_FloatBuffer_2 },
++{"glVertexAttrib4f", "!(IFFFF)V", (void *) android_glVertexAttrib4f__IFFFF },
++{"glVertexAttrib4fv", "!(I[FI)V", (void *) android_glVertexAttrib4fv__I_3FI },
++{"glVertexAttrib4fv", "!(ILjava/nio/FloatBuffer;)V", (void *) android_glVertexAttrib4fv__ILjava_nio_FloatBuffer_2 },
++{"glVertexAttribPointer", "!(IIIZII)V", (void *) android_glVertexAttribPointer__IIIZII },
++{"glVertexAttribPointerBounds", "!(IIIZILjava/nio/Buffer;I)V", (void *) android_glVertexAttribPointerBounds__IIIZILjava_nio_Buffer_2I },
++{"glViewport", "!(IIII)V", (void *) android_glViewport__IIII },
+ };
+ 
+ int register_android_opengl_jni_GLES20(JNIEnv *_env)
+diff --git a/libs/hwui/Android.bp b/libs/hwui/Android.bp
+index c468038d61c..00aaeb23757 100644
+--- a/libs/hwui/Android.bp
++++ b/libs/hwui/Android.bp
+@@ -4,7 +4,7 @@ cc_defaults {
+         "hwui_static_deps",
+ 
+         //"hwui_bugreport_font_cache_usage",
+-        //"hwui_compile_for_perf",
++        "hwui_compile_for_perf",
+     ],
+ 
+     cflags: [
+@@ -28,6 +28,8 @@ cc_defaults {
+         // TODO: Linear blending should be enabled by default, but we are
+         // TODO: making it an opt-in while it's a work in progress
+         //"-DANDROID_ENABLE_LINEAR_BLENDING",
++
++        "-DREQUIRES_SYNCHRONOUS_SETSURFACE",
+     ],
+ 
+     include_dirs: [
+@@ -87,7 +89,6 @@ cc_defaults {
+     cflags: [
+         "-fno-omit-frame-pointer",
+         "-marm",
+-        "-mapcs",
+     ],
+ }
+ 
+@@ -252,7 +253,7 @@ cc_library {
+         // Enables fine-grained GLES error checking
+         // If enabled, every GLES call is wrapped & error checked
+         // Has moderate overhead
+-        "hwui_enable_opengl_validation",
++        //"hwui_enable_opengl_validation",
+ ],
+ }
+ 
+diff --git a/libs/hwui/Extensions.cpp b/libs/hwui/Extensions.cpp
+index 69d5130e780..1e71cb081b3 100644
+--- a/libs/hwui/Extensions.cpp
++++ b/libs/hwui/Extensions.cpp
+@@ -59,7 +59,6 @@ Extensions::Extensions() {
+     mHas1BitStencil = extensions.has("GL_OES_stencil1");
+     mHas4BitStencil = extensions.has("GL_OES_stencil4");
+     mHasUnpackSubImage = extensions.has("GL_EXT_unpack_subimage");
+-    mHasRenderableFloatTexture = extensions.has("GL_OES_texture_half_float");
+ 
+     mHasSRGB = mVersionMajor >= 3 || extensions.has("GL_EXT_sRGB");
+     mHasSRGBWriteControl = extensions.has("GL_EXT_sRGB_write_control");
+diff --git a/libs/hwui/Extensions.h b/libs/hwui/Extensions.h
+index 7af7f7944ac..0ecfdb1b3e0 100644
+--- a/libs/hwui/Extensions.h
++++ b/libs/hwui/Extensions.h
+@@ -38,9 +38,6 @@ public:
+     inline bool hasPixelBufferObjects() const { return mVersionMajor >= 3; }
+     inline bool hasOcclusionQueries() const { return mVersionMajor >= 3; }
+     inline bool hasFloatTextures() const { return mVersionMajor >= 3; }
+-    inline bool hasRenderableFloatTextures() const {
+-        return (mVersionMajor >= 3 && mVersionMinor >= 2) || mHasRenderableFloatTexture;
+-    }
+     inline bool hasSRGB() const { return mHasSRGB; }
+     inline bool hasSRGBWriteControl() const { return hasSRGB() && mHasSRGBWriteControl; }
+     inline bool hasLinearBlending() const { return hasSRGB() && mHasLinearBlending; }
+@@ -59,7 +56,6 @@ private:
+     bool mHasSRGB;
+     bool mHasSRGBWriteControl;
+     bool mHasLinearBlending;
+-    bool mHasRenderableFloatTexture;
+ 
+     int mVersionMajor;
+     int mVersionMinor;
+diff --git a/libs/hwui/OpenGLReadback.cpp b/libs/hwui/OpenGLReadback.cpp
+index 751e2037db9..2687410897a 100644
+--- a/libs/hwui/OpenGLReadback.cpp
++++ b/libs/hwui/OpenGLReadback.cpp
+@@ -128,8 +128,7 @@ inline CopyResult copyTextureInto(Caches& caches, RenderState& renderState,
+         return CopyResult::DestinationInvalid;
+     }
+ 
+-    if (bitmap->colorType() == kRGBA_F16_SkColorType &&
+-            !caches.extensions().hasRenderableFloatTextures()) {
++    if (bitmap->colorType() == kRGBA_F16_SkColorType && !caches.extensions().hasFloatTextures()) {
+         ALOGW("Can't copy surface into bitmap, RGBA_F16 config is not supported");
+         return CopyResult::DestinationInvalid;
+     }
+diff --git a/libs/hwui/ProgramCache.cpp b/libs/hwui/ProgramCache.cpp
+index 11360a1f6e3..b767046f1a4 100644
+--- a/libs/hwui/ProgramCache.cpp
++++ b/libs/hwui/ProgramCache.cpp
+@@ -62,7 +62,7 @@ const char* gVS_Header_Uniforms_HasRoundRectClip =
+         "uniform mediump vec4 roundRectInnerRectLTWH;\n"
+         "uniform mediump float roundRectRadius;\n";
+ const char* gVS_Header_Varyings_HasTexture =
+-        "varying highp vec2 outTexCoords;\n";
++        "varying vec2 outTexCoords;\n";
+ const char* gVS_Header_Varyings_HasColors =
+         "varying vec4 outColors;\n";
+ const char* gVS_Header_Varyings_HasVertexAlpha =
+diff --git a/libs/hwui/TessellationCache.cpp b/libs/hwui/TessellationCache.cpp
+index 63bf7bc443e..01582ce8f00 100644
+--- a/libs/hwui/TessellationCache.cpp
++++ b/libs/hwui/TessellationCache.cpp
+@@ -400,9 +400,7 @@ TessellationCache::Buffer* TessellationCache::getOrCreateBuffer(
+             mProcessor = new TessellationProcessor(Caches::getInstance());
+         }
+         mProcessor->add(task);
+-        bool inserted = mCache.put(entry, buffer);
+-        // Note to the static analyzer that this insert should always succeed.
+-        LOG_ALWAYS_FATAL_IF(!inserted, "buffers shouldn't spontaneously appear in the cache");
++        mCache.put(entry, buffer);
+     }
+     return buffer;
+ }
+diff --git a/libs/hwui/hwui/Typeface.cpp b/libs/hwui/hwui/Typeface.cpp
+index f66bb045373..88cf99850e6 100644
+--- a/libs/hwui/hwui/Typeface.cpp
++++ b/libs/hwui/hwui/Typeface.cpp
+@@ -68,6 +68,10 @@ static minikin::FontStyle computeRelativeStyle(int baseWeight, SkTypeface::Style
+ Typeface* gDefaultTypeface = NULL;
+ 
+ Typeface* Typeface::resolveDefault(Typeface* src) {
++    if (gDefaultTypeface == nullptr) {
++        setRobotoTypefaceForTest();
++    }
++
+     LOG_ALWAYS_FATAL_IF(gDefaultTypeface == nullptr);
+     return src == nullptr ? gDefaultTypeface : src;
+ }
+diff --git a/libs/hwui/renderthread/CanvasContext.cpp b/libs/hwui/renderthread/CanvasContext.cpp
+index b8815b56ece..c846d7931b0 100644
+--- a/libs/hwui/renderthread/CanvasContext.cpp
++++ b/libs/hwui/renderthread/CanvasContext.cpp
+@@ -295,7 +295,7 @@ bool CanvasContext::isSwapChainStuffed() {
+ 
+         // If there's a multi-frameInterval gap we effectively already dropped a frame,
+         // so consider the queue healthy.
+-        if (std::abs(swapA.swapCompletedTime - swapB.swapCompletedTime) > frameInterval * 3) {
++        if (swapA.swapCompletedTime - swapB.swapCompletedTime > frameInterval * 3) {
+             return false;
+         }
+ 
+@@ -405,6 +405,10 @@ void CanvasContext::notifyFramePending() {
+ }
+ 
+ void CanvasContext::draw() {
++    if (!mRenderPipeline->isSurfaceReady()) {
++        return;
++    }
++
+     SkRect dirty;
+     mDamageAccumulator.finish(&dirty);
+ 
+diff --git a/libs/hwui/renderthread/EglManager.cpp b/libs/hwui/renderthread/EglManager.cpp
+index bd4708da562..fcb4a578bbf 100644
+--- a/libs/hwui/renderthread/EglManager.cpp
++++ b/libs/hwui/renderthread/EglManager.cpp
+@@ -223,9 +223,9 @@ void EglManager::loadConfigs() {
+         numConfigs = 1;
+         if (!eglChooseConfig(mEglDisplay, attribs16F, &mEglConfigWideGamut, numConfigs, &numConfigs)
+                 || numConfigs != 1) {
+-            ALOGE("Device claims wide gamut support, cannot find matching config, error = %s",
++            LOG_ALWAYS_FATAL(
++                    "Device claims wide gamut support, cannot find matching config, error = %s",
+                     eglErrorString());
+-            EglExtensions.pixelFormatFloat = false;
+         }
+     }
+ }
+@@ -304,11 +304,10 @@ EGLSurface EglManager::createSurface(EGLNativeWindowType window, bool wideColorG
+ 
+     EGLSurface surface = eglCreateWindowSurface(mEglDisplay,
+             wideColorGamut ? mEglConfigWideGamut : mEglConfig, window, attribs);
+-    LOG_ALWAYS_FATAL_IF(surface == EGL_NO_SURFACE,
+-            "Failed to create EGLSurface for window %p, eglErr = %s",
+-            (void*) window, eglErrorString());
+-
+-    if (mSwapBehavior != SwapBehavior::Preserved) {
++    if (surface == EGL_NO_SURFACE) {
++        ALOGW("Failed to create EGLSurface for window %p, eglErr = %s",
++                (void*) window, eglErrorString());
++    } else if (mSwapBehavior != SwapBehavior::Preserved) {
+         LOG_ALWAYS_FATAL_IF(eglSurfaceAttrib(mEglDisplay, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTROYED) == EGL_FALSE,
+                             "Failed to set swap behavior to destroyed for window %p, eglErr = %s",
+                             (void*) window, eglErrorString());
+diff --git a/libs/hwui/renderthread/RenderProxy.cpp b/libs/hwui/renderthread/RenderProxy.cpp
+index 9048bd14b35..a0723f707f9 100644
+--- a/libs/hwui/renderthread/RenderProxy.cpp
++++ b/libs/hwui/renderthread/RenderProxy.cpp
+@@ -150,7 +150,11 @@ void RenderProxy::initialize(const sp<Surface>& surface) {
+     SETUP_TASK(initialize);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(updateSurface, CanvasContext* context, Surface* surface) {
+@@ -162,7 +166,11 @@ void RenderProxy::updateSurface(const sp<Surface>& surface) {
+     SETUP_TASK(updateSurface);
+     args->context = mContext;
+     args->surface = surface.get();
++#ifdef REQUIRES_SYNCHRONOUS_SETSURFACE
++    postAndWait(task);
++#else
+     post(task);
++#endif
+ }
+ 
+ CREATE_BRIDGE2(pauseSurface, CanvasContext* context, Surface* surface) {
+diff --git a/native/graphics/jni/Android.bp b/native/graphics/jni/Android.bp
+index ae141be218f..d456950037d 100644
+--- a/native/graphics/jni/Android.bp
++++ b/native/graphics/jni/Android.bp
+@@ -12,34 +12,6 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-cc_library_shared {
+-    name: "libjnigraphics",
+-
+-    cflags: [
+-        "-Wall",
+-        "-Werror",
+-        "-Wunused",
+-        "-Wunreachable-code",
+-    ],
+-
+-    // our source files
+-    //
+-    srcs: ["bitmap.cpp"],
+-
+-    shared_libs: [
+-        "libandroid_runtime",
+-        "libskia",
+-    ],
+-
+-    arch: {
+-        arm: {
+-            // TODO: This is to work around b/24465209. Remove after root cause is fixed
+-            pack_relocations: false,
+-            ldflags: ["-Wl,--hash-style=both"],
+-        },
+-    },
+-}
+-
+ // The headers module is in frameworks/native/Android.bp.
+ ndk_library {
+     name: "libjnigraphics",
+diff --git a/opengl/java/android/opengl/GLSurfaceView.java b/opengl/java/android/opengl/GLSurfaceView.java
+index 0f0a7e9d131..e5a0c8ee70b 100644
+--- a/opengl/java/android/opengl/GLSurfaceView.java
++++ b/opengl/java/android/opengl/GLSurfaceView.java
+@@ -1568,6 +1568,10 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
+                         if (view != null) {
+                             try {
+                                 Trace.traceBegin(Trace.TRACE_TAG_VIEW, "onDrawFrame");
++                                if (mFinishDrawingRunnable != null) {
++                                    finishDrawingRunnable = mFinishDrawingRunnable;
++                                    mFinishDrawingRunnable = null;
++                                }
+                                 view.mRenderer.onDrawFrame(gl);
+                                 if (finishDrawingRunnable != null) {
+                                     finishDrawingRunnable.run();
+-- 
+2.17.0
+

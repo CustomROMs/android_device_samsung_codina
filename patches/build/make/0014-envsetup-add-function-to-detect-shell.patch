@@ -1,0 +1,47 @@
+From d04639c25c516086ac8257744fd580f3af5c2e7e Mon Sep 17 00:00:00 2001
+From: Khalid Zubair <kzubair@cyngn.com>
+Date: Mon, 8 Feb 2016 16:27:55 -0800
+Subject: [PATCH 14/90] envsetup: add function to detect shell
+
+Add a function to detect shell, other functions can now use this to
+handle shell specific behavior.
+
+Change-Id: I4aabc0068e836c5433053b144d163fb0ed49f752
+---
+ envsetup.sh | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/envsetup.sh b/envsetup.sh
+index f18ccde1f..9879c759b 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -1562,16 +1562,24 @@ function atest()
+     "$(gettop)"/tools/tradefederation/core/atest/atest.py "$@"
+ }
+ 
+-if [ "x$SHELL" != "x/bin/bash" ]; then
++function __detect_shell() {
+     case `ps -o command -p $$` in
+         *bash*)
++            echo bash
+             ;;
+         *zsh*)
++            echo zsh
+             ;;
+         *)
+-            echo "WARNING: Only bash and zsh are supported, use of other shell may lead to erroneous results"
++            echo unknown
++            return 1
+             ;;
+     esac
++    return
++}
++
++if ! __detect_shell > /dev/null; then
++    echo "WARNING: Only bash and zsh are supported, use of other shell may lead to erroneous results"
+ fi
+ 
+ # determine whether arrays are zero-based (bash) or one-based (zsh)
+-- 
+2.17.0
+

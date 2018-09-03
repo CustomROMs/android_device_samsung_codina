@@ -1,0 +1,37 @@
+From a4929494d3775395ceece52541d9979fb3df666b Mon Sep 17 00:00:00 2001
+From: Rashed Abdel-Tawab <rashed@linux.com>
+Date: Tue, 7 Aug 2018 09:20:33 -0700
+Subject: [PATCH 55/90] Don't error on kernel headers in
+ LOCAL_ADDITIONAL_DEPENDENCIES
+
+The new kernel header dependency path is wrongly picked up by this
+logic. Check if KERNEL_OBJ is contained in the string and only error
+if it isn't.
+
+Change-Id: I5425f11eb8b650a80ce1dda303514fdc64888af9
+---
+ core/base_rules.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index f59df3f4c..b618c246d 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -112,10 +112,14 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(filter-out %.mk,$(LOCAL_ADDITIONAL_DEPENDENCI
+ 
+ my_bad_deps := $(strip $(foreach dep,$(filter-out | ||,$(LOCAL_ADDITIONAL_DEPENDENCIES)),\
+                  $(if $(findstring /,$(dep)),,$(dep))))
++my_bad_deps_sans_kernel := $(strip $(foreach dep,$(filter-out | ||,$(my_bad_deps)),\
++                 $(if $(findstring KERNEL_OBJ,$(dep)),,$(dep))))
++ifeq ($(my_bad_deps_sans_kernel),)
+ ifneq ($(my_bad_deps),)
+ $(call pretty-warning,"Bad LOCAL_ADDITIONAL_DEPENDENCIES: $(my_bad_deps)")
+ $(call pretty-error,"LOCAL_ADDITIONAL_DEPENDENCIES must only contain paths (not module names)")
+ endif
++endif
+ 
+ ###########################################################
+ ## Validate and define fallbacks for input LOCAL_* variables.
+-- 
+2.17.0
+

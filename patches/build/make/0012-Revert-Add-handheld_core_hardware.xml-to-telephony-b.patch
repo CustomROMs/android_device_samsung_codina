@@ -1,0 +1,37 @@
+From 0577be2559647f2078f2e13e033ea6dd0ae4a6d2 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <ricardo@cyngn.com>
+Date: Tue, 10 Feb 2015 23:58:10 +0000
+Subject: [PATCH 12/90] Revert "Add handheld_core_hardware.xml to telephony
+ base"
+
+Don't do this. handheld_core_hardware.xml includes feature declarations
+that aren't mandatory, particularly cameras and magnetometers, but also
+things like managed users. According to the CDD, these are optional.
+Go back to the pre-L mechanism of including the declarations per-device
+to make them accurate.
+This reverts commit dccce7bbe9673d4b8ce1a3559182767f926e1ff8.
+
+Conflicts:
+	target/product/full_base_telephony.mk
+
+Change-Id: I6db55082295171b78fe595e783799ee54458c4fd
+---
+ target/product/full_base_telephony.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/target/product/full_base_telephony.mk b/target/product/full_base_telephony.mk
+index 8f3007afa..813348b24 100644
+--- a/target/product/full_base_telephony.mk
++++ b/target/product/full_base_telephony.mk
+@@ -23,8 +23,5 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     keyguard.no_require_sim=true \
+     ro.com.android.dataroaming=true
+ 
+-PRODUCT_COPY_FILES := \
+-    frameworks/native/data/etc/handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/handheld_core_hardware.xml
+-
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony.mk)
+-- 
+2.17.0
+

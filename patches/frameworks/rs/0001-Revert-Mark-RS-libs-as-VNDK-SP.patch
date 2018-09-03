@@ -1,0 +1,166 @@
+From d6c7e028d3c6850abd60479bc8096c762eac0d5e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:41:43 +0300
+Subject: [PATCH] Revert "Mark RS libs as VNDK-SP"
+
+This reverts commit 316ffa59464f42ac94fd5f992f608c7767001e6d.
+
+Change-Id: I81300b78990c9847356cf353bbfc7d11e76be69c
+---
+ Android.bp                  | 21 +--------------------
+ cpp/Android.bp              |  9 ++-------
+ cpu_ref/Android.bp          |  9 ---------
+ cpu_ref/rsCpuExecutable.cpp |  2 +-
+ driver/rsdAllocation.cpp    |  2 --
+ 5 files changed, 4 insertions(+), 39 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index 45d512b6..111b8503 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -17,11 +17,6 @@ cc_defaults {
+ 
+ cc_library_shared {
+     name: "libRSDriver",
+-    vendor_available: true,
+-    vndk: {
+-        enabled: true,
+-        support_system_process: true,
+-    },
+     defaults: ["rs_defaults"],
+ 
+     srcs: [
+@@ -60,14 +55,6 @@ cc_library_shared {
+         "libbcinfo",
+     ],
+ 
+-    static_libs: ["libarect"],
+-
+-    header_libs: [
+-        "libcutils_headers",
+-        "libutils_headers",
+-        "libnativebase_headers",
+-    ],
+-
+     product_variables: {
+         pdk: {
+             enabled: false,
+@@ -144,11 +131,6 @@ gensrcs {
+ 
+ cc_library_shared {
+     name: "libRS_internal",
+-    vendor_available: true,
+-    vndk: {
+-        enabled: true,
+-        support_system_process: true,
+-    },
+     defaults: ["rs_defaults"],
+ 
+     srcs: [
+@@ -218,8 +200,6 @@ cc_library_shared {
+         "libmediandk",
+     ],
+ 
+-    static_libs: ["libarect"],
+-
+     // These runtime modules, including libcompiler_rt.so, are required for
+     // RenderScript.
+     required: [
+@@ -258,6 +238,7 @@ cc_library_shared {
+ cc_library_shared {
+     name: "libRS",
+     defaults: ["rs_defaults"],
++
+     srcs: [
+         "rsApiStubs.cpp",
+         "rsHidlAdaptation.cpp",
+diff --git a/cpp/Android.bp b/cpp/Android.bp
+index fabb9cbc..c3b44ed7 100644
+--- a/cpp/Android.bp
++++ b/cpp/Android.bp
+@@ -1,13 +1,9 @@
+ cc_library_static {
+     name: "libRSDispatch",
+-    vendor_available: true,
+ 
+     srcs: ["rsDispatch.cpp"],
+ 
+-    include_dirs: [
+-        "frameworks/rs",
+-        "libnativehelper/include_jni",
+-    ],
++    include_dirs: ["frameworks/rs"],
+ 
+     cflags: [
+         "-Wall",
+@@ -17,9 +13,8 @@ cc_library_static {
+         "-DRS_COMPATIBILITY_LIB",
+     ],
+ 
+-
+     sdk_version: "9",
+-    shared_libs: ["libdl", "liblog"],
++    shared_libs: ["libdl"],
+     // Used in librsjni, which is built as NDK code => no ASan.
+     sanitize: {
+         never: true,
+diff --git a/cpu_ref/Android.bp b/cpu_ref/Android.bp
+index e929a9c4..84b2b0b7 100644
+--- a/cpu_ref/Android.bp
++++ b/cpu_ref/Android.bp
+@@ -1,11 +1,6 @@
+ cc_library_shared {
+     name: "libRSCpuRef",
+     defaults: ["libbcc-targets"],
+-    vendor_available: true,
+-    vndk: {
+-        enabled: true,
+-        support_system_process: true,
+-    },
+ 
+     srcs: [
+         "rsCpuCore.cpp",
+@@ -102,10 +97,6 @@ cc_library_shared {
+         "libblas",
+     ],
+     static_libs: ["libbnnmlowp"],
+-    header_libs: [
+-        "libutils_headers",
+-        "libhardware_headers",
+-    ],
+ 
+     include_dirs: [
+         "frameworks/compile/libbcc/include",
+diff --git a/cpu_ref/rsCpuExecutable.cpp b/cpu_ref/rsCpuExecutable.cpp
+index 12ec9088..8772b856 100644
+--- a/cpu_ref/rsCpuExecutable.cpp
++++ b/cpu_ref/rsCpuExecutable.cpp
+@@ -9,11 +9,11 @@
+ 
+ #ifdef RS_COMPATIBILITY_LIB
+ #include <stdio.h>
++#include <unistd.h>
+ #else
+ #include "bcc/Config.h"
+ #endif
+ 
+-#include <unistd.h>
+ #include <dlfcn.h>
+ #include <sys/stat.h>
+ 
+diff --git a/driver/rsdAllocation.cpp b/driver/rsdAllocation.cpp
+index 6b59d1c7..8bdd75b7 100644
+--- a/driver/rsdAllocation.cpp
++++ b/driver/rsdAllocation.cpp
+@@ -30,8 +30,6 @@
+ #include <GLES/glext.h>
+ #endif
+ 
+-#include <unistd.h> // for close()
+-
+ using android::renderscript::Allocation;
+ using android::renderscript::Context;
+ using android::renderscript::Element;
+-- 
+2.17.0
+

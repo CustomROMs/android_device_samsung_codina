@@ -1,0 +1,49 @@
+From 13e361e6c1bac38019166518c533ad37d1ff147f Mon Sep 17 00:00:00 2001
+From: Simon Shields <simon@lineageos.org>
+Date: Fri, 2 Mar 2018 15:18:28 +1100
+Subject: [PATCH 46/90] pathmap: Default to AOSP RIL
+
+Squash of the following changes:
+
+  Author: Simon Shields <simon@lineageos.org>
+  Date:   Fri Mar 2 15:18:28 2018 +1100
+
+    config: use AOSP RIL for non-lineage builds
+
+    Change-Id: I1ffc45426c16920d138bfd6b3940f16899b70e65
+
+  Author: Ethan Chen <intervigil@gmail.com>
+  Date:   Sat Mar 3 18:42:50 2018 -0800
+
+    pathmap: Move RIL path mapping to core/config.mk
+
+    * hardware/ril is a required project for any build. Since
+      pathmap logic is available to any project building out of
+      a Lineage checkout, RIL path mapping should be made
+      available to all build types.
+
+    Change-Id: I45fd8771d0226caaf5ac05899fbbdb73a9cc8c01
+
+Change-Id: I038613bc0c6d1a5426feabf74c0cc4513fe5fbc1
+---
+ core/config.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/config.mk b/core/config.mk
+index 39e365cf8..64bddfc0a 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -239,6 +239,10 @@ include $(BUILD_SYSTEM)/envsetup.mk
+ # See envsetup.mk for a description of SCAN_EXCLUDE_DIRS
+ FIND_LEAVES_EXCLUDES := $(addprefix --prune=, $(SCAN_EXCLUDE_DIRS) .repo .git)
+ 
++# General entries for project pathmap.  Any entries listed here should
++# be device and hardware independent.
++$(call project-set-path-variant,ril,TARGET_RIL_VARIANT,hardware/ril)
++
+ -include vendor/extra/BoardConfigExtra.mk
+ ifneq ($(LINEAGE_BUILD),)
+ include vendor/lineage/config/BoardConfigLineage.mk
+-- 
+2.17.0
+

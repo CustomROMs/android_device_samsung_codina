@@ -1,0 +1,27 @@
+From cb042c7250a343089488b67cba7884852449dc85 Mon Sep 17 00:00:00 2001
+From: Wei Wang <wangw@codeaurora.org>
+Date: Tue, 31 Oct 2017 16:47:51 -0700
+Subject: [PATCH 03/16] soong: Add kryo300 cpu variant to build/song
+
+Add kryo300 cpu variant to build/song
+
+Change-Id: Ib6eb2f82f62e8a1cfce40c48b54e50bacc1d585e
+---
+ cc/config/arm64_device.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/cc/config/arm64_device.go b/cc/config/arm64_device.go
+index 172784a7..c6aa2d01 100644
+--- a/cc/config/arm64_device.go
++++ b/cc/config/arm64_device.go
+@@ -89,6 +89,7 @@ func init() {
+ 		"cortex-a73",
+ 		"cortex-a75",
+ 		"kryo",
++		"kryo300",
+ 		"exynos-m1",
+ 		"exynos-m2",
+ 		"denver64")
+-- 
+2.17.0
+

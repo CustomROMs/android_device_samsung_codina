@@ -1,0 +1,54 @@
+From 4e7a6e6c50979c527402a47bd9a3bf1ed8142ea5 Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Mon, 21 Aug 2017 19:34:34 -0700
+Subject: [PATCH 68/90] build: remove error for additional properties
+
+Change-Id: I42ade0ea75dae2a5b819921e0a551e3ffc85392e
+---
+ core/Makefile |  2 +-
+ core/main.mk  | 16 ----------------
+ 2 files changed, 1 insertion(+), 17 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index b64fa3d57..b5998184c 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -15,7 +15,7 @@ LOCAL_PATH := $(BUILD_SYSTEM)
+ #$(2): the dest
+ define check-product-copy-files
+ $(if $(filter-out $(TARGET_COPY_OUT_SYSTEM_OTHER)/%,$(2)), \
+-  $(if $(filter %.apk, $(2)),$(error \
++  $(if $(filter %.apk, $(2)),$(warning \
+      Prebuilt apk found in PRODUCT_COPY_FILES: $(1), use BUILD_PREBUILT instead!)))
+ endef
+ # filter out the duplicate <source file>:<dest file> pairs.
+diff --git a/core/main.mk b/core/main.mk
+index d00b3dbfb..5e862920a 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -128,22 +128,6 @@ SKIP_BOOT_JARS_CHECK := true
+ endif
+ endif
+ 
+-#
+-# -----------------------------------------------------------------
+-# Validate ADDITIONAL_DEFAULT_PROPERTIES.
+-ifneq ($(ADDITIONAL_DEFAULT_PROPERTIES),)
+-$(error ADDITIONAL_DEFAULT_PROPERTIES must not be set before here: $(ADDITIONAL_DEFAULT_PROPERTIES))
+-endif
+-
+-#
+-# -----------------------------------------------------------------
+-# Validate ADDITIONAL_BUILD_PROPERTIES.
+-ifneq ($(ADDITIONAL_BUILD_PROPERTIES),)
+-$(error ADDITIONAL_BUILD_PROPERTIES must not be set before here: $(ADDITIONAL_BUILD_PROPERTIES))
+-endif
+-
+-ADDITIONAL_BUILD_PROPERTIES :=
+-
+ #
+ # -----------------------------------------------------------------
+ # Add the product-defined properties to the build properties.
+-- 
+2.17.0
+

@@ -1,0 +1,30 @@
+From 5404aaff863b2145ef280b1768bb36abe1293727 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bernhard=20Rosenkr=C3=A4nzer?=
+ <Bernhard.Rosenkranzer@linaro.org>
+Date: Wed, 9 May 2018 13:39:45 +0200
+Subject: [PATCH] Make javapoet-prebuilt-jar available to the Dialer app
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Change-Id: Idc72a53c28aa8f219e9c10a3c90a2afedb66ebce
+Signed-off-by: Bernhard Rosenkränzer <Bernhard.Rosenkranzer@linaro.org>
+---
+ common/m2/Android.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/common/m2/Android.mk b/common/m2/Android.mk
+index adc99e1e..4ec906be 100644
+--- a/common/m2/Android.mk
++++ b/common/m2/Android.mk
+@@ -58,6 +58,7 @@ LOCAL_PREBUILT_JAVA_LIBRARIES := \
+     gson-prebuilt-jar:repository/com/google/code/gson/gson/2.8.0/gson-2.8.0.jar \
+     protobuf-java-prebuilt-jar:repository/com/google/protobuf/protobuf-java/3.0.2/protobuf-java-3.0.2.jar \
+     protobuf-java-util-prebuilt-jar:repository/com/google/protobuf/protobuf-java-util/3.0.2/protobuf-java-util-3.0.2.jar \
++    javapoet-prebuilt-jar:repository/com/squareup/javapoet/1.8.0/javapoet-1.8.0.jar \
+     truth-prebuilt-host-jar:repository/com/google/truth/truth/0.28/truth-0.28.jar
+ 
+ include $(BUILD_HOST_PREBUILT)
+-- 
+2.17.0
+

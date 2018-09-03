@@ -1,0 +1,159 @@
+From 679407976fc82d656534e6fb7226271d757644a2 Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <invisiblek@cyanogenmod.org>
+Date: Thu, 1 Dec 2016 20:06:14 -0600
+Subject: [PATCH 21/90] core: allow specifying building ramdisk(s) with lzma
+
+* Add a flag that specifies which ramdisk(s) to compress with lzma
+* If not specified, fall back to gzip
+* Example: LZMA_RAMDISK_TARGETS := boot,recovery
+
+Change-Id: I9cce4da90343fb6dfb7039863649e37d78262726
+
+Force bsdiff for recovery_from_boot.p if not using GZIP
+
+imgdiff expects a ramdisk to use GZIP, which is causing a chunk
+size issue if recovery is using LZMA
+
+Change-Id: I3194b4faed25a298fe23b4e24b6dea2885bafda8
+
+commit 30da0836578d0c9814e23df7c4c0fcd7c649f555
+Author: Gabriele M <moto.falcon.git@gmail.com>
+Date:   Thu Feb 9 13:59:27 2017 +0100
+
+    releasetools: Generate recovery-from-boot.p with bsdiff if necessary
+
+    If TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK is true, we want to use bsdiff
+    to create recovery-from-boot.p, otherwise there are high chances that
+    imgdiff will fail. Currently this is done only when running make, but
+    not when we re-create the patch from releasetools, so do it.
+
+    Also, since recovery-resource.dat is used as bonus data for imgdiff,
+    don't build it if we are going to use bsdiff.
+
+    Change-Id: I93a662a358ee79f56b8acd4329eedd166a176c66
+    (cherry picked from commit 543d7376be045ccdfb20cc14b3757500a026e326)
+
+Change-Id: I9cce4da90343fb6dfb7039863649e37d78262726
+---
+ core/Makefile                | 30 ++++++++++++++++++++++++------
+ tools/releasetools/common.py |  3 ++-
+ 2 files changed, 26 insertions(+), 7 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 4a0eb17b3..edbb141e9 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -680,6 +680,18 @@ endif
+ 
+ # -----------------------------------------------------------------
+ # the ramdisk
++BOOT_RAMDISK_COMPRESSOR := $(MINIGZIP)
++RECOVERY_RAMDISK_COMPRESSOR := $(MINIGZIP)
++ifneq ($(LZMA_RAMDISK_TARGETS),)
++  ifneq (,$(findstring boot,$(LZMA_RAMDISK_TARGETS)))
++    BOOT_RAMDISK_COMPRESSOR := lzma -f -c
++  endif
++  ifneq (,$(findstring recovery,$(LZMA_RAMDISK_TARGETS)))
++    RECOVERY_RAMDISK_COMPRESSOR := lzma -f -c
++    TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK := true
++  endif
++endif
++
+ INTERNAL_RAMDISK_FILES := $(filter $(TARGET_ROOT_OUT)/%, \
+ 	$(ALL_GENERATED_SOURCES) \
+ 	$(ALL_DEFAULT_INSTALLED_MODULES))
+@@ -702,12 +714,12 @@ BUILT_RAMDISK_TARGET := $(PRODUCT_OUT)/ramdisk.img
+ INSTALLED_RAMDISK_TARGET := $(BUILT_RAMDISK_TARGET)
+ $(INSTALLED_RAMDISK_TARGET): $(MKBOOTFS) $(INTERNAL_RAMDISK_FILES) $(INSTALLED_FILES_FILE_ROOT) | $(MINIGZIP)
+ 	$(call pretty,"Target ram disk: $@")
+-	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_ROOT_OUT) | $(MINIGZIP) > $@
++	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_ROOT_OUT) | $(BOOT_RAMDISK_COMPRESSOR) > $@
+ 
+ .PHONY: ramdisk-nodeps
+ ramdisk-nodeps: $(MKBOOTFS) | $(MINIGZIP)
+ 	@echo "make $@: ignoring dependencies"
+-	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_ROOT_OUT) | $(MINIGZIP) > $(INSTALLED_RAMDISK_TARGET)
++	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_ROOT_OUT) | $(BOOT_RAMDISK_COMPRESSOR) > $(INSTALLED_RAMDISK_TARGET)
+ 
+ INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/boot.img
+ 
+@@ -1379,7 +1391,7 @@ endif
+ # versa though).
+ 
+ ifeq (,$(filter true, $(BOARD_USES_FULL_RECOVERY_IMAGE) $(BOARD_BUILD_SYSTEM_ROOT_IMAGE) \
+-  $(BOARD_INCLUDE_RECOVERY_DTBO)))
++  $(BOARD_INCLUDE_RECOVERY_DTBO) $(TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK)))
+ # Named '.dat' so we don't attempt to use imgdiff for patching it.
+ RECOVERY_RESOURCE_ZIP := $(TARGET_OUT)/etc/recovery-resource.dat
+ else
+@@ -1507,7 +1519,7 @@ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
+ 		$(DEPMOD)
+ 		$(call pretty,"Target boot image from recovery: $@")
+ 		$(call build-recoveryramdisk)
+-		$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
++		$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(RECOVERY_RAMDISK_COMPRESSOR) > $(recovery_ramdisk)
+ 		$(call build-recoveryimage-target, $@)
+ endif
+ 
+@@ -1530,7 +1542,7 @@ $(recovery_uncompressed_ramdisk): $(MKBOOTFS) $(ADBD) \
+ $(recovery_ramdisk): $(MINIGZIP) \
+ 		$(recovery_uncompressed_ramdisk)
+ 		@echo ----- Making compressed recovery ramdisk ------
+-		$(hide) $(MINIGZIP) < $(recovery_uncompressed_ramdisk) > $@
++		$(hide) $(RECOVERY_RAMDISK_COMPRESSOR) < $(recovery_uncompressed_ramdisk) > $@
+ 
+ ifndef BOARD_CUSTOM_BOOTIMG_MK
+ $(INSTALLED_RECOVERYIMAGE_TARGET): $(MKBOOTIMG) $(recovery_ramdisk) $(recovery_kernel)
+@@ -1549,7 +1561,7 @@ endif
+ recoveryimage-nodeps:
+ 	@echo "make $@: ignoring dependencies"
+ 	$(call build-recoveryramdisk)
+-	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
++	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(RECOVERY_RAMDISK_COMPRESSOR) > $(recovery_ramdisk)
+ 	$(call build-recoveryimage-target, $(INSTALLED_RECOVERYIMAGE_TARGET))
+ 
+ else # INSTALLED_RECOVERYIMAGE_TARGET not defined
+@@ -1712,6 +1724,9 @@ diff_tool := $(HOST_OUT_EXECUTABLES)/bsdiff
+ else
+ diff_tool := $(HOST_OUT_EXECUTABLES)/imgdiff
+ endif
++ifeq ($(TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK),true)
++diff_tool := $(HOST_OUT_EXECUTABLES)/bsdiff
++endif
+ intermediates := $(call intermediates-dir-for,PACKAGING,recovery_patch)
+ RECOVERY_FROM_BOOT_PATCH := $(intermediates)/recovery_from_boot.p
+ $(RECOVERY_FROM_BOOT_PATCH): PRIVATE_DIFF_TOOL := $(diff_tool)
+@@ -2873,6 +2888,9 @@ endif
+ ifeq ($(BOARD_USES_FULL_RECOVERY_IMAGE),true)
+ 	$(hide) echo "full_recovery_image=true" >> $(zip_root)/META/misc_info.txt
+ endif
++ifeq ($(TARGET_NOT_USE_GZIP_RECOVERY_RAMDISK),true)
++	$(hide) echo "no_gzip_recovery_ramdisk=true" >> $(zip_root)/META/misc_info.txt
++endif
+ ifeq ($(BOARD_AVB_ENABLE),true)
+ 	$(hide) echo "avb_enable=true" >> $(zip_root)/META/misc_info.txt
+ 	$(hide) echo "avb_vbmeta_key_path=$(BOARD_AVB_KEY_PATH)" >> $(zip_root)/META/misc_info.txt
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 7d1e2ae9e..97437f452 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1898,6 +1898,7 @@ def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
+     info_dict = OPTIONS.info_dict
+ 
+   full_recovery_image = info_dict.get("full_recovery_image") == "true"
++  use_bsdiff = info_dict.get("no_gzip_recovery_ramdisk") == "true"
+ 
+   if full_recovery_image:
+     output_sink("etc/recovery.img", recovery_img.data)
+@@ -1908,7 +1909,7 @@ def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
+     # With system-root-image, boot and recovery images will have mismatching
+     # entries (only recovery has the ramdisk entry) (Bug: 72731506). Use bsdiff
+     # to handle such a case.
+-    if system_root_image:
++    if system_root_image or use_bsdiff:
+       diff_program = ["bsdiff"]
+       bonus_args = ""
+       assert not os.path.exists(path)
+-- 
+2.17.0
+

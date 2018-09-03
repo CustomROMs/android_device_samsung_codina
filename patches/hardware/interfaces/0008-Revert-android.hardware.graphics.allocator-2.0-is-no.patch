@@ -1,0 +1,38 @@
+From 36dd2c5b5e6c4ae4360398de864b66431be33c6d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:04:28 +0300
+Subject: [PATCH 8/8] Revert "android.hardware.graphics.allocator@2.0 is no
+ longer VNDK-SP"
+
+This reverts commit e514a4b8a8db6a447d94d509c264712885849582.
+
+Change-Id: I783f838e6563c52057dd7f93f02a7610c76078b7
+---
+ CleanSpec.mk                      | 1 -
+ graphics/allocator/2.0/Android.bp | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CleanSpec.mk b/CleanSpec.mk
+index 54274c8fd..3788bc6ba 100644
+--- a/CleanSpec.mk
++++ b/CleanSpec.mk
+@@ -63,4 +63,3 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/init/android.hardware.au
+ $(call add-clean-step, find $(PRODUCT_OUT)/system $(PRODUCT_OUT)/vendor -type f -name "android\.hardware\.configstore\@1\.1*" -print0 | xargs -0 rm -f)
+ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/android.hardware.tests*)
+ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/vndk/android.hardware.tests*)
+-$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/lib/vndk-sp/android.hardware.graphics.allocator*)
+diff --git a/graphics/allocator/2.0/Android.bp b/graphics/allocator/2.0/Android.bp
+index 50b474e00..0b0722e24 100644
+--- a/graphics/allocator/2.0/Android.bp
++++ b/graphics/allocator/2.0/Android.bp
+@@ -5,6 +5,7 @@ hidl_interface {
+     root: "android.hardware",
+     vndk: {
+         enabled: true,
++        support_system_process: true,
+     },
+     srcs: [
+         "IAllocator.hal",
+-- 
+2.17.0
+

@@ -1,0 +1,29 @@
+From fec25c1d20d96a3d807bacf5525272d11af337aa Mon Sep 17 00:00:00 2001
+From: Aaron Kling <webgeek1234@gmail.com>
+Date: Tue, 7 Aug 2018 19:21:36 -0500
+Subject: [PATCH 10/16] locale: add C.utf8
+
+Several Linux distros use utf8 instead of UTF-8
+
+Change-Id: I7e3dd73ec89bc34d7f2dc1834082cc90f9521ad1
+---
+ ui/build/config.go | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/ui/build/config.go b/ui/build/config.go
+index 4f230ef1..97e1821b 100644
+--- a/ui/build/config.go
++++ b/ui/build/config.go
+@@ -294,6 +294,9 @@ func (c *configImpl) configureLocale(ctx Context) {
+ 	// for others)
+ 	if inList("C.UTF-8", locales) {
+ 		c.environ.Set("LANG", "C.UTF-8")
++	} else if inList("C.utf8", locales) {
++		// These normalize to the same thing
++		c.environ.Set("LANG", "C.UTF-8")
+ 	} else if inList("en_US.UTF-8", locales) {
+ 		c.environ.Set("LANG", "en_US.UTF-8")
+ 	} else if inList("en_US.utf8", locales) {
+-- 
+2.17.0
+

@@ -1,0 +1,219 @@
+From 57d00118ff2374c597dd3088d901a475d25bcdd0 Mon Sep 17 00:00:00 2001
+From: Chris Soyars <ctso@ctso.me>
+Date: Thu, 23 Dec 2010 00:44:33 +0100
+Subject: [PATCH 27/90] releasetools: squash backuptool support
+
+this is a squash of the following commits:
+
+commit 30e43f85f8b83dd4210b86363ab912dd640050a0
+Author: Chris Soyars <ctso@ctso.me>
+Date:   Thu Dec 23 00:44:33 2010 +0100
+
+    Add otapackage support for backuptool
+
+    Change-Id: I512554c579d444067cd3ccbb0e6946a5eb6bc964a
+
+    Modular backuptool.sh.  Executes backup and restore methods defined in arbitrary /system/addon.d/*.sh scripts.
+
+    * Copy backuptool.functions alongside backuptool.sh.
+    * Delete both from /system/bin as they are not useful there.
+
+    Patch Series
+    ============
+    http://review.cyanogenmod.com/#change,13265
+    CyanogenMod/android_build
+      * edify generator
+    http://review.cyanogenmod.com/#change,13266
+    CyanogenMod/android_system_core
+      * permissions on /system/addon.d
+    http://review.cyanogenmod.com/#change,13267
+    CyanogenMod/android_vendor_cm
+      * 50-cm.sh reference backup script
+      * modular backuptool.sh
+      * support backuptool.functions used by /system/addon.d/*.sh scripts
+
+    Change-Id: I26b4907d28f49c69627699d2accd2f0fa2d1b112
+
+    update ota_from_target_files to handle mounting/unmounting for backupscript
+
+    backupscript should not be mounting/unmounting itself as it makes other
+    scripts have unexpected results (such as modelid_cfg, which expects /system
+    to be mounted)
+
+    instead have the ota script handle the mounting/unmounting
+
+    Change-Id: I94511f4147c624d975cb3ecbeaa8b0e98f63437c
+
+    build: Don't run backuptool on GMS builds
+
+    Change-Id: I5dde27f9d16b88049171db9805221d92e67f3e5d
+
+commit 66ce73d1ffa81b9dd59639241f2e7172e5485a41
+Author: Tom Marshall <tdm@cyngn.com>
+Date:   Wed Apr 9 16:14:07 2014 -0700
+
+    build: edify: use set_metadata for backuptool
+
+    Also use saner permissions on backuptool.sh
+
+    Change-Id: I50742b51867aa358f5924b8dc208833092a35bd9
+
+commit dac6e8fee851433ff35723f2a790e3930aaeb113
+Author: Ricardo Cerqueira <ricardo@cyngn.com>
+Date:   Wed Nov 5 18:16:43 2014 +0000
+
+    ota: Include copies of the recovery scripts even if shipping in block mode
+
+commit 5a6d5b87d44f638307531f29c89d19b41c79532b
+Author: Ricardo Cerqueira <ricardo@cyngn.com>
+Date:   Wed Nov 5 19:58:59 2014 +0000
+
+    ota: Fix recovery-script cleanups in block mode
+
+    Change-Id: Iadb480f8062cfb7a0e6c9024e32ac0d71a7481d7
+
+commit d98d55edeec9d7d422b9c33883936d80da84acfb
+Author: Tom Marshall <tdm@cyngn.com>
+Date:   Fri Dec 12 11:51:33 2014 -0800
+
+    build: ota: Support for install tools in /tmp/install
+
+     * Anything in OUT/install gets packaged up into the zip and extracted
+       to /tmp/install immediately after FullOTA_InstallBegin.
+
+     * Use /tmp/install in edify scripts and remove code related to using
+       and manipulating /system for install tools.
+
+    Change-Id: I315a3238e36c8d15e26f935e272f7e27dd59c320
+
+Change-Id: I2401d334d8e16d18d3770b339ec2c787dd8e477c
+---
+ core/Makefile                               | 11 +++++++++++
+ tools/releasetools/edify_generator.py       |  9 +++++++++
+ tools/releasetools/ota_from_target_files.py | 19 +++++++++++++++++++
+ 3 files changed, 39 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 62ab6d153..8ef0ab75f 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -3073,6 +3073,16 @@ else
+     OTA_SCRIPT_OVERRIDE_DEVICE := $(TARGET_OTA_ASSERT_DEVICE)
+ endif
+ 
++ifeq ($(WITH_GMS),true)
++    $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
++else
++ifneq ($(LINEAGE_BUILD),)
++    $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
++else
++    $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
++endif
++endif
++
+ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
+ 		build/make/tools/releasetools/ota_from_target_files
+ 	@echo "Package OTA: $@"
+@@ -3082,6 +3092,7 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
+ 	   --extracted_input_target_files $(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE)) \
+ 	   -p $(HOST_OUT) \
+ 	   -k $(KEY_CERT_PAIR) \
++	   --backup=$(backuptool) \
+ 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
+ 	   $(BUILT_TARGET_FILES_PACKAGE) $@
+ 
+diff --git a/tools/releasetools/edify_generator.py b/tools/releasetools/edify_generator.py
+index bb933ec90..315e482fc 100644
+--- a/tools/releasetools/edify_generator.py
++++ b/tools/releasetools/edify_generator.py
+@@ -153,6 +153,9 @@ class EdifyGenerator(object):
+            ");")
+     self.script.append(self.WordWrap(cmd))
+ 
++  def RunBackup(self, command):
++    self.script.append(('run_program("/tmp/install/bin/backuptool.sh", "%s");' % command))
++
+   def ShowProgress(self, frac, dur):
+     """Update the progress bar, advancing it over 'frac' over the next
+     'dur' seconds.  'dur' may be zero to advance it via SetProgress
+@@ -208,6 +211,12 @@ class EdifyGenerator(object):
+           p.mount_point, mount_flags))
+       self.mounts.add(p.mount_point)
+ 
++  def Unmount(self, mount_point):
++    """Unmount the partition with the given mount_point."""
++    if mount_point in self.mounts:
++      self.mounts.remove(mount_point)
++      self.script.append('unmount("%s");' % (mount_point,))
++
+   def Comment(self, comment):
+     """Write a comment into the update script."""
+     self.script.append("")
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 38989cf15..5b9ae89cf 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -163,6 +163,10 @@ A/B OTA specific options
+ 
+   --override_device <device>
+       Override device-specific asserts. Can be a comma-separated list.
++
++  --backup <boolean>
++      Enable or disable the execution of backuptool.sh.
++      Disabled by default.
+ """
+ 
+ from __future__ import print_function
+@@ -215,6 +219,7 @@ OPTIONS.extracted_input = None
+ OPTIONS.key_passwords = []
+ OPTIONS.skip_postinstall = False
+ OPTIONS.override_device = 'auto'
++OPTIONS.backuptool = False
+ 
+ 
+ METADATA_NAME = 'META-INF/com/android/metadata'
+@@ -835,6 +840,11 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+   script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
+   script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0755, 0755, None, None)
+ 
++  if OPTIONS.backuptool:
++    script.Mount("/system")
++    script.RunBackup("backup")
++    script.Unmount("/system")
++
+   system_progress = 0.75
+ 
+   if OPTIONS.wipe_user_data:
+@@ -874,6 +884,12 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+   common.CheckSize(boot_img.data, "boot.img", target_info)
+   common.ZipWriteStr(output_zip, "boot.img", boot_img.data)
+ 
++  if OPTIONS.backuptool:
++    script.ShowProgress(0.02, 10)
++    script.Mount("/system")
++    script.RunBackup("restore")
++    script.Unmount("/system")
++
+   script.ShowProgress(0.05, 5)
+   script.WriteRawImage("/boot", "boot.img")
+ 
+@@ -1879,6 +1895,8 @@ def main(argv):
+       OPTIONS.skip_postinstall = True
+     elif o in ("--override_device"):
+       OPTIONS.override_device = a
++    elif o in ("--backup"):
++      OPTIONS.backuptool = bool(a.lower() == 'true')
+     else:
+       return False
+     return True
+@@ -1910,6 +1928,7 @@ def main(argv):
+                                  "extracted_input_target_files=",
+                                  "skip_postinstall",
+                                  "override_device=",
++                                 "backup=",
+                              ], extra_option_handler=option_handler)
+ 
+   if len(args) != 2:
+-- 
+2.17.0
+

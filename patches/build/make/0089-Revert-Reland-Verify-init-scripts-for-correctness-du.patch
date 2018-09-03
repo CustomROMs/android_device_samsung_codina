@@ -1,0 +1,117 @@
+From 08770053a7ba50d0e1ea87298ac05bc0c51622d9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 05:32:14 +0300
+Subject: [PATCH 89/90] Revert "Reland: Verify init scripts for correctness
+ during build"
+
+This reverts commit fc97764dd5236a41feb716a7eb46b8b4406b0322.
+
+Change-Id: I6ae1ef40a7903d7875dd8e2600cb93cf787b7c9b
+---
+ core/Makefile             |  4 +---
+ core/base_rules.mk        |  2 +-
+ core/config.mk            |  1 -
+ core/definitions.mk       | 27 ---------------------------
+ core/prebuilt_internal.mk |  5 +----
+ 5 files changed, 3 insertions(+), 36 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index ba1041f4f..d502d8cf3 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -36,9 +36,7 @@ $(foreach cf,$(unique_product_copy_files_pairs), \
+             $(eval $(call copy-xml-file-checked,$(_src),$(_fulldest))),\
+             $(if $(and $(filter %.jar,$(_dest)),$(filter $(basename $(notdir $(_dest))),$(PRODUCT_LOADED_BY_PRIVILEGED_MODULES))),\
+                 $(eval $(call copy-and-uncompress-dexs,$(_src),$(_fulldest))), \
+-                $(if $(filter init%rc,$(notdir $(_dest)))$(filter %/etc/init,$(dir $(_dest))),\
+-                    $(eval $(call copy-init-script-file-checked,$(_src),$(_fulldest))),\
+-                    $(eval $(call copy-one-file,$(_src),$(_fulldest)))))) \
++                $(eval $(call copy-one-file,$(_src),$(_fulldest))))) \
+         $(eval ALL_DEFAULT_INSTALLED_MODULES += $(_fulldest)) \
+         $(eval unique_product_copy_files_destinations += $(_dest))))
+ 
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index b618c246d..2ce61c348 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -428,7 +428,7 @@ my_init_rc_installed := $(foreach rc,$(my_init_rc_pairs),$(call word-colon,2,$(r
+ # Make sure we only set up the copy rules once, even if another arch variant
+ # shares a common LOCAL_INIT_RC.
+ my_init_rc_new_pairs := $(filter-out $(ALL_INIT_RC_INSTALLED_PAIRS),$(my_init_rc_pairs))
+-my_init_rc_new_installed := $(call copy-many-init-script-files-checked,$(my_init_rc_new_pairs))
++my_init_rc_new_installed := $(call copy-many-files,$(my_init_rc_new_pairs))
+ ALL_INIT_RC_INSTALLED_PAIRS += $(my_init_rc_new_pairs)
+ 
+ $(my_all_targets) : $(my_init_rc_installed)
+diff --git a/core/config.mk b/core/config.mk
+index 64bddfc0a..3da99717d 100644
+--- a/core/config.mk
++++ b/core/config.mk
+@@ -635,7 +635,6 @@ ACP := $(prebuilt_build_tools_bin)/acp
+ CKATI := $(prebuilt_build_tools_bin)/ckati
+ DEPMOD := $(HOST_OUT_EXECUTABLES)/depmod
+ FILESLIST := $(SOONG_HOST_OUT_EXECUTABLES)/fileslist
+-HOST_INIT_VERIFIER := $(HOST_OUT_EXECUTABLES)/host_init_verifier
+ MAKEPARALLEL := $(prebuilt_build_tools_bin)/makeparallel
+ SOONG_JAVAC_WRAPPER := $(SOONG_HOST_OUT_EXECUTABLES)/soong_javac_wrapper
+ SOONG_ZIP := $(SOONG_HOST_OUT_EXECUTABLES)/soong_zip
+diff --git a/core/definitions.mk b/core/definitions.mk
+index df5aa672e..f4a9b0603 100644
+--- a/core/definitions.mk
++++ b/core/definitions.mk
+@@ -2648,33 +2648,6 @@ $(foreach f, $(1), $(strip \
+     $(_cmf_dest)))
+ endef
+ 
+-# Copy the file only if it's a well-formed init script file. For use via $(eval).
+-# $(1): source file
+-# $(2): destination file
+-define copy-init-script-file-checked
+-# Host init verifier doesn't exist on darwin.
+-ifneq ($(HOST_OS),darwin)
+-$(2): $(1) $(HOST_INIT_VERIFIER) $(call intermediates-dir-for,ETC,passwd)/passwd
+-	$(hide) $(HOST_INIT_VERIFIER) $$< $(call intermediates-dir-for,ETC,passwd)/passwd
+-else
+-$(2): $(1)
+-endif
+-	@echo "Copy init script: $$@"
+-	$$(copy-file-to-target)
+-endef
+-
+-# Copies many init script files and check they are well-formed.
+-# $(1): The init script files to copy.  Each entry is a ':' separated src:dst pair.
+-# Evaluates to the list of the dst files. (ie suitable for a dependency list.)
+-define copy-many-init-script-files-checked
+-$(foreach f, $(1), $(strip \
+-    $(eval _cmf_tuple := $(subst :, ,$(f))) \
+-    $(eval _cmf_src := $(word 1,$(_cmf_tuple))) \
+-    $(eval _cmf_dest := $(word 2,$(_cmf_tuple))) \
+-    $(eval $(call copy-init-script-file-checked,$(_cmf_src),$(_cmf_dest))) \
+-    $(_cmf_dest)))
+-endef
+-
+ # Copy the file only if it's a well-formed xml file. For use via $(eval).
+ # $(1): source file
+ # $(2): destination file, must end with .xml.
+diff --git a/core/prebuilt_internal.mk b/core/prebuilt_internal.mk
+index c635ca54a..d2b0704b5 100644
+--- a/core/prebuilt_internal.mk
++++ b/core/prebuilt_internal.mk
+@@ -489,13 +489,10 @@ $(built_module) : $(my_prebuilt_src_file)
+ endif # LOCAL_DEX_PREOPT
+ 
+ else  # ! prebuilt_module_is_dex_javalib
+-ifneq ($(filter init%rc,$(notdir $(LOCAL_INSTALLED_MODULE)))$(filter %/etc/init,$(dir $(LOCAL_INSTALLED_MODULE))),)
+-  $(eval $(call copy-init-script-file-checked,$(my_prebuilt_src_file),$(built_module)))
+-else ifneq ($(LOCAL_PREBUILT_STRIP_COMMENTS),)
+ $(built_module) : $(my_prebuilt_src_file)
++ifneq ($(LOCAL_PREBUILT_STRIP_COMMENTS),)
+ 	$(transform-prebuilt-to-target-strip-comments)
+ else
+-$(built_module) : $(my_prebuilt_src_file)
+ 	$(transform-prebuilt-to-target)
+ endif
+ ifneq ($(filter EXECUTABLES NATIVE_TESTS,$(LOCAL_MODULE_CLASS)),)
+-- 
+2.17.0
+

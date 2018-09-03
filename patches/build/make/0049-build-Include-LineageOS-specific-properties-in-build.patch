@@ -1,0 +1,47 @@
+From a372b2b0e183290fb447ff63dcf38cd8c071a4d3 Mon Sep 17 00:00:00 2001
+From: Adrian DC <radian.dc@gmail.com>
+Date: Sat, 12 May 2018 11:24:33 +0200
+Subject: [PATCH 49/90] build: Include LineageOS specific properties in
+ build.prop
+
+ * Our properties were supposed to go to /system/etc/prop.default
+    after the following commit:
+    "lineage: Move to Google's method of defining system default props"
+    Change-Id: I6cb0e28a7599b010b389cc541015a37010a00f4b
+
+ * However if BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED is not true,
+    only /default.prop will retain the properties contents of
+    ADDITIONAL_DEFAULT_PROPERTIES and PRODUCT_SYSTEM_DEFAULT_PROPERTIES,
+    and none of our versioning identification was held in the system
+
+ * Enabling BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED globally would
+    break all properties on devices that handle partitions usually
+    at the device level rather than the kernel due to mounting races
+
+ * Include the vendor/lineage/config/main.mk entrypoint to be allowed
+    to extend ADDITION_BUILD_PROPERTIES as we need to define our releases
+
+Change-Id: I19918eece0f0dd3ee967db0339b4d09c9a6d540e
+Signed-off-by: Adrian DC <radian.dc@gmail.com>
+---
+ core/main.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/main.mk b/core/main.mk
+index b0574656e..d00b3dbfb 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -363,6 +363,10 @@ BUILD_WITHOUT_PV := true
+ 
+ ADDITIONAL_BUILD_PROPERTIES += net.bt.name=Android
+ 
++# ------------------------------------------------------------
++# Include vendor specific additions to build properties
++-include vendor/lineage/build/core/main.mk
++
+ # ------------------------------------------------------------
+ # Define a function that, given a list of module tags, returns
+ # non-empty if that module should be installed in /system.
+-- 
+2.17.0
+

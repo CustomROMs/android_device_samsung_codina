@@ -1,0 +1,135 @@
+From 25b4c608b2c611ebbb61b4e35d5701855cdfef1d Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <ricardo@cyngn.com>
+Date: Wed, 5 Nov 2014 21:30:23 +0000
+Subject: [PATCH 10/90] Add BOARD_CUSTOM_BOOTIMG_MK support
+
+Simplified version of the previous implementation. Recovery's ramdisk
+is spun off from the main recovery target again to allow overriding
+just the image-generation step
+
+[mikeioannina]: Squash cm-13.0 changes and adapt to N
+
+Change-Id: I058d214f0cf2d05b7621b369ef1f8a983c3ac258
+---
+ core/Makefile | 42 +++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 35 insertions(+), 7 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index b32e7c929..9c165cc01 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -760,7 +760,8 @@ ifneq ($(BOARD_USES_RECOVERY_AS_BOOT),true)
+ ifeq ($(TARGET_BOOTIMAGE_USE_EXT2),true)
+ $(error TARGET_BOOTIMAGE_USE_EXT2 is not supported anymore)
+ 
+-else ifeq (true,$(BOARD_AVB_ENABLE)) # TARGET_BOOTIMAGE_USE_EXT2 != true
++else ifndef BOARD_CUSTOM_BOOTIMG_MK
++ifeq (true,$(BOARD_AVB_ENABLE)) # TARGET_BOOTIMAGE_USE_EXT2 != true
+ 
+ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(AVBTOOL) $(INTERNAL_BOOTIMAGE_FILES) $(BOARD_AVB_BOOT_KEY_PATH)
+ 	$(call pretty,"Target boot image: $@")
+@@ -826,7 +827,8 @@ bootimage-nodeps: $(MKBOOTIMG)
+ 	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(INSTALLED_BOOTIMAGE_TARGET)
+ 	$(hide) $(call assert-max-image-size,$(INSTALLED_BOOTIMAGE_TARGET),$(BOARD_BOOTIMAGE_PARTITION_SIZE))
+ 
+-endif # TARGET_BOOTIMAGE_USE_EXT2
++endif # PRODUCT_SUPPORTS_VBOOT
++endif # TARGET_BOOTIMAGE_USE_EXT2 / BOARD_CUSTOM_BOOTIMG_MK
+ endif # BOARD_USES_RECOVERY_AS_BOOT
+ 
+ else	# TARGET_NO_KERNEL
+@@ -1303,6 +1305,7 @@ IGNORE_RECOVERY_SEPOLICY := $(patsubst $(TARGET_RECOVERY_OUT)/%,--exclude=/%,$(r
+ 
+ recovery_kernel := $(INSTALLED_KERNEL_TARGET) # same as a non-recovery system
+ recovery_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.img
++recovery_uncompressed_ramdisk := $(PRODUCT_OUT)/ramdisk-recovery.cpio
+ recovery_build_props := $(intermediate_system_build_prop)
+ ifdef property_overrides_split_enabled
+ recovery_build_props += $(INSTALLED_VENDOR_BUILD_PROP_TARGET)
+@@ -1421,9 +1424,7 @@ $(RECOVERY_INSTALL_OTA_KEYS): $(OTA_PUBLIC_KEYS) $(DUMPKEY_JAR) $(extra_keys)
+ 
+ RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
+ 
+-# $(1): output file
+-define build-recoveryimage-target
+-  # Making recovery image
++define build-recoveryramdisk
+   $(hide) mkdir -p $(TARGET_RECOVERY_OUT)
+   $(hide) mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/etc $(TARGET_RECOVERY_ROOT_OUT)/sdcard $(TARGET_RECOVERY_ROOT_OUT)/tmp
+   # Copying baseline ramdisk...
+@@ -1457,6 +1458,11 @@ define build-recoveryimage-target
+   $(hide) ln -sf prop.default $(TARGET_RECOVERY_ROOT_OUT)/default.prop
+   $(BOARD_RECOVERY_IMAGE_PREPARE)
+   $(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
++endef
++
++RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
++# $(1): output file
++define build-recoveryimage-target
+   $(if $(filter true,$(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VBOOT)), \
+     $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1).unsigned, \
+     $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1) --id > $(RECOVERYIMAGE_ID_FILE))
+@@ -1499,14 +1505,16 @@ $(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
+ 		$(BOARD_RECOVERY_KERNEL_MODULES) \
+ 		$(DEPMOD)
+ 		$(call pretty,"Target boot image from recovery: $@")
++		$(call build-recoveryramdisk)
++		$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
+ 		$(call build-recoveryimage-target, $@)
+ endif
+ 
+-$(INSTALLED_RECOVERYIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
++$(recovery_uncompressed_ramdisk): $(MKBOOTFS) $(ADBD) \
+ 		$(INSTALLED_RAMDISK_TARGET) \
+ 		$(INSTALLED_BOOTIMAGE_TARGET) \
+ 		$(INTERNAL_RECOVERYIMAGE_FILES) \
+-		$(recovery_initrc) $(recovery_sepolicy) $(recovery_kernel) \
++		$(recovery_initrc) $(recovery_sepolicy) \
+ 		$(INSTALLED_2NDBOOTLOADER_TARGET) \
+ 		$(recovery_build_props) $(recovery_resource_deps) \
+ 		$(recovery_fstab) \
+@@ -1514,7 +1522,20 @@ $(INSTALLED_RECOVERYIMAGE_TARGET): $(MKBOOTFS) $(MKBOOTIMG) $(MINIGZIP) \
+ 		$(INSTALLED_VENDOR_DEFAULT_PROP_TARGET) \
+ 		$(BOARD_RECOVERY_KERNEL_MODULES) \
+ 		$(DEPMOD)
++		$(call build-recoveryramdisk)
++		@echo ----- Making uncompressed recovery ramdisk ------
++		$(hide) $(MKBOOTFS) $(TARGET_RECOVERY_ROOT_OUT) > $@
++
++$(recovery_ramdisk): $(MINIGZIP) \
++		$(recovery_uncompressed_ramdisk)
++		@echo ----- Making compressed recovery ramdisk ------
++		$(hide) $(MINIGZIP) < $(recovery_uncompressed_ramdisk) > $@
++
++ifndef BOARD_CUSTOM_BOOTIMG_MK
++$(INSTALLED_RECOVERYIMAGE_TARGET): $(MKBOOTIMG) $(recovery_ramdisk) $(recovery_kernel)
++		@echo ----- Making recovery image ------
+ 		$(call build-recoveryimage-target, $@)
++endif # BOARD_CUSTOM_BOOTIMG_MK
+ 
+ ifdef RECOVERY_RESOURCE_ZIP
+ $(RECOVERY_RESOURCE_ZIP): $(INSTALLED_RECOVERYIMAGE_TARGET) | $(ZIPTIME)
+@@ -1526,6 +1547,8 @@ endif
+ .PHONY: recoveryimage-nodeps
+ recoveryimage-nodeps:
+ 	@echo "make $@: ignoring dependencies"
++	$(call build-recoveryramdisk)
++	$(hide) $(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(MINIGZIP) > $(recovery_ramdisk)
+ 	$(call build-recoveryimage-target, $(INSTALLED_RECOVERYIMAGE_TARGET))
+ 
+ else # INSTALLED_RECOVERYIMAGE_TARGET not defined
+@@ -1543,6 +1566,11 @@ ifneq ($(BOARD_NAND_SPARE_SIZE),)
+ $(error MTD device is no longer supported and thus BOARD_NAND_SPARE_SIZE is deprecated.)
+ endif
+ 
++ifdef BOARD_CUSTOM_BOOTIMG_MK
++include $(BOARD_CUSTOM_BOOTIMG_MK)
++endif
++
++
+ # -----------------------------------------------------------------
+ # system image
+ #
+-- 
+2.17.0
+

@@ -1,0 +1,26 @@
+From 515d8cbc9b1bac72363c1b5884f786f68f005d62 Mon Sep 17 00:00:00 2001
+From: dhacker29 <dhackerdvm@gmail.com>
+Date: Sat, 6 Jun 2015 22:22:05 -0400
+Subject: [PATCH 22/90] Remove LatinIME as it is included per target in
+ vendor/lineage
+
+Change-Id: Ibce4a244ec0653a7c7798d864047ac667866a1dc
+---
+ target/product/handheld_system.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
+index b4dea3511..611e1ed23 100644
+--- a/target/product/handheld_system.mk
++++ b/target/product/handheld_system.mk
+@@ -58,7 +58,6 @@ PRODUCT_PACKAGES += \
+     Home \
+     InputDevices \
+     KeyChain \
+-    LatinIME \
+     librs_jni \
+     ManagedProvisioning \
+     MmsService \
+-- 
+2.17.0
+

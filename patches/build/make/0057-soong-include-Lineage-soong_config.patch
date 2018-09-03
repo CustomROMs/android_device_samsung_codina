@@ -1,0 +1,26 @@
+From 9773f24ceeee86583bd8b51b87d60e6084ff86c1 Mon Sep 17 00:00:00 2001
+From: Simon Shields <simon@lineageos.org>
+Date: Fri, 10 Aug 2018 14:39:32 +1000
+Subject: [PATCH 57/90] soong: include Lineage soong_config
+
+Change-Id: Ic7b8993f4a201f8a9d24c6ba32617fa34843afc2
+---
+ core/soong_config.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/soong_config.mk b/core/soong_config.mk
+index f75e263b3..95771f284 100644
+--- a/core/soong_config.mk
++++ b/core/soong_config.mk
+@@ -156,6 +156,8 @@ $(foreach namespace,$(SOONG_CONFIG_NAMESPACES),\
+   $(eval _contents := $$(_contents)$(if $(strip $(SOONG_CONFIG_$(namespace))),__SV_END)        },$$(newline)))
+ _contents := $(_contents)$(if $(strip $(SOONG_CONFIG_NAMESPACES)),__SV_END)    },$(newline)
+ 
++include vendor/lineage/build/soong/soong_config.mk
++
+ _contents := $(subst $(comma)$(newline)__SV_END,$(newline),$(_contents)__SV_END}$(newline))
+ 
+ $(file >$(SOONG_VARIABLES).tmp,$(_contents))
+-- 
+2.17.0
+

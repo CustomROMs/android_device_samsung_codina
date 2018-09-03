@@ -1,0 +1,28 @@
+From c05528f97bf908806175d3d135b3b95286464d5e Mon Sep 17 00:00:00 2001
+From: Paul Keith <javelinanddart@bestas.gr>
+Date: Tue, 18 Apr 2017 07:22:01 -0500
+Subject: [PATCH 07/16] dumpvar: Dump TARGET_USE_SDCLANG
+
+* But only do it if SDCLANG is detected locally
+
+Change-Id: I4e9556bfcefc0321351601471b6f5587ff5a42d4
+Signed-off-by: Paul Keith <javelinanddart@bestas.gr>
+---
+ ui/build/dumpvars.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/ui/build/dumpvars.go b/ui/build/dumpvars.go
+index c6ac4204..0b57184d 100644
+--- a/ui/build/dumpvars.go
++++ b/ui/build/dumpvars.go
+@@ -115,6 +115,7 @@ var BannerVars = []string{
+ 	"TARGET_BUILD_PDK",
+ 	"PDK_FUSION_PLATFORM_ZIP",
+ 	"PRODUCT_SOONG_NAMESPACES",
++	"TARGET_USE_SDCLANG",
+ 	"RECOVERY_VARIANT",
+ 	"WITH_SU",
+ 	"WITH_GMS",
+-- 
+2.17.0
+

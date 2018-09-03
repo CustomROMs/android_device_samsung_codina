@@ -1,0 +1,55 @@
+From 8c3bbe589c9ad5c76e9375dd5dc1f342161a593b Mon Sep 17 00:00:00 2001
+From: Tom Powell <zifnab@zifnab06.net>
+Date: Fri, 20 Jan 2017 20:47:49 -0800
+Subject: [PATCH 40/90] releasetools: support reading release keys out of some
+ sort of command
+
+key passphrases may live in some sort of secure storage, support running
+an arbitrary command to retrieve them.
+
+Change-Id: I49862cf60f1b73a2356e0c492e1038beef28a95f
+(cherry picked from commit 9caf8603575aecf51761feaeac6db619be76cfd3)
+---
+ tools/releasetools/common.py | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 97437f452..b3691d2f3 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1108,6 +1108,7 @@ class PasswordManager(object):
+   def __init__(self):
+     self.editor = os.getenv("EDITOR", None)
+     self.pwfile = os.getenv("ANDROID_PW_FILE", None)
++    self.secure_storage_cmd = os.getenv("ANDROID_SECURE_STORAGE_CMD", None)
+ 
+   def GetPasswords(self, items):
+     """Get passwords corresponding to each string in 'items',
+@@ -1127,9 +1128,23 @@ class PasswordManager(object):
+       missing = []
+       for i in items:
+         if i not in current or not current[i]:
+-          missing.append(i)
++          # Attempt to load using ANDROID_SECURE_STORAGE_CMD
++          if self.secure_storage_cmd:
++            try:
++              os.environ["TMP__KEY_FILE_NAME"] = str(i)
++              ps = subprocess.Popen(self.secure_storage_cmd, shell=True, stdout=subprocess.PIPE)
++              output = ps.communicate()[0]
++              if ps.returncode == 0:
++                current[i] = output
++            except Exception as e:
++              print(e)
++              pass
++          if i not in current or not current[i]:
++            missing.append(i)
+       # Are all the passwords already in the file?
+       if not missing:
++        if "ANDROID_SECURE_STORAGE_CMD" in os.environ:
++          del os.environ["ANDROID_SECURE_STORAGE_CMD"]
+         return current
+ 
+       for i in missing:
+-- 
+2.17.0
+

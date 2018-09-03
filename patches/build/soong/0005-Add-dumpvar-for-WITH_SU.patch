@@ -1,0 +1,30 @@
+From 8c371a9ba760e0da8f3c5a4cc5c77a996e10ecb1 Mon Sep 17 00:00:00 2001
+From: Abhisek Devkota <ciwrl@lineageos.org>
+Date: Wed, 8 Feb 2017 12:06:13 -0800
+Subject: [PATCH 05/16] Add dumpvar for WITH_SU
+
+ -Allow folks to see easily if the term session they are in has
+   WITH_SU set to true
+ -Also add a dumpvar rule for WITH_GMS for those that have it
+
+Change-Id: Ib310d0016bb9eb16960f794720321b706b6fd8b0
+---
+ ui/build/dumpvars.go | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/ui/build/dumpvars.go b/ui/build/dumpvars.go
+index 354470ea..b30ca4d4 100644
+--- a/ui/build/dumpvars.go
++++ b/ui/build/dumpvars.go
+@@ -115,6 +115,8 @@ var BannerVars = []string{
+ 	"TARGET_BUILD_PDK",
+ 	"PDK_FUSION_PLATFORM_ZIP",
+ 	"PRODUCT_SOONG_NAMESPACES",
++	"WITH_SU",
++	"WITH_GMS",
+ }
+ 
+ func Banner(make_vars map[string]string) string {
+-- 
+2.17.0
+

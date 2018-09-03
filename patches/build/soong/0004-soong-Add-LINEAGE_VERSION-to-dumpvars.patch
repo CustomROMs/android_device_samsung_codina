@@ -1,0 +1,25 @@
+From e19fade85af3f1cb9b2d62b3fb657974596a7b0a Mon Sep 17 00:00:00 2001
+From: Rashed Abdel-Tawab <rashed@linux.com>
+Date: Mon, 13 Aug 2018 11:03:48 -0700
+Subject: [PATCH 04/16] soong: Add LINEAGE_VERSION to dumpvars
+
+Change-Id: I24b29442f041aec451a173db404f542060ac67d2
+---
+ ui/build/dumpvars.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/ui/build/dumpvars.go b/ui/build/dumpvars.go
+index 06bd74f2..354470ea 100644
+--- a/ui/build/dumpvars.go
++++ b/ui/build/dumpvars.go
+@@ -90,6 +90,7 @@ func dumpMakeVars(ctx Context, config Config, goals, vars []string, write_soong_
+ var BannerVars = []string{
+ 	"PLATFORM_VERSION_CODENAME",
+ 	"PLATFORM_VERSION",
++	"LINEAGE_VERSION",
+ 	"TARGET_PRODUCT",
+ 	"TARGET_BUILD_VARIANT",
+ 	"TARGET_BUILD_TYPE",
+-- 
+2.17.0
+

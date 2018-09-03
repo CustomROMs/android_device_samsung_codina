@@ -1,0 +1,34 @@
+From 306bd844565617474f037c01455f45b6cbb7c22c Mon Sep 17 00:00:00 2001
+From: Scott Mertz <scott@cyngn.com>
+Date: Wed, 25 May 2016 15:47:42 -0700
+Subject: [PATCH 20/42] debuggerd: add Lineage version to tombstones
+
+Change-Id: I7822a2e133a2f326ad2d8da8f79b0064344d59bf
+
+debuggerd: Rebrand tombstone header to LineageOS
+
+[harryyoud]: Use new props for 15.1
+[rashed]: Bah... use GetProperty
+
+Change-Id: Idd08c2eb7e395b464b1510742bf52833f465db08
+---
+ debuggerd/libdebuggerd/tombstone.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/debuggerd/libdebuggerd/tombstone.cpp b/debuggerd/libdebuggerd/tombstone.cpp
+index 433bb4657..19af19405 100644
+--- a/debuggerd/libdebuggerd/tombstone.cpp
++++ b/debuggerd/libdebuggerd/tombstone.cpp
+@@ -72,7 +72,9 @@ using namespace std::literals::string_literals;
+ static void dump_header_info(log_t* log) {
+   auto fingerprint = GetProperty("ro.build.fingerprint", "unknown");
+   auto revision = GetProperty("ro.revision", "unknown");
++  auto lineage_version = GetProperty("ro.lineage.version", "unknown");
+ 
++  _LOG(log, logtype::HEADER, "LineageOS Version: '%s'\n", lineage_version.c_str());
+   _LOG(log, logtype::HEADER, "Build fingerprint: '%s'\n", fingerprint.c_str());
+   _LOG(log, logtype::HEADER, "Revision: '%s'\n", revision.c_str());
+   _LOG(log, logtype::HEADER, "ABI: '%s'\n", ABI_STRING);
+-- 
+2.17.0
+

@@ -1,0 +1,26 @@
+From ec61f94c002f18f6e66d77afdfa9affdd4fb751c Mon Sep 17 00:00:00 2001
+From: Ethan Chen <intervigil@gmail.com>
+Date: Sun, 7 Jan 2018 23:02:47 -0800
+Subject: [PATCH 33/90] build: Make vendorimage depend on installed kernel
+
+Change-Id: I73171943b1de329bdf4523befb0625d3892af5c1
+---
+ core/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 83fc604bb..19e220ab9 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2199,7 +2199,7 @@ INSTALLED_VENDORIMAGE_TARGET := $(BUILT_VENDORIMAGE_TARGET)
+ ifdef BUILT_VENDOR_MANIFEST
+ $(INSTALLED_VENDORIMAGE_TARGET): $(BUILT_ASSEMBLED_VENDOR_MANIFEST)
+ endif
+-$(INSTALLED_VENDORIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) $(INTERNAL_VENDORIMAGE_FILES) $(INSTALLED_FILES_FILE_VENDOR) $(BUILD_IMAGE_SRCS) $(DEPMOD) $(BOARD_VENDOR_KERNEL_MODULES)
++$(INSTALLED_VENDORIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) $(INTERNAL_VENDORIMAGE_FILES) $(INSTALLED_FILES_FILE_VENDOR) $(BUILD_IMAGE_SRCS) $(DEPMOD) $(BOARD_VENDOR_KERNEL_MODULES) $(INSTALLED_KERNEL_TARGET)
+ 	$(build-vendorimage-target)
+ 
+ .PHONY: vendorimage-nodeps vnod
+-- 
+2.17.0
+

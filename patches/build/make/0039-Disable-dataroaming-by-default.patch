@@ -1,0 +1,30 @@
+From 13e468c752fd438d310511be2019bd0d31c7c85c Mon Sep 17 00:00:00 2001
+From: Pawit Pornkitprasan <p.pawit@gmail.com>
+Date: Sat, 28 Jan 2012 09:05:16 +0700
+Subject: [PATCH 39/90] Disable dataroaming by default
+
+The property is removed so that the property in vendor/lineage
+can take effect.
+
+Change-Id: Iefadc1a6e71cbf92ecb7363c953f4b5a82064446
+---
+ target/product/full_base_telephony.mk | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/target/product/full_base_telephony.mk b/target/product/full_base_telephony.mk
+index 813348b24..7988e9b77 100644
+--- a/target/product/full_base_telephony.mk
++++ b/target/product/full_base_telephony.mk
+@@ -20,8 +20,7 @@
+ # entirely appropriate to inherit from for on-device configurations.
+ 
+ PRODUCT_PROPERTY_OVERRIDES := \
+-    keyguard.no_require_sim=true \
+-    ro.com.android.dataroaming=true
++    keyguard.no_require_sim=true
+ 
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony.mk)
+-- 
+2.17.0
+

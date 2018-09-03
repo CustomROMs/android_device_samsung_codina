@@ -1,0 +1,53 @@
+From ae675a21774b454232480bdc192d24832af5972c Mon Sep 17 00:00:00 2001
+From: "Brint E. Kriebel" <bekit@cyngn.com>
+Date: Thu, 8 Jan 2015 14:36:45 -0800
+Subject: [PATCH 43/90] releasetools: Store the build.prop file in the OTA zip
+
+This file is often used to read information about the update contained
+in the OTA. Place it in the update so it can be used by scripts. Add
+build.prop to incrementals too
+
+The file is not added to the updater-script, so it will not be placed
+onto the actual system.
+
+Change-Id: I88044796cbe8f199ca02df2840fd944cba2c73fa
+---
+ tools/releasetools/ota_from_target_files.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 5b9ae89cf..7106d7df3 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -224,7 +224,7 @@ OPTIONS.backuptool = False
+ 
+ METADATA_NAME = 'META-INF/com/android/metadata'
+ POSTINSTALL_CONFIG = 'META/postinstall_config.txt'
+-UNZIP_PATTERN = ['IMAGES/*', 'META/*', 'INSTALL/*']
++UNZIP_PATTERN = ['IMAGES/*', 'META/*', 'INSTALL/*', 'SYSTEM/build.prop']
+ 
+ 
+ class BuildInfo(object):
+@@ -926,6 +926,9 @@ endif;
+   script.AddToZip(input_zip, output_zip, input_path=OPTIONS.updater_binary)
+   metadata["ota-required-cache"] = str(script.required_cache)
+ 
++  common.ZipWriteStr(output_zip, "system/build.prop",
++                     ""+input_zip.read("SYSTEM/build.prop"))
++
+   # We haven't written the metadata entry, which will be done in
+   # FinalizeMetadata.
+   common.ZipClose(output_zip)
+@@ -1662,6 +1665,9 @@ endif;
+     script.AddToZip(target_zip, output_zip, input_path=OPTIONS.updater_binary)
+   metadata["ota-required-cache"] = str(script.required_cache)
+ 
++  common.ZipWriteStr(output_zip, "system/build.prop",
++                     ""+target_zip.read("SYSTEM/build.prop"))
++
+   # We haven't written the metadata entry yet, which will be handled in
+   # FinalizeMetadata().
+   common.ZipClose(output_zip)
+-- 
+2.17.0
+

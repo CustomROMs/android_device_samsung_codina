@@ -1,0 +1,36 @@
+From 19469692778611af750803533d287dadb1f89dcb Mon Sep 17 00:00:00 2001
+From: Matt Mower <mowerm@gmail.com>
+Date: Thu, 28 Aug 2014 18:29:14 -0500
+Subject: [PATCH 30/90] Edify: Add abort message for bootloader asserts
+
+* If a bootloader assert is not satisfied, print the
+  versions that are supported by the package as well as the version
+  on the device.
+
+Change-Id: I958d49281c51bd4e60d596a727bb94cfc4a21909
+---
+ tools/releasetools/edify_generator.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/tools/releasetools/edify_generator.py b/tools/releasetools/edify_generator.py
+index 315e482fc..d9266b4de 100644
+--- a/tools/releasetools/edify_generator.py
++++ b/tools/releasetools/edify_generator.py
+@@ -146,10 +146,13 @@ class EdifyGenerator(object):
+     self.script.append(self.WordWrap(cmd))
+ 
+   def AssertSomeBootloader(self, *bootloaders):
+-    """Asert that the bootloader version is one of *bootloaders."""
++    """Assert that the bootloader version is one of *bootloaders."""
+     cmd = ("assert(" +
+            " ||\0".join(['getprop("ro.bootloader") == "%s"' % (b,)
+                          for b in bootloaders]) +
++           ' || abort("This package supports bootloader(s): ' +
++           ", ".join(["%s" % (b,) for b in bootloaders]) +
++           '; this device has bootloader " + getprop("ro.bootloader") + ".");' +
+            ");")
+     self.script.append(self.WordWrap(cmd))
+ 
+-- 
+2.17.0
+

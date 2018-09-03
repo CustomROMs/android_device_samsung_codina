@@ -1,0 +1,197 @@
+From faef40d2cbed99be21206f89e73baaab5b26da0c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:04:04 +0300
+Subject: [PATCH 6/8] Revert "graphics: add allocator HAL support library"
+
+This reverts commit d6daa8ddf9ad758a9eaddd624dec57f543d51b44.
+
+Change-Id: I3aff0b8548ae8f54106c7145f04eb53c49774a75
+---
+ graphics/allocator/2.0/utils/hal/Android.bp   | 14 ---
+ .../hal/include/allocator-hal/2.0/Allocator.h | 89 -------------------
+ .../include/allocator-hal/2.0/AllocatorHal.h  | 56 ------------
+ 3 files changed, 159 deletions(-)
+ delete mode 100644 graphics/allocator/2.0/utils/hal/Android.bp
+ delete mode 100644 graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h
+ delete mode 100644 graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/AllocatorHal.h
+
+diff --git a/graphics/allocator/2.0/utils/hal/Android.bp b/graphics/allocator/2.0/utils/hal/Android.bp
+deleted file mode 100644
+index ac642ce99..000000000
+--- a/graphics/allocator/2.0/utils/hal/Android.bp
++++ /dev/null
+@@ -1,14 +0,0 @@
+-cc_library_headers {
+-    name: "android.hardware.graphics.allocator@2.0-hal",
+-    defaults: ["hidl_defaults"],
+-    vendor: true,
+-    shared_libs: [
+-        "android.hardware.graphics.allocator@2.0",
+-        "android.hardware.graphics.mapper@2.0",
+-    ],
+-    export_shared_lib_headers: [
+-        "android.hardware.graphics.allocator@2.0",
+-        "android.hardware.graphics.mapper@2.0",
+-    ],
+-    export_include_dirs: ["include"],
+-}
+diff --git a/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h b/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h
+deleted file mode 100644
+index 2f3022e44..000000000
+--- a/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/Allocator.h
++++ /dev/null
+@@ -1,89 +0,0 @@
+-/*
+- * Copyright 2018 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#ifndef LOG_TAG
+-#warning "Allocator.h included without LOG_TAG"
+-#endif
+-
+-#include <memory>
+-
+-#include <allocator-hal/2.0/AllocatorHal.h>
+-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+-#include <log/log.h>
+-
+-namespace android {
+-namespace hardware {
+-namespace graphics {
+-namespace allocator {
+-namespace V2_0 {
+-namespace hal {
+-
+-using mapper::V2_0::BufferDescriptor;
+-using mapper::V2_0::Error;
+-
+-namespace detail {
+-
+-// AllocatorImpl implements IAllocator on top of AllocatorHal
+-template <typename IALLOCATOR, typename ALLOCATOR_HAL>
+-class AllocatorImpl : public IALLOCATOR {
+-   public:
+-    bool init(std::unique_ptr<ALLOCATOR_HAL> hal) {
+-        mHal = std::move(hal);
+-        return true;
+-    }
+-
+-    // IAllocator 2.0 interface
+-    Return<void> dumpDebugInfo(IAllocator::dumpDebugInfo_cb hidl_cb) override {
+-        hidl_cb(mHal->dumpDebugInfo());
+-        return Void();
+-    }
+-
+-    Return<void> allocate(const BufferDescriptor& descriptor, uint32_t count,
+-                          IAllocator::allocate_cb hidl_cb) override {
+-        uint32_t stride;
+-        std::vector<const native_handle_t*> buffers;
+-        Error error = mHal->allocateBuffers(descriptor, count, &stride, &buffers);
+-        if (error != Error::NONE) {
+-            hidl_cb(error, 0, hidl_vec<hidl_handle>());
+-            return Void();
+-        }
+-
+-        hidl_vec<hidl_handle> hidlBuffers(buffers.cbegin(), buffers.cend());
+-        hidl_cb(Error::NONE, stride, hidlBuffers);
+-
+-        // free the local handles
+-        mHal->freeBuffers(buffers);
+-
+-        return Void();
+-    }
+-
+-   protected:
+-    std::unique_ptr<ALLOCATOR_HAL> mHal;
+-};
+-
+-}  // namespace detail
+-
+-using Allocator = detail::AllocatorImpl<IAllocator, AllocatorHal>;
+-
+-}  // namespace hal
+-}  // namespace V2_0
+-}  // namespace allocator
+-}  // namespace graphics
+-}  // namespace hardware
+-}  // namespace android
+diff --git a/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/AllocatorHal.h b/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/AllocatorHal.h
+deleted file mode 100644
+index dec377a9e..000000000
+--- a/graphics/allocator/2.0/utils/hal/include/allocator-hal/2.0/AllocatorHal.h
++++ /dev/null
+@@ -1,56 +0,0 @@
+-/*
+- * Copyright 2018 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#include <string>
+-#include <vector>
+-
+-#include <android/hardware/graphics/allocator/2.0/IAllocator.h>
+-#include <android/hardware/graphics/mapper/2.0/IMapper.h>
+-
+-namespace android {
+-namespace hardware {
+-namespace graphics {
+-namespace allocator {
+-namespace V2_0 {
+-namespace hal {
+-
+-using mapper::V2_0::BufferDescriptor;
+-using mapper::V2_0::Error;
+-
+-class AllocatorHal {
+-   public:
+-    virtual ~AllocatorHal() = default;
+-
+-    // dump the debug information
+-    virtual std::string dumpDebugInfo() = 0;
+-
+-    // allocate buffers
+-    virtual Error allocateBuffers(const BufferDescriptor& descriptor, uint32_t count,
+-                                  uint32_t* outStride,
+-                                  std::vector<const native_handle_t*>* outBuffers) = 0;
+-
+-    // free buffers
+-    virtual void freeBuffers(const std::vector<const native_handle_t*>& buffers) = 0;
+-};
+-
+-}  // namespace hal
+-}  // namespace V2_0
+-}  // namespace allocator
+-}  // namespace graphics
+-}  // namespace hardware
+-}  // namespace android
+-- 
+2.17.0
+

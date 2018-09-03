@@ -1,0 +1,44 @@
+From a06cf84c4df7a57a5295fd523a418386f39106eb Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 62/90] Fix recovery build
+
+---
+ core/Makefile | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 5c1a3d675..8cbf5da42 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -394,9 +394,6 @@ endif
+ $(INSTALLED_BUILD_PROP_TARGET): $(intermediate_system_build_prop) $(INSTALLED_RECOVERYIMAGE_TARGET)
+ 	@echo "Target build info: $@"
+ 	$(hide) grep -v 'ro.product.first_api_level' $(intermediate_system_build_prop) > $@
+-ifdef INSTALLED_RECOVERYIMAGE_TARGET
+-	$(hide) echo ro.expect.recovery_id=`cat $(RECOVERYIMAGE_ID_FILE)` >> $@
+-endif
+ 
+ # -----------------------------------------------------------------
+ # vendor build.prop
+@@ -1460,7 +1457,7 @@ $(RECOVERY_INSTALL_OTA_KEYS): $(OTA_PUBLIC_KEYS) $(DUMPKEY_JAR) $(extra_keys)
+ 	@mkdir -p $(dir $@)
+ 	$(JAVA) -jar $(DUMPKEY_JAR) $(PRIVATE_OTA_PUBLIC_KEYS) $(extra_keys) > $@
+ 
+-RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
++RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)
+ 
+ define build-recoveryramdisk
+   $(hide) mkdir -p $(TARGET_RECOVERY_OUT)
+@@ -1507,7 +1504,7 @@ RECOVERYIMAGE_ID_FILE := $(PRODUCT_OUT)/recovery.id
+ define build-recoveryimage-target
+   $(if $(filter true,$(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VBOOT)), \
+     $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1).unsigned, \
+-    $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1) --id > $(RECOVERYIMAGE_ID_FILE))
++    $(hide) $(MKBOOTIMG) $(INTERNAL_RECOVERYIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $(1))
+   $(if $(filter true,$(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_BOOT_SIGNER)),\
+     $(if $(filter true,$(BOARD_USES_RECOVERY_AS_BOOT)),\
+       $(BOOT_SIGNER) /boot $(1) $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VERITY_SIGNING_KEY).pk8 $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VERITY_SIGNING_KEY).x509.pem $(1),\
+-- 
+2.17.0
+

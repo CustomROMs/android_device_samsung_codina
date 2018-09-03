@@ -1,0 +1,106 @@
+From 48f9ce18a5dcdd56eb3dfda1a28922bf53b0172c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 10:00:29 +0300
+Subject: [PATCH 11/24] surfaceflinger: try to fix
+
+Change-Id: I398c8b7a5048bd6048c40c5fe0136fde5afcfefd
+---
+ libs/ui/Android.bp                                          | 6 +-----
+ services/surfaceflinger/Android.mk                          | 6 +++---
+ services/surfaceflinger/DisplayDevice.cpp                   | 4 +++-
+ services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp | 2 +-
+ 4 files changed, 8 insertions(+), 10 deletions(-)
+ mode change 100644 => 100755 services/surfaceflinger/DisplayDevice.cpp
+
+diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
+index 86df887a4..25f06431d 100644
+--- a/libs/ui/Android.bp
++++ b/libs/ui/Android.bp
+@@ -21,12 +21,8 @@ cc_library_shared {
+     double_loadable: true,
+ 
+     clang: true,
+-    cflags: [
+-        "-Wall",
+-    ],
+     cppflags: [
+-        "-Weverything",
+-
++        "-Wno-unused-parameter",
+         // The static constructors and destructors in this library have not been noted to
+         // introduce significant overheads
+         "-Wno-exit-time-destructors",
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index 19a44d856..4c9701588 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -105,7 +105,7 @@ LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
+     libhidltransport \
+     libhwbinder
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code -std=c++1z
++LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code -std=c++1z
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+@@ -154,7 +154,7 @@ ifdef TARGET_32_BIT_SURFACEFLINGER
+ LOCAL_32_BIT_ONLY := true
+ endif
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code
+ 
+ include $(BUILD_EXECUTABLE)
+ 
+@@ -177,7 +177,7 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ LOCAL_MODULE := libsurfaceflinger_ddmconnection
+ 
+-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
++LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code
+ 
+ include $(BUILD_SHARED_LIBRARY)
+ endif # libnativehelper
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+old mode 100644
+new mode 100755
+index b8a0a5a21..18e308ca7
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -65,7 +65,7 @@ using namespace android::hardware::configstore;
+ using namespace android::hardware::configstore::V1_0;
+ 
+ static bool useTripleFramebuffer = getInt64< ISurfaceFlingerConfigs,
+-        &ISurfaceFlingerConfigs::maxFrameBufferAcquiredBuffers>(2) >= 3;
++        &ISurfaceFlingerConfigs::maxFrameBufferAcquiredBuffers>(2) == 3;
+ 
+ #if !defined(EGL_EGLEXT_PROTOTYPES) || !defined(EGL_ANDROID_swap_rectangle)
+ // Dummy implementation in case it is missing.
+@@ -172,9 +172,11 @@ DisplayDevice::DisplayDevice(
+     // initialize the display orientation transform.
+     setProjection(DisplayState::eOrientationDefault, mViewport, mFrame);
+ 
++#ifndef STE_HARDWARE
+     if (useTripleFramebuffer) {
+         surface->allocateBuffers();
+     }
++#endif
+ }
+ 
+ DisplayDevice::~DisplayDevice() {
+diff --git a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+index dcb29135b..fb750ca38 100644
+--- a/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
++++ b/services/surfaceflinger/DisplayHardware/HWComposer_hwc1.cpp
+@@ -1262,7 +1262,7 @@ void HWComposer::dump(String8& result) const {
+     }
+ 
+     if (mHwc && mHwc->dump) {
+-        const size_t SIZE = 4096;
++        const size_t SIZE = 16*1024;
+         char buffer[SIZE];
+         mHwc->dump(mHwc, buffer, SIZE);
+         result.append(buffer);
+-- 
+2.17.0
+

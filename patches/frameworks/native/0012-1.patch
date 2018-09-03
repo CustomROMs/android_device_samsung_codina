@@ -1,0 +1,505 @@
+From 02b0b1b01137e67471551681aa9862649f1bd39d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 2 Sep 2018 10:23:23 +0300
+Subject: [PATCH 12/24] 1
+
+Change-Id: I33485379065253fa308cb739b8e528aa7c71b94b
+---
+ services/surfaceflinger/DisplayDevice.cpp     | 36 +++++++++-
+ services/surfaceflinger/DisplayDevice.h       |  4 +-
+ services/surfaceflinger/Layer.cpp             | 47 +++++-------
+ services/surfaceflinger/Layer.h               |  7 +-
+ services/surfaceflinger/LayerVector.cpp       |  9 +--
+ services/surfaceflinger/SurfaceFlinger.h      |  3 +
+ .../surfaceflinger/SurfaceFlinger_hwc1.cpp    | 71 ++++++++++++++-----
+ 7 files changed, 115 insertions(+), 62 deletions(-)
+
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+index 18e308ca7..a91d1df71 100755
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -169,6 +169,24 @@ DisplayDevice::DisplayDevice(
+     mPowerMode = (mType >= DisplayDevice::DISPLAY_VIRTUAL) ?
+                   HWC_POWER_MODE_NORMAL : HWC_POWER_MODE_OFF;
+ 
++    // Name the display.  The name will be replaced shortly if the display
++    // was created with createDisplay().
++    switch (mType) {
++        case DISPLAY_PRIMARY:
++            mDisplayName = "Built-in Screen";
++            break;
++        case DISPLAY_EXTERNAL:
++            mDisplayName = "HDMI Screen";
++            break;
++        default:
++            mDisplayName = "Virtual Screen";    // e.g. Overlay #n
++            break;
++    }
++
++    // we store the value as orientation:
++    // 90 -> 1, 180 -> 2, 270 -> 3
++    mHardwareRotation = property_get_int32("ro.sf.hwrotation", 0) / 90;
++
+     // initialize the display orientation transform.
+     setProjection(DisplayState::eOrientationDefault, mViewport, mFrame);
+ 
+@@ -479,6 +497,14 @@ status_t DisplayDevice::orientationToTransfrom(
+         int orientation, int w, int h, Transform* tr)
+ {
+     uint32_t flags = 0;
++
++    if (mHardwareRotation && mType == DisplayType::DISPLAY_PRIMARY) {
++        // Rotate such that accounting for hardware rotation puts the
++        // buffer's rotation at 0 relative to the user.
++        orientation += (4 - mHardwareRotation);
++        orientation %= 4;
++    }
++
+     switch (orientation) {
+     case DisplayState::eOrientationDefault:
+         flags = Transform::ROT_0;
+@@ -534,7 +560,11 @@ void DisplayDevice::setProjection(int orientation,
+     if (!frame.isValid()) {
+         // the destination frame can be invalid if it has never been set,
+         // in that case we assume the whole display frame.
+-        frame = Rect(w, h);
++        if (mHardwareRotation & DisplayState::eOrientationSwapMask) {
++            frame = Rect(h, w);
++        } else {
++            frame = Rect(w, h);
++        }
+     }
+ 
+     if (viewport.isEmpty()) {
+@@ -619,11 +649,11 @@ void DisplayDevice::dump(String8& result) const {
+     eglGetConfigAttrib(mDisplay, mConfig, EGL_BLUE_SIZE, &blueSize);
+     eglGetConfigAttrib(mDisplay, mConfig, EGL_ALPHA_SIZE, &alphaSize);
+     result.appendFormat("+ DisplayDevice: %s\n", mDisplayName.string());
+-    result.appendFormat("   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d), ANativeWindow=%p "
++    result.appendFormat("   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d),"
+                         "(%d:%d:%d:%d), orient=%2d (type=%08x), "
+                         "flips=%u, isSecure=%d, powerMode=%d, activeConfig=%d, numLayers=%zu\n",
+                         mType, mHwcDisplayId, mLayerStack, mDisplayWidth, mDisplayHeight,
+-                        mNativeWindow.get(), redSize, greenSize, blueSize, alphaSize, mOrientation,
++                        redSize, greenSize, blueSize, alphaSize, mOrientation,
+                         tr.getType(), getPageFlipCount(), mIsSecure, mPowerMode, mActiveConfig,
+                         mVisibleLayersSortedByZ.size());
+     result.appendFormat("   v:[%d,%d,%d,%d], f:[%d,%d,%d,%d], s:[%d,%d,%d,%d],"
+diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
+index e8a5929ee..82a72352a 100644
+--- a/services/surfaceflinger/DisplayDevice.h
++++ b/services/surfaceflinger/DisplayDevice.h
+@@ -249,7 +249,7 @@ private:
+     /*
+      * Transaction state
+      */
+-    static status_t orientationToTransfrom(int orientation,
++    status_t orientationToTransfrom(int orientation,
+             int w, int h, Transform* tr);
+ 
+     // The identifier of the active layer stack for this display. Several displays
+@@ -271,6 +271,8 @@ private:
+     int mPowerMode;
+     // Current active config
+     int mActiveConfig;
++    // Panel hardware rotation
++    int32_t mHardwareRotation;
+ #ifdef USE_HWC2
+     // current active color mode
+     android_color_mode_t mActiveColorMode;
+diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
+index 97c56b354..e92565fd9 100755
+--- a/services/surfaceflinger/Layer.cpp
++++ b/services/surfaceflinger/Layer.cpp
+@@ -70,7 +70,7 @@ Layer::Layer(SurfaceFlinger* flinger, const sp<Client>& client,
+     :   contentDirty(false),
+         sequence(uint32_t(android_atomic_inc(&sSequence))),
+         mFlinger(flinger),
+-        mTextureName(UINT32_MAX),
++        mTextureName(-1U),
+         mPremultipliedAlpha(true),
+         mName("unnamed"),
+         mFormat(PIXEL_FORMAT_NONE),
+@@ -217,6 +217,9 @@ Layer::~Layer() {
+ 
+ #ifdef USE_HWC2
+ void Layer::onLayerDisplayed(const sp<Fence>& releaseFence) {
++    if (mHwcLayers.empty()) {
++        return;
++    }
+     mSurfaceFlingerConsumer->setReleaseFence(releaseFence);
+ }
+ #else
+@@ -392,9 +395,9 @@ bool Layer::createHwcLayer(HWComposer* hwc, int32_t hwcId) {
+     return true;
+ }
+ 
+-bool Layer::destroyHwcLayer(int32_t hwcId) {
++void Layer::destroyHwcLayer(int32_t hwcId) {
+     if (mHwcLayers.count(hwcId) == 0) {
+-        return false;
++        return;
+     }
+     auto& hwcInfo = mHwcLayers[hwcId];
+     LOG_ALWAYS_FATAL_IF(hwcInfo.layer == nullptr,
+@@ -405,8 +408,6 @@ bool Layer::destroyHwcLayer(int32_t hwcId) {
+     // mHwcLayers. Verify that.
+     LOG_ALWAYS_FATAL_IF(mHwcLayers.count(hwcId) != 0,
+             "Stale layer entry in mHwcLayers");
+-
+-    return true;
+ }
+ 
+ void Layer::destroyAllHwcLayers() {
+@@ -447,14 +448,6 @@ static Rect reduce(const Rect& win, const Region& exclude) {
+     return Region(win).subtract(exclude).getBounds();
+ }
+ 
+-static FloatRect reduce(const FloatRect& win, const Region& exclude) {
+-    if (CC_LIKELY(exclude.isEmpty())) {
+-        return win;
+-    }
+-    // Convert through Rect (by rounding) for lack of FloatRegion
+-    return Region(Rect{win}).subtract(exclude).getBounds().toFloatRect();
+-}
+-
+ Rect Layer::computeScreenBounds(bool reduceTransparentRegion) const {
+     const Layer::State& s(getDrawingState());
+     Rect win(s.active.w, s.active.h);
+@@ -493,12 +486,12 @@ Rect Layer::computeScreenBounds(bool reduceTransparentRegion) const {
+     return win;
+ }
+ 
+-FloatRect Layer::computeBounds() const {
++Rect Layer::computeBounds() const {
+     const Layer::State& s(getDrawingState());
+     return computeBounds(s.activeTransparentRegion);
+ }
+ 
+-FloatRect Layer::computeBounds(const Region& activeTransparentRegion) const {
++Rect Layer::computeBounds(const Region& activeTransparentRegion) const {
+     const Layer::State& s(getDrawingState());
+     Rect win(s.active.w, s.active.h);
+ 
+@@ -515,16 +508,14 @@ FloatRect Layer::computeBounds(const Region& activeTransparentRegion) const {
+     }
+ 
+     Transform t = getTransform();
+-
+-    FloatRect floatWin = win.toFloatRect();
+     if (p != nullptr) {
+-        floatWin = t.transform(floatWin);
+-        floatWin = floatWin.intersect(bounds.toFloatRect());
+-        floatWin = t.inverse().transform(floatWin);
++        win = t.transform(win);
++        win.intersect(bounds, &win);
++        win = t.inverse().transform(win);
+     }
+ 
+     // subtract the transparent region and snap to the bounds
+-    return reduce(floatWin, activeTransparentRegion);
++    return reduce(win, activeTransparentRegion);
+ }
+ 
+ Rect Layer::computeInitialCrop(const sp<const DisplayDevice>& hw) const {
+@@ -733,9 +724,7 @@ void Layer::setGeometry(
+                 s.active.w, activeCrop.bottom));
+     }
+ 
+-    // computeBounds returns a FloatRect to provide more accuracy during the
+-    // transformation. We then round upon constructing 'frame'.
+-    Rect frame{t.transform(computeBounds(activeTransparentRegion))};
++    Rect frame(t.transform(computeBounds(activeTransparentRegion)));
+     if (!s.finalCrop.isEmpty()) {
+         if(!frame.intersect(s.finalCrop, &frame)) {
+             frame.clear();
+@@ -1237,17 +1226,16 @@ void Layer::drawWithOpenGL(const sp<const DisplayDevice>& hw,
+      * minimal value)? Or, we could make GL behave like HWC -- but this feel
+      * like more of a hack.
+      */
+-    const Rect bounds{computeBounds()}; // Rounds from FloatRect
++    Rect win(computeBounds());
+ 
+     Transform t = getTransform();
+-    Rect win = bounds;
+     if (!s.finalCrop.isEmpty()) {
+         win = t.transform(win);
+         if (!win.intersect(s.finalCrop, &win)) {
+             win.clear();
+         }
+         win = t.inverse().transform(win);
+-        if (!win.intersect(bounds, &win)) {
++        if (!win.intersect(computeBounds(), &win)) {
+             win.clear();
+         }
+     }
+@@ -1453,7 +1441,7 @@ void Layer::computeGeometry(const sp<const DisplayDevice>& hw, Mesh& mesh,
+     const Layer::State& s(getDrawingState());
+     const Transform hwTransform(hw->getTransform());
+     const uint32_t hw_h = hw->getHeight();
+-    FloatRect win = computeBounds();
++    Rect win = computeBounds();
+ 
+     vec2 lt = vec2(win.left, win.top);
+     vec2 lb = vec2(win.left, win.bottom);
+@@ -2672,7 +2660,6 @@ int32_t Layer::getZ() const {
+     return mDrawingState.z;
+ }
+ 
+-__attribute__((no_sanitize("unsigned-integer-overflow")))
+ LayerVector Layer::makeTraversalList(LayerVector::StateSet stateSet) {
+     LOG_ALWAYS_FATAL_IF(stateSet == LayerVector::StateSet::Invalid,
+                         "makeTraversalList received invalid stateSet");
+@@ -2728,7 +2715,7 @@ void Layer::traverseInReverseZOrder(LayerVector::StateSet stateSet,
+     LayerVector list = makeTraversalList(stateSet);
+ 
+     int32_t i = 0;
+-    for (i = int32_t(list.size()) - 1; i >= 0; i--) {
++    for (i = list.size()-1; i>=0; i--) {
+         const auto& relative = list[i];
+         if (relative->getZ() < 0) {
+             break;
+diff --git a/services/surfaceflinger/Layer.h b/services/surfaceflinger/Layer.h
+index 56f508b60..f7b82e4fb 100644
+--- a/services/surfaceflinger/Layer.h
++++ b/services/surfaceflinger/Layer.h
+@@ -27,7 +27,6 @@
+ #include <utils/String8.h>
+ #include <utils/Timers.h>
+ 
+-#include <ui/FloatRect.h>
+ #include <ui/FrameStats.h>
+ #include <ui/GraphicBuffer.h>
+ #include <ui/PixelFormat.h>
+@@ -259,8 +258,8 @@ public:
+ 
+     void computeGeometry(const sp<const DisplayDevice>& hw, Mesh& mesh,
+             bool useIdentityTransform) const;
+-    FloatRect computeBounds(const Region& activeTransparentRegion) const;
+-    FloatRect computeBounds() const;
++    Rect computeBounds(const Region& activeTransparentRegion) const;
++    Rect computeBounds() const;
+ 
+     int32_t getSequence() const { return sequence; }
+ 
+@@ -455,7 +454,7 @@ public:
+     // -----------------------------------------------------------------------
+ 
+     bool createHwcLayer(HWComposer* hwc, int32_t hwcId);
+-    bool destroyHwcLayer(int32_t hwcId);
++    void destroyHwcLayer(int32_t hwcId);
+     void destroyAllHwcLayers();
+ 
+     bool hasHwcLayer(int32_t hwcId) {
+diff --git a/services/surfaceflinger/LayerVector.cpp b/services/surfaceflinger/LayerVector.cpp
+index d0f8fbea2..2233e78c2 100644
+--- a/services/surfaceflinger/LayerVector.cpp
++++ b/services/surfaceflinger/LayerVector.cpp
+@@ -35,17 +35,14 @@ int LayerVector::do_compare(const void* lhs, const void* rhs) const
+     uint32_t ls = l->getCurrentState().layerStack;
+     uint32_t rs = r->getCurrentState().layerStack;
+     if (ls != rs)
+-        return (ls > rs) ? 1 : -1;
++        return ls - rs;
+ 
+     uint32_t lz = l->getCurrentState().z;
+     uint32_t rz = r->getCurrentState().z;
+     if (lz != rz)
+-        return (lz > rz) ? 1 : -1;
++        return lz - rz;
+ 
+-    if (l->sequence == r->sequence)
+-        return 0;
+-
+-    return (l->sequence > r->sequence) ? 1 : -1;
++    return l->sequence - r->sequence;
+ }
+ 
+ void LayerVector::traverseInZOrder(StateSet stateSet, const Visitor& visitor) const {
+diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
+index e32fa58bc..224f1fdbc 100644
+--- a/services/surfaceflinger/SurfaceFlinger.h
++++ b/services/surfaceflinger/SurfaceFlinger.h
+@@ -627,6 +627,9 @@ private:
+     void updateVrFlinger();
+ #endif
+ 
++     // Panel hardware rotation
++     int32_t mHardwareRotation;
++
+     /* ------------------------------------------------------------------------
+      * Attributes
+      */
+diff --git a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+index ee938eff9..2aaba00e1 100644
+--- a/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
++++ b/services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+@@ -97,6 +97,20 @@
+ 
+ extern "C" EGLAPI const char* eglQueryStringImplementationANDROID(EGLDisplay dpy, EGLint name);
+ 
++static int convertRotation(android::Transform::orientation_flags rotation)
++{
++    switch (rotation) {
++        case android::Transform::ROT_90:
++            return 1;
++        case android::Transform::ROT_180:
++            return 2;
++        case android::Transform::ROT_270:
++            return 3;
++        default:
++            return 0;
++    }
++}
++
+ namespace android {
+ // ---------------------------------------------------------------------------
+ 
+@@ -207,6 +221,10 @@ SurfaceFlinger::SurfaceFlinger()
+     property_get("ro.sf.disable_triple_buffer", value, "1");
+     mLayerTripleBufferingDisabled = atoi(value);
+     ALOGI_IF(mLayerTripleBufferingDisabled, "Disabling Triple Buffering");
++
++    // we store the value as orientation:
++    // 90 -> 1, 180 -> 2, 270 -> 3
++    mHardwareRotation = property_get_int32("ro.sf.hwrotation", 0) / 90;
+ }
+ 
+ void SurfaceFlinger::onFirstRef()
+@@ -309,9 +327,6 @@ void SurfaceFlinger::createBuiltinDisplayLocked(DisplayDevice::DisplayType type)
+     mBuiltinDisplays[type] = new BBinder();
+     // All non-virtual displays are currently considered secure.
+     DisplayDeviceState info(type, true);
+-    info.displayName =
+-            type== DisplayDevice::DISPLAY_PRIMARY ? "Built-in Screen" : "External Screen";
+-
+     mCurrentState.displays.add(mBuiltinDisplays[type], info);
+     mInterceptor.saveDisplayCreation(info);
+ }
+@@ -528,6 +543,7 @@ void SurfaceFlinger::init() {
+     mSFEventThread = new EventThread(sfVsyncSrc, *this, true);
+     mEventQueue.setEventThread(mSFEventThread);
+ 
++#ifndef HARDWARE_SCHED_FIFO
+     // set EventThread and SFEventThread to SCHED_FIFO to minimize jitter
+     struct sched_param param = {0};
+     param.sched_priority = 2;
+@@ -537,7 +553,7 @@ void SurfaceFlinger::init() {
+     if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
+         ALOGE("Couldn't set SCHED_FIFO for EventThread");
+     }
+-
++#endif
+     // Initialize the H/W composer object.  There may or may not be an
+     // actual hardware composer underneath.
+     mHwc.reset(new HWComposer(this,
+@@ -729,10 +745,18 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+             info.orientation = 0;
+         }
+ 
+-        info.w = hwConfig.width;
+-        info.h = hwConfig.height;
+-        info.xdpi = xdpi;
+-        info.ydpi = ydpi;
++        if ((type == DisplayDevice::DISPLAY_PRIMARY) &&
++                (mHardwareRotation & DisplayState::eOrientationSwapMask)) {
++            info.h = hwConfig.width;
++            info.w = hwConfig.height;
++            info.xdpi = ydpi;
++            info.ydpi = xdpi;
++        } else {
++            info.w = hwConfig.width;
++            info.h = hwConfig.height;
++            info.xdpi = xdpi;
++            info.ydpi = ydpi;
++        }
+         info.fps = float(1e9 / hwConfig.refresh);
+         info.appVsyncOffset = vsyncPhaseOffsetNs;
+ 
+@@ -2611,14 +2635,6 @@ uint32_t SurfaceFlinger::setClientStateLocked(
+                 }
+             }
+         }
+-        if (what & layer_state_t::eRelativeLayerChanged) {
+-            ssize_t idx = mCurrentState.layersSortedByZ.indexOf(layer);
+-            if (layer->setRelativeLayer(s.relativeLayerHandle, s.z)) {
+-                mCurrentState.layersSortedByZ.removeAt(idx);
+-                mCurrentState.layersSortedByZ.add(layer);
+-                flags |= eTransactionNeeded|eTraversalNeeded;
+-            }
+-        }
+         if (what & layer_state_t::eSizeChanged) {
+             if (layer->setSize(s.w, s.h)) {
+                 flags |= eTraversalNeeded;
+@@ -2924,17 +2940,21 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
+         mHasPoweredOff = true;
+         repaintEverything();
+ 
++#ifndef HARDWARE_SCHED_FIFO
+         struct sched_param param = {0};
+         param.sched_priority = 1;
+         if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
+             ALOGW("Couldn't set SCHED_FIFO on display on");
+         }
++#endif
+     } else if (mode == HWC_POWER_MODE_OFF) {
++#ifndef HARDWARE_SCHED_FIFO
+         // Turn off the display
+         struct sched_param param = {0};
+         if (sched_setscheduler(0, SCHED_OTHER, &param) != 0) {
+             ALOGW("Couldn't set SCHED_OTHER on display off");
+         }
++#endif
+ 
+         if (type == DisplayDevice::DISPLAY_PRIMARY) {
+             disableHardwareVsync(true); // also cancels any in-progress resync
+@@ -3659,6 +3679,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+     uint32_t code;
+     Parcel const* data;
+     Parcel* reply;
++    Mutex mLock;
+ 
+     enum {
+         MSG_API_CALL,
+@@ -3672,6 +3693,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+      */
+     virtual status_t transact(uint32_t code,
+             const Parcel& data, Parcel* reply, uint32_t /* flags */) {
++        mLock.lock(); 
+         this->code = code;
+         this->data = &data;
+         this->reply = reply;
+@@ -3689,6 +3711,7 @@ class GraphicProducerWrapper : public BBinder, public MessageHandler {
+             looper->sendMessage(this, Message(MSG_API_CALL));
+             barrier.wait();
+         }
++        mLock.unlock();
+         return result;
+     }
+ 
+@@ -3927,8 +3950,20 @@ status_t SurfaceFlinger::captureScreenImplLocked(
+     uint32_t hw_w = hw->getWidth();
+     uint32_t hw_h = hw->getHeight();
+ 
+-    if (rotation & Transform::ROT_90) {
+-        std::swap(hw_w, hw_h);
++    switch ((convertRotation(rotation) + mHardwareRotation) % 4) {
++        case 1:
++            std::swap(hw_w, hw_h);
++            rotation = Transform::ROT_90;
++            break;
++        case 2:
++            rotation = Transform::ROT_180;
++            break;
++        case 3:
++            std::swap(hw_w, hw_h);
++            rotation = Transform::ROT_270;
++            break;
++        default:
++            break;
+     }
+ 
+     if ((reqWidth > hw_w) || (reqHeight > hw_h)) {
+-- 
+2.17.0
+

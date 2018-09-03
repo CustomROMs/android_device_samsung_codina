@@ -1,0 +1,34 @@
+From 6d0ad2bce02610b8f0b6aca48c61bc73738fd04e Mon Sep 17 00:00:00 2001
+From: Ethan Chen <intervigil@gmail.com>
+Date: Tue, 5 Dec 2017 20:35:20 -0800
+Subject: [PATCH 32/90] build: Make systemimage depend on installed kernel if
+ system is root
+
+If the system image is the rootfs, then any potential kernel modules
+need to be present on the rootfs if specified with
+NEEDS_KERNEL_MODULE_ROOT. Force the dependency to ensure that kernel
+module installation occurs before system.img generation.
+
+Change-Id: I5b9175fcbd8ac2884eb23f299c2d79ad20039899
+---
+ core/Makefile | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index f83575584..83fc604bb 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1601,6 +1601,10 @@ INTERNAL_SYSTEMIMAGE_FILES := $(filter $(TARGET_OUT)/%, \
+ 
+ FULL_SYSTEMIMAGE_DEPS := $(INTERNAL_SYSTEMIMAGE_FILES) $(INTERNAL_USERIMAGES_DEPS)
+ 
++ifeq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
++    FULL_SYSTEMIMAGE_DEPS += $(INSTALLED_KERNEL_TARGET)
++endif
++
+ # ASAN libraries in the system image - add dependency.
+ ASAN_IN_SYSTEM_INSTALLED := $(TARGET_OUT)/asan.tar.bz2
+ ifneq (,$(SANITIZE_TARGET))
+-- 
+2.17.0
+

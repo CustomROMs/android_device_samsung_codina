@@ -1,0 +1,60 @@
+From a90b08331156093acda95a1235f792d086393e27 Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <invisiblek@cyanogenmod.org>
+Date: Mon, 5 Sep 2016 18:17:44 -0500
+Subject: [PATCH 83/90] build: don't dex preopt by default on linux
+
+Change-Id: I56385d5ace074118ce6fad2081edd374a3e670f1
+---
+ core/dex_preopt.mk | 36 ++++++++++++------------------------
+ 1 file changed, 12 insertions(+), 24 deletions(-)
+
+diff --git a/core/dex_preopt.mk b/core/dex_preopt.mk
+index 39cbc5c64..e62aff080 100644
+--- a/core/dex_preopt.mk
++++ b/core/dex_preopt.mk
+@@ -33,30 +33,18 @@ endif
+ 
+ # The default values for pre-opting: always preopt PIC.
+ # Conditional to building on linux, as dex2oat currently does not work on darwin.
+-ifeq ($(HOST_OS),linux)
+-  WITH_DEXPREOPT ?= true
+-  ifneq (user,$(TARGET_BUILD_VARIANT))
+-    # Don't strip for quick development turnarounds.
+-    DEX_PREOPT_DEFAULT := nostripping
+-    # For an eng build only pre-opt the boot image and system server. This gives reasonable performance
+-    # and still allows a simple workflow: building in frameworks/base and syncing.
+-    WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY ?= true
+-  endif
+-  # Add mini-debug-info to the boot classpath unless explicitly asked not to.
+-  ifneq (false,$(WITH_DEXPREOPT_DEBUG_INFO))
+-    PRODUCT_DEX_PREOPT_BOOT_FLAGS += --generate-mini-debug-info
+-  endif
+-
+-  # Non eng linux builds must have preopt enabled so that system server doesn't run as interpreter
+-  # only. b/74209329
+-  ifeq (,$(filter eng, $(TARGET_BUILD_VARIANT)))
+-    ifneq (true,$(WITH_DEXPREOPT))
+-      ifneq (true,$(WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY))
+-        $(call pretty-error, DEXPREOPT must be enabled for user and userdebug builds)
+-      endif
+-    endif
+-  endif
+-endif
++#ifeq ($(HOST_OS),linux)
++#  WITH_DEXPREOPT ?= true
++# For an eng build only pre-opt the boot image and system server. This gives reasonable performance
++# and still allows a simple workflow: building in frameworks/base and syncing.
++#  ifeq (eng,$(TARGET_BUILD_VARIANT))
++#    WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY ?= true
++#  endif
++# Add mini-debug-info to the boot classpath unless explicitly asked not to.
++#  ifneq (false,$(WITH_DEXPREOPT_DEBUG_INFO))
++#    PRODUCT_DEX_PREOPT_BOOT_FLAGS += --generate-mini-debug-info
++#  endif
++#endif
+ 
+ GLOBAL_DEXPREOPT_FLAGS :=
+ 
+-- 
+2.17.0
+

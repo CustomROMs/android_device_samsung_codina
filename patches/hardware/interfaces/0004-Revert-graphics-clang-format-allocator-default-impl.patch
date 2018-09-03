@@ -1,0 +1,318 @@
+From 7f5bb127d1d055078c427a37beaa875c36b17583 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:03:49 +0300
+Subject: [PATCH 4/8] Revert "graphics: clang-format allocator default impl"
+
+This reverts commit 864c9f82340cae767c3665c91abe3cfc7928ac64.
+
+Change-Id: I032776d9e759e05cbfe3db93e230dcca5e102b6c
+---
+ graphics/allocator/2.0/default/Gralloc.cpp    | 12 ++--
+ graphics/allocator/2.0/default/Gralloc.h      | 14 ++---
+ graphics/allocator/2.0/default/service.cpp    |  2 +-
+ .../utils/passthrough/Gralloc0Allocator.cpp   | 18 +++---
+ .../2.0/utils/passthrough/Gralloc0Allocator.h |  6 +-
+ .../utils/passthrough/Gralloc1Allocator.cpp   | 56 ++++++++++++-------
+ .../2.0/utils/passthrough/Gralloc1Allocator.h |  6 +-
+ 7 files changed, 67 insertions(+), 47 deletions(-)
+
+diff --git a/graphics/allocator/2.0/default/Gralloc.cpp b/graphics/allocator/2.0/default/Gralloc.cpp
+index af578e8e1..273d3f584 100644
+--- a/graphics/allocator/2.0/default/Gralloc.cpp
++++ b/graphics/allocator/2.0/default/Gralloc.cpp
+@@ -49,9 +49,9 @@ IAllocator* HIDL_FETCH_IAllocator(const char* /* name */) {
+     }
+ }
+ 
+-}  // namespace implementation
+-}  // namespace V2_0
+-}  // namespace allocator
+-}  // namespace graphics
+-}  // namespace hardware
+-}  // namespace android
++} // namespace implementation
++} // namespace V2_0
++} // namespace allocator
++} // namespace graphics
++} // namespace hardware
++} // namespace android
+diff --git a/graphics/allocator/2.0/default/Gralloc.h b/graphics/allocator/2.0/default/Gralloc.h
+index 18c52023e..c79eeaa42 100644
+--- a/graphics/allocator/2.0/default/Gralloc.h
++++ b/graphics/allocator/2.0/default/Gralloc.h
+@@ -28,11 +28,11 @@ namespace implementation {
+ 
+ extern "C" IAllocator* HIDL_FETCH_IAllocator(const char* name);
+ 
+-}  // namespace implementation
+-}  // namespace V2_0
+-}  // namespace allocator
+-}  // namespace graphics
+-}  // namespace hardware
+-}  // namespace android
++} // namespace implementation
++} // namespace V2_0
++} // namespace allocator
++} // namespace graphics
++} // namespace hardware
++} // namespace android
+ 
+-#endif  // ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC_H
++#endif // ANDROID_HARDWARE_GRAPHICS_ALLOCATOR_V2_0_GRALLOC_H
+diff --git a/graphics/allocator/2.0/default/service.cpp b/graphics/allocator/2.0/default/service.cpp
+index bc0539a61..99f462cf2 100644
+--- a/graphics/allocator/2.0/default/service.cpp
++++ b/graphics/allocator/2.0/default/service.cpp
+@@ -20,8 +20,8 @@
+ 
+ #include <hidl/LegacySupport.h>
+ 
+-using android::hardware::defaultPassthroughServiceImplementation;
+ using android::hardware::graphics::allocator::V2_0::IAllocator;
++using android::hardware::defaultPassthroughServiceImplementation;
+ 
+ int main() {
+     return defaultPassthroughServiceImplementation<IAllocator>(4);
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.cpp b/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.cpp
+index b49370a39..3b62bb319 100644
+--- a/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.cpp
++++ b/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.cpp
+@@ -32,12 +32,14 @@ namespace allocator {
+ namespace V2_0 {
+ namespace implementation {
+ 
+-using android::hardware::graphics::mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
++using android::hardware::graphics::mapper::V2_0::implementation::
++    grallocDecodeBufferDescriptor;
+ 
+ Gralloc0Allocator::Gralloc0Allocator(const hw_module_t* module) {
+     int result = gralloc_open(module, &mDevice);
+     if (result) {
+-        LOG_ALWAYS_FATAL("failed to open gralloc0 device: %s", strerror(-result));
++        LOG_ALWAYS_FATAL("failed to open gralloc0 device: %s",
++                         strerror(-result));
+     }
+ }
+ 
+@@ -57,8 +59,8 @@ Return<void> Gralloc0Allocator::dumpDebugInfo(dumpDebugInfo_cb hidl_cb) {
+     return Void();
+ }
+ 
+-Return<void> Gralloc0Allocator::allocate(const BufferDescriptor& descriptor, uint32_t count,
+-                                         allocate_cb hidl_cb) {
++Return<void> Gralloc0Allocator::allocate(const BufferDescriptor& descriptor,
++                                         uint32_t count, allocate_cb hidl_cb) {
+     IMapper::BufferDescriptorInfo descriptorInfo;
+     if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
+         hidl_cb(Error::BAD_DESCRIPTOR, 0, hidl_vec<hidl_handle>());
+@@ -108,15 +110,17 @@ Return<void> Gralloc0Allocator::allocate(const BufferDescriptor& descriptor, uin
+ }
+ 
+ Error Gralloc0Allocator::allocateOne(const IMapper::BufferDescriptorInfo& info,
+-                                     buffer_handle_t* outBuffer, uint32_t* outStride) {
++                                     buffer_handle_t* outBuffer,
++                                     uint32_t* outStride) {
+     if (info.layerCount > 1 || (info.usage >> 32) != 0) {
+         return Error::BAD_VALUE;
+     }
+ 
+     buffer_handle_t buffer = nullptr;
+     int stride = 0;
+-    int result = mDevice->alloc(mDevice, info.width, info.height, static_cast<int>(info.format),
+-                                info.usage, &buffer, &stride);
++    int result = mDevice->alloc(mDevice, info.width, info.height,
++                                static_cast<int>(info.format), info.usage,
++                                &buffer, &stride);
+     if (result) {
+         switch (result) {
+             case -EINVAL:
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.h b/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.h
+index 605228204..0e90527f7 100644
+--- a/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.h
++++ b/graphics/allocator/2.0/utils/passthrough/Gralloc0Allocator.h
+@@ -28,9 +28,9 @@ namespace allocator {
+ namespace V2_0 {
+ namespace implementation {
+ 
++using android::hardware::graphics::mapper::V2_0::IMapper;
+ using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
+ using android::hardware::graphics::mapper::V2_0::Error;
+-using android::hardware::graphics::mapper::V2_0::IMapper;
+ 
+ class Gralloc0Allocator : public IAllocator {
+    public:
+@@ -43,8 +43,8 @@ class Gralloc0Allocator : public IAllocator {
+                           allocate_cb hidl_cb) override;
+ 
+    private:
+-    Error allocateOne(const IMapper::BufferDescriptorInfo& info, buffer_handle_t* outBuffer,
+-                      uint32_t* outStride);
++    Error allocateOne(const IMapper::BufferDescriptorInfo& info,
++                      buffer_handle_t* outBuffer, uint32_t* outStride);
+ 
+     alloc_device_t* mDevice;
+ };
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.cpp b/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.cpp
+index b7e27bb01..6cbb79155 100644
+--- a/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.cpp
++++ b/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.cpp
+@@ -33,13 +33,15 @@ namespace V2_0 {
+ namespace implementation {
+ 
+ using android::hardware::graphics::common::V1_0::BufferUsage;
+-using android::hardware::graphics::mapper::V2_0::implementation::grallocDecodeBufferDescriptor;
++using android::hardware::graphics::mapper::V2_0::implementation::
++    grallocDecodeBufferDescriptor;
+ 
+ Gralloc1Allocator::Gralloc1Allocator(const hw_module_t* module)
+     : mDevice(nullptr), mCapabilities(), mDispatch() {
+     int result = gralloc1_open(module, &mDevice);
+     if (result) {
+-        LOG_ALWAYS_FATAL("failed to open gralloc1 device: %s", strerror(-result));
++        LOG_ALWAYS_FATAL("failed to open gralloc1 device: %s",
++                         strerror(-result));
+     }
+ 
+     initCapabilities();
+@@ -67,7 +69,8 @@ void Gralloc1Allocator::initCapabilities() {
+ }
+ 
+ template <typename T>
+-void Gralloc1Allocator::initDispatch(gralloc1_function_descriptor_t desc, T* outPfn) {
++void Gralloc1Allocator::initDispatch(gralloc1_function_descriptor_t desc,
++                                     T* outPfn) {
+     auto pfn = mDevice->getFunction(mDevice, desc);
+     if (!pfn) {
+         LOG_ALWAYS_FATAL("failed to get gralloc1 function %d", desc);
+@@ -78,15 +81,20 @@ void Gralloc1Allocator::initDispatch(gralloc1_function_descriptor_t desc, T* out
+ 
+ void Gralloc1Allocator::initDispatch() {
+     initDispatch(GRALLOC1_FUNCTION_DUMP, &mDispatch.dump);
+-    initDispatch(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR, &mDispatch.createDescriptor);
+-    initDispatch(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR, &mDispatch.destroyDescriptor);
++    initDispatch(GRALLOC1_FUNCTION_CREATE_DESCRIPTOR,
++                 &mDispatch.createDescriptor);
++    initDispatch(GRALLOC1_FUNCTION_DESTROY_DESCRIPTOR,
++                 &mDispatch.destroyDescriptor);
+     initDispatch(GRALLOC1_FUNCTION_SET_DIMENSIONS, &mDispatch.setDimensions);
+     initDispatch(GRALLOC1_FUNCTION_SET_FORMAT, &mDispatch.setFormat);
+     if (mCapabilities.layeredBuffers) {
+-        initDispatch(GRALLOC1_FUNCTION_SET_LAYER_COUNT, &mDispatch.setLayerCount);
++        initDispatch(GRALLOC1_FUNCTION_SET_LAYER_COUNT,
++                     &mDispatch.setLayerCount);
+     }
+-    initDispatch(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE, &mDispatch.setConsumerUsage);
+-    initDispatch(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE, &mDispatch.setProducerUsage);
++    initDispatch(GRALLOC1_FUNCTION_SET_CONSUMER_USAGE,
++                 &mDispatch.setConsumerUsage);
++    initDispatch(GRALLOC1_FUNCTION_SET_PRODUCER_USAGE,
++                 &mDispatch.setProducerUsage);
+     initDispatch(GRALLOC1_FUNCTION_GET_STRIDE, &mDispatch.getStride);
+     initDispatch(GRALLOC1_FUNCTION_ALLOCATE, &mDispatch.allocate);
+     initDispatch(GRALLOC1_FUNCTION_RELEASE, &mDispatch.release);
+@@ -108,8 +116,8 @@ Return<void> Gralloc1Allocator::dumpDebugInfo(dumpDebugInfo_cb hidl_cb) {
+     return Void();
+ }
+ 
+-Return<void> Gralloc1Allocator::allocate(const BufferDescriptor& descriptor, uint32_t count,
+-                                         allocate_cb hidl_cb) {
++Return<void> Gralloc1Allocator::allocate(const BufferDescriptor& descriptor,
++                                         uint32_t count, allocate_cb hidl_cb) {
+     IMapper::BufferDescriptorInfo descriptorInfo;
+     if (!grallocDecodeBufferDescriptor(descriptor, &descriptorInfo)) {
+         hidl_cb(Error::BAD_DESCRIPTOR, 0, hidl_vec<hidl_handle>());
+@@ -191,8 +199,9 @@ uint64_t Gralloc1Allocator::toProducerUsage(uint64_t usage) {
+     // this is potentially broken as we have no idea which private flags
+     // should be filtered out
+     uint64_t producerUsage =
+-        usage & ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
+-                                       BufferUsage::GPU_DATA_BUFFER);
++        usage &
++        ~static_cast<uint64_t>(BufferUsage::CPU_READ_MASK | BufferUsage::CPU_WRITE_MASK |
++                               BufferUsage::GPU_DATA_BUFFER);
+ 
+     switch (usage & BufferUsage::CPU_WRITE_MASK) {
+         case static_cast<uint64_t>(BufferUsage::CPU_WRITE_RARELY):
+@@ -249,30 +258,36 @@ uint64_t Gralloc1Allocator::toConsumerUsage(uint64_t usage) {
+     return consumerUsage;
+ }
+ 
+-Error Gralloc1Allocator::createDescriptor(const IMapper::BufferDescriptorInfo& info,
+-                                          gralloc1_buffer_descriptor_t* outDescriptor) {
++Error Gralloc1Allocator::createDescriptor(
++    const IMapper::BufferDescriptorInfo& info,
++    gralloc1_buffer_descriptor_t* outDescriptor) {
+     gralloc1_buffer_descriptor_t descriptor;
+ 
+     int32_t error = mDispatch.createDescriptor(mDevice, &descriptor);
+ 
+     if (error == GRALLOC1_ERROR_NONE) {
+-        error = mDispatch.setDimensions(mDevice, descriptor, info.width, info.height);
++        error = mDispatch.setDimensions(mDevice, descriptor, info.width,
++                                        info.height);
+     }
+     if (error == GRALLOC1_ERROR_NONE) {
+-        error = mDispatch.setFormat(mDevice, descriptor, static_cast<int32_t>(info.format));
++        error = mDispatch.setFormat(mDevice, descriptor,
++                                    static_cast<int32_t>(info.format));
+     }
+     if (error == GRALLOC1_ERROR_NONE) {
+         if (mCapabilities.layeredBuffers) {
+-            error = mDispatch.setLayerCount(mDevice, descriptor, info.layerCount);
++            error =
++                mDispatch.setLayerCount(mDevice, descriptor, info.layerCount);
+         } else if (info.layerCount > 1) {
+             error = GRALLOC1_ERROR_UNSUPPORTED;
+         }
+     }
+     if (error == GRALLOC1_ERROR_NONE) {
+-        error = mDispatch.setProducerUsage(mDevice, descriptor, toProducerUsage(info.usage));
++        error = mDispatch.setProducerUsage(mDevice, descriptor,
++                                           toProducerUsage(info.usage));
+     }
+     if (error == GRALLOC1_ERROR_NONE) {
+-        error = mDispatch.setConsumerUsage(mDevice, descriptor, toConsumerUsage(info.usage));
++        error = mDispatch.setConsumerUsage(mDevice, descriptor,
++                                           toConsumerUsage(info.usage));
+     }
+ 
+     if (error == GRALLOC1_ERROR_NONE) {
+@@ -285,7 +300,8 @@ Error Gralloc1Allocator::createDescriptor(const IMapper::BufferDescriptorInfo& i
+ }
+ 
+ Error Gralloc1Allocator::allocateOne(gralloc1_buffer_descriptor_t descriptor,
+-                                     buffer_handle_t* outBuffer, uint32_t* outStride) {
++                                     buffer_handle_t* outBuffer,
++                                     uint32_t* outStride) {
+     buffer_handle_t buffer = nullptr;
+     int32_t error = mDispatch.allocate(mDevice, 1, &descriptor, &buffer);
+     if (error != GRALLOC1_ERROR_NONE && error != GRALLOC1_ERROR_NOT_SHARED) {
+diff --git a/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.h b/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.h
+index 686e8b35d..7b5a96613 100644
+--- a/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.h
++++ b/graphics/allocator/2.0/utils/passthrough/Gralloc1Allocator.h
+@@ -28,9 +28,9 @@ namespace allocator {
+ namespace V2_0 {
+ namespace implementation {
+ 
++using android::hardware::graphics::mapper::V2_0::IMapper;
+ using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
+ using android::hardware::graphics::mapper::V2_0::Error;
+-using android::hardware::graphics::mapper::V2_0::IMapper;
+ 
+ class Gralloc1Allocator : public IAllocator {
+    public:
+@@ -55,8 +55,8 @@ class Gralloc1Allocator : public IAllocator {
+ 
+     Error createDescriptor(const IMapper::BufferDescriptorInfo& info,
+                            gralloc1_buffer_descriptor_t* outDescriptor);
+-    Error allocateOne(gralloc1_buffer_descriptor_t descriptor, buffer_handle_t* outBuffer,
+-                      uint32_t* outStride);
++    Error allocateOne(gralloc1_buffer_descriptor_t descriptor,
++                      buffer_handle_t* outBuffer, uint32_t* outStride);
+ 
+     gralloc1_device_t* mDevice;
+ 
+-- 
+2.17.0
+

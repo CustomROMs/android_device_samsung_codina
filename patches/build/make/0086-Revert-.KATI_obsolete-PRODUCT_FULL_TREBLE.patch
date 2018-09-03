@@ -1,0 +1,31 @@
+From e8acdd1ae4534e9ac6f2955473c504c7c21a3a5c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 26 Aug 2018 18:13:30 +0300
+Subject: [PATCH 86/90] Revert ".KATI_obsolete PRODUCT_FULL_TREBLE."
+
+This reverts commit 5dcea5de76ef0edb69b5f8aa71a99be707ccb324.
+
+Change-Id: Ide379d9ecbaecf560ff7eadc98d7aaa7f4d036a3
+---
+ core/main.mk | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index 5e862920a..ab432ee9c 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -202,11 +202,6 @@ endif
+ 
+ ADDITIONAL_BUILD_PROPERTIES += ro.treble.enabled=${PRODUCT_FULL_TREBLE}
+ 
+-$(KATI_obsolete_var PRODUCT_FULL_TREBLE,\
+-	Code should be written to work regardless of a device being Treble or \
+-	variables like PRODUCT_SEPOLICY_SPLIT should be used until that is \
+-	possible.)
+-
+ # Sets ro.actionable_compatible_property.enabled to know on runtime whether the whitelist
+ # of actionable compatible properties is enabled or not.
+ ifeq ($(PRODUCT_ACTIONABLE_COMPATIBLE_PROPERTY_DISABLE),true)
+-- 
+2.17.0
+

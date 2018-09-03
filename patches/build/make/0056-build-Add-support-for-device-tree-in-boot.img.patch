@@ -1,0 +1,171 @@
+From c81823f091bdd89135b77c95e3458a9b1eb3416e Mon Sep 17 00:00:00 2001
+From: David Ng <dave@codeaurora.org>
+Date: Fri, 27 Jul 2012 18:39:48 -0700
+Subject: [PATCH 56/90] build: Add support for device tree in boot.img
+
+Add support for optional device tree image (dt.img)
+to boot and recovery images.  Some devices use kernel device
+tree and this adds the device tree image as a section within
+the boot/recovery images.
+
+Change-Id: I91431ef2f4b86485895678916e39a8572be878eb
+
+Build: add DT image variable to Makefile
+
+DT image variable is currently present in
+generate_extra_images.mk.This file is moved to
+build/tasks to support persist image generation
+during parallel make. As build/tasks is called
+at the end of Makefile, DT image variable is not
+available for other images generation like boot and
+recovery. Adding this variable in Makefile ensures
+the variable is defined before usage
+
+Change-Id: I21f675d8ce648dc1cf1f4f3aede33278300e08c9
+CRs-fixed: 548299
+
+Fix case where boot/recovery.img were being built with wrong params.
+
+The boot and recovery images  now get built using the same params during ota package
+generation as during a normal build.
+
+Change-Id: I93d46e11a4245288f0e87c87a2e4bf45ac5aff69
+
+Fix the extra dt.img compilation issue.
+
+Add support for optional device tree image (dt.img)
+for device that doesnt have TARGET_BOOTIMAGE_USE_EXT2
+
+Change-Id: I6e07b3ca6d049a8ebdad7ea304b4f39e7c846151
+
+releasetools: Store and use the dt image file through target files
+
+Target files packages may be used for signing images separate from the
+build process. Store the device tree image file in the target files
+package so it can be used during the signing process.
+
+Change-Id: Ie8507121fa9c4ba57ecffeab05bd859ae5f5b788
+---
+ core/Makefile                | 37 +++++++++++++++++++++++++++++++++---
+ tools/releasetools/common.py | 15 +++++++++++++++
+ 2 files changed, 49 insertions(+), 3 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 156d27145..d42a13919 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -761,6 +761,13 @@ INTERNAL_MKBOOTIMG_VERSION_ARGS := \
+     --os_version $(PLATFORM_VERSION) \
+     --os_patch_level $(PLATFORM_SECURITY_PATCH)
+ 
++INSTALLED_DTIMAGE_TARGET := $(PRODUCT_OUT)/dt.img
++
++ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DT)),true)
++  INTERNAL_BOOTIMAGE_ARGS += --dt $(INSTALLED_DTIMAGE_TARGET)
++  BOOTIMAGE_EXTRA_DEPS    := $(INSTALLED_DTIMAGE_TARGET)
++endif
++
+ # BOARD_USES_RECOVERY_AS_BOOT = true must have BOARD_BUILD_SYSTEM_ROOT_IMAGE = true.
+ ifeq ($(BOARD_USES_RECOVERY_AS_BOOT),true)
+ ifneq ($(BOARD_BUILD_SYSTEM_ROOT_IMAGE),true)
+@@ -814,7 +821,7 @@ bootimage-nodeps: $(MKBOOTIMG) $(BOOT_SIGNER)
+ 
+ else ifeq (true,$(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_SUPPORTS_VBOOT)) # PRODUCT_SUPPORTS_BOOT_SIGNER != true
+ 
+-$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(VBOOT_SIGNER) $(FUTILITY)
++$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(VBOOT_SIGNER) $(FUTILITY) $(BOOTIMAGE_EXTRA_DEPS)
+ 	$(call pretty,"Target boot image: $@")
+ 	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@.unsigned
+ 	$(VBOOT_SIGNER) $(FUTILITY) $@.unsigned $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VBOOT_SIGNING_KEY).vbpubk $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VBOOT_SIGNING_KEY).vbprivk $(PRODUCTS.$(INTERNAL_PRODUCT).PRODUCT_VBOOT_SIGNING_SUBKEY).vbprivk $@.keyblock $@
+@@ -829,7 +836,7 @@ bootimage-nodeps: $(MKBOOTIMG) $(VBOOT_SIGNER) $(FUTILITY)
+ 
+ else # PRODUCT_SUPPORTS_VBOOT != true
+ 
+-$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES)
++$(INSTALLED_BOOTIMAGE_TARGET): $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_FILES) $(BOOTIMAGE_EXTRA_DEPS)
+ 	$(call pretty,"Target boot image: $@")
+ 	$(hide) $(MKBOOTIMG) $(INTERNAL_BOOTIMAGE_ARGS) $(INTERNAL_MKBOOTIMG_VERSION_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@
+ 	$(hide) $(call assert-max-image-size,$@,$(BOARD_BOOTIMAGE_PARTITION_SIZE))
+@@ -1430,6 +1437,10 @@ endif
+ ifdef BOARD_INCLUDE_RECOVERY_DTBO
+   INTERNAL_RECOVERYIMAGE_ARGS += --recovery_dtbo $(BOARD_PREBUILT_DTBOIMAGE)
+ endif
++ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DT)),true)
++  INTERNAL_RECOVERYIMAGE_ARGS += --dt $(INSTALLED_DTIMAGE_TARGET)
++  RECOVERYIMAGE_EXTRA_DEPS    := $(INSTALLED_DTIMAGE_TARGET)
++endif
+ 
+ # Keys authorized to sign OTA packages this build will accept.  The
+ # build always uses dev-keys for this; release packaging tools will
+@@ -1563,7 +1574,8 @@ $(recovery_ramdisk): $(MINIGZIP) \
+ 		$(hide) $(RECOVERY_RAMDISK_COMPRESSOR) < $(recovery_uncompressed_ramdisk) > $@
+ 
+ ifndef BOARD_CUSTOM_BOOTIMG_MK
+-$(INSTALLED_RECOVERYIMAGE_TARGET): $(MKBOOTIMG) $(recovery_ramdisk) $(recovery_kernel)
++$(INSTALLED_RECOVERYIMAGE_TARGET): $(MKBOOTIMG) $(recovery_ramdisk) $(recovery_kernel) \
++		$(RECOVERYIMAGE_EXTRA_DEPS)
+ 		@echo ----- Making recovery image ------
+ 		$(call build-recoveryimage-target, $@)
+ endif # BOARD_CUSTOM_BOOTIMG_MK
+@@ -2793,6 +2805,15 @@ endif
+ ifdef BOARD_KERNEL_PAGESIZE
+ 	$(hide) echo "$(BOARD_KERNEL_PAGESIZE)" > $(zip_root)/$(PRIVATE_RECOVERY_OUT)/pagesize
+ endif
++ifdef BOARD_KERNEL_TAGS_ADDR
++	$(hide) echo "$(BOARD_KERNEL_TAGS_ADDR)" > $(zip_root)/$(PRIVATE_RECOVERY_OUT)/tagsaddr
++endif
++ifdef BOARD_RAMDISK_OFFSET
++	$(hide) echo "$(BOARD_RAMDISK_OFFSET)" > $(zip_root)/$(PRIVATE_RECOVERY_OUT)/ramdisk_offset
++endif
++ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DT)),true)
++	$(hide) $(ACP) $(INSTALLED_DTIMAGE_TARGET) $(zip_root)/$(PRIVATE_RECOVERY_OUT)/dt
++endif
+ endif # INSTALLED_RECOVERYIMAGE_TARGET defined or BOARD_USES_RECOVERY_AS_BOOT is true
+ 	@# Components of the boot image
+ 	$(hide) mkdir -p $(zip_root)/BOOT
+@@ -2821,6 +2842,16 @@ endif
+ ifdef BOARD_KERNEL_PAGESIZE
+ 	$(hide) echo "$(BOARD_KERNEL_PAGESIZE)" > $(zip_root)/BOOT/pagesize
+ endif
++ifdef BOARD_KERNEL_TAGS_ADDR
++	$(hide) echo "$(BOARD_KERNEL_TAGS_ADDR)" > $(zip_root)/BOOT/tagsaddr
++endif
++ifdef BOARD_RAMDISK_OFFSET
++	$(hide) echo "$(BOARD_RAMDISK_OFFSET)" > $(zip_root)/BOOT/ramdisk_offset
++endif
++
++ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DT)),true)
++	$(hide) $(ACP) $(INSTALLED_DTIMAGE_TARGET) $(zip_root)/BOOT/dt
++endif
+ endif # BOARD_USES_RECOVERY_AS_BOOT
+ 	$(hide) $(foreach t,$(INSTALLED_RADIOIMAGE_TARGET),\
+ 	            mkdir -p $(zip_root)/RADIO; \
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 01e1a89e2..e44417a54 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -441,6 +441,21 @@ def _BuildBootableImage(sourcedir, fs_config_file, info_dict=None,
+     cmd.append("--pagesize")
+     cmd.append(open(fn).read().rstrip("\n"))
+ 
++  fn = os.path.join(sourcedir, "tagsaddr")
++  if os.access(fn, os.F_OK):
++    cmd.append("--tags-addr")
++    cmd.append(open(fn).read().rstrip("\n"))
++
++  fn = os.path.join(sourcedir, "ramdisk_offset")
++  if os.access(fn, os.F_OK):
++    cmd.append("--ramdisk_offset")
++    cmd.append(open(fn).read().rstrip("\n"))
++
++  fn = os.path.join(sourcedir, "dt")
++  if os.access(fn, os.F_OK):
++    cmd.append("--dt")
++    cmd.append(fn)
++
+   args = info_dict.get("mkbootimg_args", None)
+   if args and args.strip():
+     cmd.extend(shlex.split(args))
+-- 
+2.17.0
+

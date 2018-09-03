@@ -1,0 +1,98 @@
+From 9b2a3cf6443841e1d8a19a7afd7ad4fef982d355 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 03:04:16 +0300
+Subject: [PATCH 7/8] Revert "graphics: move libgralloc1-adapter"
+
+This reverts commit d6695d5bdc83be03d775a91d961dfa5c89543ac1.
+
+Change-Id: I38e6c94c7853420181d541bac56616af2dc5035b
+---
+ graphics/allocator/2.0/default/Android.bp              | 10 ++++++++++
+ .../Gralloc1On0Adapter.cpp                             |  1 -
+ .../gralloc1-adapter => default}/Gralloc1On0Adapter.h  |  0
+ .../gralloc1-adapter => default}/gralloc1-adapter.cpp  |  0
+ .../gralloc1-adapter => default}/gralloc1-adapter.h    |  0
+ graphics/allocator/2.0/utils/OWNERS                    |  4 ----
+ .../allocator/2.0/utils/gralloc1-adapter/Android.bp    | 10 ----------
+ 7 files changed, 10 insertions(+), 15 deletions(-)
+ rename graphics/allocator/2.0/{utils/gralloc1-adapter => default}/Gralloc1On0Adapter.cpp (99%)
+ rename graphics/allocator/2.0/{utils/gralloc1-adapter => default}/Gralloc1On0Adapter.h (100%)
+ rename graphics/allocator/2.0/{utils/gralloc1-adapter => default}/gralloc1-adapter.cpp (100%)
+ rename graphics/allocator/2.0/{utils/gralloc1-adapter => default}/gralloc1-adapter.h (100%)
+ delete mode 100644 graphics/allocator/2.0/utils/OWNERS
+ delete mode 100644 graphics/allocator/2.0/utils/gralloc1-adapter/Android.bp
+
+diff --git a/graphics/allocator/2.0/default/Android.bp b/graphics/allocator/2.0/default/Android.bp
+index 796403254..9968f41f9 100644
+--- a/graphics/allocator/2.0/default/Android.bp
++++ b/graphics/allocator/2.0/default/Android.bp
+@@ -36,3 +36,13 @@ cc_binary {
+         "libutils",
+     ],
+ }
++
++cc_library_static {
++    name: "libgralloc1-adapter",
++    defaults: ["hidl_defaults"],
++    srcs: ["gralloc1-adapter.cpp", "Gralloc1On0Adapter.cpp"],
++    include_dirs: ["system/core/libsync/include"],
++    cflags: ["-Wall", "-Wextra"],
++    export_include_dirs: ["."],
++    whole_static_libs: ["libgrallocusage"],
++}
+diff --git a/graphics/allocator/2.0/utils/gralloc1-adapter/Gralloc1On0Adapter.cpp b/graphics/allocator/2.0/default/Gralloc1On0Adapter.cpp
+similarity index 99%
+rename from graphics/allocator/2.0/utils/gralloc1-adapter/Gralloc1On0Adapter.cpp
+rename to graphics/allocator/2.0/default/Gralloc1On0Adapter.cpp
+index b7ed58ceb..041ce777d 100644
+--- a/graphics/allocator/2.0/utils/gralloc1-adapter/Gralloc1On0Adapter.cpp
++++ b/graphics/allocator/2.0/default/Gralloc1On0Adapter.cpp
+@@ -29,7 +29,6 @@
+ #include <sync/sync.h>
+ 
+ #include <inttypes.h>
+-#include <unistd.h>
+ 
+ template <typename PFN, typename T>
+ static gralloc1_function_pointer_t asFP(T function)
+diff --git a/graphics/allocator/2.0/utils/gralloc1-adapter/Gralloc1On0Adapter.h b/graphics/allocator/2.0/default/Gralloc1On0Adapter.h
+similarity index 100%
+rename from graphics/allocator/2.0/utils/gralloc1-adapter/Gralloc1On0Adapter.h
+rename to graphics/allocator/2.0/default/Gralloc1On0Adapter.h
+diff --git a/graphics/allocator/2.0/utils/gralloc1-adapter/gralloc1-adapter.cpp b/graphics/allocator/2.0/default/gralloc1-adapter.cpp
+similarity index 100%
+rename from graphics/allocator/2.0/utils/gralloc1-adapter/gralloc1-adapter.cpp
+rename to graphics/allocator/2.0/default/gralloc1-adapter.cpp
+diff --git a/graphics/allocator/2.0/utils/gralloc1-adapter/gralloc1-adapter.h b/graphics/allocator/2.0/default/gralloc1-adapter.h
+similarity index 100%
+rename from graphics/allocator/2.0/utils/gralloc1-adapter/gralloc1-adapter.h
+rename to graphics/allocator/2.0/default/gralloc1-adapter.h
+diff --git a/graphics/allocator/2.0/utils/OWNERS b/graphics/allocator/2.0/utils/OWNERS
+deleted file mode 100644
+index 3aa5fa1ff..000000000
+--- a/graphics/allocator/2.0/utils/OWNERS
++++ /dev/null
+@@ -1,4 +0,0 @@
+-# Graphics team
+-jessehall@google.com
+-olv@google.com
+-stoza@google.com
+diff --git a/graphics/allocator/2.0/utils/gralloc1-adapter/Android.bp b/graphics/allocator/2.0/utils/gralloc1-adapter/Android.bp
+deleted file mode 100644
+index 9cb53e363..000000000
+--- a/graphics/allocator/2.0/utils/gralloc1-adapter/Android.bp
++++ /dev/null
+@@ -1,10 +0,0 @@
+-cc_library_static {
+-    name: "libgralloc1-adapter",
+-    defaults: ["hidl_defaults"],
+-    vendor: true,
+-    srcs: ["gralloc1-adapter.cpp", "Gralloc1On0Adapter.cpp"],
+-    include_dirs: ["system/core/libsync/include"],
+-    export_include_dirs: ["."],
+-    whole_static_libs: ["libgrallocusage"],
+-    shared_libs: ["libhardware", "liblog"],
+-}
+-- 
+2.17.0
+

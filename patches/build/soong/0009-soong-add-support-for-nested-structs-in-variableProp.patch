@@ -1,0 +1,47 @@
+From fc8a7fefb3ab24dd4117b61a14ab6f867a1c6af6 Mon Sep 17 00:00:00 2001
+From: Simon Shields <simon@lineageos.org>
+Date: Mon, 4 Sep 2017 21:09:10 +1000
+Subject: [PATCH 09/16] soong: add support for nested structs in
+ variableProperties
+
+Change-Id: I0e5395ac70220f1d3a1c87c6112e33f84f526fea
+---
+ android/variable.go | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/android/variable.go b/android/variable.go
+index 77a3c391..53dd9437 100644
+--- a/android/variable.go
++++ b/android/variable.go
+@@ -293,7 +293,14 @@ func variableMutator(mctx BottomUpMutatorContext) {
+ 	a := module.base()
+ 	variableValues := reflect.ValueOf(&a.variableProperties.Product_variables).Elem()
+ 	zeroValues := reflect.ValueOf(zeroProductVariables.Product_variables)
++	valStruct := reflect.ValueOf(mctx.Config().productVariables)
+ 
++	doVariableMutation(mctx, a, variableValues, zeroValues, valStruct)
++
++}
++
++func doVariableMutation(mctx BottomUpMutatorContext, a *ModuleBase, variableValues reflect.Value, zeroValues reflect.Value,
++	valStruct reflect.Value) {
+ 	for i := 0; i < variableValues.NumField(); i++ {
+ 		variableValue := variableValues.Field(i)
+ 		zeroValue := zeroValues.Field(i)
+@@ -301,8 +308,11 @@ func variableMutator(mctx BottomUpMutatorContext) {
+ 		property := "product_variables." + proptools.PropertyNameForField(name)
+ 
+ 		// Check that the variable was set for the product
+-		val := reflect.ValueOf(mctx.Config().productVariables).FieldByName(name)
+-		if !val.IsValid() || val.Kind() != reflect.Ptr || val.IsNil() {
++		val := valStruct.FieldByName(name)
++        if val.IsValid() && val.Kind() == reflect.Struct {
++			doVariableMutation(mctx, a, variableValue, zeroValue, val)
++            continue
++        } else if !val.IsValid() || val.Kind() != reflect.Ptr || val.IsNil() {
+ 			continue
+ 		}
+ 
+-- 
+2.17.0
+

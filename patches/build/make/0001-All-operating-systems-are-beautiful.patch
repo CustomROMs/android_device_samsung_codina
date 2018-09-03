@@ -1,0 +1,30 @@
+From 5e0e7f087d0d946d8caea0a16fa84ebbb109e6cf Mon Sep 17 00:00:00 2001
+From: "Christopher N. Hesse" <raymanfx@gmail.com>
+Date: Wed, 16 Sep 2015 14:29:36 +0200
+Subject: [PATCH 01/90] All operating systems are beautiful
+
+Thou shalt not discriminate OS X.
+Allow building otapackage on darwin.
+
+Change-Id: I9c993d44ca74cb15631ea25d6105a3398ea57e95
+---
+ core/Makefile | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 33b697c4f..1f28934a7 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2436,9 +2436,6 @@ build_ota_package := true
+ ifeq ($(TARGET_SKIP_OTA_PACKAGE),true)
+ build_ota_package := false
+ endif
+-ifeq ($(BUILD_OS),darwin)
+-build_ota_package := false
+-endif
+ ifneq ($(strip $(SANITIZE_TARGET)),)
+ build_ota_package := false
+ endif
+-- 
+2.17.0
+

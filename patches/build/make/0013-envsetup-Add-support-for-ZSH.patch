@@ -1,0 +1,113 @@
+From bb8cf3573656c56e6b746a7098e4aa65a847035b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Emilio=20L=C3=B3pez?= <turl@tuxfamily.org>
+Date: Sun, 3 Nov 2013 13:05:43 -0300
+Subject: [PATCH 13/90] envsetup: Add support for ZSH
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Squash of the following changes:
+
+  Author: Emilio López <turl@tuxfamily.org>
+  Date:   Sun Nov 3 13:05:43 2013 -0300
+
+    envsetup: Mark zsh as compatible
+
+    Basic functionality has been tested on zsh 5.0.2 and has been found to
+    work correctly.
+
+    Change-Id: I02e5e3bedf56b43104c280d9737ae7b334357643
+
+  Author: Emilio López <turl@tuxfamily.org>
+  Date:   Sun Nov 3 13:02:13 2013 -0300
+
+    envsetup: do not print an error if complete fails
+
+    complete is a bashism; so it will fail on other shells. Avoid printing
+    an error if that is the case.
+
+    Change-Id: Id6d6311792f409cc3a697c7a2bb003863f1afe60
+
+  Author: Luca Stefani <luca.stefani.ge1@gmail.com>
+  Date:   Sun Jul 1 11:26:07 2018 +0200
+
+    Add support for ZSH arrays
+
+    * ZSH arrays are one-based
+
+    Change-Id: Id14396283b77c15e9f0fc6f94628bf312f696006
+
+Change-Id: I4eeea05294fdfcd12f612540d986deb7916c4dff
+---
+ envsetup.sh | 22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+diff --git a/envsetup.sh b/envsetup.sh
+index 12168e122..f18ccde1f 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -488,7 +488,7 @@ function choosevariant()
+             export TARGET_BUILD_VARIANT=$default_value
+         elif (echo -n $ANSWER | grep -q -e "^[0-9][0-9]*$") ; then
+             if [ "$ANSWER" -le "${#VARIANT_CHOICES[@]}" ] ; then
+-                export TARGET_BUILD_VARIANT=${VARIANT_CHOICES[$(($ANSWER-1))]}
++                export TARGET_BUILD_VARIANT=${VARIANT_CHOICES[$(($ANSWER-$_arrayoffset))]}
+             fi
+         else
+             if check_variant $ANSWER
+@@ -579,7 +579,7 @@ function lunch()
+         local choices=($(TARGET_BUILD_APPS= LUNCH_MENU_CHOICES="${LUNCH_MENU_CHOICES[@]}" get_build_var COMMON_LUNCH_CHOICES))
+         if [ $answer -le ${#choices[@]} ]
+         then
+-            selection=${choices[$(($answer-1))]}
++            selection=${LUNCH_MENU_CHOICES[$(($answer-$_arrayoffset))]}
+         fi
+     else
+         selection=$answer
+@@ -646,7 +646,7 @@ function _lunch()
+     COMPREPLY=( $(compgen -W "${COMMON_LUNCH_CHOICES_CACHE}" -- ${cur}) )
+     return 0
+ }
+-complete -F _lunch lunch
++complete -F _lunch lunch 2>/dev/null
+ 
+ # Configures the build to build unbundled apps.
+ # Run tapas with one or more app names (from LOCAL_PACKAGE_NAME)
+@@ -1444,7 +1444,7 @@ function godir () {
+                 echo "Invalid choice"
+                 continue
+             fi
+-            pathname=${lines[$(($choice-1))]}
++            pathname=${lines[$(($choice-$_arrayoffset))]}
+         done
+     else
+         pathname=${lines[0]}
+@@ -1566,12 +1566,24 @@ if [ "x$SHELL" != "x/bin/bash" ]; then
+     case `ps -o command -p $$` in
+         *bash*)
+             ;;
++        *zsh*)
++            ;;
+         *)
+-            echo "WARNING: Only bash is supported, use of other shell would lead to erroneous results"
++            echo "WARNING: Only bash and zsh are supported, use of other shell may lead to erroneous results"
+             ;;
+     esac
+ fi
+ 
++# determine whether arrays are zero-based (bash) or one-based (zsh)
++_xarray=(a b c)
++if [ -z "${_xarray[${#_xarray[@]}]}" ]
++then
++    _arrayoffset=1
++else
++    _arrayoffset=0
++fi
++unset _xarray
++
+ # Execute the contents of any vendorsetup.sh files we can find.
+ for f in `test -d device && find -L device -maxdepth 4 -name 'vendorsetup.sh' 2> /dev/null | sort` \
+          `test -d vendor && find -L vendor -maxdepth 4 -name 'vendorsetup.sh' 2> /dev/null | sort` \
+-- 
+2.17.0
+

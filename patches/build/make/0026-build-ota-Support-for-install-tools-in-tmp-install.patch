@@ -1,0 +1,82 @@
+From dacd714680858c9e2a6e047af83b797bb19b2c7d Mon Sep 17 00:00:00 2001
+From: Tom Marshall <tdm@cyngn.com>
+Date: Fri, 12 Dec 2014 11:51:33 -0800
+Subject: [PATCH 26/90] build: ota: Support for install tools in /tmp/install
+
+ * Anything in OUT/install gets packaged up into the zip and extracted
+   to /tmp/install immediately after FullOTA_InstallBegin.
+
+ * Use /tmp/install in edify scripts and remove code related to using
+   and manipulating /system for install tools.
+
+ * Modified to support signing steps being split from build steps.
+
+   Package install files into target-files INSTALL path
+   Read from target-files for OTA package creation
+
+   From Change-Id: I64f919c2a757b5474f6cc5f82bd6c33c2a8b558a
+
+Change-Id: I315a3238e36c8d15e26f935e272f7e27dd59c320
+---
+ core/Makefile                               |  3 +++
+ tools/releasetools/ota_from_target_files.py | 16 +++++++++++++++-
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index edbb141e9..62ab6d153 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -2738,6 +2738,9 @@ ifneq (,$(INSTALLED_RECOVERYIMAGE_TARGET)$(filter true,$(BOARD_USES_RECOVERY_AS_
+ 	$(hide) mkdir -p $(zip_root)/$(PRIVATE_RECOVERY_OUT)
+ 	$(hide) $(call package_files-copy-root, \
+ 		$(TARGET_RECOVERY_ROOT_OUT),$(zip_root)/$(PRIVATE_RECOVERY_OUT)/RAMDISK)
++	@# OTA install helpers
++	$(hide) $(call package_files-copy-root, \
++		$(PRODUCT_OUT)/install,$(zip_root)/INSTALL)
+ ifdef INSTALLED_KERNEL_TARGET
+ 	$(hide) cp $(INSTALLED_KERNEL_TARGET) $(zip_root)/$(PRIVATE_RECOVERY_OUT)/kernel
+ endif
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 28fc82e9f..38989cf15 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -219,7 +219,7 @@ OPTIONS.override_device = 'auto'
+ 
+ METADATA_NAME = 'META-INF/com/android/metadata'
+ POSTINSTALL_CONFIG = 'META/postinstall_config.txt'
+-UNZIP_PATTERN = ['IMAGES/*', 'META/*']
++UNZIP_PATTERN = ['IMAGES/*', 'META/*', 'INSTALL/*']
+ 
+ 
+ class BuildInfo(object):
+@@ -728,6 +728,15 @@ def AddCompatibilityArchiveIfTrebleEnabled(target_zip, output_zip, target_info,
+   AddCompatibilityArchive(system_updated, vendor_updated)
+ 
+ 
++def CopyInstallTools(output_zip):
++  install_path = os.path.join(OPTIONS.input_tmp, "INSTALL")
++  for root, subdirs, files in os.walk(install_path):
++     for f in files:
++      install_source = os.path.join(root, f)
++      install_target = os.path.join("install", os.path.relpath(root, install_path), f)
++      output_zip.write(install_source, install_target)
++
++
+ def WriteFullOTAPackage(input_zip, output_file):
+   target_info = BuildInfo(OPTIONS.info_dict, OPTIONS.oem_dicts)
+ 
+@@ -821,6 +830,11 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+   script.AppendExtra("ifelse(is_mounted(\"/system\"), unmount(\"/system\"));")
+   device_specific.FullOTA_InstallBegin()
+ 
++  CopyInstallTools(output_zip)
++  script.UnpackPackageDir("install", "/tmp/install")
++  script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
++  script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0755, 0755, None, None)
++
+   system_progress = 0.75
+ 
+   if OPTIONS.wipe_user_data:
+-- 
+2.17.0
+

@@ -1,0 +1,31 @@
+From 09e73bf43ff2704f5ea6afeee5965bf32998ea19 Mon Sep 17 00:00:00 2001
+From: Ethan Chen <intervigil@gmail.com>
+Date: Sat, 20 Jan 2018 11:26:05 -0800
+Subject: [PATCH 37/90] dexopt: Only dexopt boot and system server for non-user
+ builds
+
+As stated in https://android.googlesource.com/platform/build/+/418258c
+this is required in O-MR1 since sepolicy now prevents system server from
+loading anything from /data making our system extremely slow and janky.
+
+Change-Id: I49a97a75ed050f1f44e7c4c19332f6c7b76dd5db
+---
+ core/dex_preopt.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/dex_preopt.mk b/core/dex_preopt.mk
+index 6be6c1782..39cbc5c64 100644
+--- a/core/dex_preopt.mk
++++ b/core/dex_preopt.mk
+@@ -35,7 +35,7 @@ endif
+ # Conditional to building on linux, as dex2oat currently does not work on darwin.
+ ifeq ($(HOST_OS),linux)
+   WITH_DEXPREOPT ?= true
+-  ifeq (eng,$(TARGET_BUILD_VARIANT))
++  ifneq (user,$(TARGET_BUILD_VARIANT))
+     # Don't strip for quick development turnarounds.
+     DEX_PREOPT_DEFAULT := nostripping
+     # For an eng build only pre-opt the boot image and system server. This gives reasonable performance
+-- 
+2.17.0
+

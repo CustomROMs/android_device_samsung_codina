@@ -1,0 +1,33 @@
+From 0126fc53dde45ffd01c63421d019904c596cae08 Mon Sep 17 00:00:00 2001
+From: Adrian DC <radian.dc@gmail.com>
+Date: Thu, 24 Aug 2017 22:14:51 +0200
+Subject: [PATCH 23/90] product: Revert "Add NfcNci to default builds."
+
+ * Avoids NfcNci from being built by default
+    to allow regular Nfc NXP HALs to be built
+
+ * As we used to do, NfcNci or Nfc need to be
+    explicitely included by the device trees
+
+This reverts commit 96d62d7fb7308d13f5314d9b7911150b76a1a0b0.
+Change-Id: I7ef75541bc389cfd0440759c088b020ba28d6856
+Signed-off-by: Adrian DC <radian.dc@gmail.com>
+---
+ target/product/handheld_system.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
+index 611e1ed23..eaf1daf29 100644
+--- a/target/product/handheld_system.mk
++++ b/target/product/handheld_system.mk
+@@ -64,7 +64,6 @@ PRODUCT_PACKAGES += \
+     MtpDocumentsProvider \
+     Music \
+     MusicFX \
+-    NfcNci \
+     OneTimeInitializer \
+     PacProcessor \
+     PrintRecommendationService \
+-- 
+2.17.0
+
