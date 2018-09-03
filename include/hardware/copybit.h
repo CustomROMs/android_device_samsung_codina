@@ -17,6 +17,12 @@
 #ifndef ANDROID_COPYBIT_INTERFACE_H
 #define ANDROID_COPYBIT_INTERFACE_H
 
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Winconsistent-missing-destructor-override"
+#pragma GCC diagnostic ignored "-Wweak-vtables"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+
 #include <hardware/hardware.h>
 
 #include <stdint.h>
