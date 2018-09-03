@@ -240,24 +240,22 @@ else
 -include $(LOCAL_PATH)/cwm.mk
 endif
 
-# Disable dexpreopt
-# WITH_DEXPREOPT := false
 # Enable Dex Pre-opt
-WITH_DEXPREOPT := true
+#WITH_DEXPREOPT := true
 # Enable position-independent code for odex files
-WITH_DEXPREOPT_PIC := true
+#WITH_DEXPREOPT_PIC := true
 # Disable/Enable compression of precompiled odex with gzip
-WITH_DEXPREOPT_COMP := false
-DONT_DEXPREOPT_PREBUILTS := true
+#WITH_DEXPREOPT_COMP := false
+#DONT_DEXPREOPT_PREBUILTS := true
 
 # Don't dex preopt apps to avoid I/O congestion due to paging larger sized
 # pre-compiled .odex files as opposed to background generated interpret-only
 # odex files.
-WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true
-WITH_DEX_PREOPT_GENERATE_PROFILE := false
+#WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true
+#WITH_DEX_PREOPT_GENERATE_PROFILE := false
 
-PRODUCT_DEX_PREOPT_BOOT_FLAGS += --compiler-filter=speed
-PRODUCT_SYSTEM_SERVER_COMPILER_FILTER := speed
+#PRODUCT_DEX_PREOPT_BOOT_FLAGS += --compiler-filter=speed
+#PRODUCT_SYSTEM_SERVER_COMPILER_FILTER := speed
 
 # Include an expanded selection of fonts
 EXTENDED_FONT_FOOTPRINT := true
