@@ -1,7 +1,7 @@
 From e26a94a4e8f6f12cecf595571098b1f837e46c13 Mon Sep 17 00:00:00 2001
 From: Andrew Dodd <atd7@cornell.edu>
 Date: Fri, 20 Feb 2015 20:05:25 +0100
-Subject: [PATCH 17/45] fix FramebufferNativeWindow build
+Subject: [PATCH 17/46] fix FramebufferNativeWindow build
 
 ---
  .../include/nativebase/nativebase.h           | 579 +++++++++++++++++-

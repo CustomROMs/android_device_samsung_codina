@@ -1,7 +1,7 @@
 From 2cd76c38b2c750d52d194fbbc00ac27a9c8abe72 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 09/45] libui: fix unresolved symbol
+Subject: [PATCH 09/46] libui: fix unresolved symbol
  GraphicBufferAllocator::alloc
 
 ---

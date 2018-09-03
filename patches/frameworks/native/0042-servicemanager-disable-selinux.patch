@@ -1,7 +1,7 @@
 From 929bf9e5c335329ba6bbd5bd22679c612d809f26 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 3 Jun 2018 08:07:21 +0300
-Subject: [PATCH 42/45] servicemanager: disable selinux
+Subject: [PATCH 42/46] servicemanager: disable selinux
 
 Change-Id: I9fe1efb7f6e70f360135afa9a805d4f5d285e4cb
 ---

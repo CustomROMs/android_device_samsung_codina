@@ -1,7 +1,7 @@
 From 29afd63f01457b5995a1a406162ce11f404abe9e Mon Sep 17 00:00:00 2001
 From: Caio Schnepper <caioschnepper@gmail.com>
 Date: Wed, 25 Nov 2015 17:51:30 -0200
-Subject: [PATCH 03/45] libgui: Don't assign handle to NULL after free is
+Subject: [PATCH 03/46] libgui: Don't assign handle to NULL after free is
  common
 
 Reportedly Mali and PowerVR GPUs are crashing when setting handle to NULL

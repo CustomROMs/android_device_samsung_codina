@@ -1,7 +1,7 @@
 From 84e810aa181b52435a9225ccbf288eed398f4429 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 3 Sep 2018 03:41:39 +0300
-Subject: [PATCH 3/3] Revert "Mark libmediandk as LLNDK."
+Subject: [PATCH 3/4] Revert "Mark libmediandk as LLNDK."
 
 This reverts commit a5c80414be88e042f4de406a8fe5e412236d7ca6.
 

@@ -1,7 +1,7 @@
 From 456ba5948cb8fd4e4e971b728b9d838e2b04da57 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 1 Sep 2018 23:45:07 +0300
-Subject: [PATCH 04/45] Fix build
+Subject: [PATCH 04/46] Fix build
 
 Change-Id: I8d48772aad0cefb97cfef6f3d5c341adbe2ec66e
 ---

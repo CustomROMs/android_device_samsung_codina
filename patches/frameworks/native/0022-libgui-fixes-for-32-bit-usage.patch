@@ -1,7 +1,7 @@
 From 85d733df10d19054f9e6e31e8147171b837975d7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 30 Oct 2017 18:10:11 -0700
-Subject: [PATCH 22/45] libgui: fixes for 32-bit usage
+Subject: [PATCH 22/46] libgui: fixes for 32-bit usage
 
 Change-Id: Ie82477872b4caeceb7326df446a3e343b9c5278d
 ---

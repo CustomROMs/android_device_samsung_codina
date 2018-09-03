@@ -1,7 +1,7 @@
 From d0d6ac5fbef909e0f96066e73c1f89f5da638d3c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 24/45] Sync mLastQueuedCrop with mLastQueuedSlot.
+Subject: [PATCH 24/46] Sync mLastQueuedCrop with mLastQueuedSlot.
 
 Because mLastQueuedCrop is not sync with mLastQueuedSlot at the
 same mutex scope, it will cause getLastQueuedBuffer to compute

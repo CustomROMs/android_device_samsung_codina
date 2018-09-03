@@ -1,7 +1,7 @@
 From 65f1a6141d4c3e635c15def0303d48c7e009a051 Mon Sep 17 00:00:00 2001
 From: Sam Doran <git@samdoran.com>
 Date: Fri, 4 Mar 2016 01:38:22 -0500
-Subject: [PATCH 34/45] Fix installd: disable SELinux
+Subject: [PATCH 34/46] Fix installd: disable SELinux
 
 Change-Id: I5a87b63f1fa582c7133621fa1a62d507beaef410
 ---

@@ -1,7 +1,7 @@
 From 48f9ce18a5dcdd56eb3dfda1a28922bf53b0172c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 10:00:29 +0300
-Subject: [PATCH 11/45] surfaceflinger: try to fix
+Subject: [PATCH 11/46] surfaceflinger: try to fix
 
 Change-Id: I398c8b7a5048bd6048c40c5fe0136fde5afcfefd
 ---

@@ -1,7 +1,7 @@
 From 4f08c3f0114aa43869bf857afa5337d78b83ae6d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 3 Sep 2018 03:40:49 +0300
-Subject: [PATCH 3/3] Revert graphics libs to lineage-15.1
+Subject: [PATCH 3/4] Revert graphics libs to lineage-15.1
 
 Change-Id: Iaa7533e4371b6691672bf6a5b91724736ad23cfd
 ---

@@ -1,7 +1,7 @@
 From 19bb085028e3e0001296a3b0d25d6094c71dc050 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 31/45] libbinder: fix unresolved symbol WriteString16
+Subject: [PATCH 31/46] libbinder: fix unresolved symbol WriteString16
 
 ---
  libs/binder/Parcel.cpp | 2 ++

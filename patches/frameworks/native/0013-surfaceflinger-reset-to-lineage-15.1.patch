@@ -1,7 +1,7 @@
 From c01cd4bbc83ab379ff45f7d4ce878b46434939cc Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 11:05:46 +0300
-Subject: [PATCH 13/45] surfaceflinger: reset to lineage-15.1
+Subject: [PATCH 13/46] surfaceflinger: reset to lineage-15.1
 
 Change-Id: Ic4ba559e0d6f8d8773fc5c9983b9bc548e7602fe
 ---

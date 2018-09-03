@@ -1,7 +1,7 @@
 From 43fbafdfd3eacc12ea4eeff23efc523f8094722a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 3 Sep 2018 03:41:20 +0300
-Subject: [PATCH 27/45] nativewindow: reset to lineage-15.1
+Subject: [PATCH 27/46] nativewindow: reset to lineage-15.1
 
 Change-Id: I34d5aa63cb9a0b17c3afd14df9528bee7c33beca
 ---

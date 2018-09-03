@@ -1,7 +1,7 @@
 From 11731ce6d0b0419cacbb96c3e1e0cda2245cd17c Mon Sep 17 00:00:00 2001
 From: Simon Shields <keepcalm444@gmail.com>
 Date: Thu, 3 Dec 2015 20:34:15 +1100
-Subject: [PATCH 02/45] libbinder: allow devices to disable ashmem size
+Subject: [PATCH 02/46] libbinder: allow devices to disable ashmem size
  tracking
 
 The addition of ashmem size tracking has resulted in a broken ABI

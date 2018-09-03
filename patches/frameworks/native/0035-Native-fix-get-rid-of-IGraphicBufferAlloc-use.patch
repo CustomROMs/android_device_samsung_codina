@@ -1,7 +1,7 @@
 From af3aeef80bf696f7da8e898e0c5f5e86a23da55d Mon Sep 17 00:00:00 2001
 From: Romain Guy <romainguy@google.com>
 Date: Thu, 16 Mar 2017 18:39:20 +0000
-Subject: [PATCH 35/45] Native fix: get rid of IGraphicBufferAlloc use
+Subject: [PATCH 35/46] Native fix: get rid of IGraphicBufferAlloc use
 
 ---
  libs/gui/GLConsumer.cpp           | 28 ++++++++--------------------

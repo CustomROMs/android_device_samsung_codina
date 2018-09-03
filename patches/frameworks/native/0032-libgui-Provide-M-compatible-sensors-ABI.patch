@@ -1,7 +1,7 @@
 From 95abfce64c1d765cce7a6dbca98106c26a87ef20 Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Thu, 1 Sep 2016 22:10:07 -0700
-Subject: [PATCH 32/45] libgui: Provide M-compatible sensors ABI
+Subject: [PATCH 32/46] libgui: Provide M-compatible sensors ABI
 
  * Enable with -DCOMPAT_SENSORS_M
 ---

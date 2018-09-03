@@ -1,7 +1,7 @@
 From 20d9b48f298cebd7c1717d05c47151ff0dd82e2f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 07/45] restore gralloc0/gralloc1 support
+Subject: [PATCH 07/46] restore gralloc0/gralloc1 support
 
 Change-Id: I7811dfa54ad14ba047163c436dc7db6fc868a592
 ---

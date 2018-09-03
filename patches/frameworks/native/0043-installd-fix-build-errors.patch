@@ -1,7 +1,7 @@
 From 87f32aaaef7dea6b761573259fb98fb8ad65a07a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 3 Sep 2018 05:26:02 +0300
-Subject: [PATCH 43/45] installd: fix build errors
+Subject: [PATCH 43/46] installd: fix build errors
 
 Change-Id: I89b8294bfca6888b90016d9539a057a7ba36a95f
 ---

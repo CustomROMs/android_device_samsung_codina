@@ -1,7 +1,7 @@
 From 11c4d45ad612b5481e95cb9911e4ff752c4ebad6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 11:24:34 +0300
-Subject: [PATCH 18/45] surfaceflinger: switch to FramebufferNativeWindow
+Subject: [PATCH 18/46] surfaceflinger: switch to FramebufferNativeWindow
 
 Change-Id: I1471c4f002a77dfa7ce6a6e5100a3f52ccc7e1ac
 ---

@@ -1,7 +1,7 @@
 From 706a1c196cbf521ad5e8c98cc0dc21249684bd19 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 36/45] surfaceflinger: make critical threads SCHED_FIFO
+Subject: [PATCH 36/46] surfaceflinger: make critical threads SCHED_FIFO
 
 Sets the main thread, EventThread, and SFEventThread to SCHED_FIFO to minimize jitter.
 ---

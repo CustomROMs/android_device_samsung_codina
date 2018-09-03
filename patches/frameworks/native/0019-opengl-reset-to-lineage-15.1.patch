@@ -1,7 +1,7 @@
 From 434c874df87e992310b9412446efdfdd7bd1a46d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 2 Sep 2018 11:49:15 +0300
-Subject: [PATCH 19/45] opengl: reset to lineage-15.1
+Subject: [PATCH 19/46] opengl: reset to lineage-15.1
 
 Change-Id: I882e0733bc7f6f101a2ebefaec9caedecb989c31
 ---

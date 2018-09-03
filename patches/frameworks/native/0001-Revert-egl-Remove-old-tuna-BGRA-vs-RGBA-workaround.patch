@@ -1,7 +1,7 @@
 From 4df08933bd5b527c5dd2befb2f36519b842c649d Mon Sep 17 00:00:00 2001
 From: Ethan Chen <intervigil@gmail.com>
 Date: Thu, 15 Oct 2015 13:50:10 -0700
-Subject: [PATCH 01/45] Revert "egl: Remove old tuna BGRA vs RGBA workaround."
+Subject: [PATCH 01/46] Revert "egl: Remove old tuna BGRA vs RGBA workaround."
 
 This reverts commit 733a80754786d39cdc0fee09509b194472c320bc.
 and updated for Android O.

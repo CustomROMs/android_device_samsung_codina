@@ -1,7 +1,7 @@
 From 1816395e9b0ebd389ff1c5694d231e5ef690227b Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 2/2] Camera: partially switch to 32-bit usage
+Subject: [PATCH 2/4] Camera: partially switch to 32-bit usage
 
 ---
  .../api2/CameraDeviceClient.cpp               | 15 ++++++-----

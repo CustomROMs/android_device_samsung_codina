@@ -1,7 +1,7 @@
 From 8184ba98d8623507697b03c10eba59988536c70c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 3 Sep 2018 04:03:01 +0300
-Subject: [PATCH 28/45] STE Native fix
+Subject: [PATCH 28/46] STE Native fix
 
 Change-Id: Ic77fcb5fc4618096f4e536fbfeb0439247adbb7b
 ---
