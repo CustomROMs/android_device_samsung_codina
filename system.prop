@@ -34,6 +34,7 @@ persist.sys.usb.config=mtp,adb
 
 # sdcardfs
 #ro.sys.sdcardfs=true
+ro.sys.sdcard_fuse=true
 
 # Timeout failed shutdowns
 ro.build.shutdown_timeout=5
