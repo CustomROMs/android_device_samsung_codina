@@ -1,0 +1,47 @@
+From 3e0f8c50c1fb7c2f8fde27328b47b5e2ec3a0687 Mon Sep 17 00:00:00 2001
+From: Xuefer <xuefer@gmail.com>
+Date: Tue, 29 Dec 2015 00:43:16 +0800
+Subject: [PATCH 03/26] audiopolicy: Handle legacy startOutput on output
+ command thread too
+
+* Fixes the build for legacy audio policy
+---
+ .../service/AudioPolicyInterfaceImplLegacy.cpp           | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index a5b96fe9b..81f251b16 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -158,13 +158,27 @@ status_t AudioPolicyService::startOutput(audio_io_handle_t output,
+         return NO_INIT;
+     }
+     ALOGV("startOutput()");
+-    // create audio processors according to stream
++    return mOutputCommandThread->startOutputCommand(output, stream, session);
++}
++
++status_t AudioPolicyService::doStartOutput(audio_io_handle_t output,
++                                           audio_stream_type_t stream,
++                                           audio_session_t session)
++{
++    if (uint32_t(stream) >= AUDIO_STREAM_CNT) {
++        return BAD_VALUE;
++    }
++    if (mpAudioPolicy == NULL) {
++        return NO_INIT;
++    }
++    ALOGV("doStartOutput()");
+     sp<AudioPolicyEffects>audioPolicyEffects;
+     {
+         Mutex::Autolock _l(mLock);
+         audioPolicyEffects = mAudioPolicyEffects;
+     }
+     if (audioPolicyEffects != 0) {
++        // create audio processors according to stream
+         status_t status = audioPolicyEffects->addOutputSessionEffects(output, stream, session);
+         if (status != NO_ERROR && status != ALREADY_EXISTS) {
+             ALOGW("Failed to add effects on session %d", session);
+-- 
+2.11.0
+

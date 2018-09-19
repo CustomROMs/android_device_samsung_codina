@@ -1,7 +1,7 @@
 From 30f0fc429466ba820f998d9a69c4f33ddff9e60d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 13/16] Fix shared cpufreq policy
+Subject: [PATCH 13/24] Fix shared cpufreq policy
 
 ---
  rootdir/init.rc | 6 +++++-

@@ -1,0 +1,37 @@
+From 136f0f1b6b2c2646eb36a7e6cdf6b778ee4cd080 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 02:36:04 +0300
+Subject: [PATCH 28/42] vulkan: fix usage-related build errors
+
+Change-Id: I99ea6779efa93c27bed83397b21eca0b80327a37
+---
+ vulkan/libvulkan/swapchain.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/vulkan/libvulkan/swapchain.cpp b/vulkan/libvulkan/swapchain.cpp
+index 9f5cd20d3..d41b9420e 100644
+--- a/vulkan/libvulkan/swapchain.cpp
++++ b/vulkan/libvulkan/swapchain.cpp
+@@ -497,8 +497,8 @@ VkResult CreateAndroidSurfaceKHR(
+ 
+     surface->window = pCreateInfo->window;
+     surface->swapchain_handle = VK_NULL_HANDLE;
+-    int err = native_window_get_consumer_usage(surface->window.get(),
+-                                               &surface->consumer_usage);
++    int err = -EINVAL; /*native_window_get_consumer_usage(surface->window.get(),
++                                               &surface->consumer_usage);*/
+     if (err != android::NO_ERROR) {
+         ALOGE("native_window_get_consumer_usage() failed: %s (%d)",
+               strerror(-err), err);
+@@ -1166,7 +1166,7 @@ VkResult CreateSwapchainKHR(VkDevice device,
+         }
+     }
+ 
+-    err = native_window_set_usage(surface.window.get(), legacy_usage);
++    err = native_window_set_usage(surface.window.get(), static_cast<int>(legacy_usage));
+     if (err != 0) {
+         // TODO(jessehall): Improve error reporting. Can we enumerate possible
+         // errors and translate them to valid Vulkan result codes?
+-- 
+2.11.0
+

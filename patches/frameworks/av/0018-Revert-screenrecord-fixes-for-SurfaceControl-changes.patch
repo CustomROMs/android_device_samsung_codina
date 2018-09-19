@@ -1,0 +1,91 @@
+From 42f9dc18489aed8a9ab03bed4293f9227607d04a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 13 Sep 2018 22:01:18 +0300
+Subject: [PATCH 18/26] Revert "screenrecord: fixes for SurfaceControl changes"
+
+This reverts commit 7e5a629be5b3cf4cfefc54f9242108c638e96497.
+
+Change-Id: Iadf679aa0f91b23cdfb375e9c34d0d2f84e080b6
+---
+ cmds/screenrecord/Android.mk       |  2 +-
+ cmds/screenrecord/screenrecord.cpp | 24 ++++++++++--------------
+ 2 files changed, 11 insertions(+), 15 deletions(-)
+
+diff --git a/cmds/screenrecord/Android.mk b/cmds/screenrecord/Android.mk
+index 5e83ed669..d6c992c3c 100644
+--- a/cmds/screenrecord/Android.mk
++++ b/cmds/screenrecord/Android.mk
+@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libstagefright libmedia libmedia_omx libutils libbinder libstagefright_foundation \
+-	libjpeg libui libgui libcutils liblog libEGL libGLESv2
++	libjpeg libgui libcutils liblog libEGL libGLESv2
+ 
+ LOCAL_C_INCLUDES := \
+ 	frameworks/av/media/libstagefright \
+diff --git a/cmds/screenrecord/screenrecord.cpp b/cmds/screenrecord/screenrecord.cpp
+index 46035159e..3bb9a0b70 100644
+--- a/cmds/screenrecord/screenrecord.cpp
++++ b/cmds/screenrecord/screenrecord.cpp
+@@ -236,9 +236,7 @@ static status_t prepareEncoder(float displayFps, sp<MediaCodec>* pCodec,
+  * Sets the display projection, based on the display dimensions, video size,
+  * and device orientation.
+  */
+-static status_t setDisplayProjection(
+-        SurfaceComposerClient::Transaction& t,
+-        const sp<IBinder>& dpy,
++static status_t setDisplayProjection(const sp<IBinder>& dpy,
+         const DisplayInfo& mainDpyInfo) {
+ 
+     // Set the region of the layer stack we're interested in, which in our
+@@ -298,15 +296,13 @@ static status_t setDisplayProjection(
+         if (gRotate) {
+             printf("Rotated content area is %ux%u at offset x=%d y=%d\n",
+                     outHeight, outWidth, offY, offX);
+-            fflush(stdout);
+         } else {
+             printf("Content area is %ux%u at offset x=%d y=%d\n",
+                     outWidth, outHeight, offX, offY);
+-            fflush(stdout);
+         }
+     }
+ 
+-    t.setDisplayProjection(dpy,
++    SurfaceComposerClient::setDisplayProjection(dpy,
+             gRotate ? DISPLAY_ORIENTATION_90 : DISPLAY_ORIENTATION_0,
+             layerStackRect, displayRect);
+     return NO_ERROR;
+@@ -322,11 +318,11 @@ static status_t prepareVirtualDisplay(const DisplayInfo& mainDpyInfo,
+     sp<IBinder> dpy = SurfaceComposerClient::createDisplay(
+             String8("ScreenRecorder"), false /*secure*/);
+ 
+-    SurfaceComposerClient::Transaction t;
+-    t.setDisplaySurface(dpy, bufferProducer);
+-    setDisplayProjection(t, dpy, mainDpyInfo);
+-    t.setDisplayLayerStack(dpy, 0);    // default stack
+-    t.apply();
++    SurfaceComposerClient::openGlobalTransaction();
++    SurfaceComposerClient::setDisplaySurface(dpy, bufferProducer);
++    setDisplayProjection(dpy, mainDpyInfo);
++    SurfaceComposerClient::setDisplayLayerStack(dpy, 0);    // default stack
++    SurfaceComposerClient::closeGlobalTransaction();
+ 
+     *pDisplayHandle = dpy;
+ 
+@@ -407,9 +403,9 @@ static status_t runEncoder(const sp<MediaCodec>& encoder,
+                         ALOGW("getDisplayInfo(main) failed: %d", err);
+                     } else if (orientation != mainDpyInfo.orientation) {
+                         ALOGD("orientation changed, now %d", mainDpyInfo.orientation);
+-                        SurfaceComposerClient::Transaction t;
+-                        setDisplayProjection(t, virtualDpy, mainDpyInfo);
+-                        t.apply();
++                        SurfaceComposerClient::openGlobalTransaction();
++                        setDisplayProjection(virtualDpy, mainDpyInfo);
++                        SurfaceComposerClient::closeGlobalTransaction();
+                         orientation = mainDpyInfo.orientation;
+                     }
+                 }
+-- 
+2.11.0
+

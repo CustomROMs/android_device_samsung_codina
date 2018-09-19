@@ -1,0 +1,43 @@
+From aadea7ae95faf69c50f4b3e8fdb9752e4c14e792 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 11/21] libril: enable mobile data fix for STE hardware
+
+---
+ libril/ril_service.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index da83d62..d2a18d3 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -7414,7 +7414,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v6 *dcResponse,
+     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+     dcResult.addresses = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.dnses = convertCharPtrToHidlString(dcResponse->dnses);
+-    dcResult.gateways = convertCharPtrToHidlString(dcResponse->gateways);
++    dcResult.gateways = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.pcscf = hidl_string();
+     dcResult.mtu = 0;
+ }
+@@ -7429,7 +7429,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v9 *dcResponse,
+     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+     dcResult.addresses = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.dnses = convertCharPtrToHidlString(dcResponse->dnses);
+-    dcResult.gateways = convertCharPtrToHidlString(dcResponse->gateways);
++    dcResult.gateways = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.pcscf = convertCharPtrToHidlString(dcResponse->pcscf);
+     dcResult.mtu = 0;
+ }
+@@ -7444,7 +7444,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+     dcResult.addresses = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.dnses = convertCharPtrToHidlString(dcResponse->dnses);
+-    dcResult.gateways = convertCharPtrToHidlString(dcResponse->gateways);
++    dcResult.gateways = convertCharPtrToHidlString(dcResponse->addresses);
+     dcResult.pcscf = convertCharPtrToHidlString(dcResponse->pcscf);
+     dcResult.mtu = dcResponse->mtu;
+ }
+-- 
+2.11.0
+

@@ -1,0 +1,211 @@
+From a1854bfa161d0c3c0100917593f96d900ee7d5f1 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 15 Sep 2018 18:56:44 +0300
+Subject: [PATCH 23/26] libaudiohal: fix build errors
+
+Change-Id: Icc4ea67a6f4ac30faa07c8c4574437ac7c11792c
+---
+ media/libaudiohal/Android.mk                       |  1 +
+ media/libaudiohal/DeviceHalLocal.cpp               |  5 ++++
+ media/libaudiohal/DeviceHalLocal.h                 |  4 +++
+ media/libaudiohal/EffectBufferHalLocal.h           |  1 +
+ media/libaudiohal/StreamHalLocal.cpp               | 31 ++++++++++++++++++++++
+ media/libaudiohal/StreamHalLocal.h                 |  9 +++++++
+ .../include/media/audiohal/DeviceHalInterface.h    |  4 +++
+ .../media/audiohal/EffectBufferHalInterface.h      |  2 ++
+ services/audioflinger/Android.mk                   |  1 +
+ 9 files changed, 58 insertions(+)
+
+diff --git a/media/libaudiohal/Android.mk b/media/libaudiohal/Android.mk
+index 827908ec8..0e9e0f435 100644
+--- a/media/libaudiohal/Android.mk
++++ b/media/libaudiohal/Android.mk
+@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_SHARED_LIBRARIES := \
+     libaudioutils \
++    libbase     \
+     libcutils   \
+     liblog      \
+     libutils    \
+diff --git a/media/libaudiohal/DeviceHalLocal.cpp b/media/libaudiohal/DeviceHalLocal.cpp
+index fc098f513..ec3bf787d 100644
+--- a/media/libaudiohal/DeviceHalLocal.cpp
++++ b/media/libaudiohal/DeviceHalLocal.cpp
+@@ -184,6 +184,11 @@ status_t DeviceHalLocal::setAudioPortConfig(const struct audio_port_config *conf
+         return INVALID_OPERATION;
+ }
+ 
++status_t DeviceHalLocal::getMicrophones(
++        std::vector<media::MicrophoneInfo> *microphones __unused) {
++    return INVALID_OPERATION;
++}
++
+ status_t DeviceHalLocal::dump(int fd) {
+     return mDev->dump(mDev, fd);
+ }
+diff --git a/media/libaudiohal/DeviceHalLocal.h b/media/libaudiohal/DeviceHalLocal.h
+index 865f2968e..3e6beb462 100644
+--- a/media/libaudiohal/DeviceHalLocal.h
++++ b/media/libaudiohal/DeviceHalLocal.h
+@@ -18,6 +18,7 @@
+ #define ANDROID_HARDWARE_DEVICE_HAL_LOCAL_H
+ 
+ #include <hardware/audio.h>
++#include <media/MicrophoneInfo.h>
+ #include <media/audiohal/DeviceHalInterface.h>
+ 
+ namespace android {
+@@ -100,6 +101,9 @@ class DeviceHalLocal : public DeviceHalInterface
+     // Set audio port configuration.
+     virtual status_t setAudioPortConfig(const struct audio_port_config *config);
+ 
++    virtual status_t getMicrophones(
++        std::vector<media::MicrophoneInfo> *microphones __unused);
++
+     virtual status_t dump(int fd);
+ 
+     void closeOutputStream(struct audio_stream_out *stream_out);
+diff --git a/media/libaudiohal/EffectBufferHalLocal.h b/media/libaudiohal/EffectBufferHalLocal.h
+index d2b624b0e..2335e35e0 100644
+--- a/media/libaudiohal/EffectBufferHalLocal.h
++++ b/media/libaudiohal/EffectBufferHalLocal.h
+@@ -29,6 +29,7 @@ class EffectBufferHalLocal : public EffectBufferHalInterface
+   public:
+     virtual audio_buffer_t* audioBuffer();
+     virtual void* externalData() const;
++    virtual size_t getSize() const override { return mBufferSize; }
+ 
+     virtual void setExternalData(void* external);
+     virtual void setFrameCount(size_t frameCount);
+diff --git a/media/libaudiohal/StreamHalLocal.cpp b/media/libaudiohal/StreamHalLocal.cpp
+index dc17f5ce6..63b68ff50 100644
+--- a/media/libaudiohal/StreamHalLocal.cpp
++++ b/media/libaudiohal/StreamHalLocal.cpp
+@@ -234,6 +234,19 @@ status_t StreamOutHalLocal::getPresentationPosition(uint64_t *frames, struct tim
+     return mStream->get_presentation_position(mStream, frames, timestamp);
+ }
+ 
++status_t StreamOutHalLocal::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
++    if (mStream->update_source_metadata == nullptr) {
++        return INVALID_OPERATION;
++    }
++    const source_metadata_t metadata {
++        .track_count = sourceMetadata.tracks.size(),
++        // const cast is fine as it is in a const structure
++        .tracks = const_cast<playback_track_metadata*>(sourceMetadata.tracks.data()),
++    };
++    mStream->update_source_metadata(mStream, &metadata);
++    return OK;
++}
++
+ status_t StreamOutHalLocal::start() {
+     if (mStream->start == NULL) return INVALID_OPERATION;
+     return mStream->start(mStream);
+@@ -295,6 +308,19 @@ status_t StreamInHalLocal::getCapturePosition(int64_t *frames, int64_t *time) {
+     return mStream->get_capture_position(mStream, frames, time);
+ }
+ 
++status_t StreamInHalLocal::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
++    if (mStream->update_sink_metadata == nullptr) {
++        return INVALID_OPERATION;
++    }
++    const sink_metadata_t metadata {
++        .track_count = sinkMetadata.tracks.size(),
++        // const cast is fine as it is in a const structure
++        .tracks = const_cast<record_track_metadata*>(sinkMetadata.tracks.data()),
++    };
++    mStream->update_sink_metadata(mStream, &metadata);
++    return OK;
++}
++
+ status_t StreamInHalLocal::start() {
+     if (mStream->start == NULL) return INVALID_OPERATION;
+     return mStream->start(mStream);
+@@ -316,4 +342,9 @@ status_t StreamInHalLocal::getMmapPosition(struct audio_mmap_position *position)
+     return mStream->get_mmap_position(mStream, position);
+ }
+ 
++status_t StreamInHalLocal::getActiveMicrophones(
++        std::vector<media::MicrophoneInfo> *microphones __unused) {
++    return INVALID_OPERATION;
++}
++
+ } // namespace android
+diff --git a/media/libaudiohal/StreamHalLocal.h b/media/libaudiohal/StreamHalLocal.h
+index c7136dff4..cda8d0c60 100644
+--- a/media/libaudiohal/StreamHalLocal.h
++++ b/media/libaudiohal/StreamHalLocal.h
+@@ -149,6 +149,9 @@ class StreamOutHalLocal : public StreamOutHalInterface, public StreamHalLocal {
+     // Get current read/write position in the mmap buffer
+     virtual status_t getMmapPosition(struct audio_mmap_position *position);
+ 
++    // Called when the metadata of the stream's source has been changed.
++    status_t updateSourceMetadata(const SourceMetadata& sourceMetadata) override;
++
+   private:
+     audio_stream_out_t *mStream;
+     wp<StreamOutHalInterfaceCallback> mCallback;
+@@ -194,6 +197,12 @@ class StreamInHalLocal : public StreamInHalInterface, public StreamHalLocal {
+     // Get current read/write position in the mmap buffer
+     virtual status_t getMmapPosition(struct audio_mmap_position *position);
+ 
++    // Get active microphones
++    virtual status_t getActiveMicrophones(std::vector<media::MicrophoneInfo> *microphones);
++
++    // Called when the metadata of the stream's sink has been changed.
++    status_t updateSinkMetadata(const SinkMetadata& sinkMetadata) override;
++
+   private:
+     audio_stream_in_t *mStream;
+ 
+diff --git a/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h b/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h
+index caf01becc..7de8eb3c7 100644
+--- a/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h
++++ b/media/libaudiohal/include/media/audiohal/DeviceHalInterface.h
+@@ -17,6 +17,7 @@
+ #ifndef ANDROID_HARDWARE_DEVICE_HAL_INTERFACE_H
+ #define ANDROID_HARDWARE_DEVICE_HAL_INTERFACE_H
+ 
++#include <media/MicrophoneInfo.h>
+ #include <system/audio.h>
+ #include <utils/Errors.h>
+ #include <utils/RefBase.h>
+@@ -105,6 +106,9 @@ class DeviceHalInterface : public RefBase
+     // Set audio port configuration.
+     virtual status_t setAudioPortConfig(const struct audio_port_config *config) = 0;
+ 
++    // List microphones
++    virtual status_t getMicrophones(std::vector<media::MicrophoneInfo> *microphones) = 0;
++
+     virtual status_t dump(int fd) = 0;
+ 
+   protected:
+diff --git a/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h b/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h
+index e862f6e78..1cae66209 100644
+--- a/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h
++++ b/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h
+@@ -37,6 +37,8 @@ class EffectBufferHalInterface : public RefBase
+         return externalData() != nullptr ? externalData() : audioBuffer()->raw;
+     }
+ 
++    virtual size_t getSize() const = 0;
++
+     virtual void setExternalData(void* external) = 0;
+     virtual void setFrameCount(size_t frameCount) = 0;
+     virtual bool checkFrameCountChange() = 0;  // returns whether frame count has been updated
+diff --git a/services/audioflinger/Android.mk b/services/audioflinger/Android.mk
+index 7419e648c..d0ec2d0c8 100644
+--- a/services/audioflinger/Android.mk
++++ b/services/audioflinger/Android.mk
+@@ -40,6 +40,7 @@ LOCAL_C_INCLUDES := \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+     libaudiohal \
++    libaudiohal@2.0 \
+     libaudioprocessing \
+     libaudiospdif \
+     libaudioutils \
+-- 
+2.11.0
+

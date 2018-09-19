@@ -1,0 +1,40 @@
+From a83e465cedd2937f68d76af1d6f8c8d0c59361ff Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 00:08:32 +0300
+Subject: [PATCH 25/26] libaudiohal: fix crash
+
+Change-Id: I3b1fa3382d08e2c88de713b1f20dd1e9752c7985
+---
+ media/libaudiohal/StreamHalLocal.cpp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/media/libaudiohal/StreamHalLocal.cpp b/media/libaudiohal/StreamHalLocal.cpp
+index 63b68ff50..95c12b01f 100644
+--- a/media/libaudiohal/StreamHalLocal.cpp
++++ b/media/libaudiohal/StreamHalLocal.cpp
+@@ -234,17 +234,17 @@ status_t StreamOutHalLocal::getPresentationPosition(uint64_t *frames, struct tim
+     return mStream->get_presentation_position(mStream, frames, timestamp);
+ }
+ 
+-status_t StreamOutHalLocal::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
+-    if (mStream->update_source_metadata == nullptr) {
++status_t StreamOutHalLocal::updateSourceMetadata(const SourceMetadata& /*sourceMetadata*/) {
++   // if (mStream->update_source_metadata == nullptr) {
+         return INVALID_OPERATION;
+-    }
+-    const source_metadata_t metadata {
++   // }
++   /* const source_metadata_t metadata {
+         .track_count = sourceMetadata.tracks.size(),
+         // const cast is fine as it is in a const structure
+         .tracks = const_cast<playback_track_metadata*>(sourceMetadata.tracks.data()),
+     };
+     mStream->update_source_metadata(mStream, &metadata);
+-    return OK;
++    return OK;*/
+ }
+ 
+ status_t StreamOutHalLocal::start() {
+-- 
+2.11.0
+

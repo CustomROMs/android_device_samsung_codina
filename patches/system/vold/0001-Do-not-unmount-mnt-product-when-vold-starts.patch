@@ -1,0 +1,33 @@
+From f512bfb55c551051f79fa6994b37e91f882ac048 Mon Sep 17 00:00:00 2001
+From: Bowgo Tsai <bowgotsai@google.com>
+Date: Fri, 29 Jun 2018 10:31:07 +0800
+Subject: [PATCH 01/27] Do not unmount /mnt/product/* when vold starts
+
+Bug: 110808288
+Test: Boot a device and checks /mnt/product/foo mounted in early mount
+      isn't unmounted.
+
+Change-Id: Ide411cd78565505bc72ed57e79f3d31b6392b27c
+Merged-In: Ide411cd78565505bc72ed57e79f3d31b6392b27c
+(cherry picked from commit c0cd37be9dd66d5fe7448389a71ee21f60e876e1)
+---
+ VolumeManager.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index 8c32587..21e132a 100644
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -624,7 +624,8 @@ int VolumeManager::unmountAll() {
+     while ((mentry = getmntent(fp)) != NULL) {
+         auto test = std::string(mentry->mnt_dir);
+         if ((android::base::StartsWith(test, "/mnt/") &&
+-             !android::base::StartsWith(test, "/mnt/vendor")) ||
++             !android::base::StartsWith(test, "/mnt/vendor") &&
++             !android::base::StartsWith(test, "/mnt/product")) ||
+             android::base::StartsWith(test, "/storage/")) {
+             toUnmount.push_front(test);
+         }
+-- 
+2.11.0
+

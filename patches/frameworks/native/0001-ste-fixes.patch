@@ -1,0 +1,129 @@
+From 60fcfc1fca16d27518da82601b1af593cb881fc3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 15:35:52 +0300
+Subject: [PATCH 01/42] ste fixes
+
+Change-Id: Ib05ccabeb91a2a33f455c9c56cbe5c313d3e3453
+---
+ libs/gui/BufferItemConsumer.cpp    | 2 ++
+ libs/gui/include/gui/BufferQueue.h | 4 ++++
+ opengl/include/EGL/eglext.h        | 2 ++
+ opengl/libs/EGL/eglApi.cpp         | 4 ++++
+ opengl/libs/EGL/egl_entries.in     | 2 ++
+ vulkan/libvulkan/swapchain.cpp     | 2 +-
+ 6 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/libs/gui/BufferItemConsumer.cpp b/libs/gui/BufferItemConsumer.cpp
+index 89bc0c4c2..b2d0fea32 100644
+--- a/libs/gui/BufferItemConsumer.cpp
++++ b/libs/gui/BufferItemConsumer.cpp
+@@ -110,7 +110,9 @@ void BufferItemConsumer::freeBufferLocked(int slotIndex) {
+     if (listener != NULL && mSlots[slotIndex].mGraphicBuffer != NULL) {
+         // Fire callback if we have a listener registered and the buffer being freed is valid.
+         BI_LOGV("actually calling onBufferFreed");
++#ifndef STE_HARDWARE
+         listener->onBufferFreed(mSlots[slotIndex].mGraphicBuffer);
++#endif
+     }
+     ConsumerBase::freeBufferLocked(slotIndex);
+ }
+diff --git a/libs/gui/include/gui/BufferQueue.h b/libs/gui/include/gui/BufferQueue.h
+index da952744f..e78c8bbf7 100644
+--- a/libs/gui/include/gui/BufferQueue.h
++++ b/libs/gui/include/gui/BufferQueue.h
+@@ -38,6 +38,10 @@ public:
+         PRESENT_LATER = IGraphicBufferConsumer::PRESENT_LATER,
+     };
+ 
++#ifdef STE_HARDWARE
++    enum { NUM_BLIT_BUFFER_SLOTS = 2 };
++#endif
++
+     // When in async mode we reserve two slots in order to guarantee that the
+     // producer and consumer can run asynchronously.
+     enum { MAX_MAX_ACQUIRED_BUFFERS = NUM_BUFFER_SLOTS - 2 };
+diff --git a/opengl/include/EGL/eglext.h b/opengl/include/EGL/eglext.h
+index 44f4dbc92..4cd3169c2 100644
+--- a/opengl/include/EGL/eglext.h
++++ b/opengl/include/EGL/eglext.h
+@@ -1262,6 +1262,7 @@ EGLAPI EGLBoolean EGLAPIENTRY eglGetSyncAttribNV (EGLSyncNV sync, EGLint attribu
+ #endif /* KHRONOS_SUPPORT_INT64 */
+ #endif /* EGL_NV_sync */
+ 
++#ifndef STE_HARDWARE
+ #ifndef EGL_NV_system_time
+ #define EGL_NV_system_time 1
+ typedef khronos_utime_nanoseconds_t EGLuint64NV;
+@@ -1274,6 +1275,7 @@ EGLAPI EGLuint64NV EGLAPIENTRY eglGetSystemTimeNV (void);
+ #endif
+ #endif /* KHRONOS_SUPPORT_INT64 */
+ #endif /* EGL_NV_system_time */
++#endif
+ 
+ #ifndef EGL_TIZEN_image_native_buffer
+ #define EGL_TIZEN_image_native_buffer 1
+diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
+index c65bddfbb..e00de1f74 100644
+--- a/opengl/libs/EGL/eglApi.cpp
++++ b/opengl/libs/EGL/eglApi.cpp
+@@ -168,11 +168,13 @@ static const extention_map_t sExtensionMap[] = {
+     { "eglGetSyncAttribKHR",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSyncAttribKHR },
+ 
++#ifndef STE_HARDWARE
+     // EGL_NV_system_time
+     { "eglGetSystemTimeFrequencyNV",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeFrequencyNV },
+     { "eglGetSystemTimeNV",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeNV },
++#endif
+ 
+     // EGL_KHR_wait_sync
+     { "eglWaitSyncKHR",
+@@ -2152,6 +2154,7 @@ EGLClientBuffer eglGetNativeClientBufferANDROID(const AHardwareBuffer *buffer) {
+ // ----------------------------------------------------------------------------
+ // NVIDIA extensions
+ // ----------------------------------------------------------------------------
++#ifndef STE_HARDWARE
+ EGLuint64NV eglGetSystemTimeFrequencyNV()
+ {
+     clearError();
+@@ -2187,6 +2190,7 @@ EGLuint64NV eglGetSystemTimeNV()
+ 
+     return setErrorQuiet(EGL_BAD_DISPLAY, (EGLuint64NV)0);
+ }
++#endif
+ 
+ // ----------------------------------------------------------------------------
+ // Partial update extension
+diff --git a/opengl/libs/EGL/egl_entries.in b/opengl/libs/EGL/egl_entries.in
+index b587a1620..43468cd14 100644
+--- a/opengl/libs/EGL/egl_entries.in
++++ b/opengl/libs/EGL/egl_entries.in
+@@ -85,8 +85,10 @@ EGL_ENTRY(EGLClientBuffer, eglGetNativeClientBufferANDROID, const AHardwareBuffe
+ 
+ /* NVIDIA extensions */
+ 
++#ifndef STE_HARDWARE
+ EGL_ENTRY(EGLuint64NV, eglGetSystemTimeFrequencyNV, void)
+ EGL_ENTRY(EGLuint64NV, eglGetSystemTimeNV, void)
++#endif
+ 
+ /* IMG extensions */
+ 
+diff --git a/vulkan/libvulkan/swapchain.cpp b/vulkan/libvulkan/swapchain.cpp
+index 3db8a3962..0afe5f959 100644
+--- a/vulkan/libvulkan/swapchain.cpp
++++ b/vulkan/libvulkan/swapchain.cpp
+@@ -1220,7 +1220,7 @@ VkResult CreateSwapchainKHR(VkDevice device,
+         .samples = VK_SAMPLE_COUNT_1_BIT,
+         .tiling = VK_IMAGE_TILING_OPTIMAL,
+         .usage = create_info->imageUsage,
+-        .flags = createProtectedSwapchain ? VK_IMAGE_CREATE_PROTECTED_BIT : 0u,
++        .flags = 0,
+         .sharingMode = create_info->imageSharingMode,
+         .queueFamilyIndexCount = create_info->queueFamilyIndexCount,
+         .pQueueFamilyIndices = create_info->pQueueFamilyIndices,
+-- 
+2.11.0
+

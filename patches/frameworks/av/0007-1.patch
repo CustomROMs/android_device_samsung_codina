@@ -1,0 +1,188 @@
+From 51b3605104a9abbe711f019ea2edde6413b42484 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 8 Sep 2018 18:03:00 +0300
+Subject: [PATCH 07/26] 1
+
+Change-Id: I0f84b0d05058bd783bd9e8376a283e1b1016112f
+---
+ media/libaudioclient/AudioSystem.cpp               |  9 +++--
+ media/libaudioclient/IAudioPolicyService.cpp       | 38 ++++++++++++++++++++--
+ media/libaudioclient/include/media/AudioSystem.h   |  9 ++++-
+ .../include/media/IAudioPolicyService.h            |  7 +++-
+ .../service/AudioPolicyInterfaceImplLegacy.cpp     |  2 ++
+ services/audiopolicy/service/AudioPolicyService.h  |  8 ++++-
+ 6 files changed, 65 insertions(+), 8 deletions(-)
+
+diff --git a/media/libaudioclient/AudioSystem.cpp b/media/libaudioclient/AudioSystem.cpp
+index c072901a4..82ce7d8f2 100644
+--- a/media/libaudioclient/AudioSystem.cpp
++++ b/media/libaudioclient/AudioSystem.cpp
+@@ -853,11 +853,16 @@ audio_policy_forced_cfg_t AudioSystem::getForceUse(audio_policy_force_use_t usag
+ }
+ 
+ 
+-audio_io_handle_t AudioSystem::getOutput(audio_stream_type_t stream)
++audio_io_handle_t AudioSystem::getOutput(audio_stream_type_t stream,
++                                    uint32_t samplingRate,
++                                    audio_format_t format,
++                                    audio_channel_mask_t channelMask,
++                                    audio_output_flags_t flags,
++                                    const audio_offload_info_t *offloadInfo)
+ {
+     const sp<IAudioPolicyService>& aps = AudioSystem::get_audio_policy_service();
+     if (aps == 0) return 0;
+-    return aps->getOutput(stream);
++    return aps->getOutput(stream, samplingRate, format, channelMask, flags, offloadInfo);
+ }
+ 
+ status_t AudioSystem::getOutputForAttr(const audio_attributes_t *attr,
+diff --git a/media/libaudioclient/IAudioPolicyService.cpp b/media/libaudioclient/IAudioPolicyService.cpp
+index a1236e738..f03f60363 100644
+--- a/media/libaudioclient/IAudioPolicyService.cpp
++++ b/media/libaudioclient/IAudioPolicyService.cpp
+@@ -164,11 +164,28 @@ public:
+         return static_cast <audio_policy_forced_cfg_t> (reply.readInt32());
+     }
+ 
+-    virtual audio_io_handle_t getOutput(audio_stream_type_t stream)
++    virtual audio_io_handle_t getOutput(
++                                        audio_stream_type_t stream,
++                                        uint32_t samplingRate,
++                                        audio_format_t format,
++                                        audio_channel_mask_t channelMask,
++                                        audio_output_flags_t flags,
++                                        const audio_offload_info_t *offloadInfo)
+     {
+         Parcel data, reply;
+         data.writeInterfaceToken(IAudioPolicyService::getInterfaceDescriptor());
+         data.writeInt32(static_cast <uint32_t>(stream));
++        data.writeInt32(samplingRate);
++        data.writeInt32(static_cast <uint32_t>(format));
++        data.writeInt32(channelMask);
++        data.writeInt32(static_cast <uint32_t>(flags));
++        // hasOffloadInfo
++        if (offloadInfo == NULL) {
++            data.writeInt32(0);
++        } else {
++            data.writeInt32(1);
++            data.write(offloadInfo, sizeof(audio_offload_info_t));
++        }
+         remote()->transact(GET_OUTPUT, data, &reply);
+         return static_cast <audio_io_handle_t> (reply.readInt32());
+     }
+@@ -1032,14 +1049,29 @@ status_t BnAudioPolicyService::onTransact(
+             CHECK_INTERFACE(IAudioPolicyService, data, reply);
+             audio_stream_type_t stream =
+                     static_cast <audio_stream_type_t>(data.readInt32());
+-            audio_io_handle_t output = getOutput(stream);
++            uint32_t samplingRate = data.readInt32();
++            audio_format_t format = (audio_format_t) data.readInt32();
++            audio_channel_mask_t channelMask = data.readInt32();
++            audio_output_flags_t flags =
++                    static_cast <audio_output_flags_t>(data.readInt32());
++            bool hasOffloadInfo = data.readInt32() != 0;
++            audio_offload_info_t offloadInfo;
++            if (hasOffloadInfo) {
++                data.read(&offloadInfo, sizeof(audio_offload_info_t));
++            }
++            audio_io_handle_t output = getOutput(stream,
++                                                 samplingRate,
++                                                 format,
++                                                 channelMask,
++                                                 flags,
++                                                 hasOffloadInfo ? &offloadInfo : NULL);
+             reply->writeInt32(static_cast <int>(output));
+             return NO_ERROR;
+         } break;
+ 
+         case GET_OUTPUT_FOR_ATTR: {
+             CHECK_INTERFACE(IAudioPolicyService, data, reply);
+-            audio_attributes_t attr = {};
++            audio_attributes_t attr;
+             bool hasAttributes = data.readInt32() != 0;
+             if (hasAttributes) {
+                 data.read(&attr, sizeof(audio_attributes_t));
+diff --git a/media/libaudioclient/include/media/AudioSystem.h b/media/libaudioclient/include/media/AudioSystem.h
+index 4c0f796f5..0e1af546c 100644
+--- a/media/libaudioclient/include/media/AudioSystem.h
++++ b/media/libaudioclient/include/media/AudioSystem.h
+@@ -214,6 +214,14 @@ public:
+     static status_t setForceUse(audio_policy_force_use_t usage, audio_policy_forced_cfg_t config);
+     static audio_policy_forced_cfg_t getForceUse(audio_policy_force_use_t usage);
+ 
++    // Client must successfully hand off the handle reference to AudioFlinger via createTrack(),
++    // or release it with releaseOutput().
++    static audio_io_handle_t getOutput(audio_stream_type_t stream,
++                                        uint32_t samplingRate = 0,
++                                        audio_format_t format = AUDIO_FORMAT_DEFAULT,
++                                        audio_channel_mask_t channelMask = AUDIO_CHANNEL_OUT_STEREO,
++                                        audio_output_flags_t flags = AUDIO_OUTPUT_FLAG_NONE,
++                                        const audio_offload_info_t *offloadInfo = NULL);
+     static status_t getOutputForAttr(const audio_attributes_t *attr,
+                                      audio_io_handle_t *output,
+                                      audio_session_t session,
+@@ -459,7 +467,6 @@ private:
+         Vector <sp <AudioPortCallback> >    mAudioPortCallbacks;
+     };
+ 
+-    static audio_io_handle_t getOutput(audio_stream_type_t stream);
+     static const sp<AudioFlingerClient> getAudioFlingerClient();
+     static sp<AudioIoDescriptor> getIoDescriptor(audio_io_handle_t ioHandle);
+ 
+diff --git a/media/libaudioclient/include/media/IAudioPolicyService.h b/media/libaudioclient/include/media/IAudioPolicyService.h
+index c3876afc4..fd43f2ac2 100644
+--- a/media/libaudioclient/include/media/IAudioPolicyService.h
++++ b/media/libaudioclient/include/media/IAudioPolicyService.h
+@@ -55,7 +55,12 @@ public:
+     virtual status_t setForceUse(audio_policy_force_use_t usage,
+                                     audio_policy_forced_cfg_t config) = 0;
+     virtual audio_policy_forced_cfg_t getForceUse(audio_policy_force_use_t usage) = 0;
+-    virtual audio_io_handle_t getOutput(audio_stream_type_t stream) = 0;
++    virtual audio_io_handle_t getOutput(audio_stream_type_t stream,
++                                        uint32_t samplingRate = 0,
++                                        audio_format_t format = AUDIO_FORMAT_DEFAULT,
++                                        audio_channel_mask_t channelMask = 0,
++                                        audio_output_flags_t flags = AUDIO_OUTPUT_FLAG_NONE,
++                                        const audio_offload_info_t *offloadInfo = NULL) = 0;
+     virtual status_t getOutputForAttr(const audio_attributes_t *attr,
+                                       audio_io_handle_t *output,
+                                       audio_session_t session,
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index 70ce30973..f8576d1b3 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -670,10 +670,12 @@ float AudioPolicyService::getStreamVolumeDB(
+     return INVALID_OPERATION;
+ }
+ 
++#if 0
+ status_t AudioPolicyService::listAudioSessions(audio_stream_type_t streams,
+                                                Vector< sp<AudioSessionInfo>> &sessions)
+ {
+     return INVALID_OPERATION;
+ }
++#endif
+ 
+ }; // namespace android
+diff --git a/services/audiopolicy/service/AudioPolicyService.h b/services/audiopolicy/service/AudioPolicyService.h
+index 45e7e3dc9..d2e483100 100644
+--- a/services/audiopolicy/service/AudioPolicyService.h
++++ b/services/audiopolicy/service/AudioPolicyService.h
+@@ -76,7 +76,13 @@ public:
+     virtual status_t setPhoneState(audio_mode_t state);
+     virtual status_t setForceUse(audio_policy_force_use_t usage, audio_policy_forced_cfg_t config);
+     virtual audio_policy_forced_cfg_t getForceUse(audio_policy_force_use_t usage);
+-    virtual audio_io_handle_t getOutput(audio_stream_type_t stream);
++    virtual audio_io_handle_t getOutput(audio_stream_type_t stream,
++                                        uint32_t samplingRate = 0,
++                                        audio_format_t format = AUDIO_FORMAT_DEFAULT,
++                                        audio_channel_mask_t channelMask = 0,
++                                        audio_output_flags_t flags =
++                                                AUDIO_OUTPUT_FLAG_NONE,
++                                        const audio_offload_info_t *offloadInfo = NULL);
+     virtual status_t getOutputForAttr(const audio_attributes_t *attr,
+                                       audio_io_handle_t *output,
+                                       audio_session_t session,
+-- 
+2.11.0
+

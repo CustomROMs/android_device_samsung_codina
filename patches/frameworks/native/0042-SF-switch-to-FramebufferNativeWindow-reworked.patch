@@ -1,0 +1,103 @@
+From 3f5e466ab7d1170a42a7aadbe20fb9f9237c0710 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 19 Sep 2018 01:37:02 +0300
+Subject: [PATCH 42/42] SF: switch to FramebufferNativeWindow (reworked)
+
+A previous implementation was causing Gralloc buffers leak.
+Avoid creating unnecessary FramebufferNativeWindow instances.
+
+Change-Id: I58d66d0984bcfbd39a0cacb01f565b8642ebed1c
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 19 +++++++++++++++++--
+ services/surfaceflinger/SurfaceFlinger.h   | 10 ++++++++++
+ 2 files changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 87baf8c8a..3244e4244 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -47,6 +47,11 @@
+ #include <gui/LayerDebugInfo.h>
+ #include <gui/Surface.h>
+ 
++ 
++#ifdef STE_HARDWARE
++#include <ui/FramebufferNativeWindow.h>
++#endif
++
+ #include <ui/GraphicBufferAllocator.h>
+ #include <ui/PixelFormat.h>
+ #include <ui/UiConfig.h>
+@@ -240,7 +245,8 @@ SurfaceFlinger::SurfaceFlinger(SurfaceFlinger::SkipInitializationTag)
+         mVrFlingerRequestsDisplay(false),
+         mMainThreadId(std::this_thread::get_id()),
+         mCreateBufferQueue(&BufferQueue::createBufferQueue),
+-        mCreateNativeWindowSurface(&impl::NativeWindowSurface::create) {}
++        mCreateNativeWindowSurface(&impl::NativeWindowSurface::create),
++        mIsCreated(false) {}
+ 
+ SurfaceFlinger::SurfaceFlinger() : SurfaceFlinger(SkipInitialization) {
+     ALOGI("SurfaceFlinger is starting");
+@@ -361,6 +367,15 @@ SurfaceFlinger::~SurfaceFlinger()
+ {
+ }
+ 
++sp<ANativeWindow> SurfaceFlinger::createWindow() {
++    if (!mIsCreated) {
++       mNativeWindow = new FramebufferNativeWindow();
++       mIsCreated = true;
++    }
++
++    return mNativeWindow;
++}
++
+ void SurfaceFlinger::binderDied(const wp<IBinder>& /* who */)
+ {
+     // the window manager died on us. prepare its eulogy.
+@@ -2291,7 +2306,7 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
+     getHwComposer().getHdrCapabilities(hwcId, &hdrCapabilities);
+ 
+     auto nativeWindowSurface = mCreateNativeWindowSurface(producer);
+-    auto nativeWindow = nativeWindowSurface->getNativeWindow();
++    auto nativeWindow = createWindow();
+ 
+     /*
+      * Create our display's surface
+diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
+index 8566b0387..a8e321d0b 100644
+--- a/services/surfaceflinger/SurfaceFlinger.h
++++ b/services/surfaceflinger/SurfaceFlinger.h
+@@ -83,6 +83,8 @@
+ 
+ using namespace android::surfaceflinger;
+ 
++struct ANativeWindow;
++
+ namespace android {
+ 
+ // ---------------------------------------------------------------------------
+@@ -519,6 +521,8 @@ private:
+     uint32_t setDisplayStateLocked(const DisplayState& s);
+     void setDestroyStateLocked(const ComposerState& composerState);
+ 
++    sp<ANativeWindow> createWindow();
++
+     /* ------------------------------------------------------------------------
+      * Layer management
+      */
+@@ -893,6 +897,12 @@ private:
+     CreateNativeWindowSurfaceFunction mCreateNativeWindowSurface;
+ 
+     SurfaceFlingerBE mBE;
++
++#ifdef STE_HARDWARE
++    bool mIsCreated;
++    sp<ANativeWindow> mNativeWindow;
++#endif
++
+ };
+ }; // namespace android
+ 
+-- 
+2.11.0
+

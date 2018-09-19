@@ -1,0 +1,73 @@
+From d10f10503a93f1dec12feb6941c86898730e88cf Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 15:49:43 +0300
+Subject: [PATCH 2/2] composer@2.1: remove spamming messages
+
+Change-Id: Ibb90caf670721505cbf99361e7366825d37ed27a
+---
+ graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp   | 9 ++++++++-
+ graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp | 2 +-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp b/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp
+index 6551a99a..8db7cd82 100644
+--- a/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp
++++ b/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp
+@@ -1251,10 +1251,12 @@ void HWC2On1Adapter::Display::generateChanges() {
+     for (size_t hwc1Id = 0; hwc1Id < numLayers; ++hwc1Id) {
+         const auto& receivedLayer = mHwc1RequestedContents->hwLayers[hwc1Id];
+         if (mHwc1LayerMap.count(hwc1Id) == 0) {
++#if 0
+             ALOGE_IF(receivedLayer.compositionType != HWC_FRAMEBUFFER_TARGET,
+                     "generateChanges: HWC1 layer %zd doesn't have a"
+                     " matching HWC2 layer, and isn't the framebuffer target",
+                     hwc1Id);
++#endif
+             continue;
+         }
+ 
+@@ -1295,10 +1297,13 @@ Error HWC2On1Adapter::Display::set(hwc_display_contents_1& hwcContents) {
+     if (clientTargetLayer.compositionType == HWC_FRAMEBUFFER_TARGET) {
+         clientTargetLayer.handle = mClientTarget.getBuffer();
+         clientTargetLayer.acquireFenceFd = mClientTarget.getFence();
+-    } else {
++    }
++#if 0
++    else {
+         ALOGE("[%" PRIu64 "] set: last HWC layer wasn't FRAMEBUFFER_TARGET",
+                 mId);
+     }
++#endif
+ 
+     mChanges.reset();
+ 
+@@ -1318,11 +1323,13 @@ void HWC2On1Adapter::Display::addReleaseFences(
+     for (size_t hwc1Id = 0; hwc1Id < numLayers; ++hwc1Id) {
+         const auto& receivedLayer = hwcContents.hwLayers[hwc1Id];
+         if (mHwc1LayerMap.count(hwc1Id) == 0) {
++#if 0
+             if (receivedLayer.compositionType != HWC_FRAMEBUFFER_TARGET) {
+                 ALOGE("addReleaseFences: HWC1 layer %zd doesn't have a"
+                         " matching HWC2 layer, and isn't the framebuffer"
+                         " target", hwc1Id);
+             }
++#endif
+             // Close the framebuffer target release fence since we will use the
+             // display retire fence instead
+             if (receivedLayer.releaseFenceFd != -1) {
+diff --git a/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp b/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp
+index 7c9e6518..3fb48402 100644
+--- a/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp
++++ b/graphics/composer/2.1/utils/hwc2onfbadapter/HWC2OnFbAdapter.cpp
+@@ -651,7 +651,7 @@ HWC2OnFbAdapter::HWC2OnFbAdapter(framebuffer_device_t* fbDevice)
+     mFbInfo.name = "fbdev";
+     mFbInfo.width = mFbDevice->width;
+     mFbInfo.height = mFbDevice->height;
+-    mFbInfo.format = mFbDevice->format;
++    mFbInfo.format = /*mFbDevice->format*/ 0x4 /*RGB_565*/;
+     mFbInfo.vsync_period_ns = int(1e9 / mFbDevice->fps);
+     mFbInfo.xdpi_scaled = int(mFbDevice->xdpi * 1000.0f);
+     mFbInfo.ydpi_scaled = int(mFbDevice->ydpi * 1000.0f);
+-- 
+2.11.0
+

@@ -1,0 +1,35 @@
+From 2ac07e3f2da6fdcb137ea248668f732892a15766 Mon Sep 17 00:00:00 2001
+From: Wan Zhou <wanz@nvidia.com>
+Date: Sat, 4 Feb 2017 14:59:47 +0800
+Subject: [PATCH 15/42] Fix leak of file descriptors and memory.
+
+ 1. fds must be explicitly closed if it is not retained by Flattenable::unflatten().
+ 2. must delete allocated handle before setting to NULL.
+
+Change-Id: Ibb263173e38fa59d2adcd1c6ceb730bec88ffa97
+---
+ libs/binder/include/binder/Parcel.h | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/libs/binder/include/binder/Parcel.h b/libs/binder/include/binder/Parcel.h
+index f7a119b4a..726606dfe 100644
+--- a/libs/binder/include/binder/Parcel.h
++++ b/libs/binder/include/binder/Parcel.h
+@@ -555,7 +555,13 @@ private:
+         }
+         virtual status_t unflatten(void const* buffer, size_t size, int const* fds, size_t count) {
+ #ifdef STE_HARDWARE
+-            return const_cast<Flattenable&>(val).unflatten(buffer, size, fds, count);
++            status_t err = const_cast<Flattenable&>(val).unflatten(buffer, size, fds, count);
++            if (err != NO_ERROR) {
++                for (size_t i = 0; i < count; i++) {
++                    close(fds[i]);
++                }
++            }
++            return err;
+ #else
+             return const_cast<Flattenable<T>&>(val).unflatten(buffer, size, fds, count);
+ #endif
+-- 
+2.11.0
+

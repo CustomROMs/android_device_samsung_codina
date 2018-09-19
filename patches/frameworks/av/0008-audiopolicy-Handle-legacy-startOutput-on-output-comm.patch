@@ -1,0 +1,107 @@
+From 0831b2a51b6d16859480dc429e940d3d082cd868 Mon Sep 17 00:00:00 2001
+From: Xuefer <xuefer@gmail.com>
+Date: Tue, 29 Dec 2015 00:43:16 +0800
+Subject: [PATCH 08/26] audiopolicy: Handle legacy startOutput on output
+ command thread too
+
+---
+ .../audiopolicy/service/AudioPolicyService.cpp     | 29 ++++++++++++++++++++++
+ services/audiopolicy/service/AudioPolicyService.h  | 14 +++++++++++
+ 2 files changed, 43 insertions(+)
+
+diff --git a/services/audiopolicy/service/AudioPolicyService.cpp b/services/audiopolicy/service/AudioPolicyService.cpp
+index 15bd5c941..bb90f7372 100644
+--- a/services/audiopolicy/service/AudioPolicyService.cpp
++++ b/services/audiopolicy/service/AudioPolicyService.cpp
+@@ -778,6 +778,19 @@ bool AudioPolicyService::AudioCommandThread::threadLoop()
+                             data->mVolume);
+                     command->mStatus = AudioSystem::setVoiceVolume(data->mVolume);
+                     }break;
++                case START_OUTPUT: {
++                    StartOutputData *data = (StartOutputData *)command->mParam.get();
++                    ALOGV("AudioCommandThread() processing start output %d",
++                            data->mIO);
++                    svc = mService.promote();
++                    if (svc == 0) {
++                        command->mStatus = UNKNOWN_ERROR;
++                        break;
++                    }
++                    mLock.unlock();
++                    command->mStatus = svc->doStartOutput(data->mIO, data->mStream, data->mSession);
++                    mLock.lock();
++                    }break;
+                 case STOP_OUTPUT: {
+                     StopOutputData *data = (StopOutputData *)command->mParam.get();
+                     ALOGV("AudioCommandThread() processing stop output %d",
+@@ -1031,6 +1044,22 @@ status_t AudioPolicyService::AudioCommandThread::voiceVolumeCommand(float volume
+     return sendCommand(command, delayMs);
+ }
+ 
++status_t AudioPolicyService::AudioCommandThread::startOutputCommand(audio_io_handle_t output,
++                                                                    audio_stream_type_t stream,
++                                                                    audio_session_t session)
++{
++    sp<AudioCommand> command = new AudioCommand();
++    command->mCommand = START_OUTPUT;
++    sp<StartOutputData> data = new StartOutputData();
++    data->mIO = output;
++    data->mStream = stream;
++    data->mSession = session;
++    command->mParam = data;
++    command->mWaitStatus = true;
++    ALOGV("AudioCommandThread() adding start output %d", output);
++    return sendCommand(command);
++}
++
+ void AudioPolicyService::AudioCommandThread::stopOutputCommand(audio_io_handle_t output,
+                                                                audio_stream_type_t stream,
+                                                                audio_session_t session)
+diff --git a/services/audiopolicy/service/AudioPolicyService.h b/services/audiopolicy/service/AudioPolicyService.h
+index d2e483100..2776700e2 100644
+--- a/services/audiopolicy/service/AudioPolicyService.h
++++ b/services/audiopolicy/service/AudioPolicyService.h
+@@ -219,6 +219,9 @@ public:
+                                         bool reported);
+     virtual status_t setSurroundFormatEnabled(audio_format_t audioFormat, bool enabled);
+ 
++            status_t doStartOutput(audio_io_handle_t output,
++                                   audio_stream_type_t stream,
++                                   audio_session_t session);
+             status_t doStopOutput(audio_io_handle_t output,
+                                   audio_stream_type_t stream,
+                                   audio_session_t session);
+@@ -334,6 +337,7 @@ private:
+             SET_VOLUME,
+             SET_PARAMETERS,
+             SET_VOICE_VOLUME,
++            START_OUTPUT,
+             STOP_OUTPUT,
+             RELEASE_OUTPUT,
+             CREATE_AUDIO_PATCH,
+@@ -363,6 +367,9 @@ private:
+                     status_t    parametersCommand(audio_io_handle_t ioHandle,
+                                             const char *keyValuePairs, int delayMs = 0);
+                     status_t    voiceVolumeCommand(float volume, int delayMs = 0);
++                    status_t    startOutputCommand(audio_io_handle_t output,
++                                                   audio_stream_type_t stream,
++                                                   audio_session_t session);
+                     void        stopOutputCommand(audio_io_handle_t output,
+                                                   audio_stream_type_t stream,
+                                                   audio_session_t session);
+@@ -440,6 +447,13 @@ private:
+             float mVolume;
+         };
+ 
++        class StartOutputData : public AudioCommandData {
++        public:
++            audio_io_handle_t mIO;
++            audio_stream_type_t mStream;
++            audio_session_t mSession;
++        };
++
+         class StopOutputData : public AudioCommandData {
+         public:
+             audio_io_handle_t mIO;
+-- 
+2.11.0
+

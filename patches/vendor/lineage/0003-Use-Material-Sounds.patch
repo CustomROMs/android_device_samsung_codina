@@ -1,7 +1,7 @@
 From f6cbf8c640c5014fbc8b2fed2a760320f81444e4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 03/10] Use Material Sounds
+Subject: [PATCH 03/12] Use Material Sounds
 
 ---
  config/common.mk    | 4 ++--

@@ -1,0 +1,59 @@
+From 04a9c9d60ada11bfeab7c6258d460d2704b99172 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 06/26] AudioPolicyInterfaceImplLegacy: add
+ handleDeviceConfigChange stub function
+
+ audiopolicy: fixes for 8.1
+---
+ .../service/AudioPolicyInterfaceImplLegacy.cpp     | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index ebc07c192..70ce30973 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -67,6 +67,14 @@ audio_policy_dev_state_t AudioPolicyService::getDeviceConnectionState(
+                                                       device_address);
+ }
+ 
++status_t AudioPolicyService::handleDeviceConfigChange(audio_devices_t device,
++                                                  const char *device_address,
++                                                  const char *device_name)
++{
++    ALOGE("handleDeviceConfigChange()");
++    return INVALID_OPERATION;
++}
++
+ status_t AudioPolicyService::setPhoneState(audio_mode_t state)
+ {
+     if (mpAudioPolicy == NULL) {
+@@ -271,7 +279,7 @@ status_t AudioPolicyService::getInputForAttr(const audio_attributes_t *attr,
+         inputSource = AUDIO_SOURCE_MIC;
+     }
+ 
+-    if ((inputSource == AUDIO_SOURCE_HOTWORD) && !captureHotwordAllowed()) {
++    if ((inputSource == AUDIO_SOURCE_HOTWORD) && !captureHotwordAllowed(pid, uid)) {
+         return BAD_VALUE;
+     }
+ 
+@@ -656,4 +664,16 @@ status_t AudioPolicyService::getMasterMono(bool *mono)
+     return INVALID_OPERATION;
+ }
+ 
++float AudioPolicyService::getStreamVolumeDB(
++            audio_stream_type_t stream, int index, audio_devices_t device)
++{
++    return INVALID_OPERATION;
++}
++
++status_t AudioPolicyService::listAudioSessions(audio_stream_type_t streams,
++                                               Vector< sp<AudioSessionInfo>> &sessions)
++{
++    return INVALID_OPERATION;
++}
++
+ }; // namespace android
+-- 
+2.11.0
+

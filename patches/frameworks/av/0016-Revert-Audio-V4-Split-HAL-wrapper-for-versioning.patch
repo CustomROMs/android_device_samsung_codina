@@ -1,0 +1,276 @@
+From 1c8a8e2a5ba17420d4fce1c0088ddf59f6c86b20 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 10 Sep 2018 10:12:58 +0300
+Subject: [PATCH 16/26] Revert "Audio V4: Split HAL wrapper for versioning"
+
+This reverts commit 7588ff418aca63b1dc43a85afc1e86c40dd889a3.
+
+Change-Id: I52cb58ec37a2e7b0d9abbdd36ca9f83c2d120ffb
+---
+ media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp   |  5 +++++
+ media/libaudiohal/2.0/EffectBufferHalHidl.cpp       |  6 ++++--
+ media/libaudiohal/2.0/EffectBufferHalHidl.h         |  3 ---
+ media/libaudiohal/2.0/EffectsFactoryHalHidl.cpp     | 21 ++++++++++-----------
+ media/libaudiohal/2.0/EffectsFactoryHalHidl.h       |  6 ------
+ .../media/audiohal/EffectBufferHalInterface.h       |  4 +++-
+ .../media/audiohal/EffectsFactoryHalInterface.h     |  4 ----
+ media/libaudioprocessing/BufferProviders.cpp        |  4 ++--
+ services/audioflinger/Effects.cpp                   | 12 ++++--------
+ services/audioflinger/Threads.cpp                   |  4 ++--
+ services/soundtrigger/Android.mk                    |  1 -
+ 11 files changed, 30 insertions(+), 40 deletions(-)
+
+diff --git a/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp b/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp
+index eb6f5ca91..66dcad4a2 100644
+--- a/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp
++++ b/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp
+@@ -25,6 +25,11 @@
+ 
+ namespace android {
+ 
++// static
++sp<DevicesFactoryHalInterface> DevicesFactoryHalInterface::create() {
++    return new DevicesFactoryHalHybrid();
++}
++
+ DevicesFactoryHalHybrid::DevicesFactoryHalHybrid()
+         : mLocalFactory(new DevicesFactoryHalLocal()),
+           mHidlFactory(
+diff --git a/media/libaudiohal/2.0/EffectBufferHalHidl.cpp b/media/libaudiohal/2.0/EffectBufferHalHidl.cpp
+index 226a50022..8b5201b29 100644
+--- a/media/libaudiohal/2.0/EffectBufferHalHidl.cpp
++++ b/media/libaudiohal/2.0/EffectBufferHalHidl.cpp
+@@ -37,12 +37,14 @@ uint64_t EffectBufferHalHidl::makeUniqueId() {
+     return counter++;
+ }
+ 
+-status_t EffectBufferHalHidl::allocate(
++// static
++status_t EffectBufferHalInterface::allocate(
+         size_t size, sp<EffectBufferHalInterface>* buffer) {
+     return mirror(nullptr, size, buffer);
+ }
+ 
+-status_t EffectBufferHalHidl::mirror(
++// static
++status_t EffectBufferHalInterface::mirror(
+         void* external, size_t size, sp<EffectBufferHalInterface>* buffer) {
+     sp<EffectBufferHalInterface> tempBuffer = new EffectBufferHalHidl(size);
+     status_t result = static_cast<EffectBufferHalHidl*>(tempBuffer.get())->init();
+diff --git a/media/libaudiohal/2.0/EffectBufferHalHidl.h b/media/libaudiohal/2.0/EffectBufferHalHidl.h
+index 31e0087c2..d7a43ae0f 100644
+--- a/media/libaudiohal/2.0/EffectBufferHalHidl.h
++++ b/media/libaudiohal/2.0/EffectBufferHalHidl.h
+@@ -32,9 +32,6 @@ namespace android {
+ class EffectBufferHalHidl : public EffectBufferHalInterface
+ {
+   public:
+-    static status_t allocate(size_t size, sp<EffectBufferHalInterface>* buffer);
+-    static status_t mirror(void* external, size_t size, sp<EffectBufferHalInterface>* buffer);
+-
+     virtual audio_buffer_t* audioBuffer();
+     virtual void* externalData() const;
+ 
+diff --git a/media/libaudiohal/2.0/EffectsFactoryHalHidl.cpp b/media/libaudiohal/2.0/EffectsFactoryHalHidl.cpp
+index 0d40e6d9d..08bed1b59 100644
+--- a/media/libaudiohal/2.0/EffectsFactoryHalHidl.cpp
++++ b/media/libaudiohal/2.0/EffectsFactoryHalHidl.cpp
+@@ -20,7 +20,6 @@
+ #include <cutils/native_handle.h>
+ 
+ #include "ConversionHelperHidl.h"
+-#include "EffectBufferHalHidl.h"
+ #include "EffectHalHidl.h"
+ #include "EffectsFactoryHalHidl.h"
+ #include "HidlUtils.h"
+@@ -33,6 +32,16 @@ using ::android::hardware::Return;
+ 
+ namespace android {
+ 
++// static
++sp<EffectsFactoryHalInterface> EffectsFactoryHalInterface::create() {
++    return new EffectsFactoryHalHidl();
++}
++
++// static
++bool EffectsFactoryHalInterface::isNullUuid(const effect_uuid_t *pEffectUuid) {
++    return memcmp(pEffectUuid, EFFECT_UUID_NULL, sizeof(effect_uuid_t)) == 0;
++}
++
+ EffectsFactoryHalHidl::EffectsFactoryHalHidl() : ConversionHelperHidl("EffectsFactory") {
+     mEffectsFactory = IEffectsFactory::getService();
+     if (mEffectsFactory == 0) {
+@@ -137,14 +146,4 @@ status_t EffectsFactoryHalHidl::dumpEffects(int fd) {
+     return processReturn(__FUNCTION__, ret);
+ }
+ 
+-status_t EffectsFactoryHalHidl::allocateBuffer(size_t size, sp<EffectBufferHalInterface>* buffer) {
+-    return EffectBufferHalHidl::allocate(size, buffer);
+-}
+-
+-status_t EffectsFactoryHalHidl::mirrorBuffer(void* external, size_t size,
+-                          sp<EffectBufferHalInterface>* buffer) {
+-    return EffectBufferHalHidl::mirror(external, size, buffer);
+-}
+-
+-
+ } // namespace android
+diff --git a/media/libaudiohal/2.0/EffectsFactoryHalHidl.h b/media/libaudiohal/2.0/EffectsFactoryHalHidl.h
+index 82b54814b..e89f04255 100644
+--- a/media/libaudiohal/2.0/EffectsFactoryHalHidl.h
++++ b/media/libaudiohal/2.0/EffectsFactoryHalHidl.h
+@@ -21,8 +21,6 @@
+ #include <android/hardware/audio/effect/2.0/types.h>
+ #include <media/audiohal/EffectsFactoryHalInterface.h>
+ 
+-#include "ConversionHelperHidl.h"
+-
+ namespace android {
+ 
+ using ::android::hardware::audio::effect::V2_0::EffectDescriptor;
+@@ -51,10 +49,6 @@ class EffectsFactoryHalHidl : public EffectsFactoryHalInterface, public Conversi
+ 
+     virtual status_t dumpEffects(int fd);
+ 
+-    status_t allocateBuffer(size_t size, sp<EffectBufferHalInterface>* buffer) override;
+-    status_t mirrorBuffer(void* external, size_t size,
+-                          sp<EffectBufferHalInterface>* buffer) override;
+-
+   private:
+     friend class EffectsFactoryHalInterface;
+ 
+diff --git a/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h b/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h
+index d0603cd4f..1cae66209 100644
+--- a/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h
++++ b/media/libaudiohal/include/media/audiohal/EffectBufferHalInterface.h
+@@ -26,7 +26,6 @@ namespace android {
+ // Abstraction for an audio buffer. It may be a "mirror" for
+ // a buffer that the effect chain doesn't own, or a buffer owned by
+ // the effect chain.
+-// Buffers are created from EffectsFactoryHalInterface
+ class EffectBufferHalInterface : public RefBase
+ {
+   public:
+@@ -50,6 +49,9 @@ class EffectBufferHalInterface : public RefBase
+     virtual void update(size_t size) = 0;  // copies partial data from external buffer
+     virtual void commit(size_t size) = 0;  // copies partial data to external buffer
+ 
++    static status_t allocate(size_t size, sp<EffectBufferHalInterface>* buffer);
++    static status_t mirror(void* external, size_t size, sp<EffectBufferHalInterface>* buffer);
++
+   protected:
+     // Subclasses can not be constructed directly by clients.
+     EffectBufferHalInterface() {}
+diff --git a/media/libaudiohal/include/media/audiohal/EffectsFactoryHalInterface.h b/media/libaudiohal/include/media/audiohal/EffectsFactoryHalInterface.h
+index 316a46cba..a616e8660 100644
+--- a/media/libaudiohal/include/media/audiohal/EffectsFactoryHalInterface.h
++++ b/media/libaudiohal/include/media/audiohal/EffectsFactoryHalInterface.h
+@@ -48,10 +48,6 @@ class EffectsFactoryHalInterface : public RefBase
+ 
+     static sp<EffectsFactoryHalInterface> create();
+ 
+-    virtual status_t allocateBuffer(size_t size, sp<EffectBufferHalInterface>* buffer) = 0;
+-    virtual status_t mirrorBuffer(void* external, size_t size,
+-                                  sp<EffectBufferHalInterface>* buffer) = 0;
+-
+     // Helper function to compare effect uuid to EFFECT_UUID_NULL.
+     static bool isNullUuid(const effect_uuid_t *pEffectUuid);
+ 
+diff --git a/media/libaudioprocessing/BufferProviders.cpp b/media/libaudioprocessing/BufferProviders.cpp
+index 2d9e1cb16..7f16165ba 100644
+--- a/media/libaudioprocessing/BufferProviders.cpp
++++ b/media/libaudioprocessing/BufferProviders.cpp
+@@ -183,7 +183,7 @@ DownmixerBufferProvider::DownmixerBufferProvider(
+      mOutFrameSize =
+              audio_bytes_per_sample(format) * audio_channel_count_from_out_mask(outputChannelMask);
+      status_t status;
+-     status = mEffectsFactory->mirrorBuffer(
++     status = EffectBufferHalInterface::mirror(
+              nullptr, mInFrameSize * bufferFrameCount, &mInBuffer);
+      if (status != 0) {
+          ALOGE("DownmixerBufferProvider() error %d while creating input buffer", status);
+@@ -191,7 +191,7 @@ DownmixerBufferProvider::DownmixerBufferProvider(
+          mEffectsFactory.clear();
+          return;
+      }
+-     status = mEffectsFactory->mirrorBuffer(
++     status = EffectBufferHalInterface::mirror(
+              nullptr, mOutFrameSize * bufferFrameCount, &mOutBuffer);
+      if (status != 0) {
+          ALOGE("DownmixerBufferProvider() error %d while creating output buffer", status);
+diff --git a/services/audioflinger/Effects.cpp b/services/audioflinger/Effects.cpp
+index 2047dfd2a..cb8893b5f 100644
+--- a/services/audioflinger/Effects.cpp
++++ b/services/audioflinger/Effects.cpp
+@@ -1029,9 +1029,7 @@ void AudioFlinger::EffectModule::setInBuffer(const sp<EffectBufferHalInterface>&
+                 || size > mInConversionBuffer->getSize())) {
+             mInConversionBuffer.clear();
+             ALOGV("%s: allocating mInConversionBuffer %zu", __func__, size);
+-            sp<AudioFlinger> audioFlinger = mAudioFlinger.promote();
+-            LOG_ALWAYS_FATAL_IF(audioFlinger == nullptr, "EM could not retrieved audioFlinger");
+-            (void)audioFlinger->mEffectsFactoryHal->allocateBuffer(size, &mInConversionBuffer);
++            (void)EffectBufferHalInterface::allocate(size, &mInConversionBuffer);
+         }
+         if (mInConversionBuffer.get() != nullptr) {
+             mInConversionBuffer->setFrameCount(inFrameCount);
+@@ -1075,9 +1073,7 @@ void AudioFlinger::EffectModule::setOutBuffer(const sp<EffectBufferHalInterface>
+                 || size > mOutConversionBuffer->getSize())) {
+             mOutConversionBuffer.clear();
+             ALOGV("%s: allocating mOutConversionBuffer %zu", __func__, size);
+-            sp<AudioFlinger> audioFlinger = mAudioFlinger.promote();
+-            LOG_ALWAYS_FATAL_IF(audioFlinger == nullptr, "EM could not retrieved audioFlinger");
+-            (void)audioFlinger->mEffectsFactoryHal->allocateBuffer(size, &mOutConversionBuffer);
++            (void)EffectBufferHalInterface::allocate(size, &mOutConversionBuffer);
+         }
+         if (mOutConversionBuffer.get() != nullptr) {
+             mOutConversionBuffer->setFrameCount(outFrameCount);
+@@ -2026,10 +2022,10 @@ status_t AudioFlinger::EffectChain::addEffect_ll(const sp<EffectModule>& effect)
+         size_t numSamples = thread->frameCount();
+         sp<EffectBufferHalInterface> halBuffer;
+ #ifdef FLOAT_EFFECT_CHAIN
+-        status_t result = thread->mAudioFlinger->mEffectsFactoryHal->allocateBuffer(
++        status_t result = EffectBufferHalInterface::allocate(
+                 numSamples * sizeof(float), &halBuffer);
+ #else
+-        status_t result = thread->mAudioFlinger->mEffectsFactoryHal->allocateBuffer(
++        status_t result = EffectBufferHalInterface::allocate(
+                 numSamples * sizeof(int32_t), &halBuffer);
+ #endif
+         if (result != OK) return result;
+diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.cpp
+index cf482dcc0..f5e66a338 100644
+--- a/services/audioflinger/Threads.cpp
++++ b/services/audioflinger/Threads.cpp
+@@ -2972,7 +2972,7 @@ status_t AudioFlinger::PlaybackThread::addEffectChain_l(const sp<EffectChain>& c
+ {
+     audio_session_t session = chain->sessionId();
+     sp<EffectBufferHalInterface> halInBuffer, halOutBuffer;
+-    status_t result = mAudioFlinger->mEffectsFactoryHal->mirrorBuffer(
++    status_t result = EffectBufferHalInterface::mirror(
+             mEffectBufferEnabled ? mEffectBuffer : mSinkBuffer,
+             mEffectBufferEnabled ? mEffectBufferSize : mSinkBufferSize,
+             &halInBuffer);
+@@ -2985,7 +2985,7 @@ status_t AudioFlinger::PlaybackThread::addEffectChain_l(const sp<EffectChain>& c
+         // the sink buffer as input
+         if (mType != DIRECT) {
+             size_t numSamples = mNormalFrameCount * mChannelCount;
+-            status_t result = mAudioFlinger->mEffectsFactoryHal->allocateBuffer(
++            status_t result = EffectBufferHalInterface::allocate(
+                     numSamples * sizeof(effect_buffer_t),
+                     &halInBuffer);
+             if (result != OK) return result;
+diff --git a/services/soundtrigger/Android.mk b/services/soundtrigger/Android.mk
+index ad3666e42..ca4473766 100644
+--- a/services/soundtrigger/Android.mk
++++ b/services/soundtrigger/Android.mk
+@@ -53,7 +53,6 @@ LOCAL_SHARED_LIBRARIES += \
+     libhidltransport \
+     libbase \
+     libaudiohal \
+-    libaudiohal_deathhandler \
+     android.hardware.soundtrigger@2.0 \
+     android.hardware.soundtrigger@2.1 \
+     android.hardware.audio.common@2.0 \
+-- 
+2.11.0
+

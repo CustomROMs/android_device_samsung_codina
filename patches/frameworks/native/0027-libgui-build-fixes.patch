@@ -1,0 +1,252 @@
+From a276db18de1ec3d7bd5b671dca3885c27be9fe89 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 02:09:05 +0300
+Subject: [PATCH 27/42] libgui: build fixes
+
+Change-Id: I5b6d350ed760fbff6f1ffae9a61a1154e3aa3480
+---
+ libs/gui/Android.bp                       |  2 +-
+ libs/gui/BufferHubConsumer.cpp            |  2 +-
+ libs/gui/BufferHubProducer.cpp            |  8 +++---
+ libs/gui/ConsumerBase.cpp                 |  2 +-
+ libs/gui/LayerDebugInfo.cpp               |  2 --
+ libs/gui/include/gui/BufferHubConsumer.h  |  2 +-
+ libs/gui/include/gui/BufferHubProducer.h  |  8 +++---
+ libs/gui/include/gui/ConsumerBase.h       |  2 +-
+ libs/nativewindow/include/system/window.h | 48 +++++++++++++++++++++++++++++++
+ 9 files changed, 61 insertions(+), 15 deletions(-)
+
+diff --git a/libs/gui/Android.bp b/libs/gui/Android.bp
+index c6e23dab2..c9b52e211 100644
+--- a/libs/gui/Android.bp
++++ b/libs/gui/Android.bp
+@@ -27,7 +27,7 @@ cc_library_shared {
+     clang: true,
+     cflags: [
+         "-Wall",
+-        "-Werror",
++        "-Wno-format",
+     ],
+     cppflags: [
+         "-Weverything",
+diff --git a/libs/gui/BufferHubConsumer.cpp b/libs/gui/BufferHubConsumer.cpp
+index b5cdeb280..138f111fc 100644
+--- a/libs/gui/BufferHubConsumer.cpp
++++ b/libs/gui/BufferHubConsumer.cpp
+@@ -116,7 +116,7 @@ status_t BufferHubConsumer::setDefaultBufferDataSpace(android_dataspace /*defaul
+     return INVALID_OPERATION;
+ }
+ 
+-status_t BufferHubConsumer::setConsumerUsageBits(uint64_t /*usage*/) {
++status_t BufferHubConsumer::setConsumerUsageBits(uint32_t /*usage*/) {
+     ALOGE("BufferHubConsumer::setConsumerUsageBits: not implemented.");
+     return INVALID_OPERATION;
+ }
+diff --git a/libs/gui/BufferHubProducer.cpp b/libs/gui/BufferHubProducer.cpp
+index ae5cca2d2..27aae04f7 100644
+--- a/libs/gui/BufferHubProducer.cpp
++++ b/libs/gui/BufferHubProducer.cpp
+@@ -133,7 +133,7 @@ status_t BufferHubProducer::setAsyncMode(bool async) {
+ }
+ 
+ status_t BufferHubProducer::dequeueBuffer(int* out_slot, sp<Fence>* out_fence, uint32_t width,
+-                                          uint32_t height, PixelFormat format, uint64_t usage,
++                                          uint32_t height, PixelFormat format, uint32_t usage,
+                                           uint64_t* /*outBufferAge*/,
+                                           FrameEventHistoryDelta* /* out_timestamps */) {
+     ALOGV("dequeueBuffer: w=%u, h=%u, format=%d, usage=%" PRIu64, width, height, format, usage);
+@@ -522,7 +522,7 @@ status_t BufferHubProducer::setSidebandStream(const sp<NativeHandle>& stream) {
+ }
+ 
+ void BufferHubProducer::allocateBuffers(uint32_t /* width */, uint32_t /* height */,
+-                                        PixelFormat /* format */, uint64_t /* usage */) {
++                                        PixelFormat /* format */, uint32_t /* usage */) {
+     // TODO(jwcai) |allocateBuffers| aims to preallocate up to the maximum number
+     // of buffers permitted by the current BufferQueue configuration (aka
+     // |max_buffer_count_|).
+@@ -595,7 +595,7 @@ status_t BufferHubProducer::getUniqueId(uint64_t* out_id) const {
+     return NO_ERROR;
+ }
+ 
+-status_t BufferHubProducer::getConsumerUsage(uint64_t* out_usage) const {
++status_t BufferHubProducer::getConsumerUsage(uint32_t* out_usage) const {
+     ALOGV(__FUNCTION__);
+ 
+     // same value as returned by querying NATIVE_WINDOW_CONSUMER_USAGE_BITS
+@@ -632,7 +632,7 @@ status_t BufferHubProducer::TakeAsParcelable(ProducerQueueParcelable* out_parcel
+ }
+ 
+ status_t BufferHubProducer::AllocateBuffer(uint32_t width, uint32_t height, uint32_t layer_count,
+-                                           PixelFormat format, uint64_t usage) {
++                                           PixelFormat format, uint32_t usage) {
+     auto status = queue_->AllocateBuffer(width, height, layer_count, uint32_t(format), usage);
+     if (!status) {
+         ALOGE("BufferHubProducer::AllocateBuffer: Failed to allocate buffer: %s",
+diff --git a/libs/gui/ConsumerBase.cpp b/libs/gui/ConsumerBase.cpp
+index f9e292e19..ae5867ada 100644
+--- a/libs/gui/ConsumerBase.cpp
++++ b/libs/gui/ConsumerBase.cpp
+@@ -247,7 +247,7 @@ status_t ConsumerBase::setDefaultBufferDataSpace(
+     return mConsumer->setDefaultBufferDataSpace(defaultDataSpace);
+ }
+ 
+-status_t ConsumerBase::setConsumerUsageBits(uint64_t usage) {
++status_t ConsumerBase::setConsumerUsageBits(uint32_t usage) {
+     Mutex::Autolock lock(mMutex);
+     if (mAbandoned) {
+         CB_LOGE("setConsumerUsageBits: ConsumerBase is abandoned!");
+diff --git a/libs/gui/LayerDebugInfo.cpp b/libs/gui/LayerDebugInfo.cpp
+index d3dc16d30..9eef4c305 100644
+--- a/libs/gui/LayerDebugInfo.cpp
++++ b/libs/gui/LayerDebugInfo.cpp
+@@ -121,8 +121,6 @@ std::string to_string(const LayerDebugInfo& info) {
+             info.mLayerStack, info.mZ, static_cast<double>(info.mX), static_cast<double>(info.mY),
+             info.mWidth, info.mHeight);
+ 
+-    result.appendFormat("crop=%s, finalCrop=%s, ",
+-            to_string(info.mCrop).c_str(), to_string(info.mFinalCrop).c_str());
+     result.appendFormat("isOpaque=%1d, invalidate=%1d, ", info.mIsOpaque, info.mContentDirty);
+     result.appendFormat("dataspace=%s, ", dataspaceDetails(info.mDataSpace).c_str());
+     result.appendFormat("pixelformat=%s, ", decodePixelFormat(info.mPixelFormat).c_str());
+diff --git a/libs/gui/include/gui/BufferHubConsumer.h b/libs/gui/include/gui/BufferHubConsumer.h
+index d38077014..d05de291f 100644
+--- a/libs/gui/include/gui/BufferHubConsumer.h
++++ b/libs/gui/include/gui/BufferHubConsumer.h
+@@ -75,7 +75,7 @@ public:
+     status_t setDefaultBufferDataSpace(android_dataspace defaultDataSpace) override;
+ 
+     // See |IGraphicBufferConsumer::setConsumerUsageBits|
+-    status_t setConsumerUsageBits(uint64_t usage) override;
++    status_t setConsumerUsageBits(uint32_t usage) override;
+ 
+     // See |IGraphicBufferConsumer::setConsumerIsProtected|
+     status_t setConsumerIsProtected(bool isProtected) override;
+diff --git a/libs/gui/include/gui/BufferHubProducer.h b/libs/gui/include/gui/BufferHubProducer.h
+index 23c990982..ba3d684c7 100644
+--- a/libs/gui/include/gui/BufferHubProducer.h
++++ b/libs/gui/include/gui/BufferHubProducer.h
+@@ -60,7 +60,7 @@ public:
+ 
+     // See |IGraphicBufferProducer::dequeueBuffer|
+     status_t dequeueBuffer(int* out_slot, sp<Fence>* out_fence, uint32_t width, uint32_t height,
+-                           PixelFormat format, uint64_t usage, uint64_t* outBufferAge,
++                           PixelFormat format, uint32_t usage, uint64_t* outBufferAge,
+                            FrameEventHistoryDelta* outTimestamps) override;
+ 
+     // See |IGraphicBufferProducer::detachBuffer|
+@@ -94,7 +94,7 @@ public:
+ 
+     // See |IGraphicBufferProducer::allocateBuffers|
+     void allocateBuffers(uint32_t width, uint32_t height, PixelFormat format,
+-                         uint64_t usage) override;
++                         uint32_t usage) override;
+ 
+     // See |IGraphicBufferProducer::allowAllocation|
+     status_t allowAllocation(bool allow) override;
+@@ -125,7 +125,7 @@ public:
+     status_t getUniqueId(uint64_t* out_id) const override;
+ 
+     // See |IGraphicBufferProducer::getConsumerUsage|
+-    status_t getConsumerUsage(uint64_t* out_usage) const override;
++    status_t getConsumerUsage(uint32_t* out_usage) const override;
+ 
+     // Takes out the current producer as a binder parcelable object. Note that the
+     // producer must be disconnected to be exportable. After successful export,
+@@ -156,7 +156,7 @@ private:
+     // Allocate new buffer through BufferHub and add it into |queue_| for
+     // bookkeeping.
+     status_t AllocateBuffer(uint32_t width, uint32_t height, uint32_t layer_count,
+-                            PixelFormat format, uint64_t usage);
++                            PixelFormat format, uint32_t usage);
+ 
+     // Remove a buffer via BufferHubRPC.
+     status_t RemoveBuffer(size_t slot);
+diff --git a/libs/gui/include/gui/ConsumerBase.h b/libs/gui/include/gui/ConsumerBase.h
+index 0a7c5ee5e..f129079a5 100644
+--- a/libs/gui/include/gui/ConsumerBase.h
++++ b/libs/gui/include/gui/ConsumerBase.h
+@@ -90,7 +90,7 @@ public:
+     status_t setDefaultBufferDataSpace(android_dataspace defaultDataSpace);
+ 
+     // See IGraphicBufferConsumer::setConsumerUsageBits
+-    status_t setConsumerUsageBits(uint64_t usage);
++    status_t setConsumerUsageBits(uint32_t usage);
+ 
+     // See IGraphicBufferConsumer::setTransformHint
+     status_t setTransformHint(uint32_t hint);
+diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
+index 40a951559..97c4c7690 100644
+--- a/libs/nativewindow/include/system/window.h
++++ b/libs/nativewindow/include/system/window.h
+@@ -179,6 +179,16 @@ enum {
+      * with GRALLOC_USAGE_PROTECTED usage bits on.
+      */
+     NATIVE_WINDOW_CONSUMER_IS_PROTECTED = 19,
++
++    /*
++     * Returns data space for the buffers.
++     */
++    NATIVE_WINDOW_DATASPACE = 20,
++
++    /*
++     * Returns maxBufferCount set by BufferQueueConsumer
++     */
++    NATIVE_WINDOW_MAX_BUFFER_COUNT = 21,
+ };
+ 
+ /* Valid operations for the (*perform)() hook.
+@@ -224,6 +234,8 @@ enum {
+     NATIVE_WINDOW_GET_WIDE_COLOR_SUPPORT    = 28,
+     NATIVE_WINDOW_GET_HDR_SUPPORT           = 29,
+     NATIVE_WINDOW_GET_CONSUMER_USAGE64      = 31,
++    NATIVE_WINDOW_SET_BUFFERS_SMPTE2086_METADATA = 32,
++    NATIVE_WINDOW_SET_BUFFERS_CTA861_3_METADATA = 33,
+ // clang-format on
+ };
+ 
+@@ -740,6 +752,42 @@ static inline int native_window_set_buffers_data_space(
+ }
+ 
+ /*
++ * native_window_set_buffers_smpte2086_metadata(..., metadata)
++ * All buffers queued after this call will be associated with the SMPTE
++ * ST.2086 metadata specified.
++ *
++ * metadata specifies additional information about the contents of the buffer
++ * that may affect how it's displayed.  When it is nullptr, it means no such
++ * information is available.  No SMPTE ST.2086 metadata is associated with the
++ * buffers by default.
++ */
++static inline int native_window_set_buffers_smpte2086_metadata(
++        struct ANativeWindow* window,
++        const struct android_smpte2086_metadata* metadata)
++{
++    return window->perform(window, NATIVE_WINDOW_SET_BUFFERS_SMPTE2086_METADATA,
++            metadata);
++}
++
++/*
++ * native_window_set_buffers_cta861_3_metadata(..., metadata)
++ * All buffers queued after this call will be associated with the CTA-861.3
++ * metadata specified.
++ *
++ * metadata specifies additional information about the contents of the buffer
++ * that may affect how it's displayed.  When it is nullptr, it means no such
++ * information is available.  No CTA-861.3 metadata is associated with the
++ * buffers by default.
++ */
++static inline int native_window_set_buffers_cta861_3_metadata(
++        struct ANativeWindow* window,
++        const struct android_cta861_3_metadata* metadata)
++{
++    return window->perform(window, NATIVE_WINDOW_SET_BUFFERS_CTA861_3_METADATA,
++            metadata);
++}
++
++/*
+  * native_window_set_buffers_transform(..., int transform)
+  * All buffers queued after this call will be displayed transformed according
+  * to the transform parameter specified.
+-- 
+2.11.0
+

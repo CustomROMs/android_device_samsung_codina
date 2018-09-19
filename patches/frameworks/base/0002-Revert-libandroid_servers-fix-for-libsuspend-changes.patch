@@ -1,0 +1,28 @@
+From 0ae13f1a0ce90563a34ddabbf7f61843f7e1c3cc Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 14 Sep 2018 00:12:24 +0300
+Subject: [PATCH 2/5] Revert "libandroid_servers: fix for libsuspend changes"
+
+This reverts commit a5859e20fcb691f615af957be1090fa4123b46b2.
+
+Change-Id: If19948cfaf7a6c6c9230da73a2476168bca6d132
+---
+ services/core/jni/com_android_server_am_BatteryStatsService.cpp | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/services/core/jni/com_android_server_am_BatteryStatsService.cpp b/services/core/jni/com_android_server_am_BatteryStatsService.cpp
+index fbfa1905564..02ad6c71b58 100644
+--- a/services/core/jni/com_android_server_am_BatteryStatsService.cpp
++++ b/services/core/jni/com_android_server_am_BatteryStatsService.cpp
+@@ -52,8 +52,6 @@ using android::hardware::hidl_vec;
+ using IPowerV1_1 = android::hardware::power::V1_1::IPower;
+ using IPowerV1_0 = android::hardware::power::V1_0::IPower;
+ 
+-extern "C" void autosuspend_set_wakeup_callback(void (*func)(bool success));
+-
+ namespace android
+ {
+ 
+-- 
+2.11.0
+

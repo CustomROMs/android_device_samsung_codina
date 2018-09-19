@@ -1,0 +1,41 @@
+From c416b0256a7d1f1ffa000b300c8de6e980e1d42e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 3 Sep 2018 05:26:24 +0300
+Subject: [PATCH 17/42] Native fix: fix build errors
+
+Change-Id: I48ca83f9a6bbc7e339c53d393eaa09fdeb0dc283
+---
+ libs/binder/include/binder/Parcel.h | 2 ++
+ libs/gui/GLConsumer.cpp             | 3 +++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/libs/binder/include/binder/Parcel.h b/libs/binder/include/binder/Parcel.h
+index 726606dfe..8a6d7c8e8 100644
+--- a/libs/binder/include/binder/Parcel.h
++++ b/libs/binder/include/binder/Parcel.h
+@@ -17,6 +17,8 @@
+ #ifndef ANDROID_PARCEL_H
+ #define ANDROID_PARCEL_H
+ 
++#pragma GCC diagnostic ignored "-Wweak-vtables"
++
+ #include <string>
+ #include <vector>
+ 
+diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
+index bfc0b848e..60388713b 100644
+--- a/libs/gui/GLConsumer.cpp
++++ b/libs/gui/GLConsumer.cpp
+@@ -45,6 +45,9 @@
+ #include <utils/String8.h>
+ #include <utils/Trace.h>
+ 
++#pragma GCC diagnostic ignored "-Wcast-qual"
++#pragma GCC diagnostic ignored "-Wsign-conversion"
++
+ extern "C" EGLAPI const char* eglQueryStringImplementationANDROID(EGLDisplay dpy, EGLint name);
+ #define CROP_EXT_STR "EGL_ANDROID_image_crop"
+ #define PROT_CONTENT_EXT_STR "EGL_EXT_protected_content"
+-- 
+2.11.0
+

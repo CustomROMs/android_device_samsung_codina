@@ -1,0 +1,908 @@
+From bb3fe80c1f24ad9bcf4948a2a329688b3f211649 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 15:32:18 +0300
+Subject: [PATCH 19/42] libnatiwindow: reset to lineage-15.1
+
+Change-Id: I7ec4a8c8f24d4b9069bdd96b30a76721622bd872
+---
+ libs/nativewindow/AHardwareBuffer.cpp              |  74 ++++++----
+ libs/nativewindow/ANativeWindow.cpp                |  52 +------
+ libs/nativewindow/Android.bp                       |   4 +-
+ .../nativewindow/include/android/hardware_buffer.h | 164 +++++++--------------
+ libs/nativewindow/include/android/native_window.h  |  64 ++------
+ libs/nativewindow/include/system/window.h          |  52 +------
+ libs/nativewindow/include/vndk/hardware_buffer.h   |  30 ++++
+ libs/nativewindow/include/vndk/window.h            |  17 ++-
+ libs/nativewindow/libnativewindow.map.txt          |   4 +-
+ 9 files changed, 170 insertions(+), 291 deletions(-)
+
+diff --git a/libs/nativewindow/AHardwareBuffer.cpp b/libs/nativewindow/AHardwareBuffer.cpp
+index 49ffc8f22..203816284 100644
+--- a/libs/nativewindow/AHardwareBuffer.cpp
++++ b/libs/nativewindow/AHardwareBuffer.cpp
+@@ -29,7 +29,7 @@
+ #include <system/graphics.h>
+ 
+ #include <private/android/AHardwareBufferHelpers.h>
+-#include <android/hardware/graphics/common/1.1/types.h>
++#include <android/hardware/graphics/common/1.0/types.h>
+ 
+ 
+ static constexpr int kFdBufferSize = 128 * sizeof(int);  // 128 ints
+@@ -60,13 +60,6 @@ int AHardwareBuffer_allocate(const AHardwareBuffer_Desc* desc, AHardwareBuffer**
+         return BAD_VALUE;
+     }
+ 
+-    if ((desc->usage & (AHARDWAREBUFFER_USAGE_CPU_READ_MASK | AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK)) &&
+-        (desc->usage & AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT)) {
+-        ALOGE("AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT requires AHARDWAREBUFFER_USAGE_CPU_READ_NEVER "
+-              "and AHARDWAREBUFFER_USAGE_CPU_WRITE_NEVER");
+-        return BAD_VALUE;
+-    }
+-
+     uint64_t usage =  AHardwareBuffer_convertToGrallocUsageBits(desc->usage);
+     sp<GraphicBuffer> gbuffer(new GraphicBuffer(
+             desc->width, desc->height, format, desc->layers, usage,
+@@ -286,6 +279,35 @@ const native_handle_t* AHardwareBuffer_getNativeHandle(
+     return gbuffer->handle;
+ }
+ 
++int AHardwareBuffer_createFromHandle(const AHardwareBuffer_Desc* desc,
++                                     const native_handle_t* handle, int32_t method,
++                                     AHardwareBuffer** outBuffer) {
++    static_assert(static_cast<int32_t>(AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER) ==
++                  static_cast<int32_t>(GraphicBuffer::TAKE_UNREGISTERED_HANDLE));
++    static_assert(static_cast<int32_t>(AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE) ==
++                  static_cast<int32_t>(GraphicBuffer::CLONE_HANDLE));
++
++    if (!desc || !handle || !outBuffer) return BAD_VALUE;
++    if (!(method == AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER ||
++          method == AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE))
++        return BAD_VALUE;
++    if (desc->rfu0 != 0 || desc->rfu1 != 0) return BAD_VALUE;
++    if (desc->format == AHARDWAREBUFFER_FORMAT_BLOB && desc->height != 1) return BAD_VALUE;
++
++    const int format = AHardwareBuffer_convertToPixelFormat(desc->format);
++    const uint64_t usage = AHardwareBuffer_convertToGrallocUsageBits(desc->usage);
++    const auto wrapMethod = static_cast<GraphicBuffer::HandleWrapMethod>(method);
++    sp<GraphicBuffer> gbuffer(new GraphicBuffer(handle, wrapMethod, desc->width, desc->height,
++                                                format, desc->layers, usage, desc->stride));
++    status_t err = gbuffer->initCheck();
++    if (err != 0 || gbuffer->handle == 0) return err;
++
++    *outBuffer = AHardwareBuffer_from_GraphicBuffer(gbuffer.get());
++    // Ensure the buffer doesn't get destroyed when the sp<> goes away.
++    AHardwareBuffer_acquire(*outBuffer);
++
++    return NO_ERROR;
++}
+ 
+ // ----------------------------------------------------------------------------
+ // Helpers implementation
+@@ -318,18 +340,6 @@ bool AHardwareBuffer_isValidPixelFormat(uint32_t format) {
+             "HAL and AHardwareBuffer pixel format don't match");
+     static_assert(HAL_PIXEL_FORMAT_BLOB == AHARDWAREBUFFER_FORMAT_BLOB,
+             "HAL and AHardwareBuffer pixel format don't match");
+-    static_assert(HAL_PIXEL_FORMAT_DEPTH_16 == AHARDWAREBUFFER_FORMAT_D16_UNORM,
+-            "HAL and AHardwareBuffer pixel format don't match");
+-    static_assert(HAL_PIXEL_FORMAT_DEPTH_24 == AHARDWAREBUFFER_FORMAT_D24_UNORM,
+-            "HAL and AHardwareBuffer pixel format don't match");
+-    static_assert(HAL_PIXEL_FORMAT_DEPTH_24_STENCIL_8 == AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT,
+-            "HAL and AHardwareBuffer pixel format don't match");
+-    static_assert(HAL_PIXEL_FORMAT_DEPTH_32F == AHARDWAREBUFFER_FORMAT_D32_FLOAT,
+-            "HAL and AHardwareBuffer pixel format don't match");
+-    static_assert(HAL_PIXEL_FORMAT_DEPTH_32F_STENCIL_8 == AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT,
+-            "HAL and AHardwareBuffer pixel format don't match");
+-    static_assert(HAL_PIXEL_FORMAT_STENCIL_8 == AHARDWAREBUFFER_FORMAT_S8_UINT,
+-            "HAL and AHardwareBuffer pixel format don't match");
+     static_assert(HAL_PIXEL_FORMAT_BGRA_8888 == AHARDWAREBUFFER_FORMAT_B8G8R8A8_UNORM,
+             "HAL and AHardwareBuffer pixel format don't match");
+     static_assert(HAL_PIXEL_FORMAT_YV12 == AHARDWAREBUFFER_FORMAT_YV12,
+@@ -350,6 +360,14 @@ bool AHardwareBuffer_isValidPixelFormat(uint32_t format) {
+             "HAL and AHardwareBuffer pixel format don't match");
+     static_assert(HAL_PIXEL_FORMAT_YCBCR_420_888 == AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420,
+             "HAL and AHardwareBuffer pixel format don't match");
++    static_assert(HAL_PIXEL_FORMAT_YCBCR_422_888 == AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_422,
++            "HAL and AHardwareBuffer pixel format don't match");
++    static_assert(HAL_PIXEL_FORMAT_YCBCR_444_888 == AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_444,
++            "HAL and AHardwareBuffer pixel format don't match");
++    static_assert(HAL_PIXEL_FORMAT_FLEX_RGB_888 == AHARDWAREBUFFER_FORMAT_FLEX_R8G8B8,
++            "HAL and AHardwareBuffer pixel format don't match");
++    static_assert(HAL_PIXEL_FORMAT_FLEX_RGBA_8888 == AHARDWAREBUFFER_FORMAT_FLEX_R8G8B8A8,
++            "HAL and AHardwareBuffer pixel format don't match");
+     static_assert(HAL_PIXEL_FORMAT_YCBCR_422_SP == AHARDWAREBUFFER_FORMAT_YCbCr_422_SP,
+             "HAL and AHardwareBuffer pixel format don't match");
+     static_assert(HAL_PIXEL_FORMAT_YCRCB_420_SP == AHARDWAREBUFFER_FORMAT_YCrCb_420_SP,
+@@ -365,12 +383,6 @@ bool AHardwareBuffer_isValidPixelFormat(uint32_t format) {
+         case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT:
+         case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM:
+         case AHARDWAREBUFFER_FORMAT_BLOB:
+-        case AHARDWAREBUFFER_FORMAT_D16_UNORM:
+-        case AHARDWAREBUFFER_FORMAT_D24_UNORM:
+-        case AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT:
+-        case AHARDWAREBUFFER_FORMAT_D32_FLOAT:
+-        case AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT:
+-        case AHARDWAREBUFFER_FORMAT_S8_UINT:
+             // VNDK formats only -- unfortunately we can't differentiate from where we're called
+         case AHARDWAREBUFFER_FORMAT_B8G8R8A8_UNORM:
+         case AHARDWAREBUFFER_FORMAT_YV12:
+@@ -382,6 +394,10 @@ bool AHardwareBuffer_isValidPixelFormat(uint32_t format) {
+         case AHARDWAREBUFFER_FORMAT_RAW_OPAQUE:
+         case AHARDWAREBUFFER_FORMAT_IMPLEMENTATION_DEFINED:
+         case AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420:
++        case AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_422:
++        case AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_444:
++        case AHARDWAREBUFFER_FORMAT_FLEX_R8G8B8:
++        case AHARDWAREBUFFER_FORMAT_FLEX_R8G8B8A8:
+         case AHARDWAREBUFFER_FORMAT_YCbCr_422_SP:
+         case AHARDWAREBUFFER_FORMAT_YCrCb_420_SP:
+         case AHARDWAREBUFFER_FORMAT_YCbCr_422_I:
+@@ -401,7 +417,7 @@ uint32_t AHardwareBuffer_convertToPixelFormat(uint32_t ahardwarebuffer_format) {
+ }
+ 
+ uint64_t AHardwareBuffer_convertToGrallocUsageBits(uint64_t usage) {
+-    using android::hardware::graphics::common::V1_1::BufferUsage;
++    using android::hardware::graphics::common::V1_0::BufferUsage;
+     static_assert(AHARDWAREBUFFER_USAGE_CPU_READ_NEVER == (uint64_t)BufferUsage::CPU_READ_NEVER,
+             "gralloc and AHardwareBuffer flags don't match");
+     static_assert(AHARDWAREBUFFER_USAGE_CPU_READ_RARELY == (uint64_t)BufferUsage::CPU_READ_RARELY,
+@@ -426,10 +442,6 @@ uint64_t AHardwareBuffer_convertToGrallocUsageBits(uint64_t usage) {
+             "gralloc and AHardwareBuffer flags don't match");
+     static_assert(AHARDWAREBUFFER_USAGE_SENSOR_DIRECT_DATA == (uint64_t)BufferUsage::SENSOR_DIRECT_DATA,
+             "gralloc and AHardwareBuffer flags don't match");
+-    static_assert(AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP == (uint64_t)BufferUsage::GPU_CUBE_MAP,
+-            "gralloc and AHardwareBuffer flags don't match");
+-    static_assert(AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE == (uint64_t)BufferUsage::GPU_MIPMAP_COMPLETE,
+-            "gralloc and AHardwareBuffer flags don't match");
+     return usage;
+ }
+ 
+diff --git a/libs/nativewindow/ANativeWindow.cpp b/libs/nativewindow/ANativeWindow.cpp
+index 765dcd997..c6994c30b 100644
+--- a/libs/nativewindow/ANativeWindow.cpp
++++ b/libs/nativewindow/ANativeWindow.cpp
+@@ -33,27 +33,6 @@ static int32_t query(ANativeWindow* window, int what) {
+     return res < 0 ? res : value;
+ }
+ 
+-static bool isDataSpaceValid(ANativeWindow* window, int32_t dataSpace) {
+-    bool supported = false;
+-    switch (dataSpace) {
+-        case HAL_DATASPACE_UNKNOWN:
+-        case HAL_DATASPACE_V0_SRGB:
+-            return true;
+-        // These data space need wide gamut support.
+-        case HAL_DATASPACE_V0_SCRGB_LINEAR:
+-        case HAL_DATASPACE_V0_SCRGB:
+-        case HAL_DATASPACE_DISPLAY_P3:
+-            native_window_get_wide_color_support(window, &supported);
+-            return supported;
+-        // These data space need HDR support.
+-        case HAL_DATASPACE_BT2020_PQ:
+-            native_window_get_hdr_support(window, &supported);
+-            return supported;
+-        default:
+-            return false;
+-    }
+-}
+-
+ /**************************************************************************************************
+  * NDK
+  **************************************************************************************************/
+@@ -113,10 +92,7 @@ int32_t ANativeWindow_setBuffersTransform(ANativeWindow* window, int32_t transfo
+     constexpr int32_t kAllTransformBits =
+             ANATIVEWINDOW_TRANSFORM_MIRROR_HORIZONTAL |
+             ANATIVEWINDOW_TRANSFORM_MIRROR_VERTICAL |
+-            ANATIVEWINDOW_TRANSFORM_ROTATE_90 |
+-            // We don't expose INVERSE_DISPLAY as an NDK constant, but someone could have read it
+-            // from a buffer already set by Camera framework, so we allow it to be forwarded.
+-            NATIVE_WINDOW_TRANSFORM_INVERSE_DISPLAY;
++            ANATIVEWINDOW_TRANSFORM_ROTATE_90;
+     if (!window || !query(window, NATIVE_WINDOW_IS_VALID))
+         return -EINVAL;
+     if ((transform & ~kAllTransformBits) != 0)
+@@ -125,28 +101,6 @@ int32_t ANativeWindow_setBuffersTransform(ANativeWindow* window, int32_t transfo
+     return native_window_set_buffers_transform(window, transform);
+ }
+ 
+-int32_t ANativeWindow_setBuffersDataSpace(ANativeWindow* window, int32_t dataSpace) {
+-    static_assert(ADATASPACE_UNKNOWN == HAL_DATASPACE_UNKNOWN);
+-    static_assert(ADATASPACE_SCRGB_LINEAR == HAL_DATASPACE_V0_SCRGB_LINEAR);
+-    static_assert(ADATASPACE_SRGB == HAL_DATASPACE_V0_SRGB);
+-    static_assert(ADATASPACE_SCRGB == HAL_DATASPACE_V0_SCRGB);
+-    static_assert(ADATASPACE_DISPLAY_P3 == HAL_DATASPACE_DISPLAY_P3);
+-    static_assert(ADATASPACE_BT2020_PQ == HAL_DATASPACE_BT2020_PQ);
+-
+-    if (!window || !query(window, NATIVE_WINDOW_IS_VALID) ||
+-            !isDataSpaceValid(window, dataSpace)) {
+-        return -EINVAL;
+-    }
+-    return native_window_set_buffers_data_space(window,
+-                                                static_cast<android_dataspace_t>(dataSpace));
+-}
+-
+-int32_t ANativeWindow_getBuffersDataSpace(ANativeWindow* window) {
+-    if (!window || !query(window, NATIVE_WINDOW_IS_VALID))
+-        return -EINVAL;
+-    return query(window, NATIVE_WINDOW_DATASPACE);
+-}
+-
+ /**************************************************************************************************
+  * vndk-stable
+  **************************************************************************************************/
+@@ -255,6 +209,10 @@ int ANativeWindow_setBuffersTimestamp(ANativeWindow* window, int64_t timestamp)
+     return native_window_set_buffers_timestamp(window, timestamp);
+ }
+ 
++int ANativeWindow_setBufferDataSpace(ANativeWindow* window, android_dataspace_t dataSpace) {
++    return native_window_set_buffers_data_space(window, dataSpace);
++}
++
+ int ANativeWindow_setSharedBufferMode(ANativeWindow* window, bool sharedBufferMode) {
+     return native_window_set_shared_buffer_mode(window, sharedBufferMode);
+ }
+diff --git a/libs/nativewindow/Android.bp b/libs/nativewindow/Android.bp
+index 5fbb3b2f8..36b0d51cd 100644
+--- a/libs/nativewindow/Android.bp
++++ b/libs/nativewindow/Android.bp
+@@ -60,7 +60,7 @@ cc_library {
+         "liblog",
+         "libutils",
+         "libui",
+-        "android.hardware.graphics.common@1.1",
++        "android.hardware.graphics.common@1.0",
+     ],
+ 
+     static_libs: [
+@@ -88,5 +88,3 @@ llndk_library {
+     unversioned: true,
+     export_include_dirs: ["include"],
+ }
+-
+-subdirs = ["tests"]
+diff --git a/libs/nativewindow/include/android/hardware_buffer.h b/libs/nativewindow/include/android/hardware_buffer.h
+index 78cec41b4..277560b15 100644
+--- a/libs/nativewindow/include/android/hardware_buffer.h
++++ b/libs/nativewindow/include/android/hardware_buffer.h
+@@ -15,6 +15,11 @@
+  */
+ 
+ /**
++ * @addtogroup NativeActivity Native Activity
++ * @{
++ */
++
++/**
+  * @file hardware_buffer.h
+  */
+ 
+@@ -41,11 +46,9 @@ enum {
+     AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM           = 1,
+ 
+     /**
+-     * 32 bits per pixel, 8 bits per channel format where alpha values are
+-     * ignored (always opaque).
+      * Corresponding formats:
+      *   Vulkan: VK_FORMAT_R8G8B8A8_UNORM
+-     *   OpenGL ES: GL_RGB8
++     *   OpenGL ES: GL_RGBA8
+      */
+     AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM           = 2,
+ 
+@@ -82,94 +85,39 @@ enum {
+      * the buffer size in bytes.
+      */
+     AHARDWAREBUFFER_FORMAT_BLOB                     = 0x21,
+-
+-    /**
+-     * Corresponding formats:
+-     *   Vulkan: VK_FORMAT_D16_UNORM
+-     *   OpenGL ES: GL_DEPTH_COMPONENT16
+-     */
+-    AHARDWAREBUFFER_FORMAT_D16_UNORM                = 0x30,
+-
+-    /**
+-     * Corresponding formats:
+-     *   Vulkan: VK_FORMAT_X8_D24_UNORM_PACK32
+-     *   OpenGL ES: GL_DEPTH_COMPONENT24
+-     */
+-    AHARDWAREBUFFER_FORMAT_D24_UNORM                = 0x31,
+-
+-    /**
+-     * Corresponding formats:
+-     *   Vulkan: VK_FORMAT_D24_UNORM_S8_UINT
+-     *   OpenGL ES: GL_DEPTH24_STENCIL8
+-     */
+-    AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT        = 0x32,
+-
+-    /**
+-     * Corresponding formats:
+-     *   Vulkan: VK_FORMAT_D32_SFLOAT
+-     *   OpenGL ES: GL_DEPTH_COMPONENT32F
+-     */
+-    AHARDWAREBUFFER_FORMAT_D32_FLOAT                = 0x33,
+-
+-    /**
+-     * Corresponding formats:
+-     *   Vulkan: VK_FORMAT_D32_SFLOAT_S8_UINT
+-     *   OpenGL ES: GL_DEPTH32F_STENCIL8
+-     */
+-    AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT        = 0x34,
+-
+-    /**
+-     * Corresponding formats:
+-     *   Vulkan: VK_FORMAT_S8_UINT
+-     *   OpenGL ES: GL_STENCIL_INDEX8
+-     */
+-    AHARDWAREBUFFER_FORMAT_S8_UINT                  = 0x35,
+ };
+ 
+-/**
+- * Buffer usage flags, specifying how the buffer will be accessed.
+- */
+ enum {
+-    /// The buffer will never be read by the CPU.
++    /* The buffer will never be read by the CPU */
+     AHARDWAREBUFFER_USAGE_CPU_READ_NEVER        = 0UL,
+-    /// The buffer will sometimes be read by the CPU.
++    /* The buffer will sometimes be read by the CPU */
+     AHARDWAREBUFFER_USAGE_CPU_READ_RARELY       = 2UL,
+-    /// The buffer will often be read by the CPU.
++    /* The buffer will often be read by the CPU */
+     AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN        = 3UL,
+-    /// CPU read value mask.
++    /* CPU read value mask */
+     AHARDWAREBUFFER_USAGE_CPU_READ_MASK         = 0xFUL,
+ 
+-    /// The buffer will never be written by the CPU.
++    /* The buffer will never be written by the CPU */
+     AHARDWAREBUFFER_USAGE_CPU_WRITE_NEVER       = 0UL << 4,
+-    /// The buffer will sometimes be written to by the CPU.
++    /* The buffer will sometimes be written to by the CPU */
+     AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY      = 2UL << 4,
+-    /// The buffer will often be written to by the CPU.
++    /* The buffer will often be written to by the CPU */
+     AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN       = 3UL << 4,
+-    /// CPU write value mask.
++    /* CPU write value mask */
+     AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK        = 0xFUL << 4,
+ 
+-    /// The buffer will be read from by the GPU as a texture.
++    /* The buffer will be read from by the GPU */
+     AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE      = 1UL << 8,
+-    /**
+-     * The buffer will be written to by the GPU as a framebuffer attachment.
+-     * Note that the name of this flag is somewhat misleading: it does not imply
+-     * that the buffer contains a color format. A buffer with depth or stencil
+-     * format that will be used as a framebuffer attachment should also have
+-     * this flag.
+-     */
++    /* The buffer will be written to by the GPU */
+     AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT       = 1UL << 9,
+-    /// The buffer must not be used outside of a protected hardware path.
++    /* The buffer must not be used outside of a protected hardware path */
+     AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT      = 1UL << 14,
+-    /// The buffer will be read by a hardware video encoder.
++    /* The buffer will be read by a hardware video encoder */
+     AHARDWAREBUFFER_USAGE_VIDEO_ENCODE           = 1UL << 16,
+-    /// The buffer will be used for direct writes from sensors.
++    /** The buffer will be used for sensor direct data */
+     AHARDWAREBUFFER_USAGE_SENSOR_DIRECT_DATA     = 1UL << 23,
+-    /// The buffer will be used as a shader storage or uniform buffer object.
++    /* The buffer will be used as a shader storage or uniform buffer object*/
+     AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER        = 1UL << 24,
+-    /// The buffer will be used as a cube map texture.
+-    AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP               = 1UL << 25,
+-    /// The buffer contains a complete mipmap hierarchy.
+-    AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE        = 1UL << 26,
+ 
+     AHARDWAREBUFFER_USAGE_VENDOR_0  = 1ULL << 28,
+     AHARDWAREBUFFER_USAGE_VENDOR_1  = 1ULL << 29,
+@@ -193,19 +141,15 @@ enum {
+     AHARDWAREBUFFER_USAGE_VENDOR_19 = 1ULL << 63,
+ };
+ 
+-/**
+- * Buffer description. Used for allocating new buffers and querying parameters
+- * of existing ones.
+- */
+ typedef struct AHardwareBuffer_Desc {
+-    uint32_t    width;      ///< Width in pixels.
+-    uint32_t    height;     ///< Height in pixels.
+-    uint32_t    layers;     ///< Number of images in an image array.
+-    uint32_t    format;     ///< One of AHARDWAREBUFFER_FORMAT_*
+-    uint64_t    usage;      ///< Combination of AHARDWAREBUFFER_USAGE_*
+-    uint32_t    stride;     ///< Row stride in pixels, ignored for AHardwareBuffer_allocate()
+-    uint32_t    rfu0;       ///< Initialize to zero, reserved for future use.
+-    uint64_t    rfu1;       ///< Initialize to zero, reserved for future use.
++    uint32_t    width;      // width in pixels
++    uint32_t    height;     // height in pixels
++    uint32_t    layers;     // number of images
++    uint32_t    format;     // One of AHARDWAREBUFFER_FORMAT_*
++    uint64_t    usage;      // Combination of AHARDWAREBUFFER_USAGE_*
++    uint32_t    stride;     // Stride in pixels, ignored for AHardwareBuffer_allocate()
++    uint32_t    rfu0;       // Initialize to zero, reserved for future use
++    uint64_t    rfu1;       // Initialize to zero, reserved for future use
+ } AHardwareBuffer_Desc;
+ 
+ typedef struct AHardwareBuffer AHardwareBuffer;
+@@ -214,31 +158,31 @@ typedef struct AHardwareBuffer AHardwareBuffer;
+  * Allocates a buffer that backs an AHardwareBuffer using the passed
+  * AHardwareBuffer_Desc.
+  *
+- * \return 0 on success, or an error number of the allocation fails for
+- * any reason. The returned buffer has a reference count of 1.
++ * Returns NO_ERROR on success, or an error number of the allocation fails for
++ * any reason.
+  */
+ int AHardwareBuffer_allocate(const AHardwareBuffer_Desc* desc,
+-        AHardwareBuffer** outBuffer);
++        AHardwareBuffer** outBuffer) __INTRODUCED_IN(26);
+ /**
+  * Acquire a reference on the given AHardwareBuffer object.  This prevents the
+  * object from being deleted until the last reference is removed.
+  */
+-void AHardwareBuffer_acquire(AHardwareBuffer* buffer);
++void AHardwareBuffer_acquire(AHardwareBuffer* buffer) __INTRODUCED_IN(26);
+ 
+ /**
+  * Remove a reference that was previously acquired with
+  * AHardwareBuffer_acquire().
+  */
+-void AHardwareBuffer_release(AHardwareBuffer* buffer);
++void AHardwareBuffer_release(AHardwareBuffer* buffer) __INTRODUCED_IN(26);
+ 
+ /**
+  * Return a description of the AHardwareBuffer in the passed
+  * AHardwareBuffer_Desc struct.
+  */
+ void AHardwareBuffer_describe(const AHardwareBuffer* buffer,
+-        AHardwareBuffer_Desc* outDesc);
++        AHardwareBuffer_Desc* outDesc) __INTRODUCED_IN(26);
+ 
+-/**
++/*
+  * Lock the AHardwareBuffer for reading or writing, depending on the usage flags
+  * passed.  This call may block if the hardware needs to finish rendering or if
+  * CPU caches need to be synchronized, or possibly for other implementation-
+@@ -246,16 +190,16 @@ void AHardwareBuffer_describe(const AHardwareBuffer* buffer,
+  * descriptor that will be signaled when the buffer is locked, otherwise the
+  * caller will block until the buffer is available.
+  *
+- * If \a rect is not NULL, the caller promises to modify only data in the area
++ * If rect is not NULL, the caller promises to modify only data in the area
+  * specified by rect. If rect is NULL, the caller may modify the contents of the
+  * entire buffer.
+  *
+  * The content of the buffer outside of the specified rect is NOT modified
+  * by this call.
+  *
+- * The \a usage parameter may only specify AHARDWAREBUFFER_USAGE_CPU_*. If set,
+- * then outVirtualAddress is filled with the address of the buffer in virtual
+- * memory.
++ * The buffer usage may only specify AHARDWAREBUFFER_USAGE_CPU_*. If set, then
++ * outVirtualAddress is filled with the address of the buffer in virtual memory,
++ * otherwise this function will fail.
+  *
+  * THREADING CONSIDERATIONS:
+  *
+@@ -267,41 +211,43 @@ void AHardwareBuffer_describe(const AHardwareBuffer* buffer,
+  * may return an error or leave the buffer's content into an indeterminate
+  * state.
+  *
+- * \return 0 on success, -EINVAL if \a buffer is NULL or if the usage
++ * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL or if the usage
+  * flags are not a combination of AHARDWAREBUFFER_USAGE_CPU_*, or an error
+  * number of the lock fails for any reason.
+  */
+ int AHardwareBuffer_lock(AHardwareBuffer* buffer, uint64_t usage,
+-        int32_t fence, const ARect* rect, void** outVirtualAddress);
++        int32_t fence, const ARect* rect, void** outVirtualAddress) __INTRODUCED_IN(26);
+ 
+-/**
++/*
+  * Unlock the AHardwareBuffer; must be called after all changes to the buffer
+  * are completed by the caller. If fence is not NULL then it will be set to a
+  * file descriptor that is signaled when all pending work on the buffer is
+  * completed. The caller is responsible for closing the fence when it is no
+  * longer needed.
+  *
+- * \return 0 on success, -EINVAL if \a buffer is NULL, or an error
+- * number if the unlock fails for any reason.
++ * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL, or an error
++ * number of the lock fails for any reason.
+  */
+-int AHardwareBuffer_unlock(AHardwareBuffer* buffer, int32_t* fence);
++int AHardwareBuffer_unlock(AHardwareBuffer* buffer, int32_t* fence) __INTRODUCED_IN(26);
+ 
+-/**
++/*
+  * Send the AHardwareBuffer to an AF_UNIX socket.
+  *
+- * \return 0 on success, -EINVAL if \a buffer is NULL, or an error
+- * number if the operation fails for any reason.
++ * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL, or an error
++ * number of the lock fails for any reason.
+  */
+-int AHardwareBuffer_sendHandleToUnixSocket(const AHardwareBuffer* buffer, int socketFd);
++int AHardwareBuffer_sendHandleToUnixSocket(const AHardwareBuffer* buffer, int socketFd) __INTRODUCED_IN(26);
+ 
+-/**
++/*
+  * Receive the AHardwareBuffer from an AF_UNIX socket.
+  *
+- * \return 0 on success, -EINVAL if \a outBuffer is NULL, or an error
+- * number if the operation fails for any reason.
++ * Returns NO_ERROR on success, BAD_VALUE if the buffer is NULL, or an error
++ * number of the lock fails for any reason.
+  */
+-int AHardwareBuffer_recvHandleFromUnixSocket(int socketFd, AHardwareBuffer** outBuffer);
++int AHardwareBuffer_recvHandleFromUnixSocket(int socketFd, AHardwareBuffer** outBuffer) __INTRODUCED_IN(26);
+ 
+ __END_DECLS
+ 
+ #endif // ANDROID_HARDWARE_BUFFER_H
++
++/** @} */
+diff --git a/libs/nativewindow/include/android/native_window.h b/libs/nativewindow/include/android/native_window.h
+index d5e5e9dd2..fd5d8b582 100644
+--- a/libs/nativewindow/include/android/native_window.h
++++ b/libs/nativewindow/include/android/native_window.h
+@@ -29,7 +29,6 @@
+ 
+ #include <sys/cdefs.h>
+ 
+-#include <android/data_space.h>
+ #include <android/hardware_buffer.h>
+ #include <android/rect.h>
+ 
+@@ -85,23 +84,23 @@ typedef struct ANativeWindow ANativeWindow;
+  * A pointer can be obtained using {@link ANativeWindow_lock()}.
+  */
+ typedef struct ANativeWindow_Buffer {
+-    /// The number of pixels that are shown horizontally.
++    // The number of pixels that are show horizontally.
+     int32_t width;
+ 
+-    /// The number of pixels that are shown vertically.
++    // The number of pixels that are shown vertically.
+     int32_t height;
+ 
+-    /// The number of *pixels* that a line in the buffer takes in
+-    /// memory. This may be >= width.
++    // The number of *pixels* that a line in the buffer takes in
++    // memory. This may be >= width.
+     int32_t stride;
+ 
+-    /// The format of the buffer. One of AHARDWAREBUFFER_FORMAT_*
++    // The format of the buffer. One of AHARDWAREBUFFER_FORMAT_*
+     int32_t format;
+ 
+-    /// The actual bits.
++    // The actual bits.
+     void* bits;
+ 
+-    /// Do not touch.
++    // Do not touch.
+     uint32_t reserved[6];
+ } ANativeWindow_Buffer;
+ 
+@@ -109,33 +108,33 @@ typedef struct ANativeWindow_Buffer {
+  * Acquire a reference on the given {@link ANativeWindow} object. This prevents the object
+  * from being deleted until the reference is removed.
+  */
+-void ANativeWindow_acquire(ANativeWindow* window);
++void ANativeWindow_acquire(ANativeWindow* window) __INTRODUCED_IN(26);
+ 
+ /**
+  * Remove a reference that was previously acquired with {@link ANativeWindow_acquire()}.
+  */
+-void ANativeWindow_release(ANativeWindow* window);
++void ANativeWindow_release(ANativeWindow* window) __INTRODUCED_IN(26);
+ 
+ /**
+  * Return the current width in pixels of the window surface.
+  *
+  * \return negative value on error.
+  */
+-int32_t ANativeWindow_getWidth(ANativeWindow* window);
++int32_t ANativeWindow_getWidth(ANativeWindow* window) __INTRODUCED_IN(26);
+ 
+ /**
+  * Return the current height in pixels of the window surface.
+  *
+  * \return a negative value on error.
+  */
+-int32_t ANativeWindow_getHeight(ANativeWindow* window);
++int32_t ANativeWindow_getHeight(ANativeWindow* window) __INTRODUCED_IN(26);
+ 
+ /**
+  * Return the current pixel format (AHARDWAREBUFFER_FORMAT_*) of the window surface.
+  *
+  * \return a negative value on error.
+  */
+-int32_t ANativeWindow_getFormat(ANativeWindow* window);
++int32_t ANativeWindow_getFormat(ANativeWindow* window) __INTRODUCED_IN(26);
+ 
+ /**
+  * Change the format and size of the window buffers.
+@@ -155,7 +154,7 @@ int32_t ANativeWindow_getFormat(ANativeWindow* window);
+  * \return 0 for success, or a negative value on error.
+  */
+ int32_t ANativeWindow_setBuffersGeometry(ANativeWindow* window,
+-        int32_t width, int32_t height, int32_t format);
++        int32_t width, int32_t height, int32_t format) __INTRODUCED_IN(26);
+ 
+ /**
+  * Lock the window's next drawing surface for writing.
+@@ -168,7 +167,7 @@ int32_t ANativeWindow_setBuffersGeometry(ANativeWindow* window,
+  * \return 0 for success, or a negative value on error.
+  */
+ int32_t ANativeWindow_lock(ANativeWindow* window, ANativeWindow_Buffer* outBuffer,
+-        ARect* inOutDirtyBounds);
++        ARect* inOutDirtyBounds) __INTRODUCED_IN(26);
+ 
+ /**
+  * Unlock the window's drawing surface after previously locking it,
+@@ -176,9 +175,7 @@ int32_t ANativeWindow_lock(ANativeWindow* window, ANativeWindow_Buffer* outBuffe
+  *
+  * \return 0 for success, or a negative value on error.
+  */
+-int32_t ANativeWindow_unlockAndPost(ANativeWindow* window);
+-
+-#if __ANDROID_API__ >= __ANDROID_API_O__
++int32_t ANativeWindow_unlockAndPost(ANativeWindow* window) __INTRODUCED_IN(26);
+ 
+ /**
+  * Set a transform that will be applied to future buffers posted to the window.
+@@ -186,36 +183,7 @@ int32_t ANativeWindow_unlockAndPost(ANativeWindow* window);
+  * \param transform combination of {@link ANativeWindowTransform} flags
+  * \return 0 for success, or -EINVAL if \p transform is invalid
+  */
+-int32_t ANativeWindow_setBuffersTransform(ANativeWindow* window, int32_t transform);
+-
+-#endif // __ANDROID_API__ >= __ANDROID_API_O__
+-
+-#if __ANDROID_API__ >= __ANDROID_API_P__
+-
+-/**
+- * All buffers queued after this call will be associated with the dataSpace
+- * parameter specified.
+- *
+- * dataSpace specifies additional information about the buffer.
+- * For example, it can be used to convey the color space of the image data in
+- * the buffer, or it can be used to indicate that the buffers contain depth
+- * measurement data instead of color images. The default dataSpace is 0,
+- * ADATASPACE_UNKNOWN, unless it has been overridden by the producer.
+- *
+- * \param dataSpace data space of all buffers queued after this call.
+- * \return 0 for success, -EINVAL if window is invalid or the dataspace is not
+- * supported.
+- */
+-int32_t ANativeWindow_setBuffersDataSpace(ANativeWindow* window, int32_t dataSpace);
+-
+-/**
+- * Get the dataspace of the buffers in window.
+- * \return the dataspace of buffers in window, ADATASPACE_UNKNOWN is returned if
+- * dataspace is unknown, or -EINVAL if window is invalid.
+- */
+-int32_t ANativeWindow_getBuffersDataSpace(ANativeWindow* window);
+-
+-#endif // __ANDROID_API__ >= __ANDROID_API_P__
++int32_t ANativeWindow_setBuffersTransform(ANativeWindow* window, int32_t transform) __INTRODUCED_IN(26);
+ 
+ #ifdef __cplusplus
+ };
+diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
+index 197f73f3b..55d3aac7a 100644
+--- a/libs/nativewindow/include/system/window.h
++++ b/libs/nativewindow/include/system/window.h
+@@ -55,7 +55,7 @@
+ __BEGIN_DECLS
+ 
+ /*****************************************************************************/
+-
++#ifndef FRAMEBUFFER_NATIVEWINDOW
+ #define ANDROID_NATIVE_WINDOW_MAGIC     ANDROID_NATIVE_MAKE_CONSTANT('_','w','n','d')
+ 
+ // ---------------------------------------------------------------------------
+@@ -179,16 +179,6 @@ enum {
+      * with GRALLOC_USAGE_PROTECTED usage bits on.
+      */
+     NATIVE_WINDOW_CONSUMER_IS_PROTECTED = 19,
+-
+-    /*
+-     * Returns data space for the buffers.
+-     */
+-    NATIVE_WINDOW_DATASPACE = 20,
+-
+-    /*
+-     * Returns maxBufferCount set by BufferQueueConsumer
+-     */
+-    NATIVE_WINDOW_MAX_BUFFER_COUNT = 21,
+ };
+ 
+ /* Valid operations for the (*perform)() hook.
+@@ -235,8 +225,6 @@ enum {
+     NATIVE_WINDOW_GET_HDR_SUPPORT               = 29,
+     NATIVE_WINDOW_SET_USAGE64                   = 30,
+     NATIVE_WINDOW_GET_CONSUMER_USAGE64          = 31,
+-    NATIVE_WINDOW_SET_BUFFERS_SMPTE2086_METADATA = 32,
+-    NATIVE_WINDOW_SET_BUFFERS_CTA861_3_METADATA = 33,
+ // clang-format on
+ };
+ 
+@@ -540,7 +528,7 @@ struct ANativeWindow
+     int     (*cancelBuffer)(struct ANativeWindow* window,
+                 struct ANativeWindowBuffer* buffer, int fenceFd);
+ };
+-
++#endif
+  /* Backwards compatibility: use ANativeWindow (struct ANativeWindow in C).
+   * android_native_window_t is deprecated.
+   */
+@@ -712,42 +700,6 @@ static inline int native_window_set_buffers_data_space(
+ }
+ 
+ /*
+- * native_window_set_buffers_smpte2086_metadata(..., metadata)
+- * All buffers queued after this call will be associated with the SMPTE
+- * ST.2086 metadata specified.
+- *
+- * metadata specifies additional information about the contents of the buffer
+- * that may affect how it's displayed.  When it is nullptr, it means no such
+- * information is available.  No SMPTE ST.2086 metadata is associated with the
+- * buffers by default.
+- */
+-static inline int native_window_set_buffers_smpte2086_metadata(
+-        struct ANativeWindow* window,
+-        const struct android_smpte2086_metadata* metadata)
+-{
+-    return window->perform(window, NATIVE_WINDOW_SET_BUFFERS_SMPTE2086_METADATA,
+-            metadata);
+-}
+-
+-/*
+- * native_window_set_buffers_cta861_3_metadata(..., metadata)
+- * All buffers queued after this call will be associated with the CTA-861.3
+- * metadata specified.
+- *
+- * metadata specifies additional information about the contents of the buffer
+- * that may affect how it's displayed.  When it is nullptr, it means no such
+- * information is available.  No CTA-861.3 metadata is associated with the
+- * buffers by default.
+- */
+-static inline int native_window_set_buffers_cta861_3_metadata(
+-        struct ANativeWindow* window,
+-        const struct android_cta861_3_metadata* metadata)
+-{
+-    return window->perform(window, NATIVE_WINDOW_SET_BUFFERS_CTA861_3_METADATA,
+-            metadata);
+-}
+-
+-/*
+  * native_window_set_buffers_transform(..., int transform)
+  * All buffers queued after this call will be displayed transformed according
+  * to the transform parameter specified.
+diff --git a/libs/nativewindow/include/vndk/hardware_buffer.h b/libs/nativewindow/include/vndk/hardware_buffer.h
+index 7a4b31f51..9b0647594 100644
+--- a/libs/nativewindow/include/vndk/hardware_buffer.h
++++ b/libs/nativewindow/include/vndk/hardware_buffer.h
+@@ -26,6 +26,28 @@ __BEGIN_DECLS
+ 
+ const native_handle_t* AHardwareBuffer_getNativeHandle(const AHardwareBuffer* buffer);
+ 
++enum CreateFromHandleMethod {
++    // enum values chosen to match internal GraphicBuffer::HandleWrapMethod
++    AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER = 2,
++    AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE = 3,
++};
++
++/**
++ * Create a AHardwareBuffer from a native handle.
++ *
++ * This function wraps a native handle in a AHardwareBuffer suitable for use by applications or
++ * other parts of the system. The contents of desc will be returned by AHardwareBuffer_describe().
++ *
++ * If method is AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_REGISTER, the handle is assumed to be
++ * unregistered, and it will be registered/imported before being wrapped in the AHardwareBuffer.
++ * If successful, the AHardwareBuffer will own the handle.
++ *
++ * If method is AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE, the handle will be cloned and the
++ * clone registered. The AHardwareBuffer will own the cloned handle but not the original.
++ */
++int AHardwareBuffer_createFromHandle(const AHardwareBuffer_Desc* desc,
++                                     const native_handle_t* handle, int32_t method,
++                                     AHardwareBuffer** outBuffer);
+ 
+ /**
+  * Buffer pixel formats.
+@@ -53,6 +75,14 @@ enum {
+     AHARDWAREBUFFER_FORMAT_IMPLEMENTATION_DEFINED   = 0x22,
+     /* same as HAL_PIXEL_FORMAT_YCBCR_420_888 */
+     AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420             = 0x23,
++    /* same as HAL_PIXEL_FORMAT_YCBCR_422_888 */
++    AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_422             = 0x27,
++    /* same as HAL_PIXEL_FORMAT_YCBCR_444_888 */
++    AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_444             = 0x28,
++    /* same as HAL_PIXEL_FORMAT_FLEX_RGB_888 */
++    AHARDWAREBUFFER_FORMAT_FLEX_R8G8B8              = 0x29,
++    /* same as HAL_PIXEL_FORMAT_FLEX_RGBA_8888 */
++    AHARDWAREBUFFER_FORMAT_FLEX_R8G8B8A8            = 0x2A,
+     /* same as HAL_PIXEL_FORMAT_YCBCR_422_SP */
+     AHARDWAREBUFFER_FORMAT_YCbCr_422_SP             = 0x10,
+     /* same as HAL_PIXEL_FORMAT_YCRCB_420_SP */
+diff --git a/libs/nativewindow/include/vndk/window.h b/libs/nativewindow/include/vndk/window.h
+index 995ba44d2..aeb58cafe 100644
+--- a/libs/nativewindow/include/vndk/window.h
++++ b/libs/nativewindow/include/vndk/window.h
+@@ -61,7 +61,7 @@ int ANativeWindow_OemStorageGet(ANativeWindow* window, uint32_t slot, intptr_t*
+  */
+ int ANativeWindow_setSwapInterval(ANativeWindow* window, int interval);
+ 
+-
++#ifndef FRAMEBUFFER_NATIVEWINDOW
+ /*
+  * queries that can be used with ANativeWindow_query() and ANativeWindow_queryf()
+  */
+@@ -165,6 +165,7 @@ enum ANativeWindowQuery {
+     /* vertical resolution in DPI. value is float, use queryf() */
+     ANATIVEWINDOW_QUERY_YDPI = 0x10003,
+ };
++#endif
+ 
+ typedef enum ANativeWindowQuery ANativeWindowQuery;
+ 
+@@ -306,6 +307,20 @@ int ANativeWindow_setBuffersTimestamp(ANativeWindow* window, int64_t timestamp);
+ 
+ 
+ /*
++ * All buffers queued after this call will be associated with the dataSpace
++ * parameter specified.
++ *
++ * dataSpace specifies additional information about the buffer that's dependent
++ * on the buffer format and the endpoints. For example, it can be used to convey
++ * the color space of the image data in the buffer, or it can be used to
++ * indicate that the buffers contain depth measurement data instead of color
++ * images.  The default dataSpace is 0, HAL_DATASPACE_UNKNOWN, unless it has been
++ * overridden by the consumer.
++ */
++int ANativeWindow_setBufferDataSpace(ANativeWindow* window, android_dataspace_t dataSpace);
++
++
++/*
+  * Enable/disable shared buffer mode
+  */
+ int ANativeWindow_setSharedBufferMode(ANativeWindow* window, bool sharedBufferMode);
+diff --git a/libs/nativewindow/libnativewindow.map.txt b/libs/nativewindow/libnativewindow.map.txt
+index d2ba97145..fd06ec422 100644
+--- a/libs/nativewindow/libnativewindow.map.txt
++++ b/libs/nativewindow/libnativewindow.map.txt
+@@ -2,6 +2,7 @@ LIBNATIVEWINDOW {
+   global:
+     AHardwareBuffer_acquire;
+     AHardwareBuffer_allocate;
++    AHardwareBuffer_createFromHandle; # vndk
+     AHardwareBuffer_describe;
+     AHardwareBuffer_getNativeHandle; # vndk
+     AHardwareBuffer_lock;
+@@ -15,7 +16,6 @@ LIBNATIVEWINDOW {
+     ANativeWindow_acquire;
+     ANativeWindow_cancelBuffer; # vndk
+     ANativeWindow_dequeueBuffer; # vndk
+-    ANativeWindow_getBuffersDataSpace; # introduced=28
+     ANativeWindow_getFormat;
+     ANativeWindow_getHeight;
+     ANativeWindow_getWidth;
+@@ -26,7 +26,7 @@ LIBNATIVEWINDOW {
+     ANativeWindow_release;
+     ANativeWindow_setAutoRefresh; # vndk
+     ANativeWindow_setBufferCount; # vndk
+-    ANativeWindow_setBuffersDataSpace; # introduced=28
++    ANativeWindow_setBufferDataSpace; # vndk
+     ANativeWindow_setBuffersDimensions; # vndk
+     ANativeWindow_setBuffersFormat; # vndk
+     ANativeWindow_setBuffersGeometry;
+-- 
+2.11.0
+

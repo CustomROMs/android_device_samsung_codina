@@ -1,0 +1,28 @@
+From daca977e7cd34076842cabf045f77237cae0e49b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 02/42] libgui: fix graphic buffers sharing with camera HAL
+
+ libgui: STE: add GraphicBuffer constructors
+
+Change-Id: I9abc6d0526a889303c35f87760b64e6eecf4090d
+---
+ libs/ui/GraphicBuffer.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 254038b0a..ee3ea97c6 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -46,7 +46,7 @@ sp<GraphicBuffer> GraphicBuffer::from(ANativeWindowBuffer* anwb) {
+ 
+ GraphicBuffer::GraphicBuffer()
+     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
+-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
++      mInitCheck(NO_ERROR), mId(getUniqueId())
+ {
+     width  =
+     height =
+-- 
+2.11.0
+

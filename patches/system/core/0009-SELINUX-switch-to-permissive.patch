@@ -1,7 +1,7 @@
 From 7f53d000866893867b8d1307700aa6b1e405e243 Mon Sep 17 00:00:00 2001
 From: Varun Chitre <varun.chitre15@gmail.com>
 Date: Sun, 28 Aug 2016 07:22:48 -0400
-Subject: [PATCH 09/16] SELINUX: switch to permissive
+Subject: [PATCH 09/24] SELINUX: switch to permissive
 
 Change-Id: I0ff027236d1db006df5ac1060b702d037b2ace95
 ---

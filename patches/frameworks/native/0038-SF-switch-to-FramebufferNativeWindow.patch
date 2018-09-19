@@ -1,0 +1,125 @@
+From 27cbd96e97644053065c7cd86bea7ed3969e5169 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 15:37:42 +0300
+Subject: [PATCH 38/42] SF: switch to FramebufferNativeWindow
+
+Change-Id: I5ad77cd5aa7322761a3b044e357327089c100bef
+---
+ services/surfaceflinger/DisplayDevice.cpp  | 13 +++++++++++--
+ services/surfaceflinger/SurfaceFlinger.cpp | 16 ++++++++++++----
+ 2 files changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+index db095a51d..a66b2eb0a 100644
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -34,6 +34,9 @@
+ #include <ui/DebugUtils.h>
+ #include <ui/DisplayInfo.h>
+ #include <ui/PixelFormat.h>
++#ifdef STE_HARDWARE
++#include <ui/FramebufferNativeWindow.h>
++#endif
+ 
+ #include <gui/Surface.h>
+ 
+@@ -294,6 +297,7 @@ DisplayDevice::DisplayDevice(
+     }
+     mHdrCapabilities = HdrCapabilities(types, maxLuminance, maxAverageLuminance, minLuminance);
+ 
++
+     // initialize the display orientation transform.
+     setProjection(DisplayState::eOrientationDefault, mViewport, mFrame);
+ }
+@@ -479,7 +483,7 @@ android_color_transform_t DisplayDevice::getColorTransform() const {
+ 
+ void DisplayDevice::setCompositionDataSpace(ui::Dataspace dataspace) {
+     mCompositionDataSpace = dataspace;
+-    ANativeWindow* const window = mNativeWindow.get();
++    ANativeWindow* const window = new FramebufferNativeWindow();
+     native_window_set_buffers_data_space(window, static_cast<android_dataspace>(dataspace));
+ }
+ 
+@@ -546,7 +550,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
+ 
+     mDisplaySurface->resizeBuffers(newWidth, newHeight);
+ 
++#ifdef STE_HARDWARE
++    ANativeWindow* const window = new FramebufferNativeWindow();
++#else
++    mNativeWindow = new Surface(producer, false);
+     ANativeWindow* const window = mNativeWindow.get();
++#endif
+     mSurface->setNativeWindow(window);
+     mDisplayWidth = mSurface->queryWidth();
+     mDisplayHeight = mSurface->queryHeight();
+@@ -659,7 +668,7 @@ uint32_t DisplayDevice::getPrimaryDisplayOrientationTransform() {
+ 
+ void DisplayDevice::dump(String8& result) const {
+     const Transform& tr(mGlobalTransform);
+-    ANativeWindow* const window = mNativeWindow.get();
++    ANativeWindow* const window = new FramebufferNativeWindow();
+     result.appendFormat("+ DisplayDevice: %s\n", mDisplayName.string());
+     result.appendFormat("   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d), ANativeWindow=%p "
+                         "(%d:%d:%d:%d), orient=%2d (type=%08x), "
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 3f41b11e4..56e3dc5b7 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -48,6 +48,11 @@
+ #include <gui/Surface.h>
+ 
+ #include <ui/GraphicBufferAllocator.h>
++
++#ifdef STE_HARDWARE
++#include <ui/FramebufferNativeWindow.h>
++#endif
++
+ #include <ui/PixelFormat.h>
+ #include <ui/UiConfig.h>
+ 
+@@ -2290,8 +2295,9 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
+     HdrCapabilities hdrCapabilities;
+     getHwComposer().getHdrCapabilities(hwcId, &hdrCapabilities);
+ 
+-    auto nativeWindowSurface = mCreateNativeWindowSurface(producer);
+-    auto nativeWindow = nativeWindowSurface->getNativeWindow();
++    //auto nativeWindowSurface = mCreateNativeWindowSurface(producer);
++    //auto nativeWindow = nativeWindowSurface->getNativeWindow();
++    ANativeWindow* const nativeWindow = new FramebufferNativeWindow();
+ 
+     /*
+      * Create our display's surface
+@@ -2299,7 +2305,7 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
+     std::unique_ptr<RE::Surface> renderSurface = getRenderEngine().createSurface();
+     renderSurface->setCritical(state.type == DisplayDevice::DISPLAY_PRIMARY);
+     renderSurface->setAsync(state.type >= DisplayDevice::DISPLAY_VIRTUAL);
+-    renderSurface->setNativeWindow(nativeWindow.get());
++    renderSurface->setNativeWindow(nativeWindow);
+     const int displayWidth = renderSurface->queryWidth();
+     const int displayHeight = renderSurface->queryHeight();
+ 
+@@ -2311,7 +2317,7 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
+     //   window's swap interval in eglMakeCurrent, so they'll override the
+     //   interval we set here.
+     if (state.type >= DisplayDevice::DISPLAY_VIRTUAL) {
+-        nativeWindow->setSwapInterval(nativeWindow.get(), 0);
++        nativeWindow->setSwapInterval(nativeWindow, 0);
+     }
+ 
+     // virtual displays are always considered enabled
+@@ -2325,9 +2331,11 @@ sp<DisplayDevice> SurfaceFlinger::setupNewDisplayDeviceInternal(
+                               getHwComposer().getSupportedPerFrameMetadata(hwcId),
+                               hwcColorModes, initialPowerMode);
+ 
++#ifndef STE_HARDWARE
+     if (maxFrameBufferAcquiredBuffers >= 3) {
+         nativeWindowSurface->preallocateBuffers();
+     }
++#endif
+ 
+     ColorMode defaultColorMode = ColorMode::NATIVE;
+     Dataspace defaultDataSpace = Dataspace::UNKNOWN;
+-- 
+2.11.0
+

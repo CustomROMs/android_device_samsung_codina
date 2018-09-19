@@ -1,0 +1,22 @@
+From 258c8bdaeedf3360534e17bc537da700dc1ae282 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 06/42] libbinder: fix unresolved symbol WriteString16
+
+---
+ libs/binder/Parcel.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 9596b54e8..50b1bbc4a 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -2883,3 +2883,5 @@ void Parcel::Blob::clear() {
+ }
+ 
+ }; // namespace android
++
++__strong_alias(_ZN7android6Parcel13writeString16EPKtj,_ZN7android6Parcel13writeString16EPKDsj);
+-- 
+2.11.0
+

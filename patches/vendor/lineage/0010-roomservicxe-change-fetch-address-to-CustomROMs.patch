@@ -1,7 +1,7 @@
 From a90a5e0dadf8b2e8bb2dcb1bc596a0062ca9f89c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 26 Aug 2018 18:16:50 +0300
-Subject: [PATCH 10/10] roomservicxe: change fetch address to CustomROMs
+Subject: [PATCH 10/12] roomservicxe: change fetch address to CustomROMs
 
 Change-Id: Ia49d67802c1bfd0b1a27d1dee1b728d23d8dc4a3
 ---

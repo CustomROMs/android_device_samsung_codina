@@ -1,7 +1,7 @@
 From 5648f89d80bfebbf660f1b8c0bd81209173cc4e7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 25 Aug 2018 19:53:40 +0300
-Subject: [PATCH 09/10] charger: fixes
+Subject: [PATCH 09/12] charger: fixes
 
 Change-Id: Id434768ab3a9b64b9cbdb5ae2191d2d59b280a46
 ---

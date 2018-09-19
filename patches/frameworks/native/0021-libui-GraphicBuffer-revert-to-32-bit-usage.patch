@@ -1,0 +1,121 @@
+From 707829781323784297a7003d5644c4632f0926ce Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 21/42] libui: GraphicBuffer: revert to 32-bit usage
+
+Change-Id: I82e9f43e37177d6f30ef16bde30b0093df3a051c
+---
+ libs/ui/include/ui/GraphicBuffer.h                     | 18 ++++++------------
+ libs/ui/include/ui/GraphicBufferAllocator.h            |  2 +-
+ .../DisplayHardware/VirtualDisplaySurface.cpp          |  8 ++++----
+ 3 files changed, 11 insertions(+), 17 deletions(-)
+
+diff --git a/libs/ui/include/ui/GraphicBuffer.h b/libs/ui/include/ui/GraphicBuffer.h
+index cc38982e6..422ba5609 100644
+--- a/libs/ui/include/ui/GraphicBuffer.h
++++ b/libs/ui/include/ui/GraphicBuffer.h
+@@ -82,7 +82,7 @@ public:
+     // Create a GraphicBuffer by allocating and managing a buffer internally.
+     // This function is privileged.  See reallocate for details.
+     GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
+-            uint32_t inLayerCount, uint64_t inUsage,
++            uint32_t inLayerCount, uint32_t inUsage,
+             std::string requestorName = "<Unknown>");
+ 
+     // Create a GraphicBuffer from an existing handle.
+@@ -121,15 +121,9 @@ public:
+     GraphicBuffer(const native_handle_t* handle, HandleWrapMethod method,
+             uint32_t width, uint32_t height,
+             PixelFormat format, uint32_t layerCount,
+-            uint64_t usage, uint32_t stride);
++            uint32_t usage, uint32_t stride);
+ 
+     // These functions are deprecated because they only take 32 bits of usage
+-    GraphicBuffer(const native_handle_t* handle, HandleWrapMethod method,
+-            uint32_t width, uint32_t height,
+-            PixelFormat format, uint32_t layerCount,
+-            uint32_t usage, uint32_t stride)
+-        : GraphicBuffer(handle, method, width, height, format, layerCount,
+-                static_cast<uint64_t>(usage), stride) {}
+     GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
+             uint32_t inLayerCount, uint32_t inUsage, uint32_t inStride,
+             native_handle_t* inHandle, bool keepOwnership);
+@@ -142,7 +136,7 @@ public:
+     uint32_t getWidth() const           { return static_cast<uint32_t>(width); }
+     uint32_t getHeight() const          { return static_cast<uint32_t>(height); }
+     uint32_t getStride() const          { return static_cast<uint32_t>(stride); }
+-    uint64_t getUsage() const           { return usage; }
++    uint32_t getUsage() const           { return static_cast<uint32_t>(usage); }
+     PixelFormat getPixelFormat() const  { return format; }
+     uint32_t getLayerCount() const      { return static_cast<uint32_t>(layerCount); }
+     Rect getBounds() const              { return Rect(width, height); }
+@@ -157,10 +151,10 @@ public:
+     // device or service, which usually involves adding suitable selinux
+     // rules.
+     status_t reallocate(uint32_t inWidth, uint32_t inHeight,
+-            PixelFormat inFormat, uint32_t inLayerCount, uint64_t inUsage);
++            PixelFormat inFormat, uint32_t inLayerCount, uint32_t inUsage);
+ 
+     bool needsReallocation(uint32_t inWidth, uint32_t inHeight,
+-            PixelFormat inFormat, uint32_t inLayerCount, uint64_t inUsage);
++            PixelFormat inFormat, uint32_t inLayerCount, uint32_t inUsage);
+ 
+     status_t lock(uint32_t inUsage, void** vaddr);
+     status_t lock(uint32_t inUsage, const Rect& rect, void** vaddr);
+@@ -229,7 +223,7 @@ private:
+     status_t initWithHandle(const native_handle_t* handle,
+             HandleWrapMethod method, uint32_t width, uint32_t height,
+             PixelFormat format, uint32_t layerCount,
+-            uint64_t usage, uint32_t stride);
++            uint32_t usage, uint32_t stride);
+ 
+     void free_handle();
+ 
+diff --git a/libs/ui/include/ui/GraphicBufferAllocator.h b/libs/ui/include/ui/GraphicBufferAllocator.h
+index 14a865e16..414969089 100644
+--- a/libs/ui/include/ui/GraphicBufferAllocator.h
++++ b/libs/ui/include/ui/GraphicBufferAllocator.h
+@@ -63,7 +63,7 @@ private:
+         uint32_t stride;
+         PixelFormat format;
+         uint32_t layerCount;
+-        uint64_t usage;
++        uint32_t usage;
+         size_t size;
+         std::string requestorName;
+     };
+diff --git a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
+index 9a2817dba..5bbfcf612 100644
+--- a/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
++++ b/services/surfaceflinger/DisplayHardware/VirtualDisplaySurface.cpp
+@@ -346,10 +346,10 @@ status_t VirtualDisplaySurface::dequeueBuffer(Source source,
+             mSource[source]->cancelBuffer(*sslot, *fence);
+             return result;
+         }
+-        VDS_LOGV("dequeueBuffer(%s): buffers[%d]=%p fmt=%d usage=%#" PRIx64,
++        /*VDS_LOGV("dequeueBuffer(%s): buffers[%d]=%p fmt=%d usage=%#" PRIx64,
+                 dbgSourceStr(source), pslot, mProducerBuffers[pslot].get(),
+                 mProducerBuffers[pslot]->getPixelFormat(),
+-                mProducerBuffers[pslot]->getUsage());
++                mProducerBuffers[pslot]->getUsage());*/
+     }
+ 
+     return result;
+@@ -397,12 +397,12 @@ status_t VirtualDisplaySurface::dequeueBuffer(int* pslot, sp<Fence>* fence, uint
+                 (format != 0 && format != buf->getPixelFormat()) ||
+                 (w != 0 && w != mSinkBufferWidth) ||
+                 (h != 0 && h != mSinkBufferHeight)) {
+-            VDS_LOGV("dequeueBuffer: dequeueing new output buffer: "
++            /*VDS_LOGV("dequeueBuffer: dequeueing new output buffer: "
+                     "want %dx%d fmt=%d use=%#" PRIx64 ", "
+                     "have %dx%d fmt=%d use=%#" PRIx64,
+                     w, h, format, usage,
+                     mSinkBufferWidth, mSinkBufferHeight,
+-                    buf->getPixelFormat(), buf->getUsage());
++                    buf->getPixelFormat(), buf->getUsage());*/
+             mOutputFormat = format;
+             mOutputUsage = usage;
+             result = refreshOutputBuffer();
+-- 
+2.11.0
+

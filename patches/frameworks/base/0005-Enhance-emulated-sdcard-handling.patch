@@ -1,0 +1,69 @@
+From 527918bcfaf43f359015ac923590021063efed1e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 25 Aug 2018 18:13:40 +0300
+Subject: [PATCH 5/5] Enhance emulated sdcard handling
+
+Change-Id: Ic88df14d56d34fbac086c670424473ff1ca8f4a3
+---
+ core/java/android/os/storage/StorageManager.java            |  2 ++
+ .../core/java/com/android/server/StorageManagerService.java | 13 ++++++++++++-
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/os/storage/StorageManager.java b/core/java/android/os/storage/StorageManager.java
+index 2d1bb2f25d8..446bc085efc 100644
+--- a/core/java/android/os/storage/StorageManager.java
++++ b/core/java/android/os/storage/StorageManager.java
+@@ -111,6 +111,8 @@ public class StorageManager {
+     /** {@hide} */
+     public static final String PROP_PRIMARY_PHYSICAL = "ro.vold.primary_physical";
+     /** {@hide} */
++    public static final String PROP_PRIMARY_EMULATED = "ro.vold.primary_emulated";
++    /** {@hide} */
+     public static final String PROP_HAS_ADOPTABLE = "vold.has_adoptable";
+     /** {@hide} */
+     public static final String PROP_HAS_RESERVED = "vold.has_reserved";
+diff --git a/services/core/java/com/android/server/StorageManagerService.java b/services/core/java/com/android/server/StorageManagerService.java
+index 183be9b9875..598ba798b5b 100644
+--- a/services/core/java/com/android/server/StorageManagerService.java
++++ b/services/core/java/com/android/server/StorageManagerService.java
+@@ -1159,14 +1159,24 @@ class StorageManagerService extends IStorageManager.Stub
+                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_PRIMARY;
+                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_VISIBLE;
+                 mHandler.obtainMessage(H_VOLUME_MOUNT, vol).sendToTarget();
++                return;
+ 
+             } else if (Objects.equals(privateVol.fsUuid, mPrimaryStorageUuid)) {
+                 Slog.v(TAG, "Found primary storage at " + vol);
+                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_PRIMARY;
+                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_VISIBLE;
+                 mHandler.obtainMessage(H_VOLUME_MOUNT, vol).sendToTarget();
++                return;
+             }
+ 
++            Slog.e(TAG, "emulated volume is not primary vol=" + vol);
++            if (SystemProperties.getBoolean(
++                    "ro.vold.primary_emulated", false))
++               vol.mountFlags |= VolumeInfo.MOUNT_FLAG_PRIMARY;
++            vol.mountFlags |= VolumeInfo.MOUNT_FLAG_VISIBLE;
++            mHandler.obtainMessage(H_VOLUME_MOUNT, vol).sendToTarget();
++
++
+         } else if (vol.type == VolumeInfo.TYPE_PUBLIC) {
+             // TODO: only look at first public partition
+             if (Objects.equals(StorageManager.UUID_PRIMARY_PHYSICAL, mPrimaryStorageUuid)
+@@ -1186,10 +1196,11 @@ class StorageManagerService extends IStorageManager.Stub
+             mHandler.obtainMessage(H_VOLUME_MOUNT, vol).sendToTarget();
+ 
+         } else if (vol.type == VolumeInfo.TYPE_PRIVATE) {
++            Slog.e(TAG, "onVolumeCreatedLocked: vol.type == VolumeInfo.TYPE_PRIVATE vol=" + vol);
+             mHandler.obtainMessage(H_VOLUME_MOUNT, vol).sendToTarget();
+ 
+         } else {
+-            Slog.d(TAG, "Skipping automatic mounting of " + vol);
++            Slog.e(TAG, "Skipping automatic mounting of " + vol);
+         }
+     }
+ 
+-- 
+2.11.0
+

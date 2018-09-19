@@ -1,0 +1,33 @@
+From 44d8fcfa3ae6c69f972150bd5cac3c19a452ba2d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 15:49:41 +0300
+Subject: [PATCH 35/42] libvr: revert changes
+
+Change-Id: I5c1316012fb03bd54b8eaad6f2d4937bed4063ed
+---
+ libs/vr/libvrflinger/Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libs/vr/libvrflinger/Android.bp b/libs/vr/libvrflinger/Android.bp
+index ab6567d28..4dc669b33 100644
+--- a/libs/vr/libvrflinger/Android.bp
++++ b/libs/vr/libvrflinger/Android.bp
+@@ -33,7 +33,6 @@ staticLibraries = [
+     "libbroadcastring",
+     "libvr_manager",
+     "libbroadcastring",
+-    "libsurfaceflingerincludes",
+ ]
+ 
+ sharedLibraries = [
+@@ -66,6 +65,7 @@ headerLibraries = [
+     "android.hardware.graphics.composer@2.1-command-buffer",
+     "android.hardware.graphics.composer@2.2-command-buffer",
+     "libdvr_headers",
++    "libsurfaceflinger_headers",
+ ]
+ 
+ cc_library_static {
+-- 
+2.11.0
+

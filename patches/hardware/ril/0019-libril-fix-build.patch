@@ -1,0 +1,26 @@
+From 79b4b23b8dcaa9e4dc84d51f0ed33b860a87c6a6 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 16:14:42 +0300
+Subject: [PATCH 19/21] libril: fix build
+
+Change-Id: Ic57a233138626753ccbf33a010be9bf7c13225a7
+---
+ libril/ril_service.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libril/ril_service.cpp b/libril/ril_service.cpp
+index 142d49a..e2d7e32 100644
+--- a/libril/ril_service.cpp
++++ b/libril/ril_service.cpp
+@@ -7203,7 +7203,7 @@ int radio::nitzTimeReceivedInd(int slotId,
+             return 0;
+         }
+         hidl_string nitzTime;
+-        int64_t timeReceived = android::elapsedRealtime();
++        //int64_t timeReceived = android::elapsedRealtime();
+         char *resp = strndup((char *) response, responseLen);
+         char *tmp = resp;
+ 
+-- 
+2.11.0
+

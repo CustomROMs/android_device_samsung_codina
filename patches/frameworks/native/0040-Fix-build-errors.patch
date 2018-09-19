@@ -1,0 +1,42 @@
+From 851804919ddb39880bdf8ebbe8dab4285c4b9111 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 17:11:23 +0300
+Subject: [PATCH 40/42] Fix build errors
+
+Change-Id: I0861ed9738114271e2af30e3532f51cca4f3ed36
+---
+ cmds/installd/Android.bp | 1 +
+ libs/ui/Android.bp       | 5 ++++-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/cmds/installd/Android.bp b/cmds/installd/Android.bp
+index 3825f3545..bcced2c51 100644
+--- a/cmds/installd/Android.bp
++++ b/cmds/installd/Android.bp
+@@ -3,6 +3,7 @@ cc_defaults {
+ 
+     cflags: [
+         "-Wall",
++        "-Wno-unused-parameter",
+     ],
+     srcs: [
+         "CacheItem.cpp",
+diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
+index b457aec56..4234e9faf 100644
+--- a/libs/ui/Android.bp
++++ b/libs/ui/Android.bp
+@@ -20,7 +20,10 @@ cc_library_shared {
+     },
+ 
+     clang: true,
+-    cflags: ["-DEGL_NEEDS_HANDLE"],
++    cflags: [
++             "-DEGL_NEEDS_HANDLE",
++             "-Wno-unused-parameter", 
++    ],
+     cppflags: [
+         "-Weverything",
+         "-Wno-unused-variable",
+-- 
+2.11.0
+

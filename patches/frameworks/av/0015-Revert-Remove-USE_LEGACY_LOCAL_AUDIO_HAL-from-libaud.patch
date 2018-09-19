@@ -1,0 +1,577 @@
+From ff560626d9a1e61af8f6f449eda429d80c59a9f0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 10 Sep 2018 09:55:20 +0300
+Subject: [PATCH 15/26] Revert "Remove USE_LEGACY_LOCAL_AUDIO_HAL from
+ libaudiohal"
+
+This reverts commit 9e79c70529c07f2157f8077f024f42fa5c9e22f9.
+
+Change-Id: I49caad8c44d58ff93397c99874a2dc60426564da
+---
+ media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp | 10 ++-
+ media/libaudiohal/2.0/StreamHalLocal.cpp          | 15 ++--
+ media/libaudiohal/Android.bp                      |  6 +-
+ media/libaudiohal/EffectBufferHalLocal.cpp        | 91 +++++++++++++++++++++++
+ media/libaudiohal/EffectBufferHalLocal.h          | 61 +++++++++++++++
+ media/libaudiohal/EffectHalLocal.cpp              | 83 +++++++++++++++++++++
+ media/libaudiohal/EffectHalLocal.h                | 72 ++++++++++++++++++
+ media/libaudiohal/EffectsFactoryHalLocal.cpp      | 63 ++++++++++++++++
+ media/libaudiohal/EffectsFactoryHalLocal.h        | 57 ++++++++++++++
+ 9 files changed, 449 insertions(+), 9 deletions(-)
+ create mode 100644 media/libaudiohal/EffectBufferHalLocal.cpp
+ create mode 100644 media/libaudiohal/EffectBufferHalLocal.h
+ create mode 100644 media/libaudiohal/EffectHalLocal.cpp
+ create mode 100644 media/libaudiohal/EffectHalLocal.h
+ create mode 100644 media/libaudiohal/EffectsFactoryHalLocal.cpp
+ create mode 100644 media/libaudiohal/EffectsFactoryHalLocal.h
+
+diff --git a/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp b/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp
+index 1c4be7428..eb6f5ca91 100644
+--- a/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp
++++ b/media/libaudiohal/2.0/DevicesFactoryHalHybrid.cpp
+@@ -19,13 +19,21 @@
+ 
+ #include "DevicesFactoryHalHybrid.h"
+ #include "DevicesFactoryHalLocal.h"
++#ifndef USE_LEGACY_LOCAL_AUDIO_HAL
+ #include "DevicesFactoryHalHidl.h"
++#endif
+ 
+ namespace android {
+ 
+ DevicesFactoryHalHybrid::DevicesFactoryHalHybrid()
+         : mLocalFactory(new DevicesFactoryHalLocal()),
+-          mHidlFactory(new DevicesFactoryHalHidl()) {
++          mHidlFactory(
++#ifdef USE_LEGACY_LOCAL_AUDIO_HAL
++                  nullptr
++#else
++                  new DevicesFactoryHalHidl()
++#endif
++                       ) {
+ }
+ 
+ DevicesFactoryHalHybrid::~DevicesFactoryHalHybrid() {
+diff --git a/media/libaudiohal/2.0/StreamHalLocal.cpp b/media/libaudiohal/2.0/StreamHalLocal.cpp
+index 98107e5ec..63b68ff50 100644
+--- a/media/libaudiohal/2.0/StreamHalLocal.cpp
++++ b/media/libaudiohal/2.0/StreamHalLocal.cpp
+@@ -21,6 +21,7 @@
+ #include <utils/Log.h>
+ 
+ #include "DeviceHalLocal.h"
++#include "EffectHalLocal.h"
+ #include "StreamHalLocal.h"
+ 
+ namespace android {
+@@ -85,14 +86,16 @@ status_t StreamHalLocal::getParameters(const String8& keys, String8 *values) {
+     return OK;
+ }
+ 
+-status_t StreamHalLocal::addEffect(sp<EffectHalInterface>) {
+-    LOG_ALWAYS_FATAL("Local streams can not have effects");
+-    return INVALID_OPERATION;
++status_t StreamHalLocal::addEffect(sp<EffectHalInterface> effect) {
++    LOG_ALWAYS_FATAL_IF(!effect->isLocal(), "Only local effects can be added for a local stream");
++    return mStream->add_audio_effect(mStream,
++            static_cast<EffectHalLocal*>(effect.get())->handle());
+ }
+ 
+-status_t StreamHalLocal::removeEffect(sp<EffectHalInterface>) {
+-    LOG_ALWAYS_FATAL("Local streams can not have effects");
+-    return INVALID_OPERATION;
++status_t StreamHalLocal::removeEffect(sp<EffectHalInterface> effect) {
++    LOG_ALWAYS_FATAL_IF(!effect->isLocal(), "Only local effects can be removed for a local stream");
++    return mStream->remove_audio_effect(mStream,
++            static_cast<EffectHalLocal*>(effect.get())->handle());
+ }
+ 
+ status_t StreamHalLocal::standby() {
+diff --git a/media/libaudiohal/Android.bp b/media/libaudiohal/Android.bp
+index 3a5df2797..9be8ceb74 100644
+--- a/media/libaudiohal/Android.bp
++++ b/media/libaudiohal/Android.bp
+@@ -2,13 +2,15 @@ cc_library_shared {
+     name: "libaudiohal",
+ 
+     srcs: [
+-        "DevicesFactoryHalInterface.cpp",
+-        "EffectsFactoryHalInterface.cpp",
++      "EffectBufferHalLocal.cpp", 
++      "EffectsFactoryHalLocal.cpp",
++      "EffectHalLocal.cpp"
+     ],
+ 
+     cflags: [
+         "-Wall",
+         "-Werror",
++        "-DUSE_LEGACY_LOCAL_AUDIO_HAL",
+     ],
+ 
+     shared_libs: [
+diff --git a/media/libaudiohal/EffectBufferHalLocal.cpp b/media/libaudiohal/EffectBufferHalLocal.cpp
+new file mode 100644
+index 000000000..7951c8e15
+--- /dev/null
++++ b/media/libaudiohal/EffectBufferHalLocal.cpp
+@@ -0,0 +1,91 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#define LOG_TAG "EffectBufferHalLocal"
++//#define LOG_NDEBUG 0
++
++#include <utils/Log.h>
++
++#include "EffectBufferHalLocal.h"
++
++namespace android {
++
++// static
++status_t EffectBufferHalInterface::allocate(
++        size_t size, sp<EffectBufferHalInterface>* buffer) {
++    *buffer = new EffectBufferHalLocal(size);
++    return OK;
++}
++
++// static
++status_t EffectBufferHalInterface::mirror(
++        void* external, size_t size, sp<EffectBufferHalInterface>* buffer) {
++    *buffer = new EffectBufferHalLocal(external, size);
++    return OK;
++}
++
++EffectBufferHalLocal::EffectBufferHalLocal(size_t size)
++        : mOwnBuffer(new uint8_t[size]),
++          mBufferSize(size), mFrameCountChanged(false),
++          mAudioBuffer{0, {mOwnBuffer.get()}} {
++}
++
++EffectBufferHalLocal::EffectBufferHalLocal(void* external, size_t size)
++        : mOwnBuffer(nullptr),
++          mBufferSize(size), mFrameCountChanged(false),
++          mAudioBuffer{0, {external}} {
++}
++
++EffectBufferHalLocal::~EffectBufferHalLocal() {
++}
++
++audio_buffer_t* EffectBufferHalLocal::audioBuffer() {
++    return &mAudioBuffer;
++}
++
++void* EffectBufferHalLocal::externalData() const {
++    return mAudioBuffer.raw;
++}
++
++void EffectBufferHalLocal::setFrameCount(size_t frameCount) {
++    mAudioBuffer.frameCount = frameCount;
++    mFrameCountChanged = true;
++}
++
++void EffectBufferHalLocal::setExternalData(void* external) {
++    ALOGE_IF(mOwnBuffer != nullptr, "Attempt to set external data for allocated buffer");
++    mAudioBuffer.raw = external;
++}
++
++bool EffectBufferHalLocal::checkFrameCountChange() {
++    bool result = mFrameCountChanged;
++    mFrameCountChanged = false;
++    return result;
++}
++
++void EffectBufferHalLocal::update() {
++}
++
++void EffectBufferHalLocal::commit() {
++}
++
++void EffectBufferHalLocal::update(size_t) {
++}
++
++void EffectBufferHalLocal::commit(size_t) {
++}
++
++} // namespace android
+diff --git a/media/libaudiohal/EffectBufferHalLocal.h b/media/libaudiohal/EffectBufferHalLocal.h
+new file mode 100644
+index 000000000..d2b624b0e
+--- /dev/null
++++ b/media/libaudiohal/EffectBufferHalLocal.h
+@@ -0,0 +1,61 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_HARDWARE_EFFECT_BUFFER_HAL_LOCAL_H
++#define ANDROID_HARDWARE_EFFECT_BUFFER_HAL_LOCAL_H
++
++#include <memory>
++
++#include <media/audiohal/EffectBufferHalInterface.h>
++#include <system/audio_effect.h>
++
++namespace android {
++
++class EffectBufferHalLocal : public EffectBufferHalInterface
++{
++  public:
++    virtual audio_buffer_t* audioBuffer();
++    virtual void* externalData() const;
++
++    virtual void setExternalData(void* external);
++    virtual void setFrameCount(size_t frameCount);
++    virtual bool checkFrameCountChange();
++
++    virtual void update();
++    virtual void commit();
++    virtual void update(size_t size);
++    virtual void commit(size_t size);
++
++  private:
++    friend class EffectBufferHalInterface;
++
++    std::unique_ptr<uint8_t[]> mOwnBuffer;
++    const size_t mBufferSize;
++    bool mFrameCountChanged;
++    audio_buffer_t mAudioBuffer;
++
++    // Can not be constructed directly by clients.
++    explicit EffectBufferHalLocal(size_t size);
++    EffectBufferHalLocal(void* external, size_t size);
++
++    virtual ~EffectBufferHalLocal();
++
++    status_t init();
++};
++
++} // namespace android
++
++#endif // ANDROID_HARDWARE_EFFECT_BUFFER_HAL_LOCAL_H
+diff --git a/media/libaudiohal/EffectHalLocal.cpp b/media/libaudiohal/EffectHalLocal.cpp
+new file mode 100644
+index 000000000..dd465c36f
+--- /dev/null
++++ b/media/libaudiohal/EffectHalLocal.cpp
+@@ -0,0 +1,83 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#define LOG_TAG "EffectHalLocal"
++//#define LOG_NDEBUG 0
++
++#include <media/EffectsFactoryApi.h>
++#include <utils/Log.h>
++
++#include "EffectHalLocal.h"
++
++namespace android {
++
++EffectHalLocal::EffectHalLocal(effect_handle_t handle)
++        : mHandle(handle) {
++}
++
++EffectHalLocal::~EffectHalLocal() {
++    int status = EffectRelease(mHandle);
++    ALOGW_IF(status, "Error releasing effect %p: %s", mHandle, strerror(-status));
++    mHandle = 0;
++}
++
++status_t EffectHalLocal::setInBuffer(const sp<EffectBufferHalInterface>& buffer) {
++    mInBuffer = buffer;
++    return OK;
++}
++
++status_t EffectHalLocal::setOutBuffer(const sp<EffectBufferHalInterface>& buffer) {
++    mOutBuffer = buffer;
++    return OK;
++}
++
++status_t EffectHalLocal::process() {
++    if (mInBuffer == nullptr || mOutBuffer == nullptr) {
++        ALOGE_IF(mInBuffer == nullptr, "Input buffer not set");
++        ALOGE_IF(mOutBuffer == nullptr, "Output buffer not set");
++        return NO_INIT;
++    }
++    return (*mHandle)->process(mHandle, mInBuffer->audioBuffer(), mOutBuffer->audioBuffer());
++}
++
++status_t EffectHalLocal::processReverse() {
++    if ((*mHandle)->process_reverse != NULL) {
++        if (mInBuffer == nullptr || mOutBuffer == nullptr) {
++            ALOGE_IF(mInBuffer == nullptr, "Input buffer not set");
++            ALOGE_IF(mOutBuffer == nullptr, "Output buffer not set");
++            return NO_INIT;
++        }
++        return (*mHandle)->process_reverse(
++                mHandle, mInBuffer->audioBuffer(), mOutBuffer->audioBuffer());
++    } else {
++        return INVALID_OPERATION;
++    }
++}
++
++status_t EffectHalLocal::command(uint32_t cmdCode, uint32_t cmdSize, void *pCmdData,
++        uint32_t *replySize, void *pReplyData) {
++    return (*mHandle)->command(mHandle, cmdCode, cmdSize, pCmdData, replySize, pReplyData);
++}
++
++status_t EffectHalLocal::getDescriptor(effect_descriptor_t *pDescriptor) {
++    return (*mHandle)->get_descriptor(mHandle, pDescriptor);
++}
++
++status_t EffectHalLocal::close() {
++    return OK;
++}
++
++} // namespace android
+diff --git a/media/libaudiohal/EffectHalLocal.h b/media/libaudiohal/EffectHalLocal.h
+new file mode 100644
+index 000000000..693fb5053
+--- /dev/null
++++ b/media/libaudiohal/EffectHalLocal.h
+@@ -0,0 +1,72 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_HARDWARE_EFFECT_HAL_LOCAL_H
++#define ANDROID_HARDWARE_EFFECT_HAL_LOCAL_H
++
++#include <hardware/audio_effect.h>
++#include <media/audiohal/EffectHalInterface.h>
++
++namespace android {
++
++class EffectHalLocal : public EffectHalInterface
++{
++  public:
++    // Set the input buffer.
++    virtual status_t setInBuffer(const sp<EffectBufferHalInterface>& buffer);
++
++    // Set the output buffer.
++    virtual status_t setOutBuffer(const sp<EffectBufferHalInterface>& buffer);
++
++    // Effect process function.
++    virtual status_t process();
++
++    // Process reverse stream function. This function is used to pass
++    // a reference stream to the effect engine.
++    virtual status_t processReverse();
++
++    // Send a command and receive a response to/from effect engine.
++    virtual status_t command(uint32_t cmdCode, uint32_t cmdSize, void *pCmdData,
++            uint32_t *replySize, void *pReplyData);
++
++    // Returns the effect descriptor.
++    virtual status_t getDescriptor(effect_descriptor_t *pDescriptor);
++
++    // Free resources on the remote side.
++    virtual status_t close();
++
++    // Whether it's a local implementation.
++    virtual bool isLocal() const { return true; }
++
++    effect_handle_t handle() const { return mHandle; }
++
++  private:
++    effect_handle_t mHandle;
++    sp<EffectBufferHalInterface> mInBuffer;
++    sp<EffectBufferHalInterface> mOutBuffer;
++
++    friend class EffectsFactoryHalLocal;
++
++    // Can not be constructed directly by clients.
++    explicit EffectHalLocal(effect_handle_t handle);
++
++    // The destructor automatically releases the effect.
++    virtual ~EffectHalLocal();
++};
++
++} // namespace android
++
++#endif // ANDROID_HARDWARE_EFFECT_HAL_LOCAL_H
+diff --git a/media/libaudiohal/EffectsFactoryHalLocal.cpp b/media/libaudiohal/EffectsFactoryHalLocal.cpp
+new file mode 100644
+index 000000000..bbdef5d3d
+--- /dev/null
++++ b/media/libaudiohal/EffectsFactoryHalLocal.cpp
+@@ -0,0 +1,63 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <media/EffectsFactoryApi.h>
++
++#include "EffectHalLocal.h"
++#include "EffectsFactoryHalLocal.h"
++
++namespace android {
++
++// static
++sp<EffectsFactoryHalInterface> EffectsFactoryHalInterface::create() {
++    return new EffectsFactoryHalLocal();
++}
++
++// static
++bool EffectsFactoryHalInterface::isNullUuid(const effect_uuid_t *pEffectUuid) {
++    return EffectIsNullUuid(pEffectUuid);
++}
++
++status_t EffectsFactoryHalLocal::queryNumberEffects(uint32_t *pNumEffects) {
++    return EffectQueryNumberEffects(pNumEffects);
++}
++
++status_t EffectsFactoryHalLocal::getDescriptor(
++        uint32_t index, effect_descriptor_t *pDescriptor) {
++    return EffectQueryEffect(index, pDescriptor);
++}
++
++status_t EffectsFactoryHalLocal::getDescriptor(
++        const effect_uuid_t *pEffectUuid, effect_descriptor_t *pDescriptor) {
++    return EffectGetDescriptor(pEffectUuid, pDescriptor);
++}
++
++status_t EffectsFactoryHalLocal::createEffect(
++        const effect_uuid_t *pEffectUuid, int32_t sessionId, int32_t ioId,
++        sp<EffectHalInterface> *effect) {
++    effect_handle_t handle;
++    int result = EffectCreate(pEffectUuid, sessionId, ioId, &handle);
++    if (result == 0) {
++        *effect = new EffectHalLocal(handle);
++    }
++    return result;
++}
++
++status_t EffectsFactoryHalLocal::dumpEffects(int fd) {
++    return EffectDumpEffects(fd);
++}
++
++} // namespace android
+diff --git a/media/libaudiohal/EffectsFactoryHalLocal.h b/media/libaudiohal/EffectsFactoryHalLocal.h
+new file mode 100644
+index 000000000..d5b81be22
+--- /dev/null
++++ b/media/libaudiohal/EffectsFactoryHalLocal.h
+@@ -0,0 +1,57 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_HARDWARE_EFFECTS_FACTORY_HAL_LOCAL_H
++#define ANDROID_HARDWARE_EFFECTS_FACTORY_HAL_LOCAL_H
++
++#include <media/audiohal/EffectsFactoryHalInterface.h>
++
++namespace android {
++
++class EffectsFactoryHalLocal : public EffectsFactoryHalInterface
++{
++  public:
++    // Returns the number of different effects in all loaded libraries.
++    virtual status_t queryNumberEffects(uint32_t *pNumEffects);
++
++    // Returns a descriptor of the next available effect.
++    virtual status_t getDescriptor(uint32_t index,
++            effect_descriptor_t *pDescriptor);
++
++    virtual status_t getDescriptor(const effect_uuid_t *pEffectUuid,
++            effect_descriptor_t *pDescriptor);
++
++    // Creates an effect engine of the specified type.
++    // To release the effect engine, it is necessary to release references
++    // to the returned effect object.
++    virtual status_t createEffect(const effect_uuid_t *pEffectUuid,
++            int32_t sessionId, int32_t ioId,
++            sp<EffectHalInterface> *effect);
++
++    virtual status_t dumpEffects(int fd);
++
++  private:
++    friend class EffectsFactoryHalInterface;
++
++    // Can not be constructed directly by clients.
++    EffectsFactoryHalLocal() {}
++
++    virtual ~EffectsFactoryHalLocal() {}
++};
++
++} // namespace android
++
++#endif // ANDROID_HARDWARE_EFFECTS_FACTORY_HAL_LOCAL_H
+-- 
+2.11.0
+

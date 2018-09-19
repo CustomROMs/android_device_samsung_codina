@@ -1,7 +1,7 @@
 From c89275394036b74f898cf9b998d5053d6c0a652e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 07/10] Remove apps
+Subject: [PATCH 07/12] Remove apps
 
 ---
  config/common.mk | 2 --

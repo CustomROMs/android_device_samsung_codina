@@ -1,0 +1,61 @@
+From 447ec69a83a34652a3d64f14b59512c0d2d85f27 Mon Sep 17 00:00:00 2001
+From: LuK1337 <priv.luk@gmail.com>
+Date: Tue, 6 Mar 2018 11:31:14 +0100
+Subject: [PATCH 20/27] vold: Make sure block device exists before formatting
+ it
+
+* This fixes race condition where dm-1 doesn't exist
+  when doFormat() is being executed on some devices
+  while formatting them to use with adopted storage.
+
+Change-Id: I1297025900a988141717b81b9d0fcca7197955bd
+---
+ Utils.cpp | 17 +++++++++++++++++
+ Utils.h   |  3 +++
+ 2 files changed, 20 insertions(+)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index 4a14250..bda7439 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -751,6 +751,23 @@ bool WaitForFile(const std::string& filename,
+     }
+ }
+ 
++bool WaitForFile(const std::string& filename,
++        const std::chrono::milliseconds relativeTimeout) {
++    auto startTime = std::chrono::steady_clock::now();
++
++    while (true) {
++        if (!access(filename.c_str(), F_OK) || errno != ENOENT) {
++            return true;
++        }
++
++        std::this_thread::sleep_for(50ms);
++
++        auto now = std::chrono::steady_clock::now();
++        auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime);
++        if (timeElapsed > relativeTimeout) return false;
++    }
++}
++
+ bool IsRunningInEmulator() {
+     return android::base::GetBoolProperty("ro.kernel.qemu", false);
+ }
+diff --git a/Utils.h b/Utils.h
+index 949f05b..9abb4a9 100644
+--- a/Utils.h
++++ b/Utils.h
+@@ -126,6 +126,9 @@ bool Readlinkat(int dirfd, const std::string& path, std::string* result);
+ bool WaitForFile(const std::string& filename,
+         const std::chrono::milliseconds relativeTimeout);
+ 
++bool WaitForFile(const std::string& filename,
++        const std::chrono::milliseconds relativeTimeout);
++
+ /* Checks if Android is running in QEMU */
+ bool IsRunningInEmulator();
+ 
+-- 
+2.11.0
+

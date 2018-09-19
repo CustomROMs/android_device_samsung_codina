@@ -1,0 +1,27 @@
+From 6bf68b96387fc8cf288d62e200c4e62af881ff6b Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Sat, 8 Sep 2018 23:55:36 +0200
+Subject: [PATCH 3/5] DisplayPowerController: Disable ColorFade for now because
+ of HWC issues
+
+Change-Id: Ie1b866186188c08831c5efe0f0076ce49c419218
+---
+ .../core/java/com/android/server/display/DisplayPowerController.java    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
+index 99412c56b27..ecc2214d7f6 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerController.java
+@@ -465,7 +465,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+             }
+         }
+ 
+-        mColorFadeEnabled = !ActivityManager.isLowRamDeviceStatic();
++        mColorFadeEnabled = false; //!ActivityManager.isLowRamDeviceStatic();
+         mColorFadeFadesConfig = resources.getBoolean(
+                 com.android.internal.R.bool.config_animateScreenLights);
+ 
+-- 
+2.11.0
+

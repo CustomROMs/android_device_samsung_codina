@@ -1,0 +1,33 @@
+From 4070b0a869b78570e122fbdb006f5f5123ba0ac4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 14:27:46 +0300
+Subject: [PATCH 30/42] nativewindow: fix build
+
+Change-Id: I1143fff2a18cd476115ff47163ce6db2fbc5ca94
+---
+ libs/nativewindow/include/system/window.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libs/nativewindow/include/system/window.h b/libs/nativewindow/include/system/window.h
+index 463ff4cf4..9183641a7 100644
+--- a/libs/nativewindow/include/system/window.h
++++ b/libs/nativewindow/include/system/window.h
+@@ -751,6 +751,7 @@ static inline int native_window_set_buffers_data_space(
+             dataSpace);
+ }
+ 
++#ifdef __cplusplus
+ /*
+  * native_window_set_buffers_smpte2086_metadata(..., metadata)
+  * All buffers queued after this call will be associated with the SMPTE
+@@ -786,6 +787,7 @@ static inline int native_window_set_buffers_cta861_3_metadata(
+     return 0; /*window->perform(window, NATIVE_WINDOW_SET_BUFFERS_CTA861_3_METADATA,
+             metadata);*/
+ }
++#endif
+ 
+ /*
+  * native_window_set_buffers_transform(..., int transform)
+-- 
+2.11.0
+

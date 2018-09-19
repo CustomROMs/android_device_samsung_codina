@@ -1,0 +1,63 @@
+From 62e5912c27f6460c0b48c85babb909a6cda83092 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 15 Sep 2018 18:27:17 +0300
+Subject: [PATCH 22/26] 1
+
+Change-Id: I7bafe499942e0dc38486b48a9f2ec7d8724cacad
+---
+ .../include/media/audiohal/StreamHalInterface.h    | 24 ++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/media/libaudiohal/include/media/audiohal/StreamHalInterface.h b/media/libaudiohal/include/media/audiohal/StreamHalInterface.h
+index 7419c34e0..c969e2853 100644
+--- a/media/libaudiohal/include/media/audiohal/StreamHalInterface.h
++++ b/media/libaudiohal/include/media/audiohal/StreamHalInterface.h
+@@ -17,7 +17,10 @@
+ #ifndef ANDROID_HARDWARE_STREAM_HAL_INTERFACE_H
+ #define ANDROID_HARDWARE_STREAM_HAL_INTERFACE_H
+ 
++#include <vector>
++
+ #include <media/audiohal/EffectHalInterface.h>
++#include <media/MicrophoneInfo.h>
+ #include <system/audio.h>
+ #include <utils/Errors.h>
+ #include <utils/RefBase.h>
+@@ -142,6 +145,15 @@ class StreamOutHalInterface : public virtual StreamHalInterface {
+     // Return a recent count of the number of audio frames presented to an external observer.
+     virtual status_t getPresentationPosition(uint64_t *frames, struct timespec *timestamp) = 0;
+ 
++    struct SourceMetadata {
++        std::vector<playback_track_metadata_t> tracks;
++    };
++    /**
++     * Called when the metadata of the stream's source has been changed.
++     * @param sourceMetadata Description of the audio that is played by the clients.
++     */
++    virtual status_t updateSourceMetadata(const SourceMetadata& sourceMetadata) = 0;
++
+   protected:
+     virtual ~StreamOutHalInterface() {}
+ };
+@@ -161,6 +173,18 @@ class StreamInHalInterface : public virtual StreamHalInterface {
+     // the clock time associated with that frame count.
+     virtual status_t getCapturePosition(int64_t *frames, int64_t *time) = 0;
+ 
++    // Get active microphones
++    virtual status_t getActiveMicrophones(std::vector<media::MicrophoneInfo> *microphones) = 0;
++
++    struct SinkMetadata {
++        std::vector<record_track_metadata_t> tracks;
++    };
++    /**
++     * Called when the metadata of the stream's sink has been changed.
++     * @param sinkMetadata Description of the audio that is suggested by the clients.
++     */
++    virtual status_t updateSinkMetadata(const SinkMetadata& sinkMetadata) = 0;
++
+   protected:
+     virtual ~StreamInHalInterface() {}
+ };
+-- 
+2.11.0
+

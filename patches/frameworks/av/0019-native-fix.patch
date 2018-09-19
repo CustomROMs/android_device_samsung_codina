@@ -1,0 +1,26 @@
+From c84fa2e2520912f4d812521a39e9842ea2989690 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 14 Sep 2018 00:52:01 +0300
+Subject: [PATCH 19/26] native fix
+
+Change-Id: I99848ea91364349b040598c4ea3a541640a8bf5f
+---
+ media/ndk/NdkImageReader.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/ndk/NdkImageReader.cpp b/media/ndk/NdkImageReader.cpp
+index be635ff96..25907eb08 100644
+--- a/media/ndk/NdkImageReader.cpp
++++ b/media/ndk/NdkImageReader.cpp
+@@ -149,7 +149,7 @@ AImageReader::BufferRemovedListener::onBufferFreed(const wp<GraphicBuffer>& grap
+     msg->setPointer(
+         AImageReader::kCallbackFpKey, (void*) mListener.onBufferRemoved);
+     msg->setPointer(AImageReader::kContextKey, mListener.context);
+-    msg->setObject(AImageReader::kGraphicBufferKey, gBuffer);
++    //msg->setObject(AImageReader::kGraphicBufferKey, gBuffer);
+     msg->post();
+ }
+ 
+-- 
+2.11.0
+

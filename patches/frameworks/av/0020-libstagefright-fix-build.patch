@@ -1,0 +1,134 @@
+From 21efe25ccfd6896df86c8fc04e73541c3d6f2978 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 14 Sep 2018 01:00:29 +0300
+Subject: [PATCH 20/26] libstagefright: fix build
+
+Change-Id: I4645e2a45891f21026b9896fb861f30b59685edf
+---
+ media/libstagefright/ACodec.cpp                    |  2 +-
+ media/libstagefright/MediaCodec.cpp                |  2 +-
+ media/libstagefright/SurfaceUtils.cpp              | 36 +---------------------
+ media/libstagefright/bqhelper/Conversion.cpp       |  5 ++-
+ .../colorconversion/SoftwareRenderer.cpp           |  2 +-
+ 5 files changed, 6 insertions(+), 41 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 7f39d109f..171ee3149 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -6251,7 +6251,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
+             HDRStaticInfo info;
+             if (ColorUtils::getHDRStaticInfoFromFormat(buffer->format(), &info)
+                 && memcmp(&mCodec->mLastHDRStaticInfo, &info, sizeof(info))) {
+-                setNativeWindowHdrMetadata(mCodec->mNativeWindow.get(), &info);
++                //setNativeWindowHdrMetadata(mCodec->mNativeWindow.get(), &info);
+                 mCodec->mLastHDRStaticInfo = info;
+             }
+         }
+diff --git a/media/libstagefright/MediaCodec.cpp b/media/libstagefright/MediaCodec.cpp
+index 72eff946c..5f008483c 100644
+--- a/media/libstagefright/MediaCodec.cpp
++++ b/media/libstagefright/MediaCodec.cpp
+@@ -2183,7 +2183,7 @@ void MediaCodec::onMessageReceived(const sp<AMessage> &msg) {
+                             if (mOutputFormat->contains("hdr-static-info")) {
+                                 HDRStaticInfo info;
+                                 if (ColorUtils::getHDRStaticInfoFromFormat(mOutputFormat, &info)) {
+-                                    setNativeWindowHdrMetadata(mSurface.get(), &info);
++                                    //setNativeWindowHdrMetadata(mSurface.get(), &info);
+                                 }
+                             }
+ 
+diff --git a/media/libstagefright/SurfaceUtils.cpp b/media/libstagefright/SurfaceUtils.cpp
+index 9e11a94a5..b7c1598ec 100644
+--- a/media/libstagefright/SurfaceUtils.cpp
++++ b/media/libstagefright/SurfaceUtils.cpp
+@@ -18,8 +18,8 @@
+ #define LOG_TAG "SurfaceUtils"
+ #include <utils/Log.h>
+ 
+-#include <media/hardware/VideoAPI.h>
+ #include <media/stagefright/SurfaceUtils.h>
++
+ #include <gui/Surface.h>
+ 
+ namespace android {
+@@ -128,40 +128,6 @@ status_t setNativeWindowSizeFormatAndUsage(
+     return NO_ERROR;
+ }
+ 
+-void setNativeWindowHdrMetadata(ANativeWindow *nativeWindow, HDRStaticInfo *info) {
+-    struct android_smpte2086_metadata smpte2086_meta = {
+-            .displayPrimaryRed = {
+-                    info->sType1.mR.x * 0.00002f,
+-                    info->sType1.mR.y * 0.00002f
+-            },
+-            .displayPrimaryGreen = {
+-                    info->sType1.mG.x * 0.00002f,
+-                    info->sType1.mG.y * 0.00002f
+-            },
+-            .displayPrimaryBlue = {
+-                    info->sType1.mB.x * 0.00002f,
+-                    info->sType1.mB.y * 0.00002f
+-            },
+-            .whitePoint = {
+-                    info->sType1.mW.x * 0.00002f,
+-                    info->sType1.mW.y * 0.00002f
+-            },
+-            .maxLuminance = (float) info->sType1.mMaxDisplayLuminance,
+-            .minLuminance = info->sType1.mMinDisplayLuminance * 0.0001f
+-    };
+-
+-    int err = native_window_set_buffers_smpte2086_metadata(nativeWindow, &smpte2086_meta);
+-    ALOGW_IF(err != 0, "failed to set smpte2086 metadata on surface (%d)", err);
+-
+-    struct android_cta861_3_metadata cta861_meta = {
+-            .maxContentLightLevel = (float) info->sType1.mMaxContentLightLevel,
+-            .maxFrameAverageLightLevel = (float) info->sType1.mMaxFrameAverageLightLevel
+-    };
+-
+-    err = native_window_set_buffers_cta861_3_metadata(nativeWindow, &cta861_meta);
+-    ALOGW_IF(err != 0, "failed to set cta861_3 metadata on surface (%d)", err);
+-}
+-
+ status_t pushBlankBuffersToNativeWindow(ANativeWindow *nativeWindow /* nonnull */) {
+     status_t err = NO_ERROR;
+     ANativeWindowBuffer* anb = NULL;
+diff --git a/media/libstagefright/bqhelper/Conversion.cpp b/media/libstagefright/bqhelper/Conversion.cpp
+index ffed00577..5c4493ccf 100644
+--- a/media/libstagefright/bqhelper/Conversion.cpp
++++ b/media/libstagefright/bqhelper/Conversion.cpp
+@@ -1221,8 +1221,7 @@ constexpr size_t minFlattenedSize(
+ size_t getFlattenedSize(HGraphicBufferProducer::QueueBufferInput const& t) {
+     return minFlattenedSize(t) +
+             getFenceFlattenedSize(t.fence) +
+-            getFlattenedSize(t.surfaceDamage) +
+-            sizeof(HdrMetadata::validTypes);
++            getFlattenedSize(t.surfaceDamage);
+ }
+ 
+ /**
+@@ -1280,7 +1279,7 @@ status_t flatten(HGraphicBufferProducer::QueueBufferInput const& t,
+     if (status != NO_ERROR) {
+         return status;
+     }
+-    FlattenableUtils::write(buffer, size, decltype(HdrMetadata::validTypes)(0));
++    //FlattenableUtils::write(buffer, size, decltype(HdrMetadata::validTypes)(0));
+     return NO_ERROR;
+ }
+ 
+diff --git a/media/libstagefright/colorconversion/SoftwareRenderer.cpp b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+index 657a05b42..a2afce628 100644
+--- a/media/libstagefright/colorconversion/SoftwareRenderer.cpp
++++ b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+@@ -465,7 +465,7 @@ skip_copying:
+         HDRStaticInfo info;
+         if (ColorUtils::getHDRStaticInfoFromFormat(format, &info)
+             && memcmp(&mHDRStaticInfo, &info, sizeof(info))) {
+-            setNativeWindowHdrMetadata(mNativeWindow.get(), &info);
++            //setNativeWindowHdrMetadata(mNativeWindow.get(), &info);
+             mHDRStaticInfo = info;
+         }
+     }
+-- 
+2.11.0
+

@@ -1,7 +1,7 @@
 From 6a90e8667362c38aec9fc583c37d9eabd4cc5190 Mon Sep 17 00:00:00 2001
 From: LuK1337 <priv.luk@gmail.com>
 Date: Tue, 5 Sep 2017 09:51:22 +0200
-Subject: [PATCH 05/10] soong_config: Add TARGET_USES_NON_TREBLE_CAMERA
+Subject: [PATCH 05/12] soong_config: Add TARGET_USES_NON_TREBLE_CAMERA
  variable
 
 * Soong product variable 'uses_non_treble_camera'

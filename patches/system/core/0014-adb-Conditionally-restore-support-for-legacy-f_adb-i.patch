@@ -1,7 +1,7 @@
 From 97ff275e86b3eb56e5336dcac19b277aa0b18e52 Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <dan.pasanen@gmail.com>
 Date: Wed, 28 Feb 2018 18:22:27 -0600
-Subject: [PATCH 14/16] adb: Conditionally restore support for legacy f_adb
+Subject: [PATCH 14/24] adb: Conditionally restore support for legacy f_adb
  interface
 
  * Restore full support of USB and ADB on devices using the

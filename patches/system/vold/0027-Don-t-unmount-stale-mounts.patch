@@ -1,0 +1,29 @@
+From bb8ae7b812d5dfa4f920a162b8a98fed9570e847 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 25 Jan 2018 09:26:55 +0300
+Subject: [PATCH 27/27] Don't unmount stale mounts
+
+Change-Id: I15b78edc30191083e30ed5c1e42dc16b88f5954b
+---
+ VolumeManager.cpp | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index 720098e..0509aa9 100644
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -642,11 +642,6 @@ int VolumeManager::unmountAll() {
+     }
+     endmntent(fp);
+ 
+-    for (const auto& path : toUnmount) {
+-        LOG(DEBUG) << "Tearing down stale mount " << path;
+-        android::vold::ForceUnmount(path);
+-    }
+-
+     return 0;
+ }
+ 
+-- 
+2.11.0
+

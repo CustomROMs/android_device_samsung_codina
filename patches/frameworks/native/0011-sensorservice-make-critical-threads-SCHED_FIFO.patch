@@ -1,0 +1,60 @@
+From a5376bb687493b0350d17b8a725d40d53e0fac64 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 11/42] sensorservice: make critical threads SCHED_FIFO
+
+Sets the main thread, EventThread, and SFEventThread to SCHED_FIFO to minimize jitter.
+
+Change-Id: Ic1a090236a236e24b0bdcf4b0da63f622f295559
+---
+ services/sensorservice/Android.bp             | 1 +
+ services/sensorservice/hidl/Android.bp        | 1 +
+ services/sensorservice/hidl/SensorManager.cpp | 2 ++
+ 3 files changed, 4 insertions(+)
+
+diff --git a/services/sensorservice/Android.bp b/services/sensorservice/Android.bp
+index a7f3a5235..46eed47d4 100644
+--- a/services/sensorservice/Android.bp
++++ b/services/sensorservice/Android.bp
+@@ -30,6 +30,7 @@ cc_library_shared {
+         "-Wall",
+         "-Werror",
+         "-Wextra",
++        "-DHARDWARE_FIFO_SENSOR_SERVICE",
+         "-fvisibility=hidden"
+     ],
+ 
+diff --git a/services/sensorservice/hidl/Android.bp b/services/sensorservice/hidl/Android.bp
+index 02c13fa57..e480566d5 100644
+--- a/services/sensorservice/hidl/Android.bp
++++ b/services/sensorservice/hidl/Android.bp
+@@ -9,6 +9,7 @@ cc_library_shared {
+     cflags: [
+         "-Wall",
+         "-Werror",
++        "-DHARDWARE_FIFO_SENSOR_SERVICE",
+     ],
+     shared_libs: [
+         "libbase",
+diff --git a/services/sensorservice/hidl/SensorManager.cpp b/services/sensorservice/hidl/SensorManager.cpp
+index fee6da1e6..ed30b79a1 100644
+--- a/services/sensorservice/hidl/SensorManager.cpp
++++ b/services/sensorservice/hidl/SensorManager.cpp
+@@ -142,12 +142,14 @@ sp<Looper> SensorManager::getLooper() {
+         mStopThread = false;
+         std::thread pollThread{[&stopThread = mStopThread, looper = mLooper, javaVm = mJavaVm] {
+ 
++#ifndef HARDWARE_FIFO_SENSOR_SERVICE
+             struct sched_param p = {0};
+             p.sched_priority = 10;
+             if (sched_setscheduler(0 /* current thread*/, SCHED_FIFO, &p) != 0) {
+                 LOG(WARNING) << "Could not use SCHED_FIFO for looper thread: "
+                         << strerror(errno);
+             }
++#endif
+ 
+             // set looper
+             Looper::setForThread(looper);
+-- 
+2.11.0
+

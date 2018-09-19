@@ -1,0 +1,26 @@
+From cf54ad39cace3e81fdf0ade34900f449958f71a5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 14:41:06 +0300
+Subject: [PATCH 34/42] sf fixes
+
+Change-Id: I2aa04ed3c07355842e4cb4ebe8459532b1d8d916
+---
+ services/surfaceflinger/BufferLayerConsumer.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/BufferLayerConsumer.cpp b/services/surfaceflinger/BufferLayerConsumer.cpp
+index 87333d0ff..617940491 100644
+--- a/services/surfaceflinger/BufferLayerConsumer.cpp
++++ b/services/surfaceflinger/BufferLayerConsumer.cpp
+@@ -633,7 +633,7 @@ status_t BufferLayerConsumer::Image::createIfNeeded(const Rect& imageCrop) {
+         mCropHeight = 0;
+ 
+         const sp<GraphicBuffer>& buffer = mGraphicBuffer;
+-        ALOGE("Failed to create image. size=%ux%u st=%u usage=%#" PRIx64 " fmt=%d",
++        ALOGE("Failed to create image. size=%ux%u st=%u usage=%#" PRIx32 " fmt=%d",
+               buffer->getWidth(), buffer->getHeight(), buffer->getStride(), buffer->getUsage(),
+               buffer->getPixelFormat());
+     }
+-- 
+2.11.0
+

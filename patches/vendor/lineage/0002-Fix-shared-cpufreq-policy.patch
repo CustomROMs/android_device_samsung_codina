@@ -1,7 +1,7 @@
 From 2a91f83cc9eb3775fe2b336e53398ea099c285e5 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 02/10] Fix shared cpufreq policy
+Subject: [PATCH 02/12] Fix shared cpufreq policy
 
 ---
  prebuilt/common/etc/init/lineage-governor.rc | 8 ++++++++

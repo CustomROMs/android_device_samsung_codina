@@ -1,0 +1,105 @@
+From f67ccf2c54379078bb0ab2ce5138287eb72020d8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 05/42] STE Native fix [2]
+
+---
+ libs/binder/include/binder/SafeInterface.h    | 8 ++++----
+ libs/gui/include/gui/FrameTimestamps.h        | 9 +++++++++
+ libs/gui/include/gui/GLConsumer.h             | 1 +
+ libs/gui/include/gui/IGraphicBufferProducer.h | 4 ++++
+ 4 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/libs/binder/include/binder/SafeInterface.h b/libs/binder/include/binder/SafeInterface.h
+index 3bfd46280..38ba7e1a0 100644
+--- a/libs/binder/include/binder/SafeInterface.h
++++ b/libs/binder/include/binder/SafeInterface.h
+@@ -60,23 +60,23 @@ public:
+         return write(parcel, static_cast<typename std::underlying_type<E>::type>(e));
+     }
+     template <typename T>
+-    typename std::enable_if<std::is_base_of<Flattenable<T>, T>::value, status_t>::type read(
++    typename std::enable_if<std::is_base_of<Flattenable, T>::value, status_t>::type read(
+             const Parcel& parcel, T* t) const {
+         return callParcel("read(Flattenable)", [&]() { return parcel.read(*t); });
+     }
+     template <typename T>
+-    typename std::enable_if<std::is_base_of<Flattenable<T>, T>::value, status_t>::type write(
++    typename std::enable_if<std::is_base_of<Flattenable, T>::value, status_t>::type write(
+             Parcel* parcel, const T& t) const {
+         return callParcel("write(Flattenable)", [&]() { return parcel->write(t); });
+     }
+     template <typename T>
+-    typename std::enable_if<std::is_base_of<Flattenable<T>, T>::value, status_t>::type read(
++    typename std::enable_if<std::is_base_of<Flattenable, T>::value, status_t>::type read(
+             const Parcel& parcel, sp<T>* t) const {
+         *t = new T{};
+         return callParcel("read(sp<Flattenable>)", [&]() { return parcel.read(*(t->get())); });
+     }
+     template <typename T>
+-    typename std::enable_if<std::is_base_of<Flattenable<T>, T>::value, status_t>::type write(
++    typename std::enable_if<std::is_base_of<Flattenable, T>::value, status_t>::type write(
+             Parcel* parcel, const sp<T>& t) const {
+         return callParcel("write(sp<Flattenable>)", [&]() { return parcel->write(*(t.get())); });
+     }
+diff --git a/libs/gui/include/gui/FrameTimestamps.h b/libs/gui/include/gui/FrameTimestamps.h
+index 9716be4bf..a1c7ee35e 100644
+--- a/libs/gui/include/gui/FrameTimestamps.h
++++ b/libs/gui/include/gui/FrameTimestamps.h
+@@ -242,7 +242,11 @@ private:
+ // through Binder.
+ // Although this may be sent multiple times for the same frame as new
+ // timestamps are set, Fences only need to be sent once.
++#ifdef STE_HARDWARE
++class FrameEventsDelta : public Flattenable {
++#else
+ class FrameEventsDelta : public Flattenable<FrameEventsDelta> {
++#endif
+ friend class ProducerFrameEventHistory;
+ public:
+     FrameEventsDelta() = default;
+@@ -300,8 +304,13 @@ private:
+ 
+ // A collection of updates from consumer to producer that can be sent
+ // through Binder.
++#ifdef STE_HARDWARE
++class FrameEventHistoryDelta
++        : public Flattenable {
++#else
+ class FrameEventHistoryDelta
+         : public Flattenable<FrameEventHistoryDelta> {
++#endif
+ 
+ friend class ConsumerFrameEventHistory;
+ friend class ProducerFrameEventHistory;
+diff --git a/libs/gui/include/gui/GLConsumer.h b/libs/gui/include/gui/GLConsumer.h
+index 1345aba8a..8d73a44a1 100644
+--- a/libs/gui/include/gui/GLConsumer.h
++++ b/libs/gui/include/gui/GLConsumer.h
+@@ -20,6 +20,7 @@
+ #include <EGL/egl.h>
+ #include <EGL/eglext.h>
+ 
++#include <gui/BufferQueue.h>
+ #include <gui/BufferQueueDefs.h>
+ #include <gui/ConsumerBase.h>
+ 
+diff --git a/libs/gui/include/gui/IGraphicBufferProducer.h b/libs/gui/include/gui/IGraphicBufferProducer.h
+index 27e4f7b28..26def0873 100644
+--- a/libs/gui/include/gui/IGraphicBufferProducer.h
++++ b/libs/gui/include/gui/IGraphicBufferProducer.h
+@@ -384,7 +384,11 @@ public:
+         HdrMetadata hdrMetadata;
+     };
+ 
++#ifdef STE_HARDWARE
++    struct QueueBufferOutput : public Flattenable {
++#else
+     struct QueueBufferOutput : public Flattenable<QueueBufferOutput> {
++#endif
+         QueueBufferOutput() = default;
+ 
+         // Moveable.
+-- 
+2.11.0
+

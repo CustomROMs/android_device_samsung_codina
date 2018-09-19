@@ -1,0 +1,59 @@
+From 4ac6c7621e56c1d5e3d010720518bf157942440a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 17 Sep 2018 03:58:35 +0300
+Subject: [PATCH 26/27] Revert "vold: Make sure block device exists before
+ formatting it"
+
+This reverts commit 447ec69a83a34652a3d64f14b59512c0d2d85f27.
+
+Change-Id: Ie8fc9d57117f8cadbcb1d9811b66b6a082606a49
+---
+ Utils.cpp | 17 -----------------
+ Utils.h   |  3 ---
+ 2 files changed, 20 deletions(-)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index bda7439..4a14250 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -751,23 +751,6 @@ bool WaitForFile(const std::string& filename,
+     }
+ }
+ 
+-bool WaitForFile(const std::string& filename,
+-        const std::chrono::milliseconds relativeTimeout) {
+-    auto startTime = std::chrono::steady_clock::now();
+-
+-    while (true) {
+-        if (!access(filename.c_str(), F_OK) || errno != ENOENT) {
+-            return true;
+-        }
+-
+-        std::this_thread::sleep_for(50ms);
+-
+-        auto now = std::chrono::steady_clock::now();
+-        auto timeElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime);
+-        if (timeElapsed > relativeTimeout) return false;
+-    }
+-}
+-
+ bool IsRunningInEmulator() {
+     return android::base::GetBoolProperty("ro.kernel.qemu", false);
+ }
+diff --git a/Utils.h b/Utils.h
+index 9abb4a9..949f05b 100644
+--- a/Utils.h
++++ b/Utils.h
+@@ -126,9 +126,6 @@ bool Readlinkat(int dirfd, const std::string& path, std::string* result);
+ bool WaitForFile(const std::string& filename,
+         const std::chrono::milliseconds relativeTimeout);
+ 
+-bool WaitForFile(const std::string& filename,
+-        const std::chrono::milliseconds relativeTimeout);
+-
+ /* Checks if Android is running in QEMU */
+ bool IsRunningInEmulator();
+ 
+-- 
+2.11.0
+

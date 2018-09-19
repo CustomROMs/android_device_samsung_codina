@@ -1,7 +1,7 @@
 From ccf8d5325eb9c8e140d9bb57cc16815f190561c3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 06/10] soong_config: Add BOARD_EGL_WORKAROUND_BUG_10194508
+Subject: [PATCH 06/12] soong_config: Add BOARD_EGL_WORKAROUND_BUG_10194508
  variable
 
 * Soong product variable 'Needs_egl_khr_workaround product variable'

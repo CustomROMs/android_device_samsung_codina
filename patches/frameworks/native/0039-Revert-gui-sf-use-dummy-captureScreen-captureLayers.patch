@@ -1,0 +1,138 @@
+From 7b6475f921f628197a5d250133edacd635f39283 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Tue, 18 Sep 2018 15:42:31 +0300
+Subject: [PATCH 39/42] Revert "gui, sf: use dummy captureScreen /
+ captureLayers"
+
+This reverts commit 1bdcd5db5747e7b6c9f7bd8dc14c621306bd3bd7.
+
+Change-Id: If0c67af22ba077f0409686a3fcf1487d63d81fbf
+---
+ libs/gui/ISurfaceComposer.cpp              | 15 ---------------
+ services/surfaceflinger/SurfaceFlinger.cpp | 24 ++++++++----------------
+ 2 files changed, 8 insertions(+), 31 deletions(-)
+
+diff --git a/libs/gui/ISurfaceComposer.cpp b/libs/gui/ISurfaceComposer.cpp
+index 4224873d7..e22bc708c 100644
+--- a/libs/gui/ISurfaceComposer.cpp
++++ b/libs/gui/ISurfaceComposer.cpp
+@@ -87,7 +87,6 @@ public:
+         }
+ 
+         data.writeUint32(static_cast<uint32_t>(displays.size()));
+-
+         for (const auto& d : displays) {
+             d.write(data);
+         }
+@@ -549,14 +548,6 @@ IMPLEMENT_META_INTERFACE(SurfaceComposer, "android.ui.ISurfaceComposer");
+ status_t BnSurfaceComposer::onTransact(
+     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
+ {
+-    ALOGE("%s: code = %d", __func__, code);
+-    if (code == CAPTURE_LAYERS || code == CAPTURE_SCREEN) {
+-       if (code == CAPTURE_LAYERS)
+-           ALOGE("%s: CAPTURE_LAYERS, %d", __func__, CAPTURE_LAYERS);
+-       if (code == CAPTURE_SCREEN)
+-           ALOGE("%s: CAPTURE_SCREEN, %d", __func__, CAPTURE_SCREEN);
+-       return  BAD_VALUE;
+-    }
+     switch(code) {
+         case CREATE_CONNECTION: {
+             CHECK_INTERFACE(ISurfaceComposer, data, reply);
+@@ -579,7 +570,6 @@ status_t BnSurfaceComposer::onTransact(
+             if (count > data.dataSize()) {
+                 return BAD_VALUE;
+             }
+-
+             ComposerState s;
+             Vector<ComposerState> state;
+             state.setCapacity(count);
+@@ -605,7 +595,6 @@ status_t BnSurfaceComposer::onTransact(
+             }
+ 
+             uint32_t stateFlags = data.readUint32();
+-
+             setTransactionState(state, displays, stateFlags);
+             return NO_ERROR;
+         }
+@@ -615,8 +604,6 @@ status_t BnSurfaceComposer::onTransact(
+             return NO_ERROR;
+         }
+         case CAPTURE_SCREEN: {
+-            ALOGE("%s: CAPTURE_SCREEN: not supported!", __func__);
+-            return NO_ERROR;
+             CHECK_INTERFACE(ISurfaceComposer, data, reply);
+             sp<IBinder> display = data.readStrongBinder();
+             sp<GraphicBuffer> outBuffer;
+@@ -639,8 +626,6 @@ status_t BnSurfaceComposer::onTransact(
+             return NO_ERROR;
+         }
+         case CAPTURE_LAYERS: {
+-            ALOGE("%s: CAPTURE_LAYERS: not supported!", __func__);
+-            return NO_ERROR;
+             CHECK_INTERFACE(ISurfaceComposer, data, reply);
+             sp<IBinder> layerHandleBinder = data.readStrongBinder();
+             sp<GraphicBuffer> outBuffer;
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 56e3dc5b7..0268e6362 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -4713,12 +4713,11 @@ private:
+     const int mApi;
+ };
+ 
+-status_t SurfaceFlinger::captureScreen(const sp<IBinder>& /*display*/, sp<GraphicBuffer>* /*outBuffer*/,
+-                                       Rect /*sourceCrop*/, uint32_t /*reqWidth*/, uint32_t /*reqHeight*/,
+-                                       int32_t /*minLayerZ*/, int32_t /*maxLayerZ*/,
+-                                       bool /*useIdentityTransform*/,
+-                                       ISurfaceComposer::Rotation /*rotation*/) {
+-#if 0
++status_t SurfaceFlinger::captureScreen(const sp<IBinder>& display, sp<GraphicBuffer>* outBuffer,
++                                       Rect sourceCrop, uint32_t reqWidth, uint32_t reqHeight,
++                                       int32_t minLayerZ, int32_t maxLayerZ,
++                                       bool useIdentityTransform,
++                                       ISurfaceComposer::Rotation rotation) {
+     ATRACE_CALL();
+ 
+     if (CC_UNLIKELY(display == 0)) return BAD_VALUE;
+@@ -4731,14 +4730,11 @@ status_t SurfaceFlinger::captureScreen(const sp<IBinder>& /*display*/, sp<Graphi
+     auto traverseLayers = std::bind(std::mem_fn(&SurfaceFlinger::traverseLayersInDisplay), this,
+                                     device, minLayerZ, maxLayerZ, std::placeholders::_1);
+     return captureScreenCommon(renderArea, traverseLayers, outBuffer, useIdentityTransform);
+-#endif
+-    return NO_ERROR;
+ }
+ 
+-status_t SurfaceFlinger::captureLayers(const sp<IBinder>& /*layerHandleBinder*/,
+-                                       sp<GraphicBuffer>* /*outBuffer*/, const Rect& /*sourceCrop*/,
+-                                       float /*frameScale*/, bool /*childrenOnly*/) {
+-#if 0
++status_t SurfaceFlinger::captureLayers(const sp<IBinder>& layerHandleBinder,
++                                       sp<GraphicBuffer>* outBuffer, const Rect& sourceCrop,
++                                       float frameScale, bool childrenOnly) {
+     ATRACE_CALL();
+ 
+     class LayerRenderArea : public RenderArea {
+@@ -4848,11 +4844,8 @@ status_t SurfaceFlinger::captureLayers(const sp<IBinder>& /*layerHandleBinder*/,
+         });
+     };
+     return captureScreenCommon(renderArea, traverseLayers, outBuffer, false);
+-#endif
+-    return NO_ERROR;
+ }
+ 
+-#if 0
+ status_t SurfaceFlinger::captureScreenCommon(RenderArea& renderArea,
+                                              TraverseLayersFunction traverseLayers,
+                                              sp<GraphicBuffer>* outBuffer,
+@@ -4927,7 +4920,6 @@ status_t SurfaceFlinger::captureScreenCommon(RenderArea& renderArea,
+ 
+     return result;
+ }
+-#endif
+ 
+ void SurfaceFlinger::renderScreenImplLocked(const RenderArea& renderArea,
+                                             TraverseLayersFunction traverseLayers, bool yswap,
+-- 
+2.11.0
+
