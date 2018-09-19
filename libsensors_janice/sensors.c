@@ -99,6 +99,7 @@ float last_gyro[3];
 
 static Sensor_data sensor_data;
 
+bool mFlushed = false;
 
 /*pass values to kernel space*/
 static int on = 1;
@@ -320,6 +321,24 @@ static int poll_orientation(sensors_event_t *o, sensors_event_t *g)
 	double mag_x, mag_y, mag_xy;
 	double acc_x, acc_y, acc_z;
 
+        //int numEventReceived = 0;
+        int sensorId = HANDLE_ACCELEROMETER;
+        while (mFlushed) {
+            if (mFlushed & (1 << sensorId)) { /* Send flush META_DATA_FLUSH_COMPLETE immediately */
+                sensors_event_t sensor_event;
+                memset(&sensor_event, 0, sizeof(sensor_event));
+                sensor_event.version = META_DATA_VERSION;
+                sensor_event.type = SENSOR_TYPE_META_DATA;
+                sensor_event.meta_data.sensor = sensorId;
+                sensor_event.meta_data.what = 0;
+                *o++ = sensor_event;
+                //numEventReceived++;
+                mFlushed &= ~(0x01 << sensorId);
+                ALOGD_IF(DEBUG, "AkmSensor: %s Flushed sensorId: %d", __func__, sensorId);
+            }
+            sensorId++;
+        }
+
 	data_mag[0] = 0;
 	data_mag[1] = 0;
 	data_mag[2] = 0;
@@ -513,6 +532,24 @@ static int poll_accelerometer(sensors_event_t *values)
 	int data[3];
 	char buf[SIZE_OF_BUF];
 
+        //int numEventReceived = 0;
+        int sensorId = HANDLE_ACCELEROMETER;
+        while (mFlushed) {
+            if (mFlushed & (1 << sensorId)) { /* Send flush META_DATA_FLUSH_COMPLETE immediately */
+                sensors_event_t sensor_event;
+                memset(&sensor_event, 0, sizeof(sensor_event));
+                sensor_event.version = META_DATA_VERSION;
+                sensor_event.type = SENSOR_TYPE_META_DATA;
+                sensor_event.meta_data.sensor = sensorId;
+                sensor_event.meta_data.what = 0;
+                *values++ = sensor_event;
+                //numEventReceived++;
+                mFlushed &= ~(0x01 << sensorId);
+                ALOGD_IF(DEBUG, "AkmSensor: %s Flushed sensorId: %d", __func__, sensorId);
+            }
+            sensorId++;
+        }
+
 	data[0] = 0;
 	data[1] = 0;
 	data[2] = 0;
@@ -576,6 +613,24 @@ static int poll_magnetometer(sensors_event_t *values)
 	data[0] = 0;
 	data[1] = 0;
 	data[2] = 0;
+
+        //int numEventReceived = 0;
+        int sensorId = HANDLE_ACCELEROMETER;
+        while (mFlushed) {
+            if (mFlushed & (1 << sensorId)) { /* Send flush META_DATA_FLUSH_COMPLETE immediately */
+                sensors_event_t sensor_event;
+                memset(&sensor_event, 0, sizeof(sensor_event));
+                sensor_event.version = META_DATA_VERSION;
+                sensor_event.type = SENSOR_TYPE_META_DATA;
+                sensor_event.meta_data.sensor = sensorId;
+                sensor_event.meta_data.what = 0;
+                *values++ = sensor_event;
+                //numEventReceived++;
+                mFlushed &= ~(0x01 << sensorId);
+                ALOGD_IF(DEBUG, "AkmSensor: %s Flushed sensorId: %d", __func__, sensorId);
+            }
+            sensorId++;
+        }
 
 	fd = open(PATH_DATA_MAG, O_RDONLY);
 	if (fd < 0) {
@@ -952,9 +1007,11 @@ static int m_poll_batch(struct sensors_poll_device_1 *dev, int handle,
 }
 
 static int m_poll_flush(struct sensors_poll_device_1 *dev, int handle) {
-	(void)dev;
-	(void)handle;
-	return 0;
+    (void)dev;
+    mFlushed |= (1 << handle);
+    ALOGD("%s: handle: %d", __func__, handle);
+
+    return 0;
 }
 
 /* close instace of the deevie */
