@@ -292,15 +292,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.memtrack@1.0-impl
 
-ifeq ($(DEVICE_SENSOR_MULTI_HAL),true)
-# Sensors
 PRODUCT_PACKAGES += \
-    android.hardware.sensors@1.0-impl \
-    sensors.montblanc
-
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configsnew/hals.conf:system/vendor/etc/sensors/hals.conf
-endif
+    android.hardware.sensors@1.0-impl
 
 PRODUCT_PACKAGES += \
     input.evdev.default
