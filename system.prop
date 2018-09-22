@@ -93,8 +93,8 @@ ro.sys.fw.bservice_enable=true
 # ro.am.reschedule_service=true
 
 # art optimization
-# dalvik.vm.image-dex2oat-filter=speed
-# dalvik.vm.dex2oat-filter=interpret-only
+dalvik.vm.image-dex2oat-filter=speed
+dalvik.vm.dex2oat-filter=speed
 # dalvik.vm.image-dex2oat-filter=everything
 # dalvik.vm.dex2oat-filter=everything
 dalvik.vm.dex2oat-Xmx=256m
