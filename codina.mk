@@ -271,14 +271,14 @@ PRODUCT_PACKAGES += \
     android.hardware.keymaster@3.0-impl
 
 # Camera legacy
-#PRODUCT_PACKAGES += \
-#    android.hardware.camera.provider@2.4-impl-legacy \
-#    camera.device@1.0-impl-legacy
+PRODUCT_PACKAGES += \
+    android.hardware.camera.provider@2.4-impl-legacy \
+    camera.device@1.0-impl-legacy
 
 # Camera
-PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.4-impl \
-    camera.device@1.0-impl
+#PRODUCT_PACKAGES += \
+#    android.hardware.camera.provider@2.4-impl \
+#    camera.device@1.0-impl
 
 # health
 PRODUCT_PACKAGES += \
