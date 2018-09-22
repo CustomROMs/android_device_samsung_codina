@@ -115,7 +115,7 @@ Only the three quirks included above are recognized at this point:
 
     <Encoders>
     <!-- Video encoders -->
-
+<!--
         <MediaCodec name="OMX.ST.VFM.MPEG4Enc" >
             <Type name="video/mp4v-es" />
             <Type name="video/3gpp" />
@@ -129,7 +129,7 @@ Only the three quirks included above are recognized at this point:
             <Quirk name="requires-allocate-on-output-ports" />
             <Quirk name="requires-store-metadata-before-idle" />
         </MediaCodec>
-
+-->
     </Encoders>
 
     <Include href="media_codecs_google_video_le.xml" />
