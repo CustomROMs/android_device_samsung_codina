@@ -339,6 +339,7 @@ include vendor/samsung/u8500-common/vendor-common.mk
 
 # For better compatibility with ROMs (like Slim, PAC)
 $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.mk)
+$(call inherit-product, vendor/samsung/u8500-common/janice/janice-vendor-blobs.mk)
 
 # Build GO
 $(call inherit-product, build/make/target/product/go_defaults_512.mk)
