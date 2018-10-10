@@ -1,0 +1,191 @@
+From 7e48f9477faf1c53340e4d6796c59ce25435c3e8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 07:44:11 +0300
+Subject: [PATCH 49/49] GraphicBuffer: reset to lineage-15.1
+
+Change-Id: I9365c305cddcf3de08ecdcd156dafd8ebce1057d
+---
+ libs/ui/GraphicBuffer.cpp                   | 20 --------------------
+ libs/ui/GraphicBufferAllocator.cpp          | 19 +++++++++++++++++++
+ libs/ui/include/ui/GraphicBuffer.h          | 21 ---------------------
+ libs/ui/include/ui/GraphicBufferAllocator.h |  7 ++++---
+ libs/vr/libbufferhub/detached_buffer.cpp    |  2 ++
+ 5 files changed, 25 insertions(+), 44 deletions(-)
+
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index f69198670..01d2bb195 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -22,7 +22,6 @@
+ 
+ #include <grallocusage/GrallocUsageConversion.h>
+ 
+-#include <ui/DetachedBufferHandle.h>
+ #include <ui/Gralloc2.h>
+ #include <ui/GraphicBufferAllocator.h>
+ #include <ui/GraphicBufferMapper.h>
+@@ -480,7 +479,6 @@ status_t GraphicBuffer::unflatten(
+         status_t err = mBufferMapper.importBuffer(handle);
+         if (err != NO_ERROR) {
+             width = height = stride = format = layerCount = usage = 0;
+-            native_handle_delete(const_cast<native_handle*>(handle));
+             handle = NULL;
+             ALOGE("unflatten: registerBuffer failed: %s (%d)",
+                     strerror(-err), err);
+@@ -496,24 +494,6 @@ status_t GraphicBuffer::unflatten(
+     return NO_ERROR;
+ }
+ 
+-bool GraphicBuffer::isDetachedBuffer() const {
+-    return mDetachedBufferHandle && mDetachedBufferHandle->isValid();
+-}
+-
+-status_t GraphicBuffer::setDetachedBufferHandle(std::unique_ptr<DetachedBufferHandle> channel) {
+-    if (isDetachedBuffer()) {
+-        ALOGW("setDetachedBuffer: there is already a BufferHub channel associated with this "
+-              "GraphicBuffer. Replacing the old one.");
+-    }
+-
+-    mDetachedBufferHandle = std::move(channel);
+-    return NO_ERROR;
+-}
+-
+-std::unique_ptr<DetachedBufferHandle> GraphicBuffer::takeDetachedBufferHandle() {
+-    return std::move(mDetachedBufferHandle);
+-}
+-
+ // ---------------------------------------------------------------------------
+ 
+ }; // namespace android
+diff --git a/libs/ui/GraphicBufferAllocator.cpp b/libs/ui/GraphicBufferAllocator.cpp
+index 20c7ec40c..e685462c8 100644
+--- a/libs/ui/GraphicBufferAllocator.cpp
++++ b/libs/ui/GraphicBufferAllocator.cpp
+@@ -65,6 +65,25 @@ void GraphicBufferAllocator::dump(String8& result) const
+     char buffer[SIZE];
+     snprintf(buffer, SIZE, "Allocated buffers:\n");
+     result.append(buffer);
++    const size_t c = list.size();
++    for (size_t i=0 ; i<c ; i++) {
++        const alloc_rec_t& rec(list.valueAt(i));
++        if (rec.size) {
++            snprintf(buffer, SIZE, "%10p: %7.2f KiB | %4u (%4u) x %4u | %4u | %8X | 0x%" PRIx64
++                    "\n",
++                    list.keyAt(i), rec.size/1024.0,
++                    rec.width, rec.stride, rec.height, rec.layerCount, rec.format,
++                    rec.usage);
++        } else {
++            snprintf(buffer, SIZE, "%10p: unknown     | %4u (%4u) x %4u | %4u | %8X | 0x%" PRIx64
++                    "\n",
++                    list.keyAt(i),
++                    rec.width, rec.stride, rec.height, rec.layerCount, rec.format,
++                    rec.usage);
++        }
++        result.append(buffer);
++        total += rec.size;
++    }
+     snprintf(buffer, SIZE, "Total allocated (estimate): %.2f KB\n", total/1024.0);
+     result.append(buffer);
+     if (mAllocDev->common.version >= 1 && mAllocDev->dump) {
+diff --git a/libs/ui/include/ui/GraphicBuffer.h b/libs/ui/include/ui/GraphicBuffer.h
+index 004934727..331f66f89 100644
+--- a/libs/ui/include/ui/GraphicBuffer.h
++++ b/libs/ui/include/ui/GraphicBuffer.h
+@@ -34,7 +34,6 @@
+ 
+ namespace android {
+ 
+-class DetachedBufferHandle;
+ class GraphicBufferMapper;
+ 
+ // ===========================================================================
+@@ -202,11 +201,6 @@ public:
+     status_t flatten(void*& buffer, size_t& size, int*& fds, size_t& count) const;
+     status_t unflatten(void const*& buffer, size_t& size, int const*& fds, size_t& count);
+ 
+-    // Sets and takes DetachedBuffer. Should only be called from BufferHub.
+-    bool isDetachedBuffer() const;
+-    status_t setDetachedBufferHandle(std::unique_ptr<DetachedBufferHandle> detachedBuffer);
+-    std::unique_ptr<DetachedBufferHandle> takeDetachedBufferHandle();
+-
+ private:
+     ~GraphicBuffer();
+ 
+@@ -247,27 +241,12 @@ private:
+     GraphicBufferMapper& mBufferMapper;
+     ssize_t mInitCheck;
+ 
+-    // numbers of fds/ints in native_handle_t to flatten
+-    uint32_t mTransportNumFds;
+-    uint32_t mTransportNumInts;
+-
+     uint64_t mId;
+ 
+     // Stores the generation number of this buffer. If this number does not
+     // match the BufferQueue's internal generation number (set through
+     // IGBP::setGenerationNumber), attempts to attach the buffer will fail.
+     uint32_t mGenerationNumber;
+-
+-    // Stores a BufferHub handle that can be used to re-attach this GraphicBuffer back into a
+-    // BufferHub producer/consumer set. In terms of GraphicBuffer's relationship with BufferHub,
+-    // there are three different modes:
+-    // 1. Legacy mode: GraphicBuffer is not backed by BufferHub and mDetachedBufferHandle must be
+-    //    invalid.
+-    // 2. Detached mode: GraphicBuffer is backed by BufferHub, but not part of a producer/consumer
+-    //    set. In this mode, mDetachedBufferHandle must be valid.
+-    // 3. Attached mode: GraphicBuffer is backed by BufferHub and it's part of a producer/consumer
+-    //    set. In this mode, mDetachedBufferHandle must be invalid.
+-    std::unique_ptr<DetachedBufferHandle> mDetachedBufferHandle;
+ };
+ 
+ }; // namespace android
+diff --git a/libs/ui/include/ui/GraphicBufferAllocator.h b/libs/ui/include/ui/GraphicBufferAllocator.h
+index 279b93a33..38265794c 100644
+--- a/libs/ui/include/ui/GraphicBufferAllocator.h
++++ b/libs/ui/include/ui/GraphicBufferAllocator.h
+@@ -25,15 +25,16 @@
+ 
+ #include <cutils/native_handle.h>
+ 
+-#include <ui/PixelFormat.h>
+-
+ #include <utils/Errors.h>
+ #include <utils/KeyedVector.h>
+ #include <utils/Mutex.h>
+ #include <utils/Singleton.h>
+ 
++#include <ui/PixelFormat.h>
++
+ #include <hardware/gralloc.h>
+ 
++
+ namespace android {
+ // ---------------------------------------------------------------------------
+ 
+@@ -79,7 +80,7 @@ private:
+         uint32_t stride;
+         PixelFormat format;
+         uint32_t layerCount;
+-        uint32_t usage;
++        uint64_t usage;
+         size_t size;
+     };
+ 
+diff --git a/libs/vr/libbufferhub/detached_buffer.cpp b/libs/vr/libbufferhub/detached_buffer.cpp
+index 6fae16d26..5cebf142e 100644
+--- a/libs/vr/libbufferhub/detached_buffer.cpp
++++ b/libs/vr/libbufferhub/detached_buffer.cpp
+@@ -116,8 +116,10 @@ sp<GraphicBuffer> DetachedBuffer::TakeGraphicBuffer() {
+       "DetachedBuffer::TakeGraphicBuffer: GraphicBuffer is already detached.");
+ 
+   sp<GraphicBuffer> buffer = std::move(buffer_.buffer());
++#if 0
+   buffer->setDetachedBufferHandle(
+       DetachedBufferHandle::Create(client_.TakeChannelHandle()));
++#endif
+   return buffer;
+ }
+ 
+-- 
+2.11.0
+

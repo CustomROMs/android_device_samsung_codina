@@ -1,7 +1,7 @@
 From 1c8a8e2a5ba17420d4fce1c0088ddf59f6c86b20 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 10 Sep 2018 10:12:58 +0300
-Subject: [PATCH 16/26] Revert "Audio V4: Split HAL wrapper for versioning"
+Subject: [PATCH 16/67] Revert "Audio V4: Split HAL wrapper for versioning"
 
 This reverts commit 7588ff418aca63b1dc43a85afc1e86c40dd889a3.
 

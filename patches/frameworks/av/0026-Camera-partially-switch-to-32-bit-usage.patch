@@ -1,7 +1,7 @@
 From 57417622c61d8e6c4e2bb26f495fa744e3af5723 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 26/26] Camera: partially switch to 32-bit usage
+Subject: [PATCH 26/67] Camera: partially switch to 32-bit usage
 
 Change-Id: I7c97cdc774e763bc71ccdf642f9179e02ac8cdd3
 ---

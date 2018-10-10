@@ -1,7 +1,7 @@
 From 0831b2a51b6d16859480dc429e940d3d082cd868 Mon Sep 17 00:00:00 2001
 From: Xuefer <xuefer@gmail.com>
 Date: Tue, 29 Dec 2015 00:43:16 +0800
-Subject: [PATCH 08/26] audiopolicy: Handle legacy startOutput on output
+Subject: [PATCH 08/67] audiopolicy: Handle legacy startOutput on output
  command thread too
 
 ---

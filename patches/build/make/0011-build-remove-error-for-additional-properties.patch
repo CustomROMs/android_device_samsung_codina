@@ -1,7 +1,7 @@
 From 30fa572455932ba072d8edf50cef920d8454999f Mon Sep 17 00:00:00 2001
 From: mydongistiny <jaysonedson@gmail.com>
 Date: Mon, 21 Aug 2017 19:34:34 -0700
-Subject: [PATCH 11/31] build: remove error for additional properties
+Subject: [PATCH 11/32] build: remove error for additional properties
 
 Change-Id: I42ade0ea75dae2a5b819921e0a551e3ffc85392e
 ---

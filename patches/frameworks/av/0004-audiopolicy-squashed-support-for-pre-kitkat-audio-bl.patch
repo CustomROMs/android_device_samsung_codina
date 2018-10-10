@@ -1,7 +1,7 @@
 From dcc22a6bac6b975616dafecb0829db4d652d099c Mon Sep 17 00:00:00 2001
 From: c457 <android.c357@gmail.com>
 Date: Tue, 5 Jan 2016 21:06:56 -0600
-Subject: [PATCH 04/26] audiopolicy: squashed support for pre-kitkat audio
+Subject: [PATCH 04/67] audiopolicy: squashed support for pre-kitkat audio
  blobs
 
 Squash of the following:

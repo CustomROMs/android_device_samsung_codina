@@ -1,0 +1,44 @@
+From e501d85213574ae66c85d4eca74f98eca9e60451 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 21 Sep 2018 21:43:15 +0300
+Subject: [PATCH 46/49] Revert "Sync mLastQueuedCrop with mLastQueuedSlot."
+
+This reverts commit 96ba71ddfdcf5041df7947a17f3b04cbf57cb9b2.
+
+Change-Id: I85d0f7610ad05cead8f805effe3b9cb71e42a876
+---
+ libs/gui/BufferQueueProducer.cpp | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index b373dbb8e..400ec8bf0 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -938,6 +938,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
+ 
+         mCore->mBufferHasBeenQueued = true;
+         mCore->mDequeueCondition.broadcast();
++        mCore->mLastQueuedSlot = slot;
+ 
+         output->width = mCore->mDefaultWidth;
+         output->height = mCore->mDefaultHeight;
+@@ -986,13 +987,9 @@ status_t BufferQueueProducer::queueBuffer(int slot,
+         connectedApi = mCore->mConnectedApi;
+         lastQueuedFence = std::move(mLastQueueBufferFence);
+ 
+-        { // Autolock scope
+-            Mutex::Autolock lock2(mCore->mMutex);
+-            mLastQueueBufferFence = std::move(acquireFence);
+-            mLastQueuedCrop = item.mCrop;
+-            mLastQueuedTransform = item.mTransform;
+-            mCore->mLastQueuedSlot = slot;
+-        }
++        mLastQueueBufferFence = std::move(acquireFence);
++        mLastQueuedCrop = item.mCrop;
++        mLastQueuedTransform = item.mTransform;
+ 
+         ++mCurrentCallbackTicket;
+         mCallbackCondition.broadcast();
+-- 
+2.11.0
+

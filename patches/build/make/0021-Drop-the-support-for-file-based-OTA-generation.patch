@@ -1,7 +1,7 @@
 From 306509e52098ab03f9e0564481dd03ba2db95f37 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 21/31] Drop the support for file-based OTA generation
+Subject: [PATCH 21/32] Drop the support for file-based OTA generation
 
 Change-Id: I87c365df24ee2ef97046c254b9ad387dd066ddb6
 ---

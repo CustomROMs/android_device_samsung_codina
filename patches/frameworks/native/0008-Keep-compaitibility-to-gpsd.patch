@@ -2,7 +2,7 @@ From 20b1184c58f2f827cbccc96c1abebe60d63adbd8 Mon Sep 17 00:00:00 2001
 From: "Konstantin Sharlaimov (DigitalEntity)"
  <konstantin.sharlaimov@gmail.com>
 Date: Tue, 15 Dec 2015 12:05:02 +1000
-Subject: [PATCH 08/42] Keep compaitibility to gpsd
+Subject: [PATCH 08/49] Keep compaitibility to gpsd
 
 ---
  libs/gui/Android.bp                        |  1 +

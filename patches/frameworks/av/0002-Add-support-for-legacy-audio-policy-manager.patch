@@ -1,7 +1,7 @@
 From f0ceb2b0efb65b11d80731f830db33151bef577f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 02/26] Add support for legacy audio policy manager
+Subject: [PATCH 02/67] Add support for legacy audio policy manager
 
 Change-Id: I10dbd5641c2141a5332aa07f0b504f4aab62fa23
 ---

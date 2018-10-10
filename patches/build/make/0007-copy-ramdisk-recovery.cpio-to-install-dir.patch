@@ -1,7 +1,7 @@
 From 67afa4839dd2dcacb15d90739ad045253a511cef Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 07/31] copy ramdisk-recovery.cpio to install dir
+Subject: [PATCH 07/32] copy ramdisk-recovery.cpio to install dir
 
 ---
  core/Makefile | 2 ++

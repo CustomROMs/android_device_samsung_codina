@@ -1,7 +1,7 @@
 From 58b1c239d917234479b5c3f552ceea3d8abe5a03 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 21 Aug 2018 20:17:33 +0300
-Subject: [PATCH 28/31] Add support for janice
+Subject: [PATCH 28/32] Add support for janice
 
 Change-Id: I31dc0bc88cf9785a1a32e5a1c2a15a6a989b18fa
 ---

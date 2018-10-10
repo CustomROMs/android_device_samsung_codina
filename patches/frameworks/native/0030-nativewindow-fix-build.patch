@@ -1,7 +1,7 @@
 From 4070b0a869b78570e122fbdb006f5f5123ba0ac4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 14:27:46 +0300
-Subject: [PATCH 30/42] nativewindow: fix build
+Subject: [PATCH 30/49] nativewindow: fix build
 
 Change-Id: I1143fff2a18cd476115ff47163ce6db2fbc5ca94
 ---

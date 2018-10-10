@@ -1,0 +1,30 @@
+From 00560be86b5962b4d5e79e6ac636c64da726411d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 22 Sep 2018 01:47:55 +0300
+Subject: [PATCH 3/3] dex2oat: skip dex compilation on a regular boot
+
+Change-Id: Ibd528e9b1ccc137502407fc98f83a7881d508483
+---
+ dex2oat/dex2oat.cc | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/dex2oat/dex2oat.cc b/dex2oat/dex2oat.cc
+index fe927bbc1c..96f8d19512 100644
+--- a/dex2oat/dex2oat.cc
++++ b/dex2oat/dex2oat.cc
+@@ -1679,6 +1679,12 @@ class Dex2Oat FINAL {
+ 
+     dex_files_ = MakeNonOwningPointerVector(opened_dex_files_);
+ 
++    std::string boot_reason("boot");
++    if (compilation_reason_ == boot_reason) {
++      LOG(INFO) << "not first boot, downgrading to assume-verified";
++      compiler_options_->SetCompilerFilter(CompilerFilter::kAssumeVerified);
++    }
++
+     // If we need to downgrade the compiler-filter for size reasons.
+     if (!IsBootImage() && IsVeryLarge(dex_files_)) {
+       // Disable app image to make sure dex2oat unloading is enabled.
+-- 
+2.11.0
+

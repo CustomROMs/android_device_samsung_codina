@@ -1,7 +1,7 @@
 From 417189a35dc60b06916815db156c9505f99af364 Mon Sep 17 00:00:00 2001
 From: maxwen <max.weninger@gmail.com>
 Date: Sat, 9 Dec 2017 03:06:47 +0100
-Subject: [PATCH 24/31] build: add TARGET_SPECIFIC_HEADER_PATH to config
+Subject: [PATCH 24/32] build: add TARGET_SPECIFIC_HEADER_PATH to config
 
 Change-Id: I05847e817962910e963e57b64ef08613cd5850fc
 ---

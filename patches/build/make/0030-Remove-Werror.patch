@@ -1,7 +1,7 @@
 From b4a2bce326595d06ddc39697382f7de42a6968d2 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 26 Aug 2018 23:30:36 +0300
-Subject: [PATCH 30/31] Remove -Werror
+Subject: [PATCH 30/32] Remove -Werror
 
 Change-Id: Iab2d5f975dcb4fb6fed15aac74efd9a311ed2802
 ---

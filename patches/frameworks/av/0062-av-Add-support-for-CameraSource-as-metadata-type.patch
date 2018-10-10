@@ -1,0 +1,903 @@
+From 330361aa4d367bcc99b66a5094a2acbab98b2c1d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 08:12:43 +0300
+Subject: [PATCH 62/67] av: Add support for CameraSource as metadata type
+
+*NativeHandleSource isn't supported by pre-N camera halv1.
+*Add support To Use CameraSource as metadata type.
+*Also add support for Cameraserver to run as mediaserver which is needed by pre-N camera halv1.
+*Fixes Video Recording.
+*To enable this hack:
+TARGET_HAS_LEGACY_CAMERA_HAL1 := true
+BOARD_GLOBAL_CFLAGS += -DMETADATA_CAMERA_SOURCE
+media.stagefright.legacyencoder=true
+media.stagefright.less-secure=true
+
+Change-Id: Id5d6b25de145422288b4c7ad2b43b8794d3074ac
+---
+ cmds/stagefright/Android.mk                        |  16 ++-
+ media/libmedia/IOMX.cpp                            |   3 +
+ media/libmedia/include/media/IOMX.h                |   2 +
+ .../libmediaplayerservice/StagefrightRecorder.cpp  |   1 -
+ media/libstagefright/ACodec.cpp                    |  74 +++++++++---
+ media/libstagefright/Android.bp                    |  11 ++
+ media/libstagefright/CameraSource.cpp              |   6 +
+ media/libstagefright/MediaCodecSource.cpp          |   1 -
+ media/libstagefright/SurfaceMediaSource.cpp        |  37 ++++++
+ .../include/media/stagefright/ACodec.h             |   8 +-
+ .../include/media/stagefright/MediaCodecSource.h   |   1 +
+ media/libstagefright/omx/Android.bp                |   3 +-
+ media/libstagefright/omx/OMXNodeInstance.cpp       | 124 ++++++++++-----------
+ media/libstagefright/omx/OMXUtils.cpp              |   3 +
+ .../media/stagefright/omx/OMXNodeInstance.h        |   1 -
+ .../omx/include/media/stagefright/omx/OMXUtils.h   |   2 +
+ media/libstagefright/tests/Android.bp              |   1 -
+ 17 files changed, 202 insertions(+), 92 deletions(-)
+
+diff --git a/cmds/stagefright/Android.mk b/cmds/stagefright/Android.mk
+index 327bd46cc..f2ca4e944 100644
+--- a/cmds/stagefright/Android.mk
++++ b/cmds/stagefright/Android.mk
+@@ -41,8 +41,12 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ LOCAL_C_INCLUDES:= \
+         frameworks/av/media/libstagefright \
+-        frameworks/native/include/media/openmax \
+-        frameworks/native/include/media/hardware
++        frameworks/native/include/media/openmax
++
++ifneq ($(TARGET_HAS_LEGACY_CAMERA_HAL1), true)
++LOCAL_C_INCLUDES += \
++  	frameworks/native/include/media/hardware
++endif
+ 
+ LOCAL_CFLAGS += -Wno-multichar -Werror -Wall
+ 
+@@ -66,8 +70,12 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ LOCAL_C_INCLUDES:= \
+         frameworks/av/media/libstagefright \
+-        frameworks/native/include/media/openmax \
+-        frameworks/native/include/media/hardware
++        frameworks/native/include/media/openmax
++
++ifneq ($(TARGET_HAS_LEGACY_CAMERA_HAL1), true)
++LOCAL_C_INCLUDES += \
++  	frameworks/native/include/media/hardware
++endif
+ 
+ LOCAL_CFLAGS += -Wno-multichar -Werror -Wall
+ 
+diff --git a/media/libmedia/IOMX.cpp b/media/libmedia/IOMX.cpp
+index a073081f5..5e0d6454a 100644
+--- a/media/libmedia/IOMX.cpp
++++ b/media/libmedia/IOMX.cpp
+@@ -228,6 +228,9 @@ public:
+ 
+     virtual status_t setPortMode(
+             OMX_U32 port_index, IOMX::PortMode mode) {
++#ifdef METADATE_CAMERA_SOURCE
++#warning storeMetaDataInBuffers changes are not implemented here
++#endif
+         Parcel data, reply;
+         data.writeInterfaceToken(IOMXNode::getInterfaceDescriptor());
+         data.writeInt32(port_index);
+diff --git a/media/libmedia/include/media/IOMX.h b/media/libmedia/include/media/IOMX.h
+index e69c02dda..906f42089 100644
+--- a/media/libmedia/include/media/IOMX.h
++++ b/media/libmedia/include/media/IOMX.h
+@@ -68,6 +68,8 @@ public:
+         kPortModeDynamicANWBuffer,      // uses metadata mode kMetadataBufferTypeANWBuffer
+                                         // or kMetadataBufferTypeGrallocSource
+         kPortModeDynamicNativeHandle,   // uses metadata mode kMetadataBufferTypeNativeHandleSource
++        kPortModeDynamicGrallocSource,  // [Legacy Camera HAL1] uses kMetadataBufferTypeGrallocSource
++        kPortModeDynamicCameraSource,   // [Legacy Camera HAL1] uses kMetadataBufferTypeCameraSource
+         kPortModeDynamicEnd,
+     };
+ 
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 30c0b1ca5..a05cdc6ce 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -2145,7 +2145,6 @@ status_t StagefrightRecorder::reset() {
+     mLatitudex10000 = -3600000;
+     mLongitudex10000 = -3600000;
+     mTotalBitRate = 0;
+-
+     // tracking how long we recorded.
+     mDurationRecordedUs = 0;
+     mStartedRecordingUs = 0;
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 8c8485ff4..f07f2dd88 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -605,7 +605,7 @@ ACodec::ACodec()
+ 
+     changeState(mUninitializedState);
+ 
+-    mTrebleFlag = false;
++    mTrebleFlag = bool(property_get_bool("debug.treble_omx", false));
+ }
+ 
+ ACodec::~ACodec() {
+@@ -840,6 +840,7 @@ status_t ACodec::handleSetSurface(const sp<Surface> &surface) {
+ }
+ 
+ status_t ACodec::setPortMode(int32_t portIndex, IOMX::PortMode mode) {
++    ALOGE("%s: setPortMode: mode = %d", mComponentName.c_str(), mode);
+     status_t err = mOMXNode->setPortMode(portIndex, mode);
+     if (err != OK) {
+         ALOGE("[%s] setPortMode on %s to %s failed w/ err %d",
+@@ -1267,6 +1268,12 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+ }
+ 
+ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
++#ifndef STE_HARDWARE
++    // This method only handles the non-metadata mode (or simulating legacy
++    // mode with metadata, which is transparent to ACodec).
++    CHECK(!storingMetadataInDecodedBuffers());
++#endif
++
+     OMX_U32 bufferCount, bufferSize, minUndequeuedBuffers;
+     status_t err = configureOutputBuffersFromNativeWindow(
+             &bufferCount, &bufferSize, &minUndequeuedBuffers, true /* preregister */);
+@@ -1274,10 +1281,14 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+         return err;
+     mNumUndequeuedBuffers = minUndequeuedBuffers;
+ 
++#ifdef STE_HARDWARE
+     if (!storingMetadataInDecodedBuffers()) {
++#endif
+         static_cast<Surface*>(mNativeWindow.get())
+                 ->getIGraphicBufferProducer()->allowAllocation(true);
++#ifdef STE_HARDWARE
+     }
++#endif
+ 
+     ALOGV("[%s] Allocating %u buffers from a native window of size %u on "
+          "output port",
+@@ -1349,18 +1360,15 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
+         }
+     }
+ 
+-    if (!storingMetadataInDecodedBuffers()) {
+-        static_cast<Surface*>(mNativeWindow.get())
+-                ->getIGraphicBufferProducer()->allowAllocation(false);
+-    }
++    static_cast<Surface*>(mNativeWindow.get())
++            ->getIGraphicBufferProducer()->allowAllocation(false);
+ 
+     return err;
+ }
+ 
+ status_t ACodec::allocateOutputMetadataBuffers() {
+-#ifndef STE_HARDWARE
+     CHECK(storingMetadataInDecodedBuffers());
+-#endif
++
+     OMX_U32 bufferCount, bufferSize, minUndequeuedBuffers;
+     status_t err = configureOutputBuffersFromNativeWindow(
+             &bufferCount, &bufferSize, &minUndequeuedBuffers,
+@@ -1782,6 +1790,7 @@ status_t ACodec::configureCodec(
+     status_t err = setComponentRole(encoder /* isEncoder */, mime);
+ 
+     if (err != OK) {
++        ALOGE("%s: setComponentRole err=%d", __func__, err);
+         return err;
+     }
+ 
+@@ -1792,10 +1801,12 @@ status_t ACodec::configureCodec(
+     if (encoder) {
+         if (mIsVideo || mIsImage) {
+             if (!findVideoBitrateControlInfo(msg, &bitrateMode, &bitrate, &quality)) {
++                ALOGE("%s: findVideoBitrateControlInfo err=%d", __func__, INVALID_OPERATION);
+                 return INVALID_OPERATION;
+             }
+         } else if (strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_FLAC)
+             && !msg->findInt32("bitrate", &bitrate)) {
++            ALOGE("%s: findVideoBitrateControlInfo err=%d", __func__, INVALID_OPERATION);
+             return INVALID_OPERATION;
+         }
+     }
+@@ -1819,8 +1830,10 @@ status_t ACodec::configureCodec(
+                 storeMeta == kMetadataBufferTypeGrallocSource) {
+             mode = IOMX::kPortModeDynamicANWBuffer;
+         } else {
++            ALOGE("%s: storeMeta err=%d", __func__, BAD_VALUE);
+             return BAD_VALUE;
+         }
++
+         err = setPortMode(kPortIndexInput, mode);
+         if (err != OK) {
+             return err;
+@@ -1870,10 +1883,16 @@ status_t ACodec::configureCodec(
+             enable = OMX_TRUE;
+         }
+ 
++#ifdef METADATA_CAMERA_SOURCE
++        err = setPortMode(kPortIndexOutput, IOMX::kPortModeDynamicNativeHandle);
++#else
+         err = setPortMode(kPortIndexOutput, enable ?
+                 IOMX::kPortModePresetSecureBuffer : IOMX::kPortModePresetByteBuffer);
++#endif
+         if (err != OK) {
+-            return err;
++            ALOGE("[%s] storeMetaDataInBuffers (output) failed w/ err %d",
++                mComponentName.c_str(), err);
++            //return err;
+         }
+ 
+         if (!msg->findInt64(
+@@ -1930,7 +1949,7 @@ status_t ACodec::configureCodec(
+     }
+     if (mFlags & kFlagIsSecure) {
+         // use native_handles for secure input buffers
+-        err = setPortMode(kPortIndexInput, IOMX::kPortModePresetSecureBuffer);
++        err = setPortMode(kPortIndexInput, IOMX::kPortModeDynamicNativeHandle);
+ 
+         if (err != OK) {
+             ALOGI("falling back to non-native_handles");
+@@ -2007,7 +2026,17 @@ status_t ACodec::configureCodec(
+                 return err;
+             }
+ 
+-            err = setPortMode(kPortIndexOutput, IOMX::kPortModeDynamicANWBuffer);
++#ifdef STE_HARDWARE
++            bool isSteCodec = !mComponentName.compare("OMX.ST.VFM.H264Dec") ||
++                              !mComponentName.compare("OMX.ST.VFM.MPEG4Dec");
++
++            if (!isSteCodec)
++#endif
++                err = setPortMode(kPortIndexOutput, IOMX::kPortModeDynamicANWBuffer);
++#ifdef STE_HARDWARE
++            else err = OK;
++#endif
++
+             if (err != OK) {
+                 // if adaptive playback has been requested, try JB fallback
+                 // NOTE: THIS FALLBACK MECHANISM WILL BE REMOVED DUE TO ITS
+@@ -2055,7 +2084,11 @@ status_t ACodec::configureCodec(
+             } else {
+                 ALOGV("[%s] setPortMode on output to %s succeeded",
+                         mComponentName.c_str(), asString(IOMX::kPortModeDynamicANWBuffer));
++#ifdef STE_HARDWARE
++                if (!isSteCodec)
++#endif
+                 CHECK(storingMetadataInDecodedBuffers());
++
+                 inputFormat->setInt32("adaptive-playback", true);
+             }
+ 
+@@ -2088,6 +2121,8 @@ status_t ACodec::configureCodec(
+         } else if (haveNativeWindow && !storingMetadataInDecodedBuffers()) {
+             err = setPortMode(kPortIndexOutput, IOMX::kPortModePresetANWBuffer);
+             if (err != OK) {
++                ALOGE("%s: haveNativeWindow && !storingMetadataInDecodedBuffers() err=%d", __func__, err);
++
+                 return err;
+             }
+         }
+@@ -2099,7 +2134,11 @@ status_t ACodec::configureCodec(
+         }
+ 
+         if (err != OK) {
++            ALOGE("%s: setupVideoDecoder err=%d", __func__, err);
++#if 0
+             return err;
++#endif
++            err = OK;
+         }
+ 
+         if (haveNativeWindow) {
+@@ -2111,12 +2150,16 @@ status_t ACodec::configureCodec(
+                     requestedColorFormat == OMX_COLOR_FormatYUV420Flexible) {
+                 status_t err = getPortFormat(kPortIndexOutput, outputFormat);
+                 if (err != OK) {
++            ALOGE("%s: getPortFormat err=%d", __func__, err);
++
+                     return err;
+                 }
+                 int32_t colorFormat = OMX_COLOR_FormatUnused;
+                 OMX_U32 flexibleEquivalent = OMX_COLOR_FormatUnused;
+                 if (!outputFormat->findInt32("color-format", &colorFormat)) {
+                     ALOGE("ouptut port did not have a color format (wrong domain?)");
++            ALOGE("%s: ouptut port did not have a color format err=%d", __func__, BAD_VALUE);
++
+                     return BAD_VALUE;
+                 }
+                 ALOGD("[%s] Requested output format %#x and got %#x.",
+@@ -2298,6 +2341,8 @@ status_t ACodec::configureCodec(
+     }
+ 
+     if (err != OK) {
++            ALOGE("%s: audio codecs err=%d", __func__, err);
++
+         return err;
+     }
+ 
+@@ -2344,7 +2389,7 @@ status_t ACodec::configureCodec(
+     if (err == OK) {
+         err = setVendorParameters(msg);
+         if (err != OK) {
+-            return err;
++            err = OK;
+         }
+     }
+ 
+@@ -2379,6 +2424,8 @@ status_t ACodec::configureCodec(
+         }
+     }
+ 
++    ALOGE("%s: {end} err=%d", __func__, err);
++
+     return err;
+ }
+ 
+@@ -3273,6 +3320,7 @@ status_t ACodec::setSupportedOutputFormat(bool getLegacyFlexibleFormat) {
+                 || format.eColorFormat == OMX_COLOR_FormatYUV420PackedPlanar
+                 || format.eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar
+                 || format.eColorFormat == OMX_COLOR_FormatYUV420PackedSemiPlanar
++                || format.eColorFormat == OMX_STE_COLOR_FormatYUV420PackedSemiPlanarMB
+                 || format.eColorFormat == OMX_TI_COLOR_FormatYUV420PackedSemiPlanar) {
+             break;
+         }
+@@ -3425,11 +3473,11 @@ status_t ACodec::setupVideoDecoder(
+     } else {
+         err = setSupportedOutputFormat(!haveNativeWindow /* getLegacyFlexibleFormat */);
+     }
+-
++/*
+     if (err != OK) {
+         return err;
+     }
+-
++*/
+     // Set the component input buffer number to be |tmp|. If succeed,
+     // component will set input port buffer number to be |tmp|. If fail,
+     // component will keep the same buffer number as before.
+diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
+index 26cf238da..376fb933a 100644
+--- a/media/libstagefright/Android.bp
++++ b/media/libstagefright/Android.bp
+@@ -12,6 +12,7 @@ cc_library_static {
+     cflags: [
+         "-Werror",
+         "-Wall",
++        "-Wno-#warnings",
+     ],
+     sanitize: {
+         misc_undefined: [
+@@ -34,6 +35,7 @@ cc_library_static {
+     cflags: [
+         "-Werror",
+         "-Wall",
++        "-Wno-#warnings",
+     ],
+     sanitize: {
+         misc_undefined: [
+@@ -62,6 +64,7 @@ cc_library_shared {
+     cflags: [
+         "-Werror",
+         "-Wall",
++        "-Wno-#warnings",
+     ],
+ 
+     shared_libs: [
+@@ -202,8 +205,10 @@ cc_library_shared {
+     cflags: [
+         "-Wno-multichar",
+         "-Wno-error=deprecated-declarations",
++        "-Wno-#warnings",
+         "-Wall",
+         "-DBOARD_CANT_REALLOCATE_OMX_BUFFERS",
++        "-DMETADATA_CAMERA_SOURCE",
+     ],
+ 
+     version_script: "exports.lds",
+@@ -297,6 +302,12 @@ cc_library {
+             // enable experiments only in userdebug and eng builds
+             cflags: ["-DENABLE_STAGEFRIGHT_EXPERIMENTS"],
+         },
++        lineage: {
++            has_legacy_camera_hal1: {
++                // enable legacy camera HAL1 product option
++                cflags: ["-DCAMCORDER_GRALLOC_SOURCE"],
++            },
++        },
+     },
+ 
+     sanitize: {
+diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
+index 71dd61c9e..e1a9c5ecf 100644
+--- a/media/libstagefright/CameraSource.cpp
++++ b/media/libstagefright/CameraSource.cpp
+@@ -168,6 +168,10 @@ static int32_t getColorFormat(const char* colorFormat) {
+         return OMX_COLOR_FormatAndroidOpaque;
+     }
+ 
++    if (!strcmp(colorFormat, "YVU420SemiPlanar")) {
++        return OMX_QCOM_COLOR_FormatYVU420SemiPlanar;
++    }
++
+     ALOGE("Uknown color format (%s), please add it to "
+          "CameraSource::getColorFormat", colorFormat);
+ 
+@@ -1416,8 +1420,10 @@ MetadataBufferType CameraSource::metaDataStoredInVideoBuffers() const {
+     // Output buffers will contain metadata if camera sends us buffer in metadata mode or via
+     // buffer queue.
+     switch (mVideoBufferMode) {
++#if !defined(STE_HARDWARE)
+         case hardware::ICamera::VIDEO_BUFFER_MODE_DATA_CALLBACK_METADATA:
+             return kMetadataBufferTypeNativeHandleSource;
++#endif
+         case hardware::ICamera::VIDEO_BUFFER_MODE_BUFFER_QUEUE:
+             return kMetadataBufferTypeANWBuffer;
+         default:
+diff --git a/media/libstagefright/MediaCodecSource.cpp b/media/libstagefright/MediaCodecSource.cpp
+index bedec51ac..6ecd2a2d6 100644
+--- a/media/libstagefright/MediaCodecSource.cpp
++++ b/media/libstagefright/MediaCodecSource.cpp
+@@ -479,7 +479,6 @@ status_t MediaCodecSource::init() {
+ }
+ 
+ status_t MediaCodecSource::initEncoder() {
+-
+     mReflector = new AHandlerReflector<MediaCodecSource>(this);
+     mLooper->registerHandler(mReflector);
+ 
+diff --git a/media/libstagefright/SurfaceMediaSource.cpp b/media/libstagefright/SurfaceMediaSource.cpp
+index e56916f16..75ad2d0dd 100644
+--- a/media/libstagefright/SurfaceMediaSource.cpp
++++ b/media/libstagefright/SurfaceMediaSource.cpp
+@@ -128,7 +128,11 @@ status_t SurfaceMediaSource::setFrameRate(int32_t fps)
+ 
+ MetadataBufferType SurfaceMediaSource::metaDataStoredInVideoBuffers() const {
+     ALOGV("isMetaDataStoredInVideoBuffers");
++#ifdef CAMCORDER_GRALLOC_SOURCE
++    return kMetadataBufferTypeGrallocSource;
++#else
+     return kMetadataBufferTypeANWBuffer;
++#endif
+ }
+ 
+ int32_t SurfaceMediaSource::getFrameRate( ) const {
+@@ -249,6 +253,35 @@ sp<MetaData> SurfaceMediaSource::getFormat()
+     return meta;
+ }
+ 
++#ifdef CAMCORDER_GRALLOC_SOURCE
++// Pass the data to the MediaBuffer. Pass in only the metadata
++// The metadata passed consists of two parts:
++// 1. First, there is an integer indicating that it is a GRAlloc
++// source (kMetadataBufferTypeGrallocSource)
++// 2. This is followed by the buffer_handle_t that is a handle to the
++// GRalloc buffer. The encoder needs to interpret this GRalloc handle
++// and encode the frames.
++// --------------------------------------------------------------
++// |  kMetadataBufferTypeGrallocSource | sizeof(buffer_handle_t) |
++// --------------------------------------------------------------
++// Note: Call only when you have the lock
++static void passMetadataBuffer(MediaBufferBase **buffer,
++        buffer_handle_t bufferHandle) {
++    *buffer = new MediaBuffer(4 + sizeof(buffer_handle_t));
++    char *data = (char *)(*buffer)->data();
++    if (data == NULL) {
++        ALOGE("Cannot allocate memory for metadata buffer!");
++        return;
++    }
++    OMX_U32 type = kMetadataBufferTypeGrallocSource;
++    memcpy(data, &type, 4);
++    memcpy(data + 4, &bufferHandle, sizeof(buffer_handle_t));
++
++    ALOGV("handle = %p, , offset = %zu, length = %zu",
++            bufferHandle, (*buffer)->range_length(), (*buffer)->range_offset());
++}
++#endif
++
+ // Pass the data to the MediaBuffer. Pass in only the metadata
+ // Note: Call only when you have the lock
+ void SurfaceMediaSource::passMetadataBuffer_l(MediaBufferBase **buffer,
+@@ -351,7 +384,11 @@ status_t SurfaceMediaSource::read(
+     mNumFramesEncoded++;
+     // Pass the data to the MediaBuffer. Pass in only the metadata
+ 
++#ifdef CAMCORDER_GRALLOC_SOURCE
++    passMetadataBuffer(buffer, mSlots[mCurrentSlot].mGraphicBuffer->handle);
++#else
+     passMetadataBuffer_l(buffer, mSlots[mCurrentSlot].mGraphicBuffer->getNativeBuffer());
++#endif
+ 
+     (*buffer)->setObserver(this);
+     (*buffer)->add_ref();
+diff --git a/media/libstagefright/include/media/stagefright/ACodec.h b/media/libstagefright/include/media/stagefright/ACodec.h
+index aa8a2ac3e..bf726e61a 100644
+--- a/media/libstagefright/include/media/stagefright/ACodec.h
++++ b/media/libstagefright/include/media/stagefright/ACodec.h
+@@ -333,11 +333,15 @@ private:
+     BufferInfo *dequeueBufferFromNativeWindow();
+ 
+     inline bool storingMetadataInDecodedBuffers() {
+-        return (mPortMode[kPortIndexOutput] == IOMX::kPortModeDynamicANWBuffer) && !mIsEncoder;
++        return (mPortMode[kPortIndexOutput] == IOMX::kPortModeDynamicANWBuffer ||
++                mPortMode[kPortIndexOutput] == IOMX::kPortModeDynamicGrallocSource ||
++                mPortMode[kPortIndexOutput] == IOMX::kPortModeDynamicCameraSource) && !mIsEncoder;
+     }
+ 
+     inline bool usingSecureBufferOnEncoderOutput() {
+-        return (mPortMode[kPortIndexOutput] == IOMX::kPortModePresetSecureBuffer) && mIsEncoder;
++        return (mPortMode[kPortIndexOutput] == IOMX::kPortModePresetSecureBuffer ||
++                mPortMode[kPortIndexOutput] == IOMX::kPortModeDynamicGrallocSource ||
++                mPortMode[kPortIndexOutput] == IOMX::kPortModeDynamicCameraSource) && mIsEncoder;
+     }
+ 
+     BufferInfo *findBufferByID(
+diff --git a/media/libstagefright/include/media/stagefright/MediaCodecSource.h b/media/libstagefright/include/media/stagefright/MediaCodecSource.h
+index a68cc1986..d9fa93b0b 100644
+--- a/media/libstagefright/include/media/stagefright/MediaCodecSource.h
++++ b/media/libstagefright/include/media/stagefright/MediaCodecSource.h
+@@ -35,6 +35,7 @@ struct MediaCodecSource : public MediaSource,
+                           public MediaBufferObserver {
+     enum FlagBits {
+         FLAG_USE_SURFACE_INPUT      = 1,
++        FLAG_USE_METADATA_INPUT     = 2,
+         FLAG_PREFER_SOFTWARE_CODEC  = 4,  // used for testing only
+     };
+ 
+diff --git a/media/libstagefright/omx/Android.bp b/media/libstagefright/omx/Android.bp
+index 04f03b516..7e18f409b 100644
+--- a/media/libstagefright/omx/Android.bp
++++ b/media/libstagefright/omx/Android.bp
+@@ -72,7 +72,8 @@ cc_library_shared {
+         "-Wall",
+         "-Wno-unused-parameter",
+         "-Wno-documentation",
+-        "-DCAMCORDER_GRALLOC_SOURCE"
++        "-DCAMCORDER_GRALLOC_SOURCE",
++        "-DMETADATA_CAMERA_SOURCE",
+     ],
+ 
+     sanitize: {
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index f1066145d..e15a41ddb 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -137,9 +137,10 @@ struct BufferMeta {
+         }
+ 
+         // check component returns proper range
+-        sp<ABuffer> codec = getBuffer(header, true /* limit */);
++        sp<ABuffer> codec = getBuffer(header, false /* backup */,
++                !(header->nFlags & OMX_BUFFERFLAG_EXTRADATA));
+ 
+-        memcpy(getPointer() + header->nOffset, codec->data(), codec->size());
++        memcpy((OMX_U8 *)mMem->pointer() + header->nOffset, codec->data(), codec->size());
+     }
+ 
+     void CopyToOMX(const OMX_BUFFERHEADERTYPE *header) {
+@@ -147,14 +148,26 @@ struct BufferMeta {
+             return;
+         }
+ 
++        size_t bytesToCopy = header->nFlags & OMX_BUFFERFLAG_EXTRADATA ?
++            header->nAllocLen - header->nOffset : header->nFilledLen;
+         memcpy(header->pBuffer + header->nOffset,
+-                getPointer() + header->nOffset,
+-                header->nFilledLen);
++                (const OMX_U8 *)mMem->pointer() + header->nOffset,
++                bytesToCopy);
+     }
+ 
+     // return the codec buffer
+     sp<ABuffer> getBuffer(const OMX_BUFFERHEADERTYPE *header, bool limit) {
+-        sp<ABuffer> buf = new ABuffer(header->pBuffer, header->nAllocLen);
++        return getBuffer(header, false, limit);
++    }
++
++    // return either the codec or the backup buffer
++    sp<ABuffer> getBuffer(const OMX_BUFFERHEADERTYPE *header, bool backup, bool limit) {
++        sp<ABuffer> buf;
++        if (backup && mMem != NULL) {
++            buf = new ABuffer(mMem->pointer(), mMem->size());
++        } else {
++            buf = new ABuffer(header->pBuffer, header->nAllocLen);
++        }
+         if (limit) {
+             if (header->nOffset + header->nFilledLen > header->nOffset
+                     && header->nOffset + header->nFilledLen <= header->nAllocLen) {
+@@ -372,8 +385,10 @@ OMXNodeInstance::OMXNodeInstance(
+     mPortMode[1] = IOMX::kPortModePresetByteBuffer;
+     mSecureBufferType[0] = kSecureBufferTypeUnknown;
+     mSecureBufferType[1] = kSecureBufferTypeUnknown;
++
++
+     mIsSecure = AString(name).endsWith(".secure");
+-    mLegacyAdaptiveExperiment = false; //ADebug::isExperimentEnabled("legacy-adaptive");
++    mLegacyAdaptiveExperiment = ADebug::isExperimentEnabled("legacy-adaptive");
+ }
+ 
+ OMXNodeInstance::~OMXNodeInstance() {
+@@ -682,7 +697,6 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+ 
+     CLOG_CONFIG(setPortMode, "%s(%d), port %d", asString(mode), mode, portIndex);
+ 
+-    status_t err = OK;
+     switch (mode) {
+     case IOMX::kPortModeDynamicANWBuffer:
+     {
+@@ -691,19 +705,17 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+                 CLOG_INTERNAL(setPortMode, "Legacy adaptive experiment: "
+                         "not setting port mode to %s(%d) on output",
+                         asString(mode), mode);
+-                err = StatusFromOMXError(OMX_ErrorUnsupportedIndex);
+-                break;
++                return StatusFromOMXError(OMX_ErrorUnsupportedIndex);
+             }
+ 
+-            err = enableNativeBuffers_l(
++            status_t err = enableNativeBuffers_l(
+                     portIndex, OMX_TRUE /*graphic*/, OMX_TRUE);
+             if (err != OK) {
+-                break;
++                return err;
+             }
+         }
+         (void)enableNativeBuffers_l(portIndex, OMX_FALSE /*graphic*/, OMX_FALSE);
+-        err = storeMetaDataInBuffers_l(portIndex, OMX_FALSE, NULL);
+-        break;
++        return storeMetaDataInBuffers_l(portIndex, OMX_TRUE, NULL);
+     }
+ 
+     case IOMX::kPortModeDynamicNativeHandle:
+@@ -711,15 +723,13 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+         if (portIndex != kPortIndexInput) {
+             CLOG_ERROR(setPortMode, BAD_VALUE,
+                     "%s(%d) mode is only supported on input port", asString(mode), mode);
+-            err = BAD_VALUE;
+-            break;
++            return BAD_VALUE;
+         }
+         (void)enableNativeBuffers_l(portIndex, OMX_TRUE /*graphic*/, OMX_FALSE);
+         (void)enableNativeBuffers_l(portIndex, OMX_FALSE /*graphic*/, OMX_FALSE);
+ 
+         MetadataBufferType metaType = kMetadataBufferTypeNativeHandleSource;
+-        err = storeMetaDataInBuffers_l(portIndex, OMX_TRUE, &metaType);
+-        break;
++        return storeMetaDataInBuffers_l(portIndex, OMX_TRUE, &metaType);
+     }
+ 
+     case IOMX::kPortModePresetSecureBuffer:
+@@ -727,8 +737,7 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+         // Allow on both input and output.
+         (void)storeMetaDataInBuffers_l(portIndex, OMX_FALSE, NULL);
+         (void)enableNativeBuffers_l(portIndex, OMX_TRUE /*graphic*/, OMX_FALSE);
+-        err = enableNativeBuffers_l(portIndex, OMX_FALSE /*graphic*/, OMX_TRUE);
+-        break;
++        return enableNativeBuffers_l(portIndex, OMX_FALSE /*graphic*/, OMX_TRUE);
+     }
+ 
+     case IOMX::kPortModePresetANWBuffer:
+@@ -736,8 +745,7 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+         if (portIndex != kPortIndexOutput) {
+             CLOG_ERROR(setPortMode, BAD_VALUE,
+                     "%s(%d) mode is only supported on output port", asString(mode), mode);
+-            err = BAD_VALUE;
+-            break;
++            return BAD_VALUE;
+         }
+ 
+         // Check if we're simulating legacy mode with metadata mode,
+@@ -746,27 +754,26 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+             if (storeMetaDataInBuffers_l(portIndex, OMX_TRUE, NULL) == OK) {
+                 CLOG_INTERNAL(setPortMode, "Legacy adaptive experiment: "
+                         "metdata mode enabled successfully");
+-                break;
++                return OK;
+             }
+ 
+             CLOG_INTERNAL(setPortMode, "Legacy adaptive experiment: "
+                     "unable to enable metadata mode on output");
+ 
+-            ALOGE("//mLegacyAdaptiveExperiment = false;");
+-            //mLegacyAdaptiveExperiment = false;
++            mLegacyAdaptiveExperiment = false;
+         }
+ 
+         // Disable secure buffer and enable graphic buffer
+         (void)enableNativeBuffers_l(portIndex, OMX_FALSE /*graphic*/, OMX_FALSE);
+-        err = enableNativeBuffers_l(portIndex, OMX_TRUE /*graphic*/, OMX_TRUE);
++        status_t err = enableNativeBuffers_l(portIndex, OMX_TRUE /*graphic*/, OMX_TRUE);
+         if (err != OK) {
+-            break;
++            return err;
+         }
+ 
+         // Not running experiment, or metadata is not supported.
+         // Disable metadata mode and use legacy mode.
+         (void)storeMetaDataInBuffers_l(portIndex, OMX_FALSE, NULL);
+-        break;
++        return OK;
+     }
+ 
+     case IOMX::kPortModePresetByteBuffer:
+@@ -775,19 +782,15 @@ status_t OMXNodeInstance::setPortMode(OMX_U32 portIndex, IOMX::PortMode mode) {
+         (void)enableNativeBuffers_l(portIndex, OMX_TRUE /*graphic*/, OMX_FALSE);
+         (void)enableNativeBuffers_l(portIndex, OMX_FALSE /*graphic*/, OMX_FALSE);
+         (void)storeMetaDataInBuffers_l(portIndex, OMX_FALSE, NULL);
+-        break;
++        return OK;
+     }
+ 
+     default:
+-        CLOG_ERROR(setPortMode, BAD_VALUE, "invalid port mode %d", mode);
+-        err = BAD_VALUE;
+         break;
+     }
+ 
+-    if (err == OK) {
+-        mPortMode[portIndex] = mode;
+-    }
+-    return err;
++    CLOG_ERROR(setPortMode, BAD_VALUE, "invalid port mode %d", mode);
++    return BAD_VALUE;
+ }
+ 
+ status_t OMXNodeInstance::enableNativeBuffers_l(
+@@ -1058,47 +1061,29 @@ status_t OMXNodeInstance::useBuffer(
+         return BAD_VALUE;
+     }
+ 
+-    ALOGD("%s: omxBuffer.mBufferType = %d", __func__, omxBuffer.mBufferType);
++#if defined(STE_HARDWARE) && defined(LOG_DEBUG)
++    ALOGD("%s: omxBuffer.mBufferType = %d, input = %d, mMetadataType[portIndex] = ", __func__, omxBuffer.mBufferType, portIndex == kPortIndexInput, mMetadataType[portIndex]);
++#endif
++
+     switch (omxBuffer.mBufferType) {
+-        case OMXBuffer::kBufferTypePreset: {
+-            if (mPortMode[portIndex] != IOMX::kPortModeDynamicANWBuffer
+-                    && mPortMode[portIndex] != IOMX::kPortModeDynamicNativeHandle) {
+-                break;
+-            }
++        case OMXBuffer::kBufferTypePreset:
+             return useBuffer_l(portIndex, NULL, NULL, buffer);
+-        }
+ 
+-        case OMXBuffer::kBufferTypeSharedMem: {
+-            if (mPortMode[portIndex] != IOMX::kPortModePresetByteBuffer
+-                    && mPortMode[portIndex] != IOMX::kPortModeDynamicANWBuffer) {
+-                break;
+-            }
++        case OMXBuffer::kBufferTypeSharedMem:
+             return useBuffer_l(portIndex, omxBuffer.mMem, NULL, buffer);
+-        }
+ 
+-        case OMXBuffer::kBufferTypeANWBuffer: {
+-            mMetadataType[portIndex] = kMetadataBufferTypeInvalid;
+-            if (mPortMode[portIndex] != IOMX::kPortModePresetANWBuffer) {
+-                break;
+-            }
++        case OMXBuffer::kBufferTypeANWBuffer:
+             return useGraphicBuffer_l(portIndex, omxBuffer.mGraphicBuffer, buffer);
+-        }
+ 
+         case OMXBuffer::kBufferTypeHidlMemory: {
+-                if (mPortMode[portIndex] != IOMX::kPortModePresetByteBuffer
+-                        && mPortMode[portIndex] != IOMX::kPortModeDynamicANWBuffer
+-                        && mPortMode[portIndex] != IOMX::kPortModeDynamicNativeHandle) {
+-                    break;
+-                }
+                 sp<IHidlMemory> hidlMemory = mapMemory(omxBuffer.mHidlMemory);
+                 if (hidlMemory == nullptr) {
+                     ALOGE("OMXNodeInstance useBuffer() failed to map memory");
+                     return NO_MEMORY;
+                 }
+                 return useBuffer_l(portIndex, NULL, hidlMemory, buffer);
+-        }
++            }
+         default:
+-            return BAD_VALUE;
+             break;
+     }
+ 
+@@ -1115,7 +1100,15 @@ status_t OMXNodeInstance::useBuffer_l(
+     OMX_BUFFERHEADERTYPE *header;
+     OMX_ERRORTYPE err = OMX_ErrorNone;
+     bool isMetadata = mMetadataType[portIndex] != kMetadataBufferTypeInvalid;
+-
++    ALOGE("%s: isMetadata: %d", __func__, isMetadata);
++    isMetadata = false;
++#if 0
++    if (!isMetadata && mGraphicBufferEnabled[portIndex]) {
++        ALOGE("b/62948670");
++        android_errorWriteLog(0x534e4554, "62948670");
++        return INVALID_OPERATION;
++    }
++#endif
+     size_t paramsSize;
+     void* paramsPointer;
+     if (params != NULL && hParams != NULL) {
+@@ -1535,11 +1528,6 @@ status_t OMXNodeInstance::allocateSecureBuffer(
+         android_errorWriteLog(0x534e4554, "35467458");
+         return BAD_VALUE;
+     }
+-    if (mPortMode[portIndex] != IOMX::kPortModePresetSecureBuffer) {
+-        ALOGE("b/77486542");
+-        android_errorWriteLog(0x534e4554, "77486542");
+-        return INVALID_OPERATION;
+-    }
+     BufferMeta *buffer_meta = new BufferMeta(portIndex);
+ 
+     OMX_BUFFERHEADERTYPE *header;
+@@ -1701,8 +1689,8 @@ status_t OMXNodeInstance::emptyBuffer_l(
+         static_cast<BufferMeta *>(header->pAppPrivate);
+ 
+ #ifdef CAMCORDER_GRALLOC_SOURCE
+-    sp<ABuffer> backup = buffer_meta->getBuffer(header, false /* limit */);
+-    sp<ABuffer> codec = buffer_meta->getBuffer(header, false /* limit */);
++    sp<ABuffer> backup = buffer_meta->getBuffer(header, true /* backup */, false /* limit */);
++    sp<ABuffer> codec = buffer_meta->getBuffer(header, false /* backup */, false /* limit */);
+ 
+     // convert incoming ANW meta buffers if component is configured for gralloc metadata mode
+     // ignore rangeOffset in this case
+diff --git a/media/libstagefright/omx/OMXUtils.cpp b/media/libstagefright/omx/OMXUtils.cpp
+index 52baa3a0a..970493c76 100644
+--- a/media/libstagefright/omx/OMXUtils.cpp
++++ b/media/libstagefright/omx/OMXUtils.cpp
+@@ -219,6 +219,7 @@ bool DescribeDefaultColorFormat(DescribeColorFormat2Params &params) {
+         fmt != OMX_COLOR_FormatYUV420PackedPlanar &&
+         fmt != OMX_COLOR_FormatYUV420SemiPlanar &&
+         fmt != OMX_COLOR_FormatYUV420PackedSemiPlanar &&
++        fmt != OMX_STE_COLOR_FormatYUV420PackedSemiPlanarMB &&
+         fmt != (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YV12) {
+         ALOGW("do not know color format 0x%x = %d", fmt, fmt);
+         if (fmt == OMX_COLOR_FormatYUV420Planar16) {
+@@ -297,6 +298,8 @@ bool DescribeDefaultColorFormat(DescribeColorFormat2Params &params) {
+ 
+         case OMX_COLOR_FormatYUV420SemiPlanar:
+             // FIXME: NV21 for sw-encoder, NV12 for decoder and hw-encoder
++        case OMX_STE_COLOR_FormatYUV420PackedSemiPlanarMB:
++            // FIXME: NV21 for sw-encoder, NV12 for decoder and hw-encoder
+         case OMX_COLOR_FormatYUV420PackedSemiPlanar:
+             // NV12
+             image.mPlane[image.U].mOffset = params.nStride * params.nSliceHeight;
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h
+index c85403c73..dd8bcc3e1 100644
+--- a/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h
+@@ -99,7 +99,6 @@ struct OMXNodeInstance : public BnOMXNode {
+ #ifdef STE_HARDWARE
+         kRequiresStoreMetaDataBeforeIdle      = 16384,
+ #endif
+-
+         kQuirksMask = kRequiresAllocateBufferOnInputPorts
+                     | kRequiresAllocateBufferOnOutputPorts,
+     };
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXUtils.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXUtils.h
+index 401d64b26..a4414946b 100644
+--- a/media/libstagefright/omx/include/media/stagefright/omx/OMXUtils.h
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXUtils.h
+@@ -69,8 +69,10 @@ inline static const char *asString(IOMX::PortMode mode, const char *def = "??")
+         case IOMX::kPortModePresetByteBuffer:   return "PresetByteBuffer";
+         case IOMX::kPortModePresetANWBuffer:    return "PresetANWBuffer";
+         case IOMX::kPortModePresetSecureBuffer: return "PresetSecureBuffer";
++        case IOMX::kPortModeDynamicGrallocSource: return "DynamicGrallocSource";
+         case IOMX::kPortModeDynamicANWBuffer:   return "DynamicANWBuffer";
+         case IOMX::kPortModeDynamicNativeHandle:return "DynamicNativeHandle";
++        case IOMX::kPortModeDynamicCameraSource:return "DynamicCameraSource";
+         default:                                return def;
+     }
+ }
+diff --git a/media/libstagefright/tests/Android.bp b/media/libstagefright/tests/Android.bp
+index e67a94969..bc90e8dab 100644
+--- a/media/libstagefright/tests/Android.bp
++++ b/media/libstagefright/tests/Android.bp
+@@ -29,7 +29,6 @@ cc_test {
+         "frameworks/av/media/libstagefright",
+         "frameworks/av/media/libstagefright/include",
+         "frameworks/native/include/media/openmax",
+-        "frameworks/native/include/media/hardware",
+     ],
+ 
+     cflags: [
+-- 
+2.11.0
+

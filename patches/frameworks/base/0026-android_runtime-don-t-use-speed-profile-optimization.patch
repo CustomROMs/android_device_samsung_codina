@@ -1,0 +1,44 @@
+From e0ae7f1ed1e411ac301ecf61f768d6564f0d5e35 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 00:32:13 +0300
+Subject: [PATCH 26/28] android_runtime: don't use speed profile optimization
+
+Change-Id: I9f75732af7d5fe00b80100595f8466a19fce9dc9
+---
+ core/jni/AndroidRuntime.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/AndroidRuntime.cpp b/core/jni/AndroidRuntime.cpp
+index 9da3b21a613..825845f455e 100644
+--- a/core/jni/AndroidRuntime.cpp
++++ b/core/jni/AndroidRuntime.cpp
+@@ -815,6 +815,7 @@ int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv, bool zygote)
+                             "--compiler-filter=", "-Ximage-compiler-option");
+     }
+ 
++#if 0
+     // If there is a boot profile, it takes precedence over the image and preloaded classes.
+     if (hasFile("/system/etc/boot-image.prof")) {
+         addOption("-Ximage-compiler-option");
+@@ -822,6 +823,7 @@ int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv, bool zygote)
+         addOption("-Ximage-compiler-option");
+         addOption("--compiler-filter=speed-profile");
+     } else {
++#endif
+         // Make sure there is a preloaded-classes file.
+         if (!hasFile("/system/etc/preloaded-classes")) {
+             ALOGE("Missing preloaded-classes file, /system/etc/preloaded-classes not found: %s\n",
+@@ -842,8 +844,9 @@ int AndroidRuntime::startVm(JavaVM** pJavaVM, JNIEnv** pEnv, bool zygote)
+             addOption("-Ximage-compiler-option");
+             addOption("--dirty-image-objects=/system/etc/dirty-image-objects");
+         }
++#if 0
+     }
+-
++#endif
+     property_get("dalvik.vm.image-dex2oat-flags", dex2oatImageFlagsBuf, "");
+     parseExtraOpts(dex2oatImageFlagsBuf, "-Ximage-compiler-option");
+ 
+-- 
+2.11.0
+

@@ -1,7 +1,7 @@
 From 7edaaa6bf2e0fb5965d005f1298193592b4db1e7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 15 Sep 2018 18:18:04 +0300
-Subject: [PATCH 21/26] Revert "Revert "libaudiohal: reset to lineage-15.1""
+Subject: [PATCH 21/67] Revert "Revert "libaudiohal: reset to lineage-15.1""
 
 This reverts commit aff85165eee3c3853a3b2160650a14cf0895b9e6.
 

@@ -1,0 +1,53 @@
+From ae75376e1d5e6169b8f34c54ab86e8eb15d75383 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 19 Sep 2018 07:46:15 +0300
+Subject: [PATCH 2/3] Revert "test"
+
+This reverts commit eb79ee1659652808c5503fc173dc49a05eb7a227.
+
+Change-Id: I5f563f3f82e03a5279f0d9c74ebe32658aab94d4
+---
+ runtime/jit/profile_compilation_info.cc | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/runtime/jit/profile_compilation_info.cc b/runtime/jit/profile_compilation_info.cc
+index 8107973f14..12081731ef 100644
+--- a/runtime/jit/profile_compilation_info.cc
++++ b/runtime/jit/profile_compilation_info.cc
+@@ -1073,8 +1073,7 @@ bool ProfileCompilationInfo::Load(
+   }
+ }
+ 
+-bool ProfileCompilationInfo::VerifyProfileData(const std::vector<const DexFile*>& /*dex_files*/) {
+-#if 0
++bool ProfileCompilationInfo::VerifyProfileData(const std::vector<const DexFile*>& dex_files) {
+   std::unordered_map<std::string, const DexFile*> key_to_dex_file;
+   for (const DexFile* dex_file : dex_files) {
+     key_to_dex_file.emplace(GetProfileDexFileKey(dex_file->GetLocation()), dex_file);
+@@ -1087,13 +1086,13 @@ bool ProfileCompilationInfo::VerifyProfileData(const std::vector<const DexFile*>
+     }
+     const DexFile* dex_file = it->second;
+     const std::string& dex_location = dex_file->GetLocation();
+-    /*if (!ChecksumMatch(dex_data->checksum, dex_file->GetLocationChecksum())) {
++    if (!ChecksumMatch(dex_data->checksum, dex_file->GetLocationChecksum())) {
+       LOG(ERROR) << "Dex checksum mismatch while verifying profile "
+                  << "dex location " << dex_location << " (checksum="
+                  << dex_file->GetLocationChecksum() << ", profile checksum="
+                  << dex_data->checksum;
+       return false;
+-    }*/
++    }
+ 
+     if (dex_data->num_method_ids != dex_file->NumMethodIds()) {
+       LOG(ERROR) << "Number of method ids in dex file and profile don't match."
+@@ -1163,7 +1162,6 @@ bool ProfileCompilationInfo::VerifyProfileData(const std::vector<const DexFile*>
+       }
+     }
+   }
+-#endif
+   return true;
+ }
+ 
+-- 
+2.11.0
+

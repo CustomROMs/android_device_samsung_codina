@@ -1,7 +1,7 @@
 From 3b49c210dc8c6c25ae9f0748e80bbf96549db8bd Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 8 Sep 2018 19:02:23 +0300
-Subject: [PATCH 09/26] audiopolicy: fixes for P
+Subject: [PATCH 09/67] audiopolicy: fixes for P
 
 Change-Id: I08242be30c7ad714af6304fc2f23ae8a42c97fbe
 ---

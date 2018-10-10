@@ -1,7 +1,7 @@
 From b94bfaf16944672c61a547aaa60e49e810ee1c11 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 14:31:16 +0300
-Subject: [PATCH 31/42] vr, ui: build fixes
+Subject: [PATCH 31/49] vr, ui: build fixes
 
 Change-Id: I3dd7bbca427f0eeadd48755a566565bdcaf72d59
 ---

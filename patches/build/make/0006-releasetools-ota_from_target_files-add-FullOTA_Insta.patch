@@ -1,7 +1,7 @@
 From 972ffe46ffe2d60bce88c9ee762b67fa3d468f9f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 06/31] releasetools: ota_from_target_files: add
+Subject: [PATCH 06/32] releasetools: ota_from_target_files: add
  FullOTA_InstallNew
 
 ---

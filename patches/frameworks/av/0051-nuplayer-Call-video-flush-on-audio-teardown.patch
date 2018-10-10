@@ -1,0 +1,44 @@
+From 90cea94c064ff8661d0b8e3112280128f7c56a98 Mon Sep 17 00:00:00 2001
+From: Uma Mehta <umamehta@codeaurora.org>
+Date: Fri, 1 Apr 2016 12:05:58 +0530
+Subject: [PATCH 51/67] nuplayer: Call video flush on audio teardown
+
+When audio tear down happens, Audio gets flushed and
+seek is issued. If we don't flush video before seek,
+will see previous video buffers and this leads to AV
+sync issues. Hence calling video flush.
+---
+ media/libmediaplayerservice/nuplayer/NuPlayer.cpp | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index 795bc3af2..7e7ad0438 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -1841,10 +1841,21 @@ void NuPlayer::restartAudio(
+     closeAudioSink();
+     mRenderer->flush(true /* audio */, false /* notifyComplete */);
+     if (mVideoDecoder != NULL) {
+-        mRenderer->flush(false /* audio */, false /* notifyComplete */);
++        mDeferredActions.push_back(
++                new FlushDecoderAction(FLUSH_CMD_NONE /* audio */,
++                                       FLUSH_CMD_FLUSH /* video */));
+     }
+ 
+-    performSeek(currentPositionUs, MediaPlayerSeekMode::SEEK_PREVIOUS_SYNC /* mode */);
++    mDeferredActions.push_back(
++            new SeekAction(currentPositionUs, MediaPlayerSeekMode::SEEK_PREVIOUS_SYNC /* mode */));
++
++    // After a flush without shutdown, decoder is paused.
++    // Don't resume it until source seek is done, otherwise it could
++    // start pulling stale data too soon.
++    mDeferredActions.push_back(
++            new ResumeDecoderAction(false));
++
++    processDeferredActions();
+ 
+     if (forceNonOffload) {
+         mRenderer->signalDisableOffloadAudio();
+-- 
+2.11.0
+

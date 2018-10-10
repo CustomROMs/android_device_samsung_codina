@@ -1,7 +1,7 @@
 From a3f8f28b2c18233d5e502fd5a80291bdbcb90111 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 05:08:51 +0300
-Subject: [PATCH 24/24] logd: don't set group to root
+Subject: [PATCH 24/30] logd: don't set group to root
 
 Change-Id: Ic7feca4dea2c081b0d5b4c0bc0aec7cc7fe7557f
 ---

@@ -1,7 +1,7 @@
 From 21efe25ccfd6896df86c8fc04e73541c3d6f2978 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 14 Sep 2018 01:00:29 +0300
-Subject: [PATCH 20/26] libstagefright: fix build
+Subject: [PATCH 20/67] libstagefright: fix build
 
 Change-Id: I4645e2a45891f21026b9896fb861f30b59685edf
 ---

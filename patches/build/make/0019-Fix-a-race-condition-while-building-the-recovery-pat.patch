@@ -1,7 +1,7 @@
 From b6bb9af11ee2ca27a496466ee3b431236b2dea67 Mon Sep 17 00:00:00 2001
 From: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 Date: Sun, 6 Mar 2016 22:06:28 +0100
-Subject: [PATCH 19/31] Fix a race condition while building the recovery patch
+Subject: [PATCH 19/32] Fix a race condition while building the recovery patch
 
 RECOVERY_PATCH_INSTALL has a dependency on RECOVERY_FROM_BOOT_PATCH.
 This is correct, because RECOVERY_PATCH_INSTALL uses make_recovery_patch

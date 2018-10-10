@@ -1,7 +1,7 @@
 From 6ef060daa30975e2bd6c609c4e6496dc742c3ba9 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 16/31] Add Board Global CFLAGS
+Subject: [PATCH 16/32] Add Board Global CFLAGS
 
 ---
  core/combo/select.mk | 3 +++

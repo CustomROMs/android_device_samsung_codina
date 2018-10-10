@@ -1,7 +1,7 @@
 From cc7a9a9e565a9b3effe15a6f016d3fe96b7bb2ef Mon Sep 17 00:00:00 2001
 From: Simon Shields <simon@lineageos.org>
 Date: Tue, 29 Aug 2017 23:03:29 +1000
-Subject: [PATCH 03/31] edify: bring back SetPermissionsRecursive
+Subject: [PATCH 03/32] edify: bring back SetPermissionsRecursive
 
 * we still need this, even with block-based OTAs.
 

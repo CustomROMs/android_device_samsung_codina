@@ -1,7 +1,7 @@
 From f90470efffeb5607bfbaa9c69569788af215d2a6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 05:01:00 +0300
-Subject: [PATCH 15/24] libsuspend: fix build
+Subject: [PATCH 15/30] libsuspend: fix build
 
 Change-Id: I985151b05bf1c08d6d04fc6f51fb5063942601fa
 ---

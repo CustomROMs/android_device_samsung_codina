@@ -1,7 +1,7 @@
 From c65f3a3d561c16f68bb93bfda2648338ede49e85 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Wed, 19 Sep 2018 01:16:44 +0300
-Subject: [PATCH 41/42] Revert "SF: switch to FramebufferNativeWindow"
+Subject: [PATCH 41/49] Revert "SF: switch to FramebufferNativeWindow"
 
 This reverts commit 27cbd96e97644053065c7cd86bea7ed3969e5169.
 

@@ -1,7 +1,7 @@
 From 5ae11a2ebf5d3eaa784504f191791044013663f2 Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@google.com>
 Date: Tue, 28 Nov 2017 19:21:28 -0800
-Subject: [PATCH 27/31] releasetools: Fix duplicate build.prop file in the OTA
+Subject: [PATCH 27/32] releasetools: Fix duplicate build.prop file in the OTA
  zip
 
 Change-Id: Ifa564153687fbcbdbb95e6cab3903eefbdade1c5

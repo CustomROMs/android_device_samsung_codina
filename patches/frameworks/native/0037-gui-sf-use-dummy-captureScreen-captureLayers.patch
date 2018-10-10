@@ -1,7 +1,7 @@
 From 1bdcd5db5747e7b6c9f7bd8dc14c621306bd3bd7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 16:46:06 +0300
-Subject: [PATCH 37/42] gui, sf: use dummy captureScreen / captureLayers
+Subject: [PATCH 37/49] gui, sf: use dummy captureScreen / captureLayers
 
 our mali blobs don't play nice with new changes to captureScreen / captureLayers
 

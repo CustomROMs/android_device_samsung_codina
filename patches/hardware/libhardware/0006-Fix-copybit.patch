@@ -1,7 +1,7 @@
 From bca7331a88aee30c84193b9112bb5229bceb31ea Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 6/6] Fix copybit
+Subject: [PATCH 6/7] Fix copybit
 
 Change-Id: I58cbc7c4c52c0f529932ee7e46c9b46812497422
 ---

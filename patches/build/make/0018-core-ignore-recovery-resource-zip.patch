@@ -1,7 +1,7 @@
 From 8b39346a02cf8934647106fb44fa86794553d4a1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 18/31] core: ignore recovery resource zip
+Subject: [PATCH 18/32] core: ignore recovery resource zip
 
 Won't be shipping recovery or anything anyways
 

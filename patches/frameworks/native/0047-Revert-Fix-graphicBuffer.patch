@@ -1,0 +1,37 @@
+From 5f1bbbb753fa7d2e7e7198ef2b5a4b3ca6d87459 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 21 Sep 2018 22:11:34 +0300
+Subject: [PATCH 47/49] Revert "Fix graphicBuffer"
+
+This reverts commit 9e07370f93ed107111700cafe80ee15879b6a1ba.
+
+Change-Id: I3a5fd04483002d6d26eb0a2455c3ddf3d31a171d
+---
+ libs/gui/BufferQueueProducer.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 400ec8bf0..1c6d42653 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -513,7 +513,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
+         { // Autolock scope
+             Mutex::Autolock lock(mCore->mMutex);
+ 
+-            if (graphicBuffer != NULL && !mCore->mIsAbandoned) {
++            if (error == NO_ERROR && !mCore->mIsAbandoned) {
+                 graphicBuffer->setGenerationNumber(mCore->mGenerationNumber);
+                 mSlots[*outSlot].mGraphicBuffer = graphicBuffer;
+             }
+@@ -521,7 +521,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
+             mCore->mIsAllocating = false;
+             mCore->mIsAllocatingCondition.broadcast();
+ 
+-            if (graphicBuffer == NULL) {
++            if (error != NO_ERROR) {
+                 mCore->mFreeSlots.insert(*outSlot);
+                 mCore->clearBufferSlotLocked(*outSlot);
+                 BQ_LOGE("dequeueBuffer: createGraphicBuffer failed");
+-- 
+2.11.0
+

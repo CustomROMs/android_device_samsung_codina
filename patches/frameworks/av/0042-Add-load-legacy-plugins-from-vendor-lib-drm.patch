@@ -1,0 +1,33 @@
+From 4379388b9c6ef3304df7149aaa9663663ed66ca3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 42/67] Add load legacy plugins from /vendor/lib/drm
+
+Only the OMA forward lock plugin remains and it is
+loaded from system/lib/drm.
+---
+ drm/drmserver/DrmManager.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drm/drmserver/DrmManager.cpp b/drm/drmserver/DrmManager.cpp
+index bf04a893a..1d835f9c4 100644
+--- a/drm/drmserver/DrmManager.cpp
++++ b/drm/drmserver/DrmManager.cpp
+@@ -88,9 +88,14 @@ void DrmManager::removeUniqueId(int uniqueId) {
+ }
+ 
+ status_t DrmManager::loadPlugIns() {
++
++    String8 vendorPluginDirPath("/vendor/lib/drm");
++    loadPlugIns(vendorPluginDirPath);
++
+     String8 pluginDirPath("/system/lib/drm");
+     loadPlugIns(pluginDirPath);
+     return DRM_NO_ERROR;
++
+ }
+ 
+ status_t DrmManager::loadPlugIns(const String8& plugInDirPath) {
+-- 
+2.11.0
+

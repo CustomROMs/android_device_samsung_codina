@@ -1,7 +1,7 @@
 From 707829781323784297a7003d5644c4632f0926ce Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 21/42] libui: GraphicBuffer: revert to 32-bit usage
+Subject: [PATCH 21/49] libui: GraphicBuffer: revert to 32-bit usage
 
 Change-Id: I82e9f43e37177d6f30ef16bde30b0093df3a051c
 ---

@@ -1,7 +1,7 @@
 From a04669faa723a857b64eebc13ae6f4691d6fccfd Mon Sep 17 00:00:00 2001
 From: Bauuuuu <abansode@outlook.com>
 Date: Wed, 23 May 2018 23:13:34 +0200
-Subject: [PATCH 13/42] Fix bugs regarding calculate dalvik-cache size
+Subject: [PATCH 13/49] Fix bugs regarding calculate dalvik-cache size
 
 Symptom:
 App size measure too large.

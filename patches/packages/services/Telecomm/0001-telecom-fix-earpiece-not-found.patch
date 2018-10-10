@@ -1,0 +1,33 @@
+From cc646dd33010f9e14caa781fc51979767aa0319d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 22 Sep 2018 03:12:40 +0300
+Subject: [PATCH] telecom: fix earpiece not found
+
+Change-Id: I3d1cea3f6d784e25022effa939726d5b02fb34e2
+---
+ src/com/android/server/telecom/CallAudioRouteStateMachine.java | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/src/com/android/server/telecom/CallAudioRouteStateMachine.java b/src/com/android/server/telecom/CallAudioRouteStateMachine.java
+index 42740176..a4e35893 100644
+--- a/src/com/android/server/telecom/CallAudioRouteStateMachine.java
++++ b/src/com/android/server/telecom/CallAudioRouteStateMachine.java
+@@ -1643,14 +1643,7 @@ public class CallAudioRouteStateMachine extends StateMachine {
+     }
+ 
+     private boolean checkForEarpieceSupport() {
+-        AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+-        for (AudioDeviceInfo device: deviceList) {
+-            if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE) {
+-                return true;
+-            }
+-        }
+-        // No earpiece found
+-        return false;
++        return true;
+     }
+ 
+     private int calculateBaselineRouteMessage(boolean isExplicitUserRequest,
+-- 
+2.11.0
+

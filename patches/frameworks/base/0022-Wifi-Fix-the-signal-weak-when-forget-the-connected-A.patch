@@ -1,0 +1,44 @@
+From 858a2970e28130ab3d0d6a8831300b1c7e4d3ead Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 22/28] Wifi: Fix the signal weak when forget the connected AP.
+
+ 1. Sync with wifi settings' UNREACHABLE_RSSI with wifi framework's invalid value
+ 2. Fix the condition of updating AP's info in AccessPoint.java. When
+Wifi configuration is null and it is not ephemeral, we should not update rssi from wifi info.
+---
+ .../SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
+
+diff --git a/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java b/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
+old mode 100644
+new mode 100755
+index 50dfc26d6a2..c31ca95af2b
+--- a/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
++++ b/packages/SettingsLib/src/com/android/settingslib/wifi/AccessPoint.java
+@@ -176,7 +176,7 @@ public class AccessPoint implements Comparable<AccessPoint> {
+      */
+     public static final int SIGNAL_LEVELS = 5;
+ 
+-    public static final int UNREACHABLE_RSSI = Integer.MIN_VALUE;
++    public static final int UNREACHABLE_RSSI = WifiConfiguration.INVALID_RSSI;
+ 
+     private final Context mContext;
+ 
+@@ -964,7 +964,11 @@ public class AccessPoint implements Comparable<AccessPoint> {
+             // Might be an ephemeral connection with no WifiConfiguration. Try matching on SSID.
+             // (Note that we only do this if the WifiConfiguration explicitly equals INVALID).
+             // TODO: Handle hex string SSIDs.
+-            return ssid.equals(removeDoubleQuotes(info.getSSID()));
++            if (!info.isEphemeral() && config == null) {
++                return false;
++            } else {
++                return ssid.equals(removeDoubleQuotes(info.getSSID()));
++            }
+         }
+     }
+ 
+-- 
+2.11.0
+

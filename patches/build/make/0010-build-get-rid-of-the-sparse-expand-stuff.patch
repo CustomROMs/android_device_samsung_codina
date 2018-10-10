@@ -1,7 +1,7 @@
 From bf2dc86e199146fcd704662165d2221becb7d2dc Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 10/31] build: get rid of the sparse expand stuff
+Subject: [PATCH 10/32] build: get rid of the sparse expand stuff
 
 * i don't see a reason why we are doing this because we never deal
 with flashing system img rawly

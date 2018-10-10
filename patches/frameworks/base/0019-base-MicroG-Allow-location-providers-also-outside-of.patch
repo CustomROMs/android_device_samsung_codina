@@ -1,0 +1,27 @@
+From b382354bdf8cb8a3fcf773d266c0568cbaebf0f8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 19/28] base: [MicroG] Allow location providers also outside of
+ /system
+
+---
+ services/core/java/com/android/server/ServiceWatcher.java | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/ServiceWatcher.java b/services/core/java/com/android/server/ServiceWatcher.java
+index 42c836eab7d..0c47cf00741 100644
+--- a/services/core/java/com/android/server/ServiceWatcher.java
++++ b/services/core/java/com/android/server/ServiceWatcher.java
+@@ -93,8 +93,7 @@ public class ServiceWatcher implements ServiceConnection {
+             String pkg = initialPackageNames.get(i);
+             try {
+                 HashSet<Signature> set = new HashSet<Signature>();
+-                Signature[] sigs = pm.getPackageInfo(pkg, PackageManager.MATCH_SYSTEM_ONLY
+-                        | PackageManager.GET_SIGNATURES).signatures;
++                Signature[] sigs = pm.getPackageInfo(pkg, PackageManager.GET_SIGNATURES).signatures;
+                 set.addAll(Arrays.asList(sigs));
+                 sigSets.add(set);
+             } catch (NameNotFoundException e) {
+-- 
+2.11.0
+

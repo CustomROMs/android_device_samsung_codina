@@ -1,0 +1,38 @@
+From cfea27806883b3a867760cebd1d58b3a891791fd Mon Sep 17 00:00:00 2001
+From: Elektroschmock <elektroschmock78@googlemail.com>
+Date: Tue, 26 Jun 2018 22:04:57 +0200
+Subject: [PATCH 16/28] hwui: Remove deprecated compiler flag
+
+ * HWUI_COMPILE_FOR_PERF uses the -mapcs flag
+   but it has already been deprecated.
+ * Remove the flag "-mapcs" completely
+
+Change-Id: I28b5f2ca93fbe1991ba3024f118bddd0a4975aa8
+---
+ libs/hwui/Android.bp | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/libs/hwui/Android.bp b/libs/hwui/Android.bp
+index cb260b5b4b9..0419f13c38a 100644
+--- a/libs/hwui/Android.bp
++++ b/libs/hwui/Android.bp
+@@ -4,7 +4,7 @@ cc_defaults {
+         "hwui_static_deps",
+         "skia_deps",
+         //"hwui_bugreport_font_cache_usage",
+-        //"hwui_compile_for_perf",
++        "hwui_compile_for_perf",
+         "hwui_pgo",
+         "hwui_lto",
+     ],
+@@ -86,7 +86,6 @@ cc_defaults {
+     cflags: [
+         "-fno-omit-frame-pointer",
+         "-marm",
+-        "-mapcs",
+     ],
+ }
+ 
+-- 
+2.11.0
+

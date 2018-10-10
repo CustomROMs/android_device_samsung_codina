@@ -1,7 +1,7 @@
 From 60bb7bd3bf9488a8b4ec8320792d3cdea57d2d62 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 04:56:49 +0300
-Subject: [PATCH 22/24] logd: derp
+Subject: [PATCH 22/30] logd: derp
 
 Change-Id: I5600bc6a9b82310c91b372ab5916f80276888f3d
 ---

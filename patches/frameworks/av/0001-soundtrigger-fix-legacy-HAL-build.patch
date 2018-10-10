@@ -1,7 +1,7 @@
 From 07ea498c7b40859159bfb6f7f6e8d8bcc7d8ddb9 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 00:53:44 +0300
-Subject: [PATCH 01/26] soundtrigger: fix legacy HAL build
+Subject: [PATCH 01/67] soundtrigger: fix legacy HAL build
 
 Change-Id: I973e78323156719ccaa42b4c11f601ffa081a09d
 ---

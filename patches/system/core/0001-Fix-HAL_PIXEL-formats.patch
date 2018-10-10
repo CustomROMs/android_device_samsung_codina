@@ -1,7 +1,7 @@
 From 5e644f05b5e51587dbf93bd2d58708d5cf863fdb Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 00:39:33 +0300
-Subject: [PATCH 01/24] Fix HAL_PIXEL formats
+Subject: [PATCH 01/30] Fix HAL_PIXEL formats
 
 Change-Id: I1b9f865260e3d2aaeb77f26bf5aacf47206bf5a8
 ---

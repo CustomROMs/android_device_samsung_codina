@@ -1,7 +1,7 @@
 From ff2def900d7e665b97b394ce3c41a725624fcec8 Mon Sep 17 00:00:00 2001
 From: Arnav Gupta <championswimmer@gmail.com>
 Date: Tue, 26 Jan 2016 14:52:10 +0000
-Subject: [PATCH 13/31] build: force rebuild build.prop
+Subject: [PATCH 13/32] build: force rebuild build.prop
 
 build.prop is not rebuilt if there are only
 changes in PRODUCT_PROPERTY_OVERRIDES

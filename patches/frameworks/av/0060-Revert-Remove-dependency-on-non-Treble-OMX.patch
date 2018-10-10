@@ -1,0 +1,2582 @@
+From 1383cd01ce150ebe9152b9192e42968f6aa04fc0 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 21 Sep 2018 09:31:15 +0300
+Subject: [PATCH 60/67] Revert "Remove dependency on non-Treble OMX"
+
+This reverts commit e7b894297aebc24939ddfa632ea3dd2d405d9f93.
+
+Change-Id: I103fcd6e594d4d2ea072058b2cbd5daeaadb05ce
+---
+ cmds/stagefright/Android.mk                        |   2 +-
+ cmds/stagefright/stagefright.cpp                   |  51 ++-
+ media/libmedia/Android.bp                          |   2 +
+ media/libmedia/IMediaCodecService.cpp              |  86 +++++
+ media/libmedia/IOMXStore.cpp                       | 367 +++++++++++++++++++++
+ media/libmedia/include/media/IMediaCodecService.h  |  47 +++
+ media/libmedia/include/media/IOMXStore.h           |  79 +++++
+ media/libmediaplayerservice/MediaPlayerService.cpp |  26 +-
+ .../libmediaplayerservice/MediaRecorderClient.cpp  |  27 +-
+ media/libstagefright/ACodec.cpp                    | 200 +++++++----
+ media/libstagefright/MediaCodecList.cpp            |   1 +
+ media/libstagefright/OMXClient.cpp                 |  60 +++-
+ media/libstagefright/OmxInfoBuilder.cpp            | 216 ++++++++----
+ media/libstagefright/include/OmxNodeOwner.h        |  37 +++
+ .../include/media/stagefright/ACodec.h             |   7 +
+ .../include/media/stagefright/OMXClient.h          |  14 +-
+ media/libstagefright/omx/Android.bp                |   2 +
+ media/libstagefright/omx/OMX.cpp                   | 198 +++++++++++
+ media/libstagefright/omx/OMXNodeInstance.cpp       |   2 +-
+ media/libstagefright/omx/OMXStore.cpp              | 119 +++++++
+ .../omx/include/media/stagefright/omx/1.0/Omx.h    |   9 +-
+ .../omx/include/media/stagefright/omx/OMX.h        |  67 ++++
+ .../media/stagefright/omx/OMXNodeInstance.h        |   9 +-
+ .../omx/include/media/stagefright/omx/OMXStore.h   |  62 ++++
+ media/libstagefright/omx/tests/OMXHarness.cpp      |  67 ++--
+ media/libstagefright/omx/tests/OMXHarness.h        |   2 +
+ services/mediacodec/Android.mk                     |  17 +
+ services/mediacodec/MediaCodecService.cpp          |  53 +++
+ services/mediacodec/MediaCodecService.h            |  54 +++
+ services/mediacodec/main_codecservice.cpp          |  47 +--
+ 30 files changed, 1698 insertions(+), 232 deletions(-)
+ create mode 100644 media/libmedia/IMediaCodecService.cpp
+ create mode 100644 media/libmedia/IOMXStore.cpp
+ create mode 100644 media/libmedia/include/media/IMediaCodecService.h
+ create mode 100644 media/libmedia/include/media/IOMXStore.h
+ create mode 100644 media/libstagefright/include/OmxNodeOwner.h
+ create mode 100644 media/libstagefright/omx/OMX.cpp
+ create mode 100644 media/libstagefright/omx/OMXStore.cpp
+ create mode 100644 media/libstagefright/omx/include/media/stagefright/omx/OMX.h
+ create mode 100644 media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
+ create mode 100644 services/mediacodec/MediaCodecService.cpp
+ create mode 100644 services/mediacodec/MediaCodecService.h
+
+diff --git a/cmds/stagefright/Android.mk b/cmds/stagefright/Android.mk
+index c7619afec..327bd46cc 100644
+--- a/cmds/stagefright/Android.mk
++++ b/cmds/stagefright/Android.mk
+@@ -10,7 +10,7 @@ LOCAL_SRC_FILES:=       \
+ LOCAL_SHARED_LIBRARIES := \
+         libstagefright libmedia libmedia_omx libmediaextractor libutils libbinder \
+         libstagefright_foundation libjpeg libui libgui libcutils liblog \
+-        libhidlbase \
++        libhidlmemory \
+         android.hardware.media.omx@1.0 \
+ 
+ LOCAL_C_INCLUDES:= \
+diff --git a/cmds/stagefright/stagefright.cpp b/cmds/stagefright/stagefright.cpp
+index 61fc897b0..72f01d23e 100644
+--- a/cmds/stagefright/stagefright.cpp
++++ b/cmds/stagefright/stagefright.cpp
+@@ -36,6 +36,7 @@
+ #include <media/MediaSource.h>
+ #include <media/ICrypto.h>
+ #include <media/IMediaHTTPService.h>
++#include <media/IMediaCodecService.h>
+ #include <media/IMediaPlayerService.h>
+ #include <media/stagefright/foundation/ABuffer.h>
+ #include <media/stagefright/foundation/ALooper.h>
+@@ -67,6 +68,7 @@
+ #include <gui/SurfaceComposerClient.h>
+ 
+ #include <android/hardware/media/omx/1.0/IOmx.h>
++#include <media/omx/1.0/WOmx.h>
+ 
+ using namespace android;
+ 
+@@ -921,24 +923,37 @@ int main(int argc, char **argv) {
+     }
+ 
+     if (listComponents) {
+-        using ::android::hardware::hidl_vec;
+-        using ::android::hardware::hidl_string;
+-        using namespace ::android::hardware::media::omx::V1_0;
+-        sp<IOmx> omx = IOmx::getService();
+-        CHECK(omx.get() != nullptr);
+-
+-        hidl_vec<IOmx::ComponentInfo> nodeList;
+-        auto transStatus = omx->listNodes([](
+-                const auto& status, const auto& nodeList) {
+-                    CHECK(status == Status::OK);
+-                    for (const auto& info : nodeList) {
+-                        printf("%s\t Roles: ", info.mName.c_str());
+-                        for (const auto& role : info.mRoles) {
+-                            printf("%s\t", role.c_str());
+-                        }
+-                    }
+-                });
+-        CHECK(transStatus.isOk());
++        sp<IOMX> omx;
++        if (property_get_bool("persist.media.treble_omx", true)) {
++            using namespace ::android::hardware::media::omx::V1_0;
++            sp<IOmx> tOmx = IOmx::getService();
++
++            CHECK(tOmx.get() != NULL);
++
++            omx = new utils::LWOmx(tOmx);
++        } else {
++            sp<IServiceManager> sm = defaultServiceManager();
++            sp<IBinder> binder = sm->getService(String16("media.codec"));
++            sp<IMediaCodecService> service = interface_cast<IMediaCodecService>(binder);
++
++            CHECK(service.get() != NULL);
++
++            omx = service->getOMX();
++        }
++        CHECK(omx.get() != NULL);
++
++        List<IOMX::ComponentInfo> list;
++        omx->listNodes(&list);
++
++        for (List<IOMX::ComponentInfo>::iterator it = list.begin();
++             it != list.end(); ++it) {
++            printf("%s\t Roles: ", (*it).mName.string());
++            for (List<String8>::iterator itRoles = (*it).mRoles.begin() ;
++                    itRoles != (*it).mRoles.end() ; ++itRoles) {
++                printf("%s\t", (*itRoles).string());
++            }
++            printf("\n");
++        }
+     }
+ 
+     sp<SurfaceComposerClient> composerClient;
+diff --git a/media/libmedia/Android.bp b/media/libmedia/Android.bp
+index 1a1d6b3f1..f7c80554e 100644
+--- a/media/libmedia/Android.bp
++++ b/media/libmedia/Android.bp
+@@ -47,7 +47,9 @@ cc_library_shared {
+         "aidl/android/IOMXBufferSource.aidl",
+ 
+         "IMediaCodecList.cpp",
++        "IMediaCodecService.cpp",
+         "IOMX.cpp",
++        "IOMXStore.cpp",
+         "MediaCodecBuffer.cpp",
+         "MediaCodecInfo.cpp",
+         "OMXBuffer.cpp",
+diff --git a/media/libmedia/IMediaCodecService.cpp b/media/libmedia/IMediaCodecService.cpp
+new file mode 100644
+index 000000000..adfa93df2
+--- /dev/null
++++ b/media/libmedia/IMediaCodecService.cpp
+@@ -0,0 +1,86 @@
++/*
++**
++** Copyright 2015, The Android Open Source Project
++**
++** Licensed under the Apache License, Version 2.0 (the "License");
++** you may not use this file except in compliance with the License.
++** You may obtain a copy of the License at
++**
++**     http://www.apache.org/licenses/LICENSE-2.0
++**
++** Unless required by applicable law or agreed to in writing, software
++** distributed under the License is distributed on an "AS IS" BASIS,
++** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++** See the License for the specific language governing permissions and
++** limitations under the License.
++*/
++
++#define LOG_TAG "IMediaCodecService"
++//#define LOG_NDEBUG 0
++
++#include <utils/Log.h>
++#include <stdint.h>
++#include <sys/types.h>
++#include <binder/Parcel.h>
++#include <media/IMediaCodecService.h>
++
++namespace android {
++
++enum {
++    GET_OMX = IBinder::FIRST_CALL_TRANSACTION,
++    GET_OMX_STORE
++};
++
++class BpMediaCodecService : public BpInterface<IMediaCodecService>
++{
++public:
++    explicit BpMediaCodecService(const sp<IBinder>& impl)
++        : BpInterface<IMediaCodecService>(impl)
++    {
++    }
++
++    virtual sp<IOMX> getOMX() {
++        Parcel data, reply;
++        data.writeInterfaceToken(IMediaCodecService::getInterfaceDescriptor());
++        remote()->transact(GET_OMX, data, &reply);
++        return interface_cast<IOMX>(reply.readStrongBinder());
++    }
++
++    virtual sp<IOMXStore> getOMXStore() {
++        Parcel data, reply;
++        data.writeInterfaceToken(IMediaCodecService::getInterfaceDescriptor());
++        remote()->transact(GET_OMX_STORE, data, &reply);
++        return interface_cast<IOMXStore>(reply.readStrongBinder());
++    }
++
++};
++
++IMPLEMENT_META_INTERFACE(MediaCodecService, "android.media.IMediaCodecService");
++
++// ----------------------------------------------------------------------
++
++status_t BnMediaCodecService::onTransact(
++    uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
++{
++    switch (code) {
++
++        case GET_OMX: {
++            CHECK_INTERFACE(IMediaCodecService, data, reply);
++            sp<IOMX> omx = getOMX();
++            reply->writeStrongBinder(IInterface::asBinder(omx));
++            return NO_ERROR;
++        }
++        case GET_OMX_STORE: {
++            CHECK_INTERFACE(IMediaCodecService, data, reply);
++            sp<IOMXStore> omxStore = getOMXStore();
++            reply->writeStrongBinder(IInterface::asBinder(omxStore));
++            return NO_ERROR;
++        }
++        default:
++            return BBinder::onTransact(code, data, reply, flags);
++    }
++}
++
++// ----------------------------------------------------------------------------
++
++} // namespace android
+diff --git a/media/libmedia/IOMXStore.cpp b/media/libmedia/IOMXStore.cpp
+new file mode 100644
+index 000000000..4948f1ad2
+--- /dev/null
++++ b/media/libmedia/IOMXStore.cpp
+@@ -0,0 +1,367 @@
++/*
++ * Copyright (c) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++//#define LOG_NDEBUG 0
++#define LOG_TAG "IOMXStore"
++
++#include <utils/Log.h>
++
++#include <media/IOMX.h>
++#include <media/IOMXStore.h>
++#include <android/hardware/media/omx/1.0/IOmxStore.h>
++
++#include <binder/IInterface.h>
++#include <binder/IBinder.h>
++#include <binder/Parcel.h>
++
++#include <vector>
++#include <string>
++
++namespace android {
++
++namespace {
++
++enum {
++    CONNECT = IBinder::FIRST_CALL_TRANSACTION,
++    LIST_SERVICE_ATTRIBUTES,
++    GET_NODE_PREFIX,
++    LIST_ROLES,
++    GET_OMX,
++};
++
++// Forward declarations of std::vector<T> <-> Parcel conversion funcitons that
++// depend on writeToParcel() and readToParcel() for T <-> Parcel.
++
++template <typename T>
++status_t writeToParcel(const std::vector<T>& v, Parcel* p);
++
++template <typename T>
++status_t readFromParcel(std::vector<T>* v, const Parcel& p);
++
++// std::string <-> Parcel
++
++status_t writeToParcel(const std::string& s, Parcel* p) {
++    if (s.size() > INT32_MAX) {
++        return BAD_VALUE;
++    }
++    return p->writeByteArray(
++            s.size(), reinterpret_cast<const uint8_t*>(s.c_str()));
++}
++
++status_t readFromParcel(std::string* s, const Parcel& p) {
++    int32_t len;
++    status_t status = p.readInt32(&len);
++    if (status != NO_ERROR) {
++        return status;
++    } else if ((len < 0) || (static_cast<uint64_t>(len) > SIZE_MAX)) {
++        return BAD_VALUE;
++    }
++    s->resize(len);
++    if (len == 0) {
++        return NO_ERROR;
++    }
++    return p.read(static_cast<void*>(&s->front()), static_cast<size_t>(len));
++}
++
++// IOMXStore::Attribute <-> Parcel
++
++status_t writeToParcel(const IOMXStore::Attribute& a, Parcel* p) {
++    status_t status = writeToParcel(a.key, p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    return writeToParcel(a.value, p);
++}
++
++status_t readFromParcel(IOMXStore::Attribute* a, const Parcel& p) {
++    status_t status = readFromParcel(&(a->key), p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    return readFromParcel(&(a->value), p);
++}
++
++// IOMXStore::NodeInfo <-> Parcel
++
++status_t writeToParcel(const IOMXStore::NodeInfo& n, Parcel* p) {
++    status_t status = writeToParcel(n.name, p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = writeToParcel(n.owner, p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    return writeToParcel(n.attributes, p);
++}
++
++status_t readFromParcel(IOMXStore::NodeInfo* n, const Parcel& p) {
++    status_t status = readFromParcel(&(n->name), p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = readFromParcel(&(n->owner), p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    return readFromParcel(&(n->attributes), p);
++}
++
++// IOMXStore::RoleInfo <-> Parcel
++
++status_t writeToParcel(const IOMXStore::RoleInfo& r, Parcel* p) {
++    status_t status = writeToParcel(r.role, p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = writeToParcel(r.type, p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = p->writeBool(r.isEncoder);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = p->writeBool(r.preferPlatformNodes);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    return writeToParcel(r.nodes, p);
++}
++
++status_t readFromParcel(IOMXStore::RoleInfo* r, const Parcel& p) {
++    status_t status = readFromParcel(&(r->role), p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = readFromParcel(&(r->type), p);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = p.readBool(&(r->isEncoder));
++    if (status != NO_ERROR) {
++        return status;
++    }
++    status = p.readBool(&(r->preferPlatformNodes));
++    if (status != NO_ERROR) {
++        return status;
++    }
++    return readFromParcel(&(r->nodes), p);
++}
++
++// std::vector<NodeInfo> <-> Parcel
++// std::vector<RoleInfo> <-> Parcel
++
++template <typename T>
++status_t writeToParcel(const std::vector<T>& v, Parcel* p) {
++    status_t status = p->writeVectorSize(v);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    for (const T& x : v) {
++        status = writeToParcel(x, p);
++        if (status != NO_ERROR) {
++            return status;
++        }
++    }
++    return NO_ERROR;
++}
++
++template <typename T>
++status_t readFromParcel(std::vector<T>* v, const Parcel& p) {
++    status_t status = p.resizeOutVector(v);
++    if (status != NO_ERROR) {
++        return status;
++    }
++    for (T& x : *v) {
++        status = readFromParcel(&x, p);
++        if (status != NO_ERROR) {
++            return status;
++        }
++    }
++    return NO_ERROR;
++}
++
++} // unnamed namespace
++
++////////////////////////////////////////////////////////////////////////////////
++
++class BpOMXStore : public BpInterface<IOMXStore> {
++public:
++    explicit BpOMXStore(const sp<IBinder> &impl)
++        : BpInterface<IOMXStore>(impl) {
++    }
++
++    status_t listServiceAttributes(
++            std::vector<Attribute>* attributes) override {
++        Parcel data, reply;
++        status_t status;
++        status = data.writeInterfaceToken(IOMXStore::getInterfaceDescriptor());
++        if (status != NO_ERROR) {
++            return status;
++        }
++        status = remote()->transact(LIST_SERVICE_ATTRIBUTES, data, &reply);
++        if (status != NO_ERROR) {
++            return status;
++        }
++        return readFromParcel(attributes, reply);
++    }
++
++    status_t getNodePrefix(std::string* prefix) override {
++        Parcel data, reply;
++        status_t status;
++        status = data.writeInterfaceToken(IOMXStore::getInterfaceDescriptor());
++        if (status != NO_ERROR) {
++            return status;
++        }
++        status = remote()->transact(GET_NODE_PREFIX, data, &reply);
++        if (status != NO_ERROR) {
++            return status;
++        }
++        return readFromParcel(prefix, reply);
++    }
++
++    status_t listRoles(std::vector<RoleInfo>* roleList) override {
++        Parcel data, reply;
++        status_t status;
++        status = data.writeInterfaceToken(IOMXStore::getInterfaceDescriptor());
++        if (status != NO_ERROR) {
++            return status;
++        }
++        status = remote()->transact(LIST_ROLES, data, &reply);
++        if (status != NO_ERROR) {
++            return status;
++        }
++        return readFromParcel(roleList, reply);
++    }
++
++    status_t getOmx(const std::string& name, sp<IOMX>* omx) override {
++        Parcel data, reply;
++        status_t status;
++        status = data.writeInterfaceToken(IOMXStore::getInterfaceDescriptor());
++        if (status != NO_ERROR) {
++            return status;
++        }
++        status = writeToParcel(name, &data);
++        if (status != NO_ERROR) {
++            return status;
++        }
++        status = remote()->transact(GET_OMX, data, &reply);
++        if (status != NO_ERROR) {
++            return status;
++        }
++        return reply.readStrongBinder(omx);
++    }
++
++};
++
++IMPLEMENT_META_INTERFACE(OMXStore, "android.hardware.IOMXStore");
++
++////////////////////////////////////////////////////////////////////////////////
++
++#define CHECK_OMX_INTERFACE(interface, data, reply) \
++        do { if (!(data).enforceInterface(interface::getInterfaceDescriptor())) { \
++            ALOGW("Call incorrectly routed to " #interface); \
++            return PERMISSION_DENIED; \
++        } } while (0)
++
++status_t BnOMXStore::onTransact(
++    uint32_t code, const Parcel &data, Parcel *reply, uint32_t flags) {
++    switch (code) {
++        case LIST_SERVICE_ATTRIBUTES: {
++            CHECK_OMX_INTERFACE(IOMXStore, data, reply);
++            status_t status;
++            std::vector<Attribute> attributes;
++
++            status = listServiceAttributes(&attributes);
++            if (status != NO_ERROR) {
++                ALOGE("listServiceAttributes() fails with status %d",
++                        static_cast<int>(status));
++                return NO_ERROR;
++            }
++            status = writeToParcel(attributes, reply);
++            if (status != NO_ERROR) {
++                ALOGE("listServiceAttributes() fails to send reply");
++                return NO_ERROR;
++            }
++            return NO_ERROR;
++        }
++        case GET_NODE_PREFIX: {
++            CHECK_OMX_INTERFACE(IOMXStore, data, reply);
++            status_t status;
++            std::string prefix;
++
++            status = getNodePrefix(&prefix);
++            if (status != NO_ERROR) {
++                ALOGE("getNodePrefix() fails with status %d",
++                        static_cast<int>(status));
++                return NO_ERROR;
++            }
++            status = writeToParcel(prefix, reply);
++            if (status != NO_ERROR) {
++                ALOGE("getNodePrefix() fails to send reply");
++                return NO_ERROR;
++            }
++            return NO_ERROR;
++        }
++        case LIST_ROLES: {
++            CHECK_OMX_INTERFACE(IOMXStore, data, reply);
++            status_t status;
++            std::vector<RoleInfo> roleList;
++
++            status = listRoles(&roleList);
++            if (status != NO_ERROR) {
++                ALOGE("listRoles() fails with status %d",
++                        static_cast<int>(status));
++                return NO_ERROR;
++            }
++            status = writeToParcel(roleList, reply);
++            if (status != NO_ERROR) {
++                ALOGE("listRoles() fails to send reply");
++                return NO_ERROR;
++            }
++            return NO_ERROR;
++        }
++        case GET_OMX: {
++            CHECK_OMX_INTERFACE(IOMXStore, data, reply);
++            status_t status;
++            std::string name;
++            sp<IOMX> omx;
++
++            status = readFromParcel(&name, data);
++            if (status != NO_ERROR) {
++                ALOGE("getOmx() fails to retrieve name");
++                return NO_ERROR;
++            }
++            status = getOmx(name, &omx);
++            if (status != NO_ERROR) {
++                ALOGE("getOmx() fails with status %d",
++                        static_cast<int>(status));
++                return NO_ERROR;
++            }
++            status = reply->writeStrongBinder(IInterface::asBinder(omx));
++            if (status != NO_ERROR) {
++                ALOGE("getOmx() fails to send reply");
++                return NO_ERROR;
++            }
++            return NO_ERROR;
++        }
++        default:
++            return BBinder::onTransact(code, data, reply, flags);
++    }
++}
++
++}  // namespace android
+diff --git a/media/libmedia/include/media/IMediaCodecService.h b/media/libmedia/include/media/IMediaCodecService.h
+new file mode 100644
+index 000000000..59fb1c018
+--- /dev/null
++++ b/media/libmedia/include/media/IMediaCodecService.h
+@@ -0,0 +1,47 @@
++/*
++ * Copyright (C) 2015 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_IMEDIACODECSERVICE_H
++#define ANDROID_IMEDIACODECSERVICE_H
++
++#include <binder/IInterface.h>
++#include <binder/IMemory.h>
++#include <binder/Parcel.h>
++#include <media/IDataSource.h>
++#include <media/IOMX.h>
++#include <media/IOMXStore.h>
++
++namespace android {
++
++class IMediaCodecService: public IInterface
++{
++public:
++    DECLARE_META_INTERFACE(MediaCodecService);
++
++    virtual sp<IOMX> getOMX() = 0;
++    virtual sp<IOMXStore> getOMXStore() = 0;
++};
++
++class BnMediaCodecService: public BnInterface<IMediaCodecService>
++{
++public:
++    virtual status_t    onTransact(uint32_t code, const Parcel& data, Parcel* reply,
++                                uint32_t flags = 0);
++};
++
++}   // namespace android
++
++#endif  // ANDROID_IMEDIACODECSERVICE_H
+diff --git a/media/libmedia/include/media/IOMXStore.h b/media/libmedia/include/media/IOMXStore.h
+new file mode 100644
+index 000000000..628db70d3
+--- /dev/null
++++ b/media/libmedia/include/media/IOMXStore.h
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (C) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_IOMXSTORE_H_
++
++#define ANDROID_IOMXSTORE_H_
++
++#include <media/IOMX.h>
++#include <android/hardware/media/omx/1.0/IOmxStore.h>
++
++#include <binder/IInterface.h>
++#include <binder/IBinder.h>
++
++#include <vector>
++#include <string>
++
++namespace android {
++
++using hardware::media::omx::V1_0::IOmxStore;
++
++class IOMXStore : public IInterface {
++public:
++    DECLARE_META_INTERFACE(OMXStore);
++
++    struct Attribute {
++        std::string key;
++        std::string value;
++    };
++
++    struct NodeInfo {
++        std::string name;
++        std::string owner;
++        std::vector<Attribute> attributes;
++    };
++
++    struct RoleInfo {
++        std::string role;
++        std::string type;
++        bool isEncoder;
++        bool preferPlatformNodes;
++        std::vector<NodeInfo> nodes;
++    };
++
++    virtual status_t listServiceAttributes(
++            std::vector<Attribute>* attributes) = 0;
++
++    virtual status_t getNodePrefix(std::string* prefix) = 0;
++
++    virtual status_t listRoles(std::vector<RoleInfo>* roleList) = 0;
++
++    virtual status_t getOmx(const std::string& name, sp<IOMX>* omx) = 0;
++};
++
++
++////////////////////////////////////////////////////////////////////////////////
++
++class BnOMXStore : public BnInterface<IOMXStore> {
++public:
++    virtual status_t onTransact(
++            uint32_t code, const Parcel &data, Parcel *reply,
++            uint32_t flags = 0);
++};
++
++}  // namespace android
++
++#endif  // ANDROID_IOMX_H_
+diff --git a/media/libmediaplayerservice/MediaPlayerService.cpp b/media/libmediaplayerservice/MediaPlayerService.cpp
+index 9bcfc8377..d074d5763 100644
+--- a/media/libmediaplayerservice/MediaPlayerService.cpp
++++ b/media/libmediaplayerservice/MediaPlayerService.cpp
+@@ -742,14 +742,26 @@ sp<MediaPlayerBase> MediaPlayerService::Client::setDataSource_pre(
+             new ServiceDeathNotifier(binder, p, MEDIAEXTRACTOR_PROCESS_DEATH);
+     binder->linkToDeath(extractorDeathListener);
+ 
+-    sp<IOmx> omx = IOmx::getService();
+-    if (omx == nullptr) {
+-        ALOGE("IOmx service is not available");
+-        return NULL;
++    sp<ServiceDeathNotifier> codecDeathListener;
++    if (property_get_bool("persist.media.treble_omx", true)) {
++        // Treble IOmx
++        sp<IOmx> omx = IOmx::getService();
++        if (omx == nullptr) {
++            ALOGE("Treble IOmx not available");
++            return NULL;
++        }
++        codecDeathListener = new ServiceDeathNotifier(omx, p, MEDIACODEC_PROCESS_DEATH);
++        omx->linkToDeath(codecDeathListener, 0);
++    } else {
++        // Legacy IOMX
++        binder = sm->getService(String16("media.codec"));
++        if (binder == NULL) {
++            ALOGE("codec service not available");
++            return NULL;
++        }
++        codecDeathListener = new ServiceDeathNotifier(binder, p, MEDIACODEC_PROCESS_DEATH);
++        binder->linkToDeath(codecDeathListener);
+     }
+-    sp<ServiceDeathNotifier> codecDeathListener =
+-            new ServiceDeathNotifier(omx, p, MEDIACODEC_PROCESS_DEATH);
+-    omx->linkToDeath(codecDeathListener, 0);
+ 
+     Mutex::Autolock lock(mLock);
+ 
+diff --git a/media/libmediaplayerservice/MediaRecorderClient.cpp b/media/libmediaplayerservice/MediaRecorderClient.cpp
+index 4206647c6..3c7811614 100644
+--- a/media/libmediaplayerservice/MediaRecorderClient.cpp
++++ b/media/libmediaplayerservice/MediaRecorderClient.cpp
+@@ -469,14 +469,27 @@ status_t MediaRecorderClient::setListener(const sp<IMediaRecorderClient>& listen
+     }
+     sCameraChecked = true;
+ 
+-    sp<IOmx> omx = IOmx::getService();
+-    if (omx == nullptr) {
+-        ALOGE("IOmx service is not available");
+-        return NO_INIT;
++    if (property_get_bool("persist.media.treble_omx", true)) {
++        // Treble IOmx
++        sp<IOmx> omx = IOmx::getService();
++        if (omx == nullptr) {
++            ALOGE("Treble IOmx not available");
++            return NO_INIT;
++        }
++        mCodecDeathListener = new ServiceDeathNotifier(omx, listener,
++                MediaPlayerService::MEDIACODEC_PROCESS_DEATH);
++        omx->linkToDeath(mCodecDeathListener, 0);
++    } else {
++        // Legacy IOMX
++        binder = sm->getService(String16("media.codec"));
++        if (binder == NULL) {
++           ALOGE("Unable to connect to media codec service");
++           return NO_INIT;
++        }
++        mCodecDeathListener = new ServiceDeathNotifier(binder, listener,
++                MediaPlayerService::MEDIACODEC_PROCESS_DEATH);
++        binder->linkToDeath(mCodecDeathListener);
+     }
+-    mCodecDeathListener = new ServiceDeathNotifier(omx, listener,
+-            MediaPlayerService::MEDIACODEC_PROCESS_DEATH);
+-    omx->linkToDeath(mCodecDeathListener, 0);
+ 
+     mAudioDeviceUpdatedNotifier = new AudioDeviceUpdatedNotifier(listener);
+     mRecorder->setAudioDeviceCallback(mAudioDeviceUpdatedNotifier);
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index d842a0e14..8c8485ff4 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -28,6 +28,8 @@
+ 
+ #include <media/stagefright/ACodec.h>
+ 
++#include <binder/MemoryDealer.h>
++
+ #include <media/stagefright/foundation/avc_utils.h>
+ #include <media/stagefright/foundation/hexdump.h>
+ #include <media/stagefright/foundation/ABuffer.h>
+@@ -602,6 +604,8 @@ ACodec::ACodec()
+     memset(&mLastNativeWindowCrop, 0, sizeof(mLastNativeWindowCrop));
+ 
+     changeState(mUninitializedState);
++
++    mTrebleFlag = false;
+ }
+ 
+ ACodec::~ACodec() {
+@@ -853,7 +857,11 @@ status_t ACodec::setPortMode(int32_t portIndex, IOMX::PortMode mode) {
+ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+     CHECK(portIndex == kPortIndexInput || portIndex == kPortIndexOutput);
+ 
+-    CHECK(mAllocator[portIndex] == NULL);
++    if (getTrebleFlag()) {
++        CHECK(mAllocator[portIndex] == NULL);
++    } else {
++        CHECK(mDealer[portIndex] == NULL);
++    }
+     CHECK(mBuffers[portIndex].isEmpty());
+ 
+     status_t err;
+@@ -899,10 +907,7 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+                 }
+             }
+ 
+-            size_t alignment = 32; // This is the value currently returned by
+-                                   // MemoryDealer::getAllocationAlignment().
+-                                   // TODO: Fix this when Treble has
+-                                   // MemoryHeap/MemoryDealer.
++            size_t alignment = MemoryDealer::getAllocationAlignment();
+ 
+             ALOGV("[%s] Allocating %u buffers of size %zu (from %u using %s) on %s port",
+                     mComponentName.c_str(),
+@@ -924,15 +929,18 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+             }
+ 
+             if (mode != IOMX::kPortModePresetSecureBuffer) {
+-                mAllocator[portIndex] = TAllocator::getService("ashmem");
+-                if (mAllocator[portIndex] == nullptr) {
+-                    ALOGE("hidl allocator on port %d is null",
+-                            (int)portIndex);
+-                    return NO_MEMORY;
++                if (getTrebleFlag()) {
++                    mAllocator[portIndex] = TAllocator::getService("ashmem");
++                    if (mAllocator[portIndex] == nullptr) {
++                        ALOGE("hidl allocator on port %d is null",
++                                (int)portIndex);
++                        return NO_MEMORY;
++                    }
++                } else {
++                    size_t totalSize = def.nBufferCountActual *
++                            (alignedSize + alignedConvSize);
++                    mDealer[portIndex] = new MemoryDealer(totalSize, "ACodec");
+                 }
+-                // TODO: When Treble has MemoryHeap/MemoryDealer, we should
+-                // specify the heap size to be
+-                // def.nBufferCountActual * (alignedSize + alignedConvSize).
+             }
+ 
+             const sp<AMessage> &format =
+@@ -961,55 +969,23 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+                             : new SecureBuffer(format, native_handle, bufSize);
+                     info.mCodecData = info.mData;
+                 } else {
+-                    bool success;
+-                    auto transStatus = mAllocator[portIndex]->allocate(
+-                            bufSize,
+-                            [&success, &hidlMemToken](
+-                                    bool s,
+-                                    hidl_memory const& m) {
+-                                success = s;
+-                                hidlMemToken = m;
+-                            });
+-
+-                    if (!transStatus.isOk()) {
+-                        ALOGE("hidl's AshmemAllocator failed at the "
+-                                "transport: %s",
+-                                transStatus.description().c_str());
+-                        return NO_MEMORY;
+-                    }
+-                    if (!success) {
+-                        return NO_MEMORY;
+-                    }
+-                    hidlMem = mapMemory(hidlMemToken);
+-                    if (hidlMem == nullptr) {
+-                        return NO_MEMORY;
+-                    }
+-                    err = mOMXNode->useBuffer(
+-                            portIndex, hidlMemToken, &info.mBufferID);
+-
+-                    if (mode == IOMX::kPortModeDynamicANWBuffer) {
+-                        VideoNativeMetadata* metaData = (VideoNativeMetadata*)(
+-                                (void*)hidlMem->getPointer());
+-                        metaData->nFenceFd = -1;
+-                    }
+-
+-                    info.mCodecData = new SharedMemoryBuffer(
+-                            format, hidlMem);
+-                    info.mCodecRef = hidlMem;
+-
+-                    // if we require conversion, allocate conversion buffer for client use;
+-                    // otherwise, reuse codec buffer
+-                    if (mConverter[portIndex] != NULL) {
+-                        CHECK_GT(conversionBufferSize, (size_t)0);
++                    if (getTrebleFlag()) {
+                         bool success;
+-                        mAllocator[portIndex]->allocate(
+-                                conversionBufferSize,
++                        auto transStatus = mAllocator[portIndex]->allocate(
++                                bufSize,
+                                 [&success, &hidlMemToken](
+                                         bool s,
+                                         hidl_memory const& m) {
+                                     success = s;
+                                     hidlMemToken = m;
+                                 });
++
++                        if (!transStatus.isOk()) {
++                            ALOGE("hidl's AshmemAllocator failed at the "
++                                    "transport: %s",
++                                    transStatus.description().c_str());
++                            return NO_MEMORY;
++                        }
+                         if (!success) {
+                             return NO_MEMORY;
+                         }
+@@ -1017,8 +993,67 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {
+                         if (hidlMem == nullptr) {
+                             return NO_MEMORY;
+                         }
+-                        info.mData = new SharedMemoryBuffer(format, hidlMem);
+-                        info.mMemRef = hidlMem;
++                        err = mOMXNode->useBuffer(
++                                portIndex, hidlMemToken, &info.mBufferID);
++                    } else {
++                        mem = mDealer[portIndex]->allocate(bufSize);
++                        if (mem == NULL || mem->pointer() == NULL) {
++                            return NO_MEMORY;
++                        }
++
++                        err = mOMXNode->useBuffer(
++                                portIndex, mem, &info.mBufferID);
++                    }
++
++                    if (mode == IOMX::kPortModeDynamicANWBuffer) {
++                        VideoNativeMetadata* metaData = (VideoNativeMetadata*)(
++                                getTrebleFlag() ?
++                                (void*)hidlMem->getPointer() : mem->pointer());
++                        metaData->nFenceFd = -1;
++                    }
++
++                    if (getTrebleFlag()) {
++                        info.mCodecData = new SharedMemoryBuffer(
++                                format, hidlMem);
++                        info.mCodecRef = hidlMem;
++                    } else {
++                        info.mCodecData = new SharedMemoryBuffer(
++                                format, mem);
++                        info.mCodecRef = mem;
++                    }
++
++                    // if we require conversion, allocate conversion buffer for client use;
++                    // otherwise, reuse codec buffer
++                    if (mConverter[portIndex] != NULL) {
++                        CHECK_GT(conversionBufferSize, (size_t)0);
++                        if (getTrebleFlag()) {
++                            bool success;
++                            mAllocator[portIndex]->allocate(
++                                    conversionBufferSize,
++                                    [&success, &hidlMemToken](
++                                            bool s,
++                                            hidl_memory const& m) {
++                                        success = s;
++                                        hidlMemToken = m;
++                                    });
++                            if (!success) {
++                                return NO_MEMORY;
++                            }
++                            hidlMem = mapMemory(hidlMemToken);
++                            if (hidlMem == nullptr) {
++                                return NO_MEMORY;
++                            }
++                            info.mData = new SharedMemoryBuffer(format, hidlMem);
++                            info.mMemRef = hidlMem;
++                        } else {
++                            mem = mDealer[portIndex]->allocate(
++                                    conversionBufferSize);
++                            if (mem == NULL|| mem->pointer() == NULL) {
++                                return NO_MEMORY;
++                            }
++                            info.mData = new SharedMemoryBuffer(format, mem);
++                            info.mMemRef = mem;
++                        }
+                     } else {
+                         info.mData = info.mCodecData;
+                         info.mMemRef = info.mCodecRef;
+@@ -1597,7 +1632,11 @@ status_t ACodec::freeBuffersOnPort(OMX_U32 portIndex) {
+         }
+     }
+ 
+-    mAllocator[portIndex].clear();
++    if (getTrebleFlag()) {
++        mAllocator[portIndex].clear();
++    } else {
++        mDealer[portIndex].clear();
++    }
+     return err;
+ }
+ 
+@@ -6386,8 +6425,13 @@ void ACodec::UninitializedState::stateEntered() {
+ 
+     if (mDeathNotifier != NULL) {
+         if (mCodec->mOMXNode != NULL) {
+-            auto tOmxNode = mCodec->mOMXNode->getHalInterface();
+-            tOmxNode->unlinkToDeath(mDeathNotifier);
++            if (mCodec->getTrebleFlag()) {
++                auto tOmxNode = mCodec->mOMXNode->getHalInterface();
++                tOmxNode->unlinkToDeath(mDeathNotifier);
++            } else {
++                sp<IBinder> binder = IInterface::asBinder(mCodec->mOMXNode);
++                binder->unlinkToDeath(mDeathNotifier);
++            }
+         }
+         mDeathNotifier.clear();
+     }
+@@ -6494,8 +6538,10 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
+     sp<IOMXNode> omxNode;
+ 
+     status_t err = NAME_NOT_FOUND;
++
+     OMXClient client;
+-    if (client.connect(owner.c_str()) != OK) {
++    bool trebleFlag;
++    if (client.connect(owner.c_str(), &trebleFlag) != OK) {
+         mCodec->signalError(OMX_ErrorUndefined, NO_INIT);
+         return false;
+     }
+@@ -6507,7 +6553,9 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
+     err = omx->allocateNode(componentName.c_str(), observer, &omxNode);
+     androidSetThreadPriority(tid, prevPriority);
+ 
+-    if (err != OK) {
++    if (err == OK) {
++        mCodec->setTrebleFlag(trebleFlag);
++    } else {
+         ALOGE("Unable to instantiate codec '%s' with err %#x.", componentName.c_str(), err);
+ 
+         mCodec->signalError((OMX_ERRORTYPE)err, makeNoSideEffectStatus(err));
+@@ -6515,9 +6563,17 @@ bool ACodec::UninitializedState::onAllocateComponent(const sp<AMessage> &msg) {
+     }
+ 
+     mDeathNotifier = new DeathNotifier(notify);
+-    auto tOmxNode = omxNode->getHalInterface();
+-    if (!tOmxNode->linkToDeath(mDeathNotifier, 0)) {
+-        mDeathNotifier.clear();
++    if (mCodec->getTrebleFlag()) {
++        auto tOmxNode = omxNode->getHalInterface();
++        if (!tOmxNode->linkToDeath(mDeathNotifier, 0)) {
++            mDeathNotifier.clear();
++        }
++    } else {
++        if (IInterface::asBinder(omxNode)->linkToDeath(mDeathNotifier) != OK) {
++            // This was a local binder, if it dies so do we, we won't care
++            // about any notifications in the afterlife.
++            mDeathNotifier.clear();
++        }
+     }
+ 
+     notify = new AMessage(kWhatOMXMessageList, mCodec);
+@@ -7947,7 +8003,11 @@ bool ACodec::OutputPortSettingsChangedState::onOMXEvent(
+                             mCodec->mBuffers[kPortIndexOutput].size());
+                     err = FAILED_TRANSACTION;
+                 } else {
+-                    mCodec->mAllocator[kPortIndexOutput].clear();
++                    if (mCodec->getTrebleFlag()) {
++                        mCodec->mAllocator[kPortIndexOutput].clear();
++                    } else {
++                        mCodec->mDealer[kPortIndexOutput].clear();
++                    }
+                 }
+ 
+                 if (err == OK) {
+@@ -8550,4 +8610,12 @@ status_t ACodec::getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE
+     return OK;
+ }
+ 
++void ACodec::setTrebleFlag(bool trebleFlag) {
++    mTrebleFlag = trebleFlag;
++}
++
++bool ACodec::getTrebleFlag() const {
++    return mTrebleFlag;
++}
++
+ }  // namespace android
+diff --git a/media/libstagefright/MediaCodecList.cpp b/media/libstagefright/MediaCodecList.cpp
+index eaff283ce..ded2f1995 100644
+--- a/media/libstagefright/MediaCodecList.cpp
++++ b/media/libstagefright/MediaCodecList.cpp
+@@ -25,6 +25,7 @@
+ 
+ #include <media/IMediaCodecList.h>
+ #include <media/IMediaPlayerService.h>
++#include <media/IMediaCodecService.h>
+ #include <media/MediaCodecInfo.h>
+ 
+ #include <media/stagefright/foundation/ADebug.h>
+diff --git a/media/libstagefright/OMXClient.cpp b/media/libstagefright/OMXClient.cpp
+index 9375de126..5f50e46c3 100644
+--- a/media/libstagefright/OMXClient.cpp
++++ b/media/libstagefright/OMXClient.cpp
+@@ -25,6 +25,7 @@
+ #include <cutils/properties.h>
+ 
+ #include <binder/IServiceManager.h>
++#include <media/IMediaCodecService.h>
+ #include <media/stagefright/OMXClient.h>
+ 
+ #include <media/IOMX.h>
+@@ -37,25 +38,70 @@ OMXClient::OMXClient() {
+ }
+ 
+ status_t OMXClient::connect() {
+-    return connect("default");
++    return connect("default", nullptr);
+ }
+ 
+-status_t OMXClient::connect(const char* name) {
++status_t OMXClient::connect(bool* trebleFlag) {
++    if (property_get_bool("persist.media.treble_omx", true)) {
++        if (trebleFlag != nullptr) {
++            *trebleFlag = true;
++        }
++        return connectTreble();
++    }
++    if (trebleFlag != nullptr) {
++        *trebleFlag = false;
++    }
++    return connectLegacy();
++}
++
++status_t OMXClient::connect(const char* name, bool* trebleFlag) {
++    if (property_get_bool("persist.media.treble_omx", true)) {
++        if (trebleFlag != nullptr) {
++            *trebleFlag = true;
++        }
++        return connectTreble(name);
++    }
++    if (trebleFlag != nullptr) {
++        *trebleFlag = false;
++    }
++    return connectLegacy();
++}
++
++status_t OMXClient::connectLegacy() {
++    sp<IServiceManager> sm = defaultServiceManager();
++    sp<IBinder> codecbinder = sm->getService(String16("media.codec"));
++    sp<IMediaCodecService> codecservice = interface_cast<IMediaCodecService>(codecbinder);
++
++    if (codecservice.get() == NULL) {
++        ALOGE("Cannot obtain IMediaCodecService");
++        return NO_INIT;
++    }
++
++    mOMX = codecservice->getOMX();
++    if (mOMX.get() == NULL) {
++        ALOGE("Cannot obtain mediacodec IOMX");
++        return NO_INIT;
++    }
++
++    return OK;
++}
++
++status_t OMXClient::connectTreble(const char* name) {
+     using namespace ::android::hardware::media::omx::V1_0;
+     if (name == nullptr) {
+         name = "default";
+     }
+     sp<IOmx> tOmx = IOmx::getService(name);
+     if (tOmx.get() == nullptr) {
+-        ALOGE("Cannot obtain IOmx service.");
++        ALOGE("Cannot obtain Treble IOmx.");
+         return NO_INIT;
+     }
+     if (!tOmx->isRemote()) {
+-        ALOGE("IOmx service running in passthrough mode.");
++        ALOGE("Treble IOmx is in passthrough mode.");
+         return NO_INIT;
+     }
+     mOMX = new utils::LWOmx(tOmx);
+-    ALOGI("IOmx service obtained");
++    ALOGI("Treble IOmx obtained");
+     return OK;
+ }
+ 
+@@ -63,8 +109,4 @@ void OMXClient::disconnect() {
+     mOMX.clear();
+ }
+ 
+-sp<IOMX> OMXClient::interface() {
+-    return mOMX;
+-}
+-
+ }  // namespace android
+diff --git a/media/libstagefright/OmxInfoBuilder.cpp b/media/libstagefright/OmxInfoBuilder.cpp
+index 96b896ba9..5d37d9852 100644
+--- a/media/libstagefright/OmxInfoBuilder.cpp
++++ b/media/libstagefright/OmxInfoBuilder.cpp
+@@ -24,6 +24,8 @@
+ #include <utils/Log.h>
+ #include <cutils/properties.h>
+ 
++#include <binder/IServiceManager.h>
++#include <media/IMediaCodecService.h>
+ #include <media/stagefright/foundation/MediaDefs.h>
+ #include <media/stagefright/OmxInfoBuilder.h>
+ #include <media/stagefright/ACodec.h>
+@@ -33,6 +35,7 @@
+ #include <android/hardware/media/omx/1.0/IOmxNode.h>
+ #include <media/stagefright/omx/OMXUtils.h>
+ 
++#include <media/IOMXStore.h>
+ #include <media/IOMX.h>
+ #include <media/omx/1.0/WOmx.h>
+ #include <media/stagefright/omx/1.0/OmxStore.h>
+@@ -46,18 +49,10 @@
+ 
+ namespace android {
+ 
+-using ::android::hardware::hidl_string;
+-using ::android::hardware::hidl_vec;
+-using namespace ::android::hardware::media::omx::V1_0;
+-
+ namespace /* unnamed */ {
+ 
+-bool hasPrefix(const hidl_string& s, const char* prefix) {
+-    return strncmp(s.c_str(), prefix, strlen(prefix)) == 0;
+-}
+-
+ status_t queryCapabilities(
+-        const IOmxStore::NodeInfo& node, const char* mime, bool isEncoder,
++        const IOMXStore::NodeInfo& node, const char* mime, bool isEncoder,
+         MediaCodecInfo::CapabilitiesWriter* caps) {
+     sp<ACodec> codec = new ACodec();
+     status_t err = codec->queryCapabilities(
+@@ -68,13 +63,14 @@ status_t queryCapabilities(
+     for (const auto& attribute : node.attributes) {
+         // All features have an int32 value except
+         // "feature-bitrate-modes", which has a string value.
+-        if (hasPrefix(attribute.key, "feature-") &&
+-                !hasPrefix(attribute.key, "feature-bitrate-modes")) {
+-            // If this attribute.key is a feature that is not bitrate modes,
+-            // add an int32 value.
++        if ((attribute.key.compare(0, 8, "feature-") == 0) &&
++                (attribute.key.compare(8, 15, "bitrate-modes")
++                 != 0)) {
++            // If this attribute.key is a feature that is not a bitrate
++            // control, add an int32 value.
+             caps->addDetail(
+                     attribute.key.c_str(),
+-                    hasPrefix(attribute.value, "1") ? 1 : 0);
++                    attribute.value == "1" ? 1 : 0);
+         } else {
+             // Non-feature attributes
+             caps->addDetail(
+@@ -90,69 +86,161 @@ OmxInfoBuilder::OmxInfoBuilder() {
+ }
+ 
+ status_t OmxInfoBuilder::buildMediaCodecList(MediaCodecListWriter* writer) {
+-    // Obtain IOmxStore
+-    sp<IOmxStore> omxStore = IOmxStore::getService();
+-    if (omxStore == nullptr) {
+-        ALOGE("Cannot find an IOmxStore service.");
+-        return NO_INIT;
+-    }
++    bool treble;
++    sp<IOMX> omx;
++    std::vector<IOMXStore::RoleInfo> roles;
+ 
+-    // List service attributes (global settings)
+-    Status status;
+-    hidl_vec<IOmxStore::RoleInfo> roles;
+-    auto transStatus = omxStore->listRoles(
+-            [&roles] (
+-            const hidl_vec<IOmxStore::RoleInfo>& inRoleList) {
+-                roles = inRoleList;
+-            });
+-    if (!transStatus.isOk()) {
+-        ALOGE("Fail to obtain codec roles from IOmxStore.");
+-        return NO_INIT;
+-    }
++    treble = property_get_bool("persist.media.treble_omx", true);
++    if (treble) {
++        using namespace ::android::hardware::media::omx::V1_0;
++        using ::android::hardware::hidl_vec;
++        using ::android::hardware::hidl_string;
+ 
+-    hidl_vec<IOmxStore::ServiceAttribute> serviceAttributes;
+-    transStatus = omxStore->listServiceAttributes(
+-            [&status, &serviceAttributes] (
+-            Status inStatus,
+-            const hidl_vec<IOmxStore::ServiceAttribute>& inAttributes) {
+-                status = inStatus;
+-                serviceAttributes = inAttributes;
+-            });
+-    if (!transStatus.isOk()) {
+-        ALOGE("Fail to obtain global settings from IOmxStore.");
+-        return NO_INIT;
+-    }
+-    if (status != Status::OK) {
+-        ALOGE("IOmxStore reports parsing error.");
+-        return NO_INIT;
+-    }
+-    for (const auto& p : serviceAttributes) {
+-        writer->addGlobalSetting(
+-                p.key.c_str(), p.value.c_str());
+-    }
++        // Obtain IOmxStore
++        sp<IOmxStore> omxStore = IOmxStore::getService();
++        if (omxStore == nullptr) {
++            ALOGE("Cannot connect to an IOmxStore instance.");
++            return NO_INIT;
++        }
+ 
+-    // Convert roles to lists of codecs
++        // List service attributes (global settings)
++        Status status;
++        hidl_vec<IOmxStore::ServiceAttribute> serviceAttributes;
++        auto transStatus = omxStore->listServiceAttributes(
++                [&status, &serviceAttributes]
++                (Status inStatus, const hidl_vec<IOmxStore::ServiceAttribute>&
++                        inAttributes) {
++                    status = inStatus;
++                    serviceAttributes = inAttributes;
++                });
++        if (!transStatus.isOk()) {
++            ALOGE("Fail to obtain global settings from IOmxStore.");
++            return NO_INIT;
++        }
++        if (status != Status::OK) {
++            ALOGE("IOmxStore reports parsing error.");
++            return NO_INIT;
++        }
++        for (const auto& p : serviceAttributes) {
++            writer->addGlobalSetting(
++                    p.key.c_str(), p.value.c_str());
++        }
++
++        // List roles and convert to IOMXStore's format
++        transStatus = omxStore->listRoles(
++                [&roles]
++                (const hidl_vec<IOmxStore::RoleInfo>& inRoleList) {
++                    roles.reserve(inRoleList.size());
++                    for (const auto& inRole : inRoleList) {
++                        IOMXStore::RoleInfo role;
++                        role.role = inRole.role;
++                        role.type = inRole.type;
++                        role.isEncoder = inRole.isEncoder;
++                        role.preferPlatformNodes = inRole.preferPlatformNodes;
++                        std::vector<IOMXStore::NodeInfo>& nodes =
++                                role.nodes;
++                        nodes.reserve(inRole.nodes.size());
++                        for (const auto& inNode : inRole.nodes) {
++                            IOMXStore::NodeInfo node;
++                            node.name = inNode.name;
++                            node.owner = inNode.owner;
++                            std::vector<IOMXStore::Attribute>& attributes =
++                                    node.attributes;
++                            attributes.reserve(inNode.attributes.size());
++                            for (const auto& inAttr : inNode.attributes) {
++                                IOMXStore::Attribute attr;
++                                attr.key = inAttr.key;
++                                attr.value = inAttr.value;
++                                attributes.push_back(std::move(attr));
++                            }
++                            nodes.push_back(std::move(node));
++                        }
++                        roles.push_back(std::move(role));
++                    }
++                });
++        if (!transStatus.isOk()) {
++            ALOGE("Fail to obtain codec roles from IOmxStore.");
++            return NO_INIT;
++        }
++    } else {
++        // Obtain IOMXStore
++        sp<IServiceManager> sm = defaultServiceManager();
++        if (sm == nullptr) {
++            ALOGE("Cannot obtain the default service manager.");
++            return NO_INIT;
++        }
++        sp<IBinder> codecBinder = sm->getService(String16("media.codec"));
++        if (codecBinder == nullptr) {
++            ALOGE("Cannot obtain the media codec service.");
++            return NO_INIT;
++        }
++        sp<IMediaCodecService> codecService =
++                interface_cast<IMediaCodecService>(codecBinder);
++        if (codecService == nullptr) {
++            ALOGE("Wrong type of media codec service obtained.");
++            return NO_INIT;
++        }
++        omx = codecService->getOMX();
++        if (omx == nullptr) {
++            ALOGE("Cannot connect to an IOMX instance.");
++        }
++        sp<IOMXStore> omxStore = codecService->getOMXStore();
++        if (omxStore == nullptr) {
++            ALOGE("Cannot connect to an IOMXStore instance.");
++            return NO_INIT;
++        }
+ 
+-    // codec name -> index into swCodecs/hwCodecs
+-    std::map<hidl_string, std::unique_ptr<MediaCodecInfoWriter>>
+-            swCodecName2Info, hwCodecName2Info;
++        // List service attributes (global settings)
++        std::vector<IOMXStore::Attribute> serviceAttributes;
++        status_t status = omxStore->listServiceAttributes(&serviceAttributes);
++        if (status != OK) {
++            ALOGE("Fail to obtain global settings from IOMXStore.");
++            return NO_INIT;
++        }
++        for (const auto& p : serviceAttributes) {
++            writer->addGlobalSetting(
++                    p.key.c_str(), p.value.c_str());
++        }
++
++        // List roles
++        status = omxStore->listRoles(&roles);
++        if (status != OK) {
++            ALOGE("Fail to obtain codec roles from IOMXStore.");
++            return NO_INIT;
++        }
++    }
+ 
+     char rank[PROPERTY_VALUE_MAX];
+     uint32_t defaultRank = 0x100;
+     if (property_get("debug.stagefright.omx_default_rank", rank, nullptr)) {
+         defaultRank = std::strtoul(rank, nullptr, 10);
+     }
+-    for (const IOmxStore::RoleInfo& role : roles) {
+-        const hidl_string& typeName = role.type;
++
++    // Convert roles to lists of codecs
++
++    // codec name -> index into swCodecs
++    std::map<std::string, std::unique_ptr<MediaCodecInfoWriter> >
++            swCodecName2Info;
++    // codec name -> index into hwCodecs
++    std::map<std::string, std::unique_ptr<MediaCodecInfoWriter> >
++            hwCodecName2Info;
++    // owner name -> MediaCodecInfo
++    // This map will be used to obtain the correct IOmx service(s) needed for
++    // creating IOmxNode instances and querying capabilities.
++    std::map<std::string, std::vector<sp<MediaCodecInfo> > >
++            owner2CodecInfo;
++
++    for (const auto& role : roles) {
++        const auto& typeName = role.type;
+         bool isEncoder = role.isEncoder;
+         bool preferPlatformNodes = role.preferPlatformNodes;
+         // If preferPlatformNodes is true, hardware nodes must be added after
+         // platform (software) nodes. hwCodecs is used to hold hardware nodes
+         // that need to be added after software nodes for the same role.
+-        std::vector<const IOmxStore::NodeInfo*> hwCodecs;
+-        for (const IOmxStore::NodeInfo& node : role.nodes) {
+-            const hidl_string& nodeName = node.name;
+-            bool isSoftware = hasPrefix(nodeName, "OMX.google");
++        std::vector<const IOMXStore::NodeInfo*> hwCodecs;
++        for (const auto& node : role.nodes) {
++            const auto& nodeName = node.name;
++            bool isSoftware = nodeName.compare(0, 10, "OMX.google") == 0;
+             MediaCodecInfoWriter* info;
+             if (isSoftware) {
+                 auto c2i = swCodecName2Info.find(nodeName);
+@@ -208,9 +296,9 @@ status_t OmxInfoBuilder::buildMediaCodecList(MediaCodecListWriter* writer) {
+         // added in the loop above, but rather saved in hwCodecs. They are
+         // going to be added here.
+         if (preferPlatformNodes) {
+-            for (const IOmxStore::NodeInfo *node : hwCodecs) {
++            for (const auto& node : hwCodecs) {
+                 MediaCodecInfoWriter* info;
+-                const hidl_string& nodeName = node->name;
++                const auto& nodeName = node->name;
+                 auto c2i = hwCodecName2Info.find(nodeName);
+                 if (c2i == hwCodecName2Info.end()) {
+                     // Create a new MediaCodecInfo for a new node.
+diff --git a/media/libstagefright/include/OmxNodeOwner.h b/media/libstagefright/include/OmxNodeOwner.h
+new file mode 100644
+index 000000000..64ec7f71f
+--- /dev/null
++++ b/media/libstagefright/include/OmxNodeOwner.h
+@@ -0,0 +1,37 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef OMX_NODE_OWNER_H_
++
++#define OMX_NODE_OWNER_H_
++
++namespace android {
++
++struct OMXNodeInstance;
++
++/**
++ * This struct is needed to separate OMX from OMXNodeInstance.
++ *
++ * TODO: This might not be needed after Treble transition is complete.
++ */
++struct OmxNodeOwner {
++    virtual status_t freeNode(const sp<OMXNodeInstance> &instance) = 0;
++    virtual ~OmxNodeOwner() {}
++};
++
++}
++
++#endif  // OMX_NODE_OWNER_H_
+diff --git a/media/libstagefright/include/media/stagefright/ACodec.h b/media/libstagefright/include/media/stagefright/ACodec.h
+index 733f19067..aa8a2ac3e 100644
+--- a/media/libstagefright/include/media/stagefright/ACodec.h
++++ b/media/libstagefright/include/media/stagefright/ACodec.h
+@@ -98,6 +98,11 @@ struct ACodec : public AHierarchicalStateMachine, public CodecBase {
+ 
+     static status_t getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE map[]);
+ 
++    // Save the flag.
++    void setTrebleFlag(bool trebleFlag);
++    // Return the saved flag.
++    bool getTrebleFlag() const;
++
+ protected:
+     virtual ~ACodec();
+ 
+@@ -231,7 +236,9 @@ private:
+     sp<IOMX> mOMX;
+     sp<IOMXNode> mOMXNode;
+     int32_t mNodeGeneration;
++    bool mTrebleFlag;
+     sp<TAllocator> mAllocator[2];
++    sp<MemoryDealer> mDealer[2];
+ 
+     bool mUsingNativeWindow;
+     sp<ANativeWindow> mNativeWindow;
+diff --git a/media/libstagefright/include/media/stagefright/OMXClient.h b/media/libstagefright/include/media/stagefright/OMXClient.h
+index bb133d341..b1864b834 100644
+--- a/media/libstagefright/include/media/stagefright/OMXClient.h
++++ b/media/libstagefright/include/media/stagefright/OMXClient.h
+@@ -18,19 +18,25 @@
+ 
+ #define OMX_CLIENT_H_
+ 
+-namespace android {
++#include <media/IOMX.h>
+ 
+-class IOMX;
++namespace android {
+ 
+ class OMXClient {
+ public:
+     OMXClient();
+ 
+     status_t connect();
+-    status_t connect(const char* name);
++    status_t connect(bool* trebleFlag);
++    status_t connect(const char* name, bool* trebleFlag = nullptr);
++
++    status_t connectLegacy();
++    status_t connectTreble(const char* name = "default");
+     void disconnect();
+ 
+-    sp<IOMX> interface();
++    sp<IOMX> interface() {
++        return mOMX;
++    }
+ 
+ private:
+     sp<IOMX> mOMX;
+diff --git a/media/libstagefright/omx/Android.bp b/media/libstagefright/omx/Android.bp
+index e9ad212d4..04f03b516 100644
+--- a/media/libstagefright/omx/Android.bp
++++ b/media/libstagefright/omx/Android.bp
+@@ -7,6 +7,8 @@ cc_library_shared {
+ 
+     srcs: [
+         "BWGraphicBufferSource.cpp",
++        "OMX.cpp",
++        "OMXStore.cpp",
+         "OMXMaster.cpp",
+         "OMXNodeInstance.cpp",
+         "OMXUtils.cpp",
+diff --git a/media/libstagefright/omx/OMX.cpp b/media/libstagefright/omx/OMX.cpp
+new file mode 100644
+index 000000000..2bd0f3fe4
+--- /dev/null
++++ b/media/libstagefright/omx/OMX.cpp
+@@ -0,0 +1,198 @@
++/*
++ * Copyright (C) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <inttypes.h>
++
++//#define LOG_NDEBUG 0
++#define LOG_TAG "OMX"
++#include <utils/Log.h>
++
++#include <dlfcn.h>
++
++#include <media/stagefright/omx/OMX.h>
++#include <media/stagefright/omx/OMXNodeInstance.h>
++#include <media/stagefright/omx/BWGraphicBufferSource.h>
++#include <media/stagefright/omx/OMXMaster.h>
++#include <media/stagefright/omx/OMXUtils.h>
++#include <media/stagefright/foundation/ADebug.h>
++
++namespace android {
++
++// node ids are created by concatenating the pid with a 16-bit counter
++static size_t kMaxNodeInstances = (1 << 16);
++
++OMX::OMX() : mMaster(new OMXMaster), mParser() {
++}
++
++OMX::~OMX() {
++    delete mMaster;
++    mMaster = NULL;
++}
++
++void OMX::binderDied(const wp<IBinder> &the_late_who) {
++    sp<OMXNodeInstance> instance;
++
++    {
++        Mutex::Autolock autoLock(mLock);
++
++        ssize_t index = mLiveNodes.indexOfKey(the_late_who);
++
++        if (index < 0) {
++            ALOGE("b/27597103, nonexistent observer on binderDied");
++            android_errorWriteLog(0x534e4554, "27597103");
++            return;
++        }
++
++        instance = mLiveNodes.editValueAt(index);
++        mLiveNodes.removeItemsAt(index);
++    }
++
++    instance->onObserverDied();
++}
++
++status_t OMX::listNodes(List<ComponentInfo> *list) {
++    list->clear();
++
++    OMX_U32 index = 0;
++    char componentName[256];
++    while (mMaster->enumerateComponents(
++                componentName, sizeof(componentName), index) == OMX_ErrorNone) {
++        list->push_back(ComponentInfo());
++        ComponentInfo &info = *--list->end();
++
++        info.mName = componentName;
++
++        Vector<String8> roles;
++        OMX_ERRORTYPE err =
++            mMaster->getRolesOfComponent(componentName, &roles);
++
++        if (err == OMX_ErrorNone) {
++            for (OMX_U32 i = 0; i < roles.size(); ++i) {
++                info.mRoles.push_back(roles[i]);
++            }
++        }
++
++        ++index;
++    }
++
++    return OK;
++}
++
++status_t OMX::allocateNode(
++        const char *name, const sp<IOMXObserver> &observer,
++        sp<IOMXNode> *omxNode) {
++    Mutex::Autolock autoLock(mLock);
++
++    omxNode->clear();
++
++    if (mLiveNodes.size() == kMaxNodeInstances) {
++        return NO_MEMORY;
++    }
++
++    sp<OMXNodeInstance> instance = new OMXNodeInstance(this, observer, name);
++
++    OMX_COMPONENTTYPE *handle;
++    OMX_ERRORTYPE err = mMaster->makeComponentInstance(
++            name, &OMXNodeInstance::kCallbacks,
++            instance.get(), &handle);
++
++    if (err != OMX_ErrorNone) {
++        ALOGE("FAILED to allocate omx component '%s' err=%s(%#x)", name, asString(err), err);
++
++        return StatusFromOMXError(err);
++    }
++    instance->setHandle(handle);
++
++    // Find quirks from mParser
++    const auto& codec = mParser.getCodecMap().find(name);
++    if (codec == mParser.getCodecMap().cend()) {
++        ALOGW("Failed to obtain quirks for omx component '%s' from XML files",
++                name);
++    } else {
++        uint32_t quirks = 0;
++        for (const auto& quirk : codec->second.quirkSet) {
++            if (quirk == "requires-allocate-on-input-ports") {
++                quirks |= OMXNodeInstance::
++                        kRequiresAllocateBufferOnInputPorts;
++            }
++            if (quirk == "requires-allocate-on-output-ports") {
++                quirks |= OMXNodeInstance::
++                        kRequiresAllocateBufferOnOutputPorts;
++            }
++        }
++        instance->setQuirks(quirks);
++    }
++
++    mLiveNodes.add(IInterface::asBinder(observer), instance);
++    IInterface::asBinder(observer)->linkToDeath(this);
++
++    *omxNode = instance;
++
++    return OK;
++}
++
++status_t OMX::freeNode(const sp<OMXNodeInstance> &instance) {
++    if (instance == NULL) {
++        return OK;
++    }
++
++    {
++        Mutex::Autolock autoLock(mLock);
++        ssize_t index = mLiveNodes.indexOfKey(IInterface::asBinder(instance->observer()));
++        if (index < 0) {
++            // This could conceivably happen if the observer dies at roughly the
++            // same time that a client attempts to free the node explicitly.
++
++            // NOTE: it's guaranteed that this method is called at most once per
++            //       instance.
++            ALOGV("freeNode: instance already removed from book-keeping.");
++        } else {
++            mLiveNodes.removeItemsAt(index);
++            IInterface::asBinder(instance->observer())->unlinkToDeath(this);
++        }
++    }
++
++    CHECK(instance->handle() != NULL);
++    OMX_ERRORTYPE err = mMaster->destroyComponentInstance(
++            static_cast<OMX_COMPONENTTYPE *>(instance->handle()));
++    ALOGV("freeNode: handle destroyed: %p", instance->handle());
++
++    return StatusFromOMXError(err);
++}
++
++status_t OMX::createInputSurface(
++        sp<IGraphicBufferProducer> *bufferProducer,
++        sp<IGraphicBufferSource> *bufferSource) {
++    if (bufferProducer == NULL || bufferSource == NULL) {
++        ALOGE("b/25884056");
++        return BAD_VALUE;
++    }
++
++    sp<OmxGraphicBufferSource> graphicBufferSource = new OmxGraphicBufferSource();
++    status_t err = graphicBufferSource->initCheck();
++    if (err != OK) {
++        ALOGE("Failed to create persistent input surface: %s (%d)",
++                strerror(-err), err);
++        return err;
++    }
++
++    *bufferProducer = graphicBufferSource->getIGraphicBufferProducer();
++    *bufferSource = new BWGraphicBufferSource(graphicBufferSource);
++
++    return OK;
++}
++
++}  // namespace android
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index aa5ca3f09..f1066145d 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -344,7 +344,7 @@ bool OMXNodeInstance::CallbackDispatcherThread::threadLoop() {
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+ OMXNodeInstance::OMXNodeInstance(
+-        Omx *owner, const sp<IOMXObserver> &observer, const char *name)
++        OmxNodeOwner *owner, const sp<IOMXObserver> &observer, const char *name)
+     : mOwner(owner),
+       mHandle(NULL),
+       mObserver(observer),
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+new file mode 100644
+index 000000000..345336dbc
+--- /dev/null
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -0,0 +1,119 @@
++/*
++ * Copyright (C) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++//#define LOG_NDEBUG 0
++#define LOG_TAG "OMXStore"
++#include <utils/Log.h>
++
++#include <media/stagefright/omx/OMXUtils.h>
++#include <media/stagefright/omx/OMX.h>
++#include <media/stagefright/omx/OMXStore.h>
++#include <media/stagefright/xmlparser/MediaCodecsXmlParser.h>
++
++#include <map>
++#include <string>
++
++namespace android {
++
++namespace {
++    struct RoleProperties {
++        std::string type;
++        bool isEncoder;
++        bool preferPlatformNodes;
++        std::multimap<size_t, IOMXStore::NodeInfo> nodeList;
++    };
++}  // Unnamed namespace
++
++OMXStore::OMXStore(
++        const char* owner,
++        const char* const* searchDirs,
++        const char* mainXmlName,
++        const char* performanceXmlName,
++        const char* profilingResultsXmlPath) {
++    MediaCodecsXmlParser parser(
++            searchDirs,
++            mainXmlName,
++            performanceXmlName,
++            profilingResultsXmlPath);
++    mParsingStatus = parser.getParsingStatus();
++
++    const auto& serviceAttributeMap = parser.getServiceAttributeMap();
++    mServiceAttributeList.reserve(serviceAttributeMap.size());
++    for (const auto& attributePair : serviceAttributeMap) {
++        Attribute attribute;
++        attribute.key = attributePair.first;
++        attribute.value = attributePair.second;
++        mServiceAttributeList.push_back(std::move(attribute));
++    }
++
++    const auto& roleMap = parser.getRoleMap();
++    mRoleList.reserve(roleMap.size());
++    for (const auto& rolePair : roleMap) {
++        RoleInfo role;
++        role.role = rolePair.first;
++        role.type = rolePair.second.type;
++        role.isEncoder = rolePair.second.isEncoder;
++        // TODO: Currently, preferPlatformNodes information is not available in
++        // the xml file. Once we have a way to provide this information, it
++        // should be parsed properly.
++        role.preferPlatformNodes = rolePair.first.compare(0, 5, "audio") == 0;
++        std::vector<NodeInfo>& nodeList = role.nodes;
++        nodeList.reserve(rolePair.second.nodeList.size());
++        for (const auto& nodePair : rolePair.second.nodeList) {
++            NodeInfo node;
++            node.name = nodePair.second.name;
++            node.owner = owner;
++            std::vector<Attribute>& attributeList = node.attributes;
++            attributeList.reserve(nodePair.second.attributeList.size());
++            for (const auto& attributePair : nodePair.second.attributeList) {
++                Attribute attribute;
++                attribute.key = attributePair.first;
++                attribute.value = attributePair.second;
++                attributeList.push_back(std::move(attribute));
++            }
++            nodeList.push_back(std::move(node));
++        }
++        mRoleList.push_back(std::move(role));
++    }
++
++    mPrefix = parser.getCommonPrefix();
++}
++
++status_t OMXStore::listServiceAttributes(std::vector<Attribute>* attributes) {
++    *attributes = mServiceAttributeList;
++    return mParsingStatus;
++}
++
++status_t OMXStore::getNodePrefix(std::string* prefix) {
++    *prefix = mPrefix;
++    return mParsingStatus;
++}
++
++status_t OMXStore::listRoles(std::vector<RoleInfo>* roleList) {
++    *roleList = mRoleList;
++    return mParsingStatus;
++}
++
++status_t OMXStore::getOmx(const std::string& name, sp<IOMX>* omx) {
++    *omx = new OMX();
++    return NO_ERROR;
++}
++
++OMXStore::~OMXStore() {
++}
++
++}  // namespace android
++
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/1.0/Omx.h b/media/libstagefright/omx/include/media/stagefright/omx/1.0/Omx.h
+index 5a46b26f3..bfef6c0d2 100644
+--- a/media/libstagefright/omx/include/media/stagefright/omx/1.0/Omx.h
++++ b/media/libstagefright/omx/include/media/stagefright/omx/1.0/Omx.h
+@@ -20,6 +20,7 @@
+ #include <hidl/MQDescriptor.h>
+ #include <hidl/Status.h>
+ 
++#include <media/stagefright/omx/OMXNodeInstance.h>
+ #include <media/stagefright/xmlparser/MediaCodecsXmlParser.h>
+ #include <android/hardware/media/omx/1.0/IOmx.h>
+ #include <utils/KeyedVector.h>
+@@ -28,7 +29,6 @@
+ namespace android {
+ 
+ struct OMXMaster;
+-struct OMXNodeInstance;
+ 
+ namespace hardware {
+ namespace media {
+@@ -52,9 +52,10 @@ using ::android::sp;
+ using ::android::wp;
+ 
+ using ::android::OMXMaster;
++using ::android::OmxNodeOwner;
+ using ::android::OMXNodeInstance;
+ 
+-struct Omx : public IOmx, public hidl_death_recipient {
++struct Omx : public IOmx, public hidl_death_recipient, public OmxNodeOwner {
+     Omx();
+     virtual ~Omx();
+ 
+@@ -69,8 +70,8 @@ struct Omx : public IOmx, public hidl_death_recipient {
+     // Method from hidl_death_recipient
+     void serviceDied(uint64_t cookie, const wp<IBase>& who) override;
+ 
+-    // Method for OMXNodeInstance
+-    status_t freeNode(sp<OMXNodeInstance> const& instance);
++    // Method from OmxNodeOwner
++    virtual status_t freeNode(sp<OMXNodeInstance> const& instance) override;
+ 
+ protected:
+     OMXMaster* mMaster;
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMX.h b/media/libstagefright/omx/include/media/stagefright/omx/OMX.h
+new file mode 100644
+index 000000000..594b4c016
+--- /dev/null
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMX.h
+@@ -0,0 +1,67 @@
++/*
++ * Copyright (C) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_OMX_H_
++#define ANDROID_OMX_H_
++
++#include <media/IOMX.h>
++#include <utils/threads.h>
++#include <utils/KeyedVector.h>
++#include <media/stagefright/xmlparser/MediaCodecsXmlParser.h>
++#include "OmxNodeOwner.h"
++
++namespace android {
++
++struct OMXMaster;
++struct OMXNodeInstance;
++
++class OMX : public BnOMX,
++            public OmxNodeOwner,
++            public IBinder::DeathRecipient {
++public:
++    OMX();
++
++    virtual status_t listNodes(List<ComponentInfo> *list);
++
++    virtual status_t allocateNode(
++            const char *name, const sp<IOMXObserver> &observer,
++            sp<IOMXNode> *omxNode);
++
++    virtual status_t createInputSurface(
++            sp<IGraphicBufferProducer> *bufferProducer,
++            sp<IGraphicBufferSource> *bufferSource);
++
++    virtual void binderDied(const wp<IBinder> &the_late_who);
++
++    virtual status_t freeNode(const sp<OMXNodeInstance>& instance);
++
++protected:
++    virtual ~OMX();
++
++private:
++    Mutex mLock;
++    OMXMaster *mMaster;
++    MediaCodecsXmlParser mParser;
++
++    KeyedVector<wp<IBinder>, sp<OMXNodeInstance> > mLiveNodes;
++
++    OMX(const OMX &);
++    OMX &operator=(const OMX &);
++};
++
++}  // namespace android
++
++#endif  // ANDROID_OMX_H_
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h
+index f68288eaf..c85403c73 100644
+--- a/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXNodeInstance.h
+@@ -25,9 +25,9 @@
+ #include <utils/threads.h>
+ #include <utils/KeyedVector.h>
+ #include <utils/SortedVector.h>
++#include "OmxNodeOwner.h"
+ 
+ #include <android/hidl/memory/1.0/IMemory.h>
+-#include <media/stagefright/omx/1.0/Omx.h>
+ 
+ namespace android {
+ class GraphicBuffer;
+@@ -35,12 +35,11 @@ class IOMXBufferSource;
+ class IOMXObserver;
+ struct OMXMaster;
+ class OMXBuffer;
+-using IHidlMemory = hidl::memory::V1_0::IMemory;
+-using hardware::media::omx::V1_0::implementation::Omx;
++typedef hidl::memory::V1_0::IMemory IHidlMemory;
+ 
+ struct OMXNodeInstance : public BnOMXNode {
+     OMXNodeInstance(
+-            Omx *owner, const sp<IOMXObserver> &observer, const char *name);
++            OmxNodeOwner *owner, const sp<IOMXObserver> &observer, const char *name);
+ 
+     void setHandle(OMX_HANDLETYPE handle);
+ 
+@@ -126,7 +125,7 @@ private:
+ 
+     Mutex mLock;
+ 
+-    Omx *mOwner;
++    OmxNodeOwner *mOwner;
+     OMX_HANDLETYPE mHandle;
+     sp<IOMXObserver> mObserver;
+     sp<CallbackDispatcher> mDispatcher;
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
+new file mode 100644
+index 000000000..e00d71390
+--- /dev/null
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
+@@ -0,0 +1,62 @@
++/*
++ * Copyright (C) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_OMXSTORE_H_
++#define ANDROID_OMXSTORE_H_
++
++#include <media/IOMXStore.h>
++#include <media/IOMX.h>
++#include <media/stagefright/xmlparser/MediaCodecsXmlParser.h>
++
++#include <vector>
++#include <string>
++
++namespace android {
++
++class OMXStore : public BnOMXStore {
++public:
++    OMXStore(
++            const char* owner = "default",
++            const char* const* searchDirs
++                = MediaCodecsXmlParser::defaultSearchDirs,
++            const char* mainXmlName
++                = MediaCodecsXmlParser::defaultMainXmlName,
++            const char* performanceXmlName
++                = MediaCodecsXmlParser::defaultPerformanceXmlName,
++            const char* profilingResultsXmlPath
++                = MediaCodecsXmlParser::defaultProfilingResultsXmlPath);
++
++    status_t listServiceAttributes(
++            std::vector<Attribute>* attributes) override;
++
++    status_t getNodePrefix(std::string* prefix) override;
++
++    status_t listRoles(std::vector<RoleInfo>* roleList) override;
++
++    status_t getOmx(const std::string& name, sp<IOMX>* omx) override;
++
++    ~OMXStore() override;
++
++protected:
++    status_t mParsingStatus;
++    std::string mPrefix;
++    std::vector<Attribute> mServiceAttributeList;
++    std::vector<RoleInfo> mRoleList;
++};
++
++}  // namespace android
++
++#endif  // ANDROID_OMXSTORE_H_
+diff --git a/media/libstagefright/omx/tests/OMXHarness.cpp b/media/libstagefright/omx/tests/OMXHarness.cpp
+index 895a4cef4..49de3e633 100644
+--- a/media/libstagefright/omx/tests/OMXHarness.cpp
++++ b/media/libstagefright/omx/tests/OMXHarness.cpp
+@@ -25,9 +25,11 @@
+ 
+ #include <binder/ProcessState.h>
+ #include <binder/IServiceManager.h>
++#include <binder/MemoryDealer.h>
+ #include <cutils/properties.h>
+ #include <media/DataSource.h>
+ #include <media/IMediaHTTPService.h>
++#include <media/IMediaCodecService.h>
+ #include <media/MediaExtractor.h>
+ #include <media/MediaSource.h>
+ #include <media/OMXBuffer.h>
+@@ -69,7 +71,7 @@ void Harness::CodecObserver::onMessages(const std::list<omx_message> &messages)
+ /////////////////////////////////////////////////////////////////////
+ 
+ Harness::Harness()
+-    : mInitCheck(NO_INIT) {
++    : mInitCheck(NO_INIT), mUseTreble(false) {
+     mInitCheck = initOMX();
+ }
+ 
+@@ -81,12 +83,21 @@ status_t Harness::initCheck() const {
+ }
+ 
+ status_t Harness::initOMX() {
+-    using namespace ::android::hardware::media::omx::V1_0;
+-    sp<IOmx> tOmx = IOmx::getService();
+-    if (tOmx == nullptr) {
+-        return NO_INIT;
++    if (property_get_bool("persist.media.treble_omx", true)) {
++        using namespace ::android::hardware::media::omx::V1_0;
++        sp<IOmx> tOmx = IOmx::getService();
++        if (tOmx == nullptr) {
++            return NO_INIT;
++        }
++        mOMX = new utils::LWOmx(tOmx);
++        mUseTreble = true;
++    } else {
++        sp<IServiceManager> sm = defaultServiceManager();
++        sp<IBinder> binder = sm->getService(String16("media.codec"));
++        sp<IMediaCodecService> service = interface_cast<IMediaCodecService>(binder);
++        mOMX = service->getOMX();
++        mUseTreble = false;
+     }
+-    mOMX = new utils::LWOmx(tOmx);
+ 
+     return mOMX != 0 ? OK : NO_INIT;
+ }
+@@ -214,19 +225,25 @@ status_t Harness::allocatePortBuffers(
+     for (OMX_U32 i = 0; i < def.nBufferCountActual; ++i) {
+         Buffer buffer;
+         buffer.mFlags = 0;
+-        bool success;
+-        auto transStatus = mAllocator->allocate(def.nBufferSize,
+-                [&success, &buffer](
+-                        bool s,
+-                        hidl_memory const& m) {
+-                    success = s;
+-                    buffer.mHidlMemory = m;
+-                });
+-        EXPECT(transStatus.isOk(),
+-                "Cannot call allocator");
+-        EXPECT(success,
+-                "Cannot allocate memory");
+-        err = mOMXNode->useBuffer(portIndex, buffer.mHidlMemory, &buffer.mID);
++        if (mUseTreble) {
++            bool success;
++            auto transStatus = mAllocator->allocate(def.nBufferSize,
++                    [&success, &buffer](
++                            bool s,
++                            hidl_memory const& m) {
++                        success = s;
++                        buffer.mHidlMemory = m;
++                    });
++            EXPECT(transStatus.isOk(),
++                    "Cannot call allocator");
++            EXPECT(success,
++                    "Cannot allocate memory");
++            err = mOMXNode->useBuffer(portIndex, buffer.mHidlMemory, &buffer.mID);
++        } else {
++            buffer.mMemory = mDealer->allocate(def.nBufferSize);
++            CHECK(buffer.mMemory != NULL);
++            err = mOMXNode->useBuffer(portIndex, buffer.mMemory, &buffer.mID);
++        }
+ 
+         EXPECT_SUCCESS(err, "useBuffer");
+ 
+@@ -295,11 +312,13 @@ status_t Harness::testStateTransitions(
+         return OK;
+     }
+ 
+-    mAllocator = IAllocator::getService("ashmem");
+-    EXPECT(mAllocator != nullptr,
+-            "Cannot obtain hidl AshmemAllocator");
+-    // TODO: When Treble has MemoryHeap/MemoryDealer, we should specify the heap
+-    // size to be 16 * 1024 * 1024.
++    if (mUseTreble) {
++        mAllocator = IAllocator::getService("ashmem");
++        EXPECT(mAllocator != nullptr,
++                "Cannot obtain hidl AshmemAllocator");
++    } else {
++        mDealer = new MemoryDealer(16 * 1024 * 1024, "OMXHarness");
++    }
+ 
+     sp<CodecObserver> observer = new CodecObserver(this, ++mCurGeneration);
+ 
+diff --git a/media/libstagefright/omx/tests/OMXHarness.h b/media/libstagefright/omx/tests/OMXHarness.h
+index dca787cee..4fc0f7978 100644
+--- a/media/libstagefright/omx/tests/OMXHarness.h
++++ b/media/libstagefright/omx/tests/OMXHarness.h
+@@ -93,6 +93,8 @@ private:
+     Condition mMessageAddedCondition;
+     int32_t mLastMsgGeneration;
+     int32_t mCurGeneration;
++    bool mUseTreble;
++    sp<MemoryDealer> mDealer;
+     sp<IAllocator> mAllocator;
+ 
+     status_t initOMX();
+diff --git a/services/mediacodec/Android.mk b/services/mediacodec/Android.mk
+index 8631c3998..c8b45838c 100644
+--- a/services/mediacodec/Android.mk
++++ b/services/mediacodec/Android.mk
+@@ -23,6 +23,22 @@ _software_codecs := \
+     libstagefright_soft_vpxdec \
+     libstagefright_soft_vpxenc \
+ 
++# service library
++include $(CLEAR_VARS)
++LOCAL_SRC_FILES := MediaCodecService.cpp
++LOCAL_SHARED_LIBRARIES := \
++    libmedia_omx \
++    libbinder \
++    libgui \
++    libutils \
++    liblog \
++    libstagefright_omx \
++    libstagefright_xmlparser
++LOCAL_MODULE:= libmediacodecservice
++LOCAL_VENDOR_MODULE := true
++LOCAL_32_BIT_ONLY := true
++include $(BUILD_SHARED_LIBRARY)
++
+ # service executable
+ include $(CLEAR_VARS)
+ # seccomp is not required for coverage build.
+@@ -34,6 +50,7 @@ endif
+ LOCAL_SRC_FILES := main_codecservice.cpp
+ LOCAL_SHARED_LIBRARIES := \
+     libmedia_omx \
++    libmediacodecservice \
+     libbinder \
+     libutils \
+     liblog \
+diff --git a/services/mediacodec/MediaCodecService.cpp b/services/mediacodec/MediaCodecService.cpp
+new file mode 100644
+index 000000000..6b510c68b
+--- /dev/null
++++ b/services/mediacodec/MediaCodecService.cpp
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (C) 2015 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#define LOG_TAG "MediaCodecService"
++//#define LOG_NDEBUG 0
++#include <utils/Log.h>
++
++#include "MediaCodecService.h"
++
++namespace android {
++
++sp<IOMX> MediaCodecService::getOMX() {
++
++    Mutex::Autolock autoLock(mOMXLock);
++
++    if (mOMX.get() == NULL) {
++        mOMX = new OMX();
++    }
++
++    return mOMX;
++}
++
++sp<IOMXStore> MediaCodecService::getOMXStore() {
++
++    Mutex::Autolock autoLock(mOMXStoreLock);
++
++    if (mOMXStore.get() == NULL) {
++        mOMXStore = new OMXStore();
++    }
++
++    return mOMXStore;
++}
++
++status_t MediaCodecService::onTransact(uint32_t code, const Parcel& data, Parcel* reply,
++        uint32_t flags)
++{
++    return BnMediaCodecService::onTransact(code, data, reply, flags);
++}
++
++}   // namespace android
+diff --git a/services/mediacodec/MediaCodecService.h b/services/mediacodec/MediaCodecService.h
+new file mode 100644
+index 000000000..9301135e1
+--- /dev/null
++++ b/services/mediacodec/MediaCodecService.h
+@@ -0,0 +1,54 @@
++/*
++ * Copyright (C) 2015 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_MEDIA_CODEC_SERVICE_H
++#define ANDROID_MEDIA_CODEC_SERVICE_H
++
++#include <binder/BinderService.h>
++#include <media/IMediaCodecService.h>
++#include <media/stagefright/omx/OMX.h>
++#include <media/stagefright/omx/OMXStore.h>
++
++namespace android {
++
++class MediaCodecService : public BinderService<MediaCodecService>,
++        public BnMediaCodecService
++{
++    friend class BinderService<MediaCodecService>;    // for MediaCodecService()
++public:
++    MediaCodecService() : BnMediaCodecService() { }
++    virtual ~MediaCodecService() { }
++    virtual void onFirstRef() { }
++
++    static const char*    getServiceName() { return "media.codec"; }
++
++    virtual sp<IOMX>      getOMX();
++
++    virtual sp<IOMXStore> getOMXStore();
++
++    virtual status_t      onTransact(uint32_t code, const Parcel& data,
++                                     Parcel* reply, uint32_t flags);
++
++private:
++    Mutex                 mOMXLock;
++    sp<IOMX>              mOMX;
++    Mutex                 mOMXStoreLock;
++    sp<IOMXStore>         mOMXStore;
++};
++
++}   // namespace android
++
++#endif  // ANDROID_MEDIA_CODEC_SERVICE_H
+diff --git a/services/mediacodec/main_codecservice.cpp b/services/mediacodec/main_codecservice.cpp
+index 51619f625..70049b0d0 100644
+--- a/services/mediacodec/main_codecservice.cpp
++++ b/services/mediacodec/main_codecservice.cpp
+@@ -15,12 +15,22 @@
+ ** limitations under the License.
+ */
+ 
++#include <fcntl.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++#include <binder/IPCThreadState.h>
++#include <binder/ProcessState.h>
++#include <binder/IServiceManager.h>
++#include <cutils/properties.h>
++
++#include <string>
++
+ #include <android-base/logging.h>
+ 
+ // from LOCAL_C_INCLUDES
++#include "MediaCodecService.h"
+ #include "minijail.h"
+ 
+-#include <binder/ProcessState.h>
+ #include <hidl/HidlTransportSupport.h>
+ #include <media/stagefright/omx/1.0/Omx.h>
+ #include <media/stagefright/omx/1.0/OmxStore.h>
+@@ -38,32 +48,21 @@ static const char kVendorSeccompPolicyPath[] =
+ 
+ int main(int argc __unused, char** argv)
+ {
+-    strcpy(argv[0], "media.codec");
+     LOG(INFO) << "mediacodecservice starting";
++    bool treble = property_get_bool("persist.media.treble_omx", true);
++    if (treble) {
++      android::ProcessState::initWithDriver("/dev/vndbinder");
++    }
++
+     signal(SIGPIPE, SIG_IGN);
+     SetUpMinijail(kSystemSeccompPolicyPath, kVendorSeccompPolicyPath);
+ 
+-    android::ProcessState::initWithDriver("/dev/vndbinder");
+-    android::ProcessState::self()->startThreadPool();
++    strcpy(argv[0], "media.codec");
+ 
+     ::android::hardware::configureRpcThreadpool(64, false);
++    sp<ProcessState> proc(ProcessState::self());
+ 
+-    // Registration of customized codec services
+-    void *registrantLib = dlopen(
+-            "libmedia_codecserviceregistrant.so",
+-            RTLD_NOW | RTLD_LOCAL);
+-    if (registrantLib) {
+-        RegisterCodecServicesFunc registerCodecServices =
+-                reinterpret_cast<RegisterCodecServicesFunc>(
+-                dlsym(registrantLib, "RegisterCodecServices"));
+-        if (registerCodecServices) {
+-            registerCodecServices();
+-        } else {
+-            LOG(WARNING) << "Cannot register additional services "
+-                    "-- corrupted library.";
+-        }
+-    } else {
+-        // Default codec services
++    if (treble) {
+         using namespace ::android::hardware::media::omx::V1_0;
+         sp<IOmxStore> omxStore = new implementation::OmxStore();
+         if (omxStore == nullptr) {
+@@ -77,9 +76,13 @@ int main(int argc __unused, char** argv)
+         } else if (omx->registerAsService() != OK) {
+             LOG(ERROR) << "Cannot register IOmx HAL service.";
+         } else {
+-            LOG(INFO) << "IOmx HAL service created.";
++            LOG(INFO) << "Treble OMX service created.";
+         }
++    } else {
++        MediaCodecService::instantiate();
++        LOG(INFO) << "Non-Treble OMX service created.";
+     }
+ 
+-    ::android::hardware::joinRpcThreadpool();
++    ProcessState::self()->startThreadPool();
++    IPCThreadState::self()->joinThreadPool();
+ }
+-- 
+2.11.0
+

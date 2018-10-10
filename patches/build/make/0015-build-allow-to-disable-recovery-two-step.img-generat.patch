@@ -1,7 +1,7 @@
 From 3de0b4dcea7162239f720f4719a1af7ce0e9e4da Mon Sep 17 00:00:00 2001
 From: Flex1911 <dedsa2002@gmail.com>
 Date: Fri, 7 Apr 2017 12:56:44 +0300
-Subject: [PATCH 15/31] build: allow to disable recovery-two-step.img
+Subject: [PATCH 15/32] build: allow to disable recovery-two-step.img
  generation
 
 Android 7.1.2 introduced new mechanism for recovery updating in two-step OTAs.

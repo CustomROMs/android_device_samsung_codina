@@ -1,7 +1,7 @@
 From 527918bcfaf43f359015ac923590021063efed1e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 25 Aug 2018 18:13:40 +0300
-Subject: [PATCH 5/5] Enhance emulated sdcard handling
+Subject: [PATCH 05/28] Enhance emulated sdcard handling
 
 Change-Id: Ic88df14d56d34fbac086c670424473ff1ca8f4a3
 ---

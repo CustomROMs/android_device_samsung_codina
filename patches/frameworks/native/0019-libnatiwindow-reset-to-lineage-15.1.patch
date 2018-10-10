@@ -1,7 +1,7 @@
 From bb3fe80c1f24ad9bcf4948a2a329688b3f211649 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 18 Sep 2018 15:32:18 +0300
-Subject: [PATCH 19/42] libnatiwindow: reset to lineage-15.1
+Subject: [PATCH 19/49] libnatiwindow: reset to lineage-15.1
 
 Change-Id: I7ec4a8c8f24d4b9069bdd96b30a76721622bd872
 ---

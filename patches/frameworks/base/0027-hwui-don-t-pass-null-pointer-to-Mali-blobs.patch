@@ -1,0 +1,33 @@
+From 1db477da7aeb9a1db8a657d0d7e5002db2e4678e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 00:34:01 +0300
+Subject: [PATCH 27/28] hwui: don't pass null pointer to Mali blobs
+
+Change-Id: I958a8222af9142b448886886e0a56da5f1c9e262
+---
+ libs/hwui/renderthread/EglManager.cpp | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/libs/hwui/renderthread/EglManager.cpp b/libs/hwui/renderthread/EglManager.cpp
+index 6e239e357cf..5665de36afd 100644
+--- a/libs/hwui/renderthread/EglManager.cpp
++++ b/libs/hwui/renderthread/EglManager.cpp
+@@ -324,11 +324,10 @@ EGLSurface EglManager::createSurface(EGLNativeWindowType window, bool wideColorG
+ 
+     EGLSurface surface = eglCreateWindowSurface(
+             mEglDisplay, wideColorGamut ? mEglConfigWideGamut : mEglConfig, window, attribs);
+-    LOG_ALWAYS_FATAL_IF(surface == EGL_NO_SURFACE,
+-                        "Failed to create EGLSurface for window %p, eglErr = %s", (void*)window,
+-                        eglErrorString());
+-
+-    if (mSwapBehavior != SwapBehavior::Preserved) {
++    if (surface == EGL_NO_SURFACE) {
++        ALOGW("Failed to create EGLSurface for window %p, eglErr = %s",
++                (void*) window, eglErrorString());
++    } else if (mSwapBehavior != SwapBehavior::Preserved) {
+         LOG_ALWAYS_FATAL_IF(eglSurfaceAttrib(mEglDisplay, surface, EGL_SWAP_BEHAVIOR,
+                                              EGL_BUFFER_DESTROYED) == EGL_FALSE,
+                             "Failed to set swap behavior to destroyed for window %p, eglErr = %s",
+-- 
+2.11.0
+

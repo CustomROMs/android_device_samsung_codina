@@ -1,7 +1,7 @@
 From 8faace414bce8c7b8e1cdf8db46ec5dbe6ab86ca Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 01:09:13 +0300
-Subject: [PATCH 07/24] bootloop fixes
+Subject: [PATCH 07/30] bootloop fixes
 
 Change-Id: Ia707ee5aa87d8b4741dcdc9db61c9a6a35a67098
 ---

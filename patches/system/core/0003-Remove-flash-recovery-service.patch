@@ -1,7 +1,7 @@
 From eaaeaecb520940006da3ea1cbe4b7dba0883ce2c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 03/24] Remove flash recovery service
+Subject: [PATCH 03/30] Remove flash recovery service
 
 ---
  rootdir/init.rc | 9 ---------

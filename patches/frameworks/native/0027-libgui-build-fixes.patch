@@ -1,7 +1,7 @@
 From a276db18de1ec3d7bd5b671dca3885c27be9fe89 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 02:09:05 +0300
-Subject: [PATCH 27/42] libgui: build fixes
+Subject: [PATCH 27/49] libgui: build fixes
 
 Change-Id: I5b6d350ed760fbff6f1ffae9a61a1154e3aa3480
 ---

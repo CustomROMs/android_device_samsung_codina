@@ -1,0 +1,692 @@
+From 5c7cd7b7600563fc3561573997d29c10f9be4af7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Fri, 21 Sep 2018 23:39:41 +0300
+Subject: [PATCH 48/49] sf: switch back to SurfaceFlingerConsumer (GLConsumer)
+
+Change-Id: I511081be10cb3e8b1363154b293bbc103330232b
+---
+ libs/gui/GLConsumer.cpp                            |   5 +-
+ libs/gui/include/gui/GLConsumer.h                  |  10 +
+ services/surfaceflinger/Android.bp                 |   1 +
+ services/surfaceflinger/BufferLayer.cpp            |   5 +-
+ services/surfaceflinger/BufferLayer.h              |  10 +-
+ services/surfaceflinger/BufferLayerConsumer.cpp    |  10 -
+ services/surfaceflinger/BufferLayerConsumer.h      |  22 +-
+ services/surfaceflinger/LayerRejecter.h            |   4 +-
+ services/surfaceflinger/SurfaceFlingerConsumer.cpp | 296 +++++++++++++++++++++
+ services/surfaceflinger/SurfaceFlingerConsumer.h   | 128 +++++++++
+ 10 files changed, 466 insertions(+), 25 deletions(-)
+ create mode 100644 services/surfaceflinger/SurfaceFlingerConsumer.cpp
+ create mode 100644 services/surfaceflinger/SurfaceFlingerConsumer.h
+
+diff --git a/libs/gui/GLConsumer.cpp b/libs/gui/GLConsumer.cpp
+index f7dd8ec55..226893e44 100644
+--- a/libs/gui/GLConsumer.cpp
++++ b/libs/gui/GLConsumer.cpp
+@@ -149,7 +149,8 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
+ #ifdef STE_HARDWARE
+     mNextBlitSlot(0),
+ #endif
+-    mAttached(true)
++    mAttached(true),
++    mCurrentApi(0)
+ {
+     GLC_LOGV("GLConsumer");
+ 
+@@ -578,9 +579,11 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferItem& item,
+     mCurrentScalingMode = item.mScalingMode;
+     mCurrentTimestamp = item.mTimestamp;
+     mCurrentDataSpace = item.mDataSpace;
++    mCurrentHdrMetadata = item.mHdrMetadata;
+     mCurrentFence = item.mFence;
+     mCurrentFenceTime = item.mFenceTime;
+     mCurrentFrameNumber = item.mFrameNumber;
++    mCurrentApi = item.mApi;
+ 
+     computeCurrentTransformMatrixLocked();
+ 
+diff --git a/libs/gui/include/gui/GLConsumer.h b/libs/gui/include/gui/GLConsumer.h
+index eac435d74..167c08246 100644
+--- a/libs/gui/include/gui/GLConsumer.h
++++ b/libs/gui/include/gui/GLConsumer.h
+@@ -431,10 +431,16 @@ private:
+     // gets set each time updateTexImage is called.
+     int64_t mCurrentTimestamp;
+ 
++protected:
+     // mCurrentDataSpace is the dataspace for the current texture. It
+     // gets set each time updateTexImage is called.
+     android_dataspace mCurrentDataSpace;
+ 
++    // mCurrentHdrMetadata is the HDR metadata for the current texture. It
++    // gets set each time updateTexImage is called.
++    HdrMetadata mCurrentHdrMetadata;
++
++private:
+     // mCurrentFrameNumber is the frame counter for the current texture.
+     // It gets set each time updateTexImage is called.
+     uint64_t mCurrentFrameNumber;
+@@ -530,6 +536,10 @@ private:
+     // attachToContext.
+     bool mAttached;
+ 
++protected:
++    int mCurrentApi;
++
++private:
+     // protects static initialization
+     static Mutex sStaticInitLock;
+ 
+diff --git a/services/surfaceflinger/Android.bp b/services/surfaceflinger/Android.bp
+index 8c17db2c8..1d7a72991 100644
+--- a/services/surfaceflinger/Android.bp
++++ b/services/surfaceflinger/Android.bp
+@@ -124,6 +124,7 @@ filegroup {
+         "RenderEngine/Texture.cpp",
+         "StartPropertySetThread.cpp",
+         "SurfaceFlinger.cpp",
++        "SurfaceFlingerConsumer.cpp",
+         "SurfaceInterceptor.cpp",
+         "SurfaceTracing.cpp",
+         "TimeStats/TimeStats.cpp",
+diff --git a/services/surfaceflinger/BufferLayer.cpp b/services/surfaceflinger/BufferLayer.cpp
+index fda790674..0320d6d16 100644
+--- a/services/surfaceflinger/BufferLayer.cpp
++++ b/services/surfaceflinger/BufferLayer.cpp
+@@ -442,7 +442,7 @@ Region BufferLayer::latchBuffer(bool& recomputeVisibleRegions, nsecs_t latchTime
+         // layer update so we check again at the next opportunity.
+         mFlinger->signalLayerUpdate();
+         return outDirtyRegion;
+-    } else if (updateResult == BufferLayerConsumer::BUFFER_REJECTED) {
++    } else if (updateResult == SurfaceFlingerConsumer::BUFFER_REJECTED) {
+         // If the buffer has been rejected, remove it from the shadow queue
+         // and return early
+         if (queuedBuffer) {
+@@ -706,8 +706,7 @@ void BufferLayer::onFirstRef() {
+     sp<IGraphicBufferConsumer> consumer;
+     BufferQueue::createBufferQueue(&producer, &consumer, true);
+     mProducer = new MonitoredProducer(producer, mFlinger, this);
+-    mConsumer = new BufferLayerConsumer(consumer,
+-            mFlinger->getRenderEngine(), mTextureName, this);
++    mConsumer = new SurfaceFlingerConsumer(consumer, mTextureName, this);
+     mConsumer->setConsumerUsageBits(getEffectiveUsage(0));
+     mConsumer->setContentsChangedListener(this);
+     mConsumer->setName(mName);
+diff --git a/services/surfaceflinger/BufferLayer.h b/services/surfaceflinger/BufferLayer.h
+index bf0ca6925..ba5f0840e 100644
+--- a/services/surfaceflinger/BufferLayer.h
++++ b/services/surfaceflinger/BufferLayer.h
+@@ -16,7 +16,6 @@
+ 
+ #pragma once
+ 
+-#include "BufferLayerConsumer.h"
+ #include "Client.h"
+ #include "Layer.h"
+ #include "DisplayHardware/HWComposer.h"
+@@ -27,6 +26,7 @@
+ #include "RenderEngine/Mesh.h"
+ #include "RenderEngine/Texture.h"
+ #include "SurfaceFlinger.h"
++#include "SurfaceFlingerConsumer.h"
+ #include "Transform.h"
+ 
+ #include <gui/ISurfaceComposerClient.h>
+@@ -48,13 +48,13 @@
+ namespace android {
+ 
+ /*
+- * A new BufferQueue and a new BufferLayerConsumer are created when the
++ * A new BufferQueue and a new SurfaceFlingerConsumer are created when the
+  * BufferLayer is first referenced.
+  *
+  * This also implements onFrameAvailable(), which notifies SurfaceFlinger
+  * that new data has arrived.
+  */
+-class BufferLayer : public Layer, public BufferLayerConsumer::ContentsChangedListener {
++class BufferLayer : public Layer, public SurfaceFlingerConsumer::ContentsChangedListener {
+ public:
+     BufferLayer(SurfaceFlinger* flinger, const sp<Client>& client, const String8& name, uint32_t w,
+                 uint32_t h, uint32_t flags);
+@@ -139,7 +139,7 @@ private:
+     void onFirstRef() override;
+ 
+     // Interface implementation for
+-    // BufferLayerConsumer::ContentsChangedListener
++    // SurfaceFlingerConsumer::ContentsChangedListener
+     void onFrameAvailable(const BufferItem& item) override;
+     void onFrameReplaced(const BufferItem& item) override;
+     void onSidebandStreamChanged() override;
+@@ -172,7 +172,7 @@ public:
+     sp<IGraphicBufferProducer> getProducer() const;
+ 
+ private:
+-    sp<BufferLayerConsumer> mConsumer;
++    sp<SurfaceFlingerConsumer> mConsumer;
+ 
+     // Check all of the local sync points to ensure that all transactions
+     // which need to have been applied prior to the frame which is about to
+diff --git a/services/surfaceflinger/BufferLayerConsumer.cpp b/services/surfaceflinger/BufferLayerConsumer.cpp
+index 5252afdf3..d21570a5f 100644
+--- a/services/surfaceflinger/BufferLayerConsumer.cpp
++++ b/services/surfaceflinger/BufferLayerConsumer.cpp
+@@ -245,11 +245,6 @@ status_t BufferLayerConsumer::updateTexImage(BufferRejecter* rejecter, const Dis
+     return err;
+ }
+ 
+-status_t BufferLayerConsumer::bindTextureImage() {
+-    Mutex::Autolock lock(mMutex);
+-    return bindTextureImageLocked();
+-}
+-
+ void BufferLayerConsumer::setReleaseFence(const sp<Fence>& fence) {
+     if (!fence->isValid()) {
+         return;
+@@ -284,11 +279,6 @@ bool BufferLayerConsumer::releasePendingBuffer() {
+     return true;
+ }
+ 
+-sp<Fence> BufferLayerConsumer::getPrevFinalReleaseFence() const {
+-    Mutex::Autolock lock(mMutex);
+-    return ConsumerBase::mPrevFinalReleaseFence;
+-}
+-
+ status_t BufferLayerConsumer::acquireBufferLocked(BufferItem* item, nsecs_t presentWhen,
+                                                   uint64_t maxFrameNumber) {
+     status_t err = ConsumerBase::acquireBufferLocked(item, presentWhen, maxFrameNumber);
+diff --git a/services/surfaceflinger/BufferLayerConsumer.h b/services/surfaceflinger/BufferLayerConsumer.h
+index 9837b0378..06afaa49c 100644
+--- a/services/surfaceflinger/BufferLayerConsumer.h
++++ b/services/surfaceflinger/BufferLayerConsumer.h
+@@ -106,9 +106,6 @@ public:
+     status_t updateTexImage(BufferRejecter* rejecter, const DispSync& dispSync, bool* autoRefresh,
+                             bool* queuedBuffer, uint64_t maxFrameNumber);
+ 
+-    // See BufferLayerConsumer::bindTextureImageLocked().
+-    status_t bindTextureImage();
+-
+     // setReleaseFence stores a fence that will signal when the current buffer
+     // is no longer being read. This fence will be returned to the producer
+     // when the current buffer is released by updateTexImage(). Multiple
+@@ -120,7 +117,24 @@ public:
+ 
+     sp<Fence> getPrevFinalReleaseFence() const;
+ 
+-    // See GLConsumer::getTransformMatrix.
++    // getTransformMatrix retrieves the 4x4 texture coordinate transform matrix
++    // associated with the texture image set by the most recent call to
++    // updateTexImage.
++    //
++    // This transform matrix maps 2D homogeneous texture coordinates of the form
++    // (s, t, 0, 1) with s and t in the inclusive range [0, 1] to the texture
++    // coordinate that should be used to sample that location from the texture.
++    // Sampling the texture outside of the range of this transform is undefined.
++    //
++    // This transform is necessary to compensate for transforms that the stream
++    // content producer may implicitly apply to the content. By forcing users of
++    // a BufferLayerConsumer to apply this transform we avoid performing an extra
++    // copy of the data that would be needed to hide the transform from the
++    // user.
++    //
++    // The matrix is stored in column-major order so that it may be passed
++    // directly to OpenGL ES via the glLoadMatrixf or glUniformMatrix4fv
++    // functions.
+     void getTransformMatrix(float mtx[16]);
+ 
+     // getTimestamp retrieves the timestamp associated with the texture image
+diff --git a/services/surfaceflinger/LayerRejecter.h b/services/surfaceflinger/LayerRejecter.h
+index 40972aac8..828cd8b96 100644
+--- a/services/surfaceflinger/LayerRejecter.h
++++ b/services/surfaceflinger/LayerRejecter.h
+@@ -18,10 +18,10 @@
+ #define ANDROID_LAYER_REJECTER_H
+ 
+ #include "Layer.h"
+-#include "BufferLayerConsumer.h"
++#include "SurfaceFlingerConsumer.h"
+ 
+ namespace android {
+-    class LayerRejecter : public BufferLayerConsumer::BufferRejecter {
++    class LayerRejecter : public SurfaceFlingerConsumer::BufferRejecter {
+     public:
+         LayerRejecter(Layer::State &front,
+                       Layer::State &current,
+diff --git a/services/surfaceflinger/SurfaceFlingerConsumer.cpp b/services/surfaceflinger/SurfaceFlingerConsumer.cpp
+new file mode 100644
+index 000000000..111db2f17
+--- /dev/null
++++ b/services/surfaceflinger/SurfaceFlingerConsumer.cpp
+@@ -0,0 +1,296 @@
++/*
++ * Copyright (C) 2012 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#define ATRACE_TAG ATRACE_TAG_GRAPHICS
++//#define LOG_NDEBUG 0
++
++#include "SurfaceFlingerConsumer.h"
++#include "Layer.h"
++
++#include <private/gui/SyncFeatures.h>
++
++#include <gui/BufferItem.h>
++#include <gui/BufferQueue.h>
++
++#include <utils/Errors.h>
++#include <utils/NativeHandle.h>
++#include <utils/Trace.h>
++
++namespace android {
++
++// Macros for including the SurfaceFlingerConsumer name in log messages
++#define SFC_LOGV(x, ...) ALOGV("[%s] " x, mName.string(), ##__VA_ARGS__)
++#define SFC_LOGD(x, ...) ALOGD("[%s] " x, mName.string(), ##__VA_ARGS__)
++//#define SFC_LOGI(x, ...) ALOGI("[%s] " x, mName.string(), ##__VA_ARGS__)
++#define SFC_LOGW(x, ...) ALOGW("[%s] " x, mName.string(), ##__VA_ARGS__)
++#define SFC_LOGE(x, ...) ALOGE("[%s] " x, mName.string(), ##__VA_ARGS__)
++
++// ---------------------------------------------------------------------------
++
++status_t SurfaceFlingerConsumer::updateTexImage(BufferRejecter* rejecter,
++        const DispSync& dispSync, bool* autoRefresh, bool* queuedBuffer,
++        uint64_t maxFrameNumber)
++{
++    ATRACE_CALL();
++    ALOGV("updateTexImage");
++    Mutex::Autolock lock(mMutex);
++
++    if (mAbandoned) {
++        ALOGE("updateTexImage: GLConsumer is abandoned!");
++        return NO_INIT;
++    }
++
++    // Make sure the EGL state is the same as in previous calls.
++    status_t err = checkAndUpdateEglStateLocked();
++    if (err != NO_ERROR) {
++        return err;
++    }
++
++    BufferItem item;
++
++    // Acquire the next buffer.
++    // In asynchronous mode the list is guaranteed to be one buffer
++    // deep, while in synchronous mode we use the oldest buffer.
++    err = acquireBufferLocked(&item, computeExpectedPresent(dispSync),
++            maxFrameNumber);
++    if (err != NO_ERROR) {
++        if (err == BufferQueue::NO_BUFFER_AVAILABLE) {
++            err = NO_ERROR;
++        } else if (err == BufferQueue::PRESENT_LATER) {
++            // return the error, without logging
++        } else {
++            ALOGE("updateTexImage: acquire failed: %s (%d)",
++                strerror(-err), err);
++        }
++        return err;
++    }
++
++    if (autoRefresh) {
++        *autoRefresh = item.mAutoRefresh;
++    }
++
++    if (queuedBuffer) {
++        *queuedBuffer = item.mQueuedBuffer;
++    }
++
++    // We call the rejecter here, in case the caller has a reason to
++    // not accept this buffer.  This is used by SurfaceFlinger to
++    // reject buffers which have the wrong size
++    int slot = item.mSlot;
++    if (rejecter && rejecter->reject(mSlots[slot].mGraphicBuffer, item)) {
++        releaseBufferLocked(slot, mSlots[slot].mGraphicBuffer, EGL_NO_SYNC_KHR);
++        return BUFFER_REJECTED;
++    }
++
++    // Release the previous buffer.
++    err = updateAndReleaseLocked(item, &mPendingRelease);
++    if (err != NO_ERROR) {
++        return err;
++    }
++
++    if (!SyncFeatures::getInstance().useNativeFenceSync()) {
++        // Bind the new buffer to the GL texture.
++        //
++        // Older devices require the "implicit" synchronization provided
++        // by glEGLImageTargetTexture2DOES, which this method calls.  Newer
++        // devices will either call this in Layer::onDraw, or (if it's not
++        // a GL-composited layer) not at all.
++        err = bindTextureImageLocked();
++    }
++
++    return err;
++}
++
++status_t SurfaceFlingerConsumer::bindTextureImage()
++{
++    Mutex::Autolock lock(mMutex);
++
++    return bindTextureImageLocked();
++}
++
++status_t SurfaceFlingerConsumer::acquireBufferLocked(BufferItem* item,
++        nsecs_t presentWhen, uint64_t maxFrameNumber) {
++    status_t result = GLConsumer::acquireBufferLocked(item, presentWhen,
++            maxFrameNumber);
++    if (result == NO_ERROR) {
++        mTransformToDisplayInverse = item->mTransformToDisplayInverse;
++        mSurfaceDamage = item->mSurfaceDamage;
++    }
++    return result;
++}
++
++bool SurfaceFlingerConsumer::getTransformToDisplayInverse() const {
++    Mutex::Autolock lock(mMutex);
++    return mTransformToDisplayInverse;
++}
++
++const Region& SurfaceFlingerConsumer::getSurfaceDamage() const {
++    return mSurfaceDamage;
++}
++
++sp<NativeHandle> SurfaceFlingerConsumer::getSidebandStream() const {
++    sp<NativeHandle> stream;
++    mConsumer->getSidebandStream(&stream);
++    return stream;
++}
++
++// We need to determine the time when a buffer acquired now will be
++// displayed.  This can be calculated:
++//   time when previous buffer's actual-present fence was signaled
++//    + current display refresh rate * HWC latency
++//    + a little extra padding
++//
++// Buffer producers are expected to set their desired presentation time
++// based on choreographer time stamps, which (coming from vsync events)
++// will be slightly later then the actual-present timing.  If we get a
++// desired-present time that is unintentionally a hair after the next
++// vsync, we'll hold the frame when we really want to display it.  We
++// need to take the offset between actual-present and reported-vsync
++// into account.
++//
++// If the system is configured without a DispSync phase offset for the app,
++// we also want to throw in a bit of padding to avoid edge cases where we
++// just barely miss.  We want to do it here, not in every app.  A major
++// source of trouble is the app's use of the display's ideal refresh time
++// (via Display.getRefreshRate()), which could be off of the actual refresh
++// by a few percent, with the error multiplied by the number of frames
++// between now and when the buffer should be displayed.
++//
++// If the refresh reported to the app has a phase offset, we shouldn't need
++// to tweak anything here.
++nsecs_t SurfaceFlingerConsumer::computeExpectedPresent(const DispSync& dispSync)
++{
++    // The HWC doesn't currently have a way to report additional latency.
++    // Assume that whatever we submit now will appear right after the flip.
++    // For a smart panel this might be 1.  This is expressed in frames,
++    // rather than time, because we expect to have a constant frame delay
++    // regardless of the refresh rate.
++    const uint32_t hwcLatency = 0;
++
++    // Ask DispSync when the next refresh will be (CLOCK_MONOTONIC).
++    const nsecs_t nextRefresh = dispSync.computeNextRefresh(hwcLatency);
++
++    // The DispSync time is already adjusted for the difference between
++    // vsync and reported-vsync (SurfaceFlinger::dispSyncPresentTimeOffset), so
++    // we don't need to factor that in here.  Pad a little to avoid
++    // weird effects if apps might be requesting times right on the edge.
++    nsecs_t extraPadding = 0;
++    if (SurfaceFlinger::vsyncPhaseOffsetNs == 0) {
++        extraPadding = 1000000;        // 1ms (6% of 60Hz)
++    }
++
++    return nextRefresh + extraPadding;
++}
++
++sp<Fence> SurfaceFlingerConsumer::getPrevFinalReleaseFence() const {
++    Mutex::Autolock lock(mMutex);
++    return ConsumerBase::mPrevFinalReleaseFence;
++}
++
++void SurfaceFlingerConsumer::setReleaseFence(const sp<Fence>& fence)
++{
++    if (!mPendingRelease.isPending) {
++        GLConsumer::setReleaseFence(fence);
++        return;
++    }
++    auto currentTexture = mPendingRelease.currentTexture;
++    if (fence->isValid() &&
++            currentTexture != BufferQueue::INVALID_BUFFER_SLOT) {
++        status_t result = addReleaseFence(currentTexture,
++                mPendingRelease.graphicBuffer, fence);
++        ALOGE_IF(result != NO_ERROR, "setReleaseFence: failed to add the"
++                " fence: %s (%d)", strerror(-result), result);
++    }
++}
++
++bool SurfaceFlingerConsumer::releasePendingBuffer()
++{
++    if (!mPendingRelease.isPending) {
++        ALOGV("Pending buffer already released");
++        return false;
++    }
++    ALOGV("Releasing pending buffer");
++    Mutex::Autolock lock(mMutex);
++    status_t result = releaseBufferLocked(mPendingRelease.currentTexture,
++            mPendingRelease.graphicBuffer, mPendingRelease.display,
++            mPendingRelease.fence);
++    ALOGE_IF(result < NO_ERROR, "releasePendingBuffer failed: %s (%d)",
++            strerror(-result), result);
++    mPendingRelease = PendingRelease();
++    return true;
++}
++
++void SurfaceFlingerConsumer::setContentsChangedListener(
++        const wp<ContentsChangedListener>& listener) {
++    setFrameAvailableListener(listener);
++    Mutex::Autolock lock(mMutex);
++    mContentsChangedListener = listener;
++}
++
++void SurfaceFlingerConsumer::onSidebandStreamChanged() {
++    FrameAvailableListener* unsafeFrameAvailableListener = nullptr;
++    {
++        Mutex::Autolock lock(mFrameAvailableMutex);
++        unsafeFrameAvailableListener = mFrameAvailableListener.unsafe_get();
++    }
++    sp<ContentsChangedListener> listener;
++    {   // scope for the lock
++        Mutex::Autolock lock(mMutex);
++        ALOG_ASSERT(unsafeFrameAvailableListener == mContentsChangedListener.unsafe_get());
++        listener = mContentsChangedListener.promote();
++    }
++
++    if (listener != NULL) {
++        listener->onSidebandStreamChanged();
++    }
++}
++
++void SurfaceFlingerConsumer::onDisconnect() {
++    sp<Layer> l = mLayer.promote();
++    if (l.get()) {
++        l->onDisconnect();
++    }
++}
++
++void SurfaceFlingerConsumer::addAndGetFrameTimestamps(
++        const NewFrameEventsEntry* newTimestamps,
++        FrameEventHistoryDelta *outDelta) {
++    sp<Layer> l = mLayer.promote();
++    if (l.get()) {
++        l->addAndGetFrameTimestamps(newTimestamps, outDelta);
++    }
++}
++
++ui::Dataspace SurfaceFlingerConsumer::getCurrentDataSpace() {
++    SFC_LOGV("getCurrentDataSpace");
++    Mutex::Autolock lock(mMutex);
++    return static_cast<ui::Dataspace>(mCurrentDataSpace);
++}
++
++const HdrMetadata& SurfaceFlingerConsumer::getCurrentHdrMetadata() const {
++    SFC_LOGV("getCurrentHdrMetadata");
++    Mutex::Autolock lock(mMutex);
++    return mCurrentHdrMetadata;
++}
++
++int SurfaceFlingerConsumer::getCurrentApi() const {
++    Mutex::Autolock lock(mMutex);
++    return mCurrentApi;
++}
++
++// ---------------------------------------------------------------------------
++}; // namespace android
++
+diff --git a/services/surfaceflinger/SurfaceFlingerConsumer.h b/services/surfaceflinger/SurfaceFlingerConsumer.h
+new file mode 100644
+index 000000000..c8cdf3481
+--- /dev/null
++++ b/services/surfaceflinger/SurfaceFlingerConsumer.h
+@@ -0,0 +1,128 @@
++/*
++ * Copyright (C) 2012 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef ANDROID_SURFACEFLINGERCONSUMER_H
++#define ANDROID_SURFACEFLINGERCONSUMER_H
++
++#include "DispSync.h"
++
++#include <ui/Region.h>
++#include <ui/GraphicTypes.h>
++#include <gui/GLConsumer.h>
++
++namespace android {
++// ----------------------------------------------------------------------------
++
++class Layer;
++
++/*
++ * This is a thin wrapper around GLConsumer.
++ */
++class SurfaceFlingerConsumer : public GLConsumer {
++public:
++    static const status_t BUFFER_REJECTED = UNKNOWN_ERROR + 8;
++
++    struct ContentsChangedListener: public FrameAvailableListener {
++        virtual void onSidebandStreamChanged() = 0;
++    };
++
++    SurfaceFlingerConsumer(const sp<IGraphicBufferConsumer>& consumer,
++            uint32_t tex, Layer* layer)
++        : GLConsumer(consumer, tex, GLConsumer::TEXTURE_EXTERNAL, false, false),
++          mTransformToDisplayInverse(false), mSurfaceDamage(), mLayer(layer)
++    {}
++
++    class BufferRejecter {
++        friend class SurfaceFlingerConsumer;
++        virtual bool reject(const sp<GraphicBuffer>& buf,
++                const BufferItem& item) = 0;
++
++    protected:
++        virtual ~BufferRejecter() { }
++    };
++
++    virtual status_t acquireBufferLocked(BufferItem *item, nsecs_t presentWhen,
++            uint64_t maxFrameNumber = 0) override;
++
++    // This version of updateTexImage() takes a functor that may be used to
++    // reject the newly acquired buffer.  Unlike the GLConsumer version,
++    // this does not guarantee that the buffer has been bound to the GL
++    // texture.
++    status_t updateTexImage(BufferRejecter* rejecter, const DispSync& dispSync,
++            bool* autoRefresh, bool* queuedBuffer,
++            uint64_t maxFrameNumber);
++
++    // See GLConsumer::bindTextureImageLocked().
++    status_t bindTextureImage();
++
++    bool getTransformToDisplayInverse() const;
++
++    // must be called from SF main thread
++    const Region& getSurfaceDamage() const;
++
++    // Sets the contents changed listener. This should be used instead of
++    // ConsumerBase::setFrameAvailableListener().
++    void setContentsChangedListener(const wp<ContentsChangedListener>& listener);
++
++    sp<NativeHandle> getSidebandStream() const;
++
++    nsecs_t computeExpectedPresent(const DispSync& dispSync);
++
++    sp<Fence> getPrevFinalReleaseFence() const;
++    virtual void setReleaseFence(const sp<Fence>& fence) override;
++    bool releasePendingBuffer();
++
++    void onDisconnect() override;
++    void addAndGetFrameTimestamps(
++            const NewFrameEventsEntry* newTimestamps,
++            FrameEventHistoryDelta* outDelta) override;
++
++    // getDataSpace retrieves the DataSpace associated with the texture image
++    // set by the most recent call to updateTexImage.
++    ui::Dataspace getCurrentDataSpace();
++
++    // getCurrentHdrMetadata retrieves the HDR metadata associated with the
++    // texture image set by the most recent call to updateTexImage.
++    const HdrMetadata& getCurrentHdrMetadata() const;
++
++    // getCurrentApi retrieves the API which queues the current buffer.
++    int getCurrentApi() const;
++
++private:
++    virtual void onSidebandStreamChanged();
++
++    wp<ContentsChangedListener> mContentsChangedListener;
++
++    // Indicates this buffer must be transformed by the inverse transform of the screen
++    // it is displayed onto. This is applied after GLConsumer::mCurrentTransform.
++    // This must be set/read from SurfaceFlinger's main thread.
++    bool mTransformToDisplayInverse;
++
++    // The portion of this surface that has changed since the previous frame
++    Region mSurfaceDamage;
++
++    // A release that is pending on the receipt of a new release fence from
++    // presentDisplay
++    PendingRelease mPendingRelease;
++
++    // The layer for this SurfaceFlingerConsumer
++    const wp<Layer> mLayer;
++};
++
++// ----------------------------------------------------------------------------
++}; // namespace android
++
++#endif // ANDROID_SURFACEFLINGERCONSUMER_H
+-- 
+2.11.0
+

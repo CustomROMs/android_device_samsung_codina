@@ -1,7 +1,7 @@
 From c416b0256a7d1f1ffa000b300c8de6e980e1d42e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 3 Sep 2018 05:26:24 +0300
-Subject: [PATCH 17/42] Native fix: fix build errors
+Subject: [PATCH 17/49] Native fix: fix build errors
 
 Change-Id: I48ca83f9a6bbc7e339c53d393eaa09fdeb0dc283
 ---

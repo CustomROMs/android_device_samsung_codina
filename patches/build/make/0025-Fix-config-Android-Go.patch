@@ -1,7 +1,7 @@
 From ac21629a07ca77b73f0e74ad91c1125f99188d19 Mon Sep 17 00:00:00 2001
 From: Tobias Tefke <tobias.tefke@gmail.com>
 Date: Sat, 3 Mar 2018 13:57:36 +0100
-Subject: [PATCH 25/31] Fix config Android Go
+Subject: [PATCH 25/32] Fix config Android Go
 
 Change-Id: I033cc6ea455374d4352b916300b8992134b07e7f
 ---

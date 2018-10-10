@@ -1,7 +1,7 @@
 From 2f9f57abaacda72ba944d366d17b2a887fdb24b6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 00:46:56 +0300
-Subject: [PATCH 31/31] HACK: ota_from_target_files: fix build issues
+Subject: [PATCH 31/32] HACK: ota_from_target_files: fix build issues
 
 Change-Id: I5496a990cf2f78dc8d72dd05a3effaa882bddb08
 ---

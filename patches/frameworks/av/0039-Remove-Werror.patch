@@ -1,0 +1,51 @@
+From 74f9aa4b8f5706cf27dce73012c236ad93b466f7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 39/67] Remove -Werror
+
+Change-Id: I1f5e7f63ed7be71e99a71c0e1d12d5e9669fa7c9
+---
+ media/libstagefright/Android.bp             | 1 -
+ media/mediaserver/Android.mk                | 1 +
+ services/camera/libcameraservice/Android.mk | 1 +
+ 3 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
+index 48e351b59..9e0a21aba 100644
+--- a/media/libstagefright/Android.bp
++++ b/media/libstagefright/Android.bp
+@@ -200,7 +200,6 @@ cc_library_shared {
+ 
+     cflags: [
+         "-Wno-multichar",
+-        "-Werror",
+         "-Wno-error=deprecated-declarations",
+         "-Wall",
+     ],
+diff --git a/media/mediaserver/Android.mk b/media/mediaserver/Android.mk
+index f7597db81..ebd93e9c0 100644
+--- a/media/mediaserver/Android.mk
++++ b/media/mediaserver/Android.mk
+@@ -18,6 +18,7 @@ LOCAL_SHARED_LIBRARIES := \
+         libresourcemanagerservice \
+         liblog \
+         libmediaplayerservice \
++        libnativewindow \
+         libutils \
+         libbinder \
+         libicuuc \
+diff --git a/services/camera/libcameraservice/Android.mk b/services/camera/libcameraservice/Android.mk
+index 96261ab0e..36466976a 100644
+--- a/services/camera/libcameraservice/Android.mk
++++ b/services/camera/libcameraservice/Android.mk
+@@ -76,6 +76,7 @@ LOCAL_SHARED_LIBRARIES:= \
+     libhidltransport \
+     libjpeg \
+     libmemunreachable \
++    libnativewindow \
+     android.hardware.camera.common@1.0 \
+     android.hardware.camera.provider@2.4 \
+     android.hardware.camera.device@1.0 \
+-- 
+2.11.0
+

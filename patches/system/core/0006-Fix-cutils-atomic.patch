@@ -1,7 +1,7 @@
 From 3af1b02c466187e9e50df6848c951e3c9886851e Mon Sep 17 00:00:00 2001
 From: Steven Moreland <smoreland@google.com>
 Date: Fri, 23 Feb 2018 14:53:55 -0800
-Subject: [PATCH 06/24] Fix cutils atomic
+Subject: [PATCH 06/30] Fix cutils atomic
 
 Change-Id: Ic144b1b09198e3de5f44a901711860c784ba4b73
 ---

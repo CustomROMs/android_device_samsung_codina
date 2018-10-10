@@ -1,7 +1,7 @@
 From d10f10503a93f1dec12feb6941c86898730e88cf Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 18 Sep 2018 15:49:43 +0300
-Subject: [PATCH 2/2] composer@2.1: remove spamming messages
+Subject: [PATCH 02/11] composer@2.1: remove spamming messages
 
 Change-Id: Ibb90caf670721505cbf99361e7366825d37ed27a
 ---

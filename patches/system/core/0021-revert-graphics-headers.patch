@@ -1,7 +1,7 @@
 From 7cc6d794a1426ceb46ab85c85880df02d2bf12ee Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 14 Sep 2018 11:09:44 +0300
-Subject: [PATCH 21/24] revert graphics headers
+Subject: [PATCH 21/30] revert graphics headers
 
 Change-Id: I89cff5a54ba3c4939739caab3ccd8c7998426fdc
 ---

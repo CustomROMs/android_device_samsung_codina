@@ -1,7 +1,7 @@
 From 04a9c9d60ada11bfeab7c6258d460d2704b99172 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 06/26] AudioPolicyInterfaceImplLegacy: add
+Subject: [PATCH 06/67] AudioPolicyInterfaceImplLegacy: add
  handleDeviceConfigChange stub function
 
  audiopolicy: fixes for 8.1

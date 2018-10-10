@@ -1,7 +1,7 @@
 From e8c7ad08027cf3589f7fcf8563e57b70905fa087 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 18 Sep 2018 16:10:24 +0300
-Subject: [PATCH 1/2] light: remove blank_service
+Subject: [PATCH 01/11] light: remove blank_service
 
 Change-Id: I97f5d6be2dd3cca3a178886e4751ad1ee9018906
 ---

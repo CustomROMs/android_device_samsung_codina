@@ -1,0 +1,63 @@
+From 72c738adba966934f697396b97f222bee84e4997 Mon Sep 17 00:00:00 2001
+From: Michael Gernoth <michael@gernoth.net>
+Date: Wed, 11 Mar 2015 03:19:22 -0500
+Subject: [PATCH 43/67] libstagefright: Make it possible to skip OMX buffer
+ reallocation
+
+Some devices don't like the call to setParameter() at this point, so
+skip this call if enough buffers are already allocated. This check
+was present in KitKat but got removed when code to allocate extra-
+buffers was introduced.
+This is activated only for omap4 for now, but also has an opt-in via BOARD_CANT_REALLOCATE_OMX_BUFFERS
+---
+ media/libstagefright/ACodec.cpp | 13 +++++++++++++
+ media/libstagefright/Android.bp |  1 +
+ 2 files changed, 14 insertions(+)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index d79ad4fcc..d842a0e14 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1184,7 +1184,17 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+     // 2. try to allocate two (2) additional buffers to reduce starvation from
+     //    the consumer
+     //    plus an extra buffer to account for incorrect minUndequeuedBufs
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    // Some devices don't like to set OMX_IndexParamPortDefinition at this
++    // point (even with an unmodified def), so skip it if possible.
++    // This check was present in KitKat.
++    if (def.nBufferCountActual < def.nBufferCountMin + *minUndequeuedBuffers) {
++#endif
++#ifdef STE_HARDWARE
++    for (OMX_U32 extraBuffers = 1; /* condition inside loop */; extraBuffers--) {
++#else
+     for (OMX_U32 extraBuffers = 2 + 1; /* condition inside loop */; extraBuffers--) {
++#endif
+         OMX_U32 newBufferCount =
+             def.nBufferCountMin + *minUndequeuedBuffers + extraBuffers;
+         def.nBufferCountActual = newBufferCount;
+@@ -1203,6 +1213,9 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(
+             return err;
+         }
+     }
++#ifdef BOARD_CANT_REALLOCATE_OMX_BUFFERS
++    }
++#endif
+ 
+     err = native_window_set_buffer_count(
+             mNativeWindow.get(), def.nBufferCountActual);
+diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
+index 9e0a21aba..3bd03b9a0 100644
+--- a/media/libstagefright/Android.bp
++++ b/media/libstagefright/Android.bp
+@@ -202,6 +202,7 @@ cc_library_shared {
+         "-Wno-multichar",
+         "-Wno-error=deprecated-declarations",
+         "-Wall",
++        "-DBOARD_CANT_REALLOCATE_OMX_BUFFERS",
+     ],
+ 
+     version_script: "exports.lds",
+-- 
+2.11.0
+

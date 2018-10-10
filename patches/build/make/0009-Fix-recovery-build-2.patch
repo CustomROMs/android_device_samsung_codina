@@ -1,7 +1,7 @@
 From cff4342fc9ebd5fbdf462594dd9e9d55c7003671 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 09/31] Fix recovery build [2]
+Subject: [PATCH 09/32] Fix recovery build [2]
 
 Change-Id: I9512682a4d166f749db38eafc196dfc6f4367a8b
 ---

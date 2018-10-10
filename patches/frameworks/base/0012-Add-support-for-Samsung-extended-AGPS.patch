@@ -1,0 +1,74 @@
+From 8f1feda3a76c9b927ce8cce60b9c55bbe51d9bda Mon Sep 17 00:00:00 2001
+From: ghepeu <ghepeu@gmail.com>
+Date: Sun, 14 Jul 2013 21:01:49 +0200
+Subject: [PATCH 12/28] Add support for Samsung extended AGPS
+
+The AGPS implementation in the GPS chipset used in some Samsung devices
+(i9100, i9300) can make use of the Psc field. Adapt the relevant
+functions hiding the changes incompatible with other devices under the
+AGPS_USE_PSC #define.
+
+Credit to Qaweck from xda-developers forum for finding the meaning
+of the field.
+
+Change-Id: I548fe11f6481a1ad689636a3b7a6b9f1f73e05de
+---
+ .../core/java/com/android/server/location/GnssLocationProvider.java  | 4 ++--
+ .../core/jni/com_android_server_location_GnssLocationProvider.cpp    | 5 +++--
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/services/core/java/com/android/server/location/GnssLocationProvider.java b/services/core/java/com/android/server/location/GnssLocationProvider.java
+index 6bea844e259..e2f4fd7c1de 100644
+--- a/services/core/java/com/android/server/location/GnssLocationProvider.java
++++ b/services/core/java/com/android/server/location/GnssLocationProvider.java
+@@ -2258,7 +2258,7 @@ public class GnssLocationProvider implements LocationProviderInterface, InjectNt
+                     type = AGPS_REF_LOCATION_TYPE_GSM_CELLID;
+                 }
+                 native_agps_set_ref_location_cellid(type, mcc, mnc,
+-                        gsm_cell.getLac(), gsm_cell.getCid());
++                        gsm_cell.getLac(), gsm_cell.getCid(), gsm_cell.getPsc());
+             } else {
+                 Log.e(TAG, "Error getting cell location info.");
+             }
+@@ -2766,7 +2766,7 @@ public class GnssLocationProvider implements LocationProviderInterface, InjectNt
+ 
+     // AGPS ril suport
+     private native void native_agps_set_ref_location_cellid(int type, int mcc, int mnc,
+-            int lac, int cid);
++            int lac, int cid, int psc);
+ 
+     private native void native_agps_set_id(int type, String setid);
+ 
+diff --git a/services/core/jni/com_android_server_location_GnssLocationProvider.cpp b/services/core/jni/com_android_server_location_GnssLocationProvider.cpp
+index b47dbfa5866..97d6ed11e3d 100644
+--- a/services/core/jni/com_android_server_location_GnssLocationProvider.cpp
++++ b/services/core/jni/com_android_server_location_GnssLocationProvider.cpp
+@@ -1450,7 +1450,7 @@ static void android_location_GnssLocationProvider_delete_aiding_data(JNIEnv* /*
+ }
+ 
+ static void android_location_GnssLocationProvider_agps_set_reference_location_cellid(
+-        JNIEnv* /* env */, jobject /* obj */, jint type, jint mcc, jint mnc, jint lac, jint cid) {
++        JNIEnv* /* env */, jobject /* obj */, jint type, jint mcc, jint mnc, jint lac, jint cid, jint psc) {
+     IAGnssRil::AGnssRefLocation location;
+ 
+     if (agnssRilIface == nullptr) {
+@@ -1465,6 +1465,7 @@ static void android_location_GnssLocationProvider_agps_set_reference_location_ce
+           location.cellID.mcc = mcc;
+           location.cellID.mnc = mnc;
+           location.cellID.lac = lac;
++          location.cellID.psc = psc;
+           location.cellID.cid = cid;
+           break;
+         default:
+@@ -2166,7 +2167,7 @@ static const JNINativeMethod sMethods[] = {
+             "(ILjava/lang/String;)V",
+             reinterpret_cast<void *>(android_location_GnssLocationProvider_agps_set_id)},
+     {"native_agps_set_ref_location_cellid",
+-            "(IIIII)V",
++            "(IIIIII)V",
+             reinterpret_cast<void *>(
+                     android_location_GnssLocationProvider_agps_set_reference_location_cellid)},
+     {"native_set_agps_server",
+-- 
+2.11.0
+

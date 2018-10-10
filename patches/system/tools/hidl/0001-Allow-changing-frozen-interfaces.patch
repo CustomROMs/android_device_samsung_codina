@@ -1,0 +1,32 @@
+From 114cab6874949dbd665e9988d63b75a1bd4c1fa3 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 05:52:37 +0300
+Subject: [PATCH] Allow changing frozen interfaces
+
+Change-Id: I9de92b337a964488eda8a0e35993c14d8d759cce
+---
+ Coordinator.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Coordinator.cpp b/Coordinator.cpp
+index 9a2009c..116d600 100644
+--- a/Coordinator.cpp
++++ b/Coordinator.cpp
+@@ -827,12 +827,12 @@ Coordinator::HashStatus Coordinator::checkHash(const FQName& fqName) const {
+ 
+     std::string currentHash = ast->getFileHash()->hexString();
+ 
+-    if (std::find(frozen.begin(), frozen.end(), currentHash) == frozen.end()) {
++/*    if (std::find(frozen.begin(), frozen.end(), currentHash) == frozen.end()) {
+         std::cerr << "ERROR: " << fqName.string() << " has hash " << currentHash
+                   << " which does not match hash on record. This interface has "
+                   << "been frozen. Do not change it!" << std::endl;
+         return HashStatus::CHANGED;
+-    }
++    }*/
+ 
+     return HashStatus::FROZEN;
+ }
+-- 
+2.11.0
+

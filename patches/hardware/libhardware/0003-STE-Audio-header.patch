@@ -1,7 +1,7 @@
 From 705e3f203fc21627aa251068b07ebe00692758c2 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 3/6] STE Audio header
+Subject: [PATCH 3/7] STE Audio header
 
 ---
  include/hardware/audio.h | 13 +++++++++++++

@@ -1,7 +1,7 @@
 From 7bb5fddbc2c75dda725ef242735ebe389870760a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 05/31] Fix recovery build
+Subject: [PATCH 05/32] Fix recovery build
 
 ---
  core/Makefile | 7 ++-----

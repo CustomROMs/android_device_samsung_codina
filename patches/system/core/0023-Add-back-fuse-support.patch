@@ -1,7 +1,7 @@
 From 7c0fcab6af3ebfb2ac969dc20c0f2090f2247251 Mon Sep 17 00:00:00 2001
 From: Aaron Kling <webgeek1234@gmail.com>
 Date: Fri, 10 Aug 2018 19:10:23 -0500
-Subject: [PATCH 23/24] Add back fuse support
+Subject: [PATCH 23/30] Add back fuse support
 
 This is guarded by a check for sdcardfs support and
 an explicit prop: ro.sys.sdcard_fuse.

@@ -1,7 +1,7 @@
 From 3f5e466ab7d1170a42a7aadbe20fb9f9237c0710 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Wed, 19 Sep 2018 01:37:02 +0300
-Subject: [PATCH 42/42] SF: switch to FramebufferNativeWindow (reworked)
+Subject: [PATCH 42/49] SF: switch to FramebufferNativeWindow (reworked)
 
 A previous implementation was causing Gralloc buffers leak.
 Avoid creating unnecessary FramebufferNativeWindow instances.

@@ -1,7 +1,7 @@
 From 07df322bc850c07d5fce7899b178ba82266e8492 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Thu, 13 Sep 2018 22:29:56 +0300
-Subject: [PATCH 17/24] libsuspend
+Subject: [PATCH 17/30] libsuspend
 
 Change-Id: I2650253fc55236743448edc8d1059590fee03f61
 ---

@@ -1,7 +1,7 @@
 From 2d5a0310de5e139841978e96a8a904ad028dee10 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 16:32:02 +0300
-Subject: [PATCH 36/42] sf: remove tests
+Subject: [PATCH 36/49] sf: remove tests
 
 Change-Id: I881f16c13f9c54299eaa111a1dc0496ed37407fb
 ---

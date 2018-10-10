@@ -1,7 +1,7 @@
 From 2fa1720b41507cca964a3f174d3e26e74ffcf659 Mon Sep 17 00:00:00 2001
 From: Rashed Abdel-Tawab <rashed@linux.com>
 Date: Thu, 26 Oct 2017 22:36:28 -0700
-Subject: [PATCH 02/31] Revert "Remove the obsolete UnpackPackageDir() in edify
+Subject: [PATCH 02/32] Revert "Remove the obsolete UnpackPackageDir() in edify
  generator"
 
 We still use this for our custom building and signing process

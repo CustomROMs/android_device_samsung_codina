@@ -1,0 +1,26 @@
+From f0eb90533a113f4ff11abbb16931fbe2c93aed4a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 22 Sep 2018 00:26:33 +0300
+Subject: [PATCH 25/28] libandroid_servers: fix for libsuspend
+
+Change-Id: I53dcf9f45068456d2fe90887a75ccec727de8e9d
+---
+ services/core/jni/com_android_server_am_BatteryStatsService.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/jni/com_android_server_am_BatteryStatsService.cpp b/services/core/jni/com_android_server_am_BatteryStatsService.cpp
+index 02ad6c71b58..39cc95368d7 100644
+--- a/services/core/jni/com_android_server_am_BatteryStatsService.cpp
++++ b/services/core/jni/com_android_server_am_BatteryStatsService.cpp
+@@ -101,7 +101,7 @@ static jint nativeWaitWakeup(JNIEnv *env, jobject clazz, jobject outBuf)
+             return -1;
+         }
+         ALOGV("Registering callback...");
+-        autosuspend_set_wakeup_callback(&wakeup_callback);
++        set_wakeup_callback(&wakeup_callback);
+     }
+ 
+     // Wait for wakeup.
+-- 
+2.11.0
+

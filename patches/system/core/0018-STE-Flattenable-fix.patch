@@ -1,7 +1,7 @@
 From 82bd00f23d67496297e8df99bbb980717ef1f7c8 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 18/24] STE Flattenable fix
+Subject: [PATCH 18/30] STE Flattenable fix
 
 Change-Id: Ia3da89e0549e26d26393c61d982fc8a12b5bf812
 ---

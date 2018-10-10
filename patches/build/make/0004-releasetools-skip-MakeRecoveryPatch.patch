@@ -1,7 +1,7 @@
 From 765955cf61eb2d28aa6c536452c93f0cfe6ace8f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 04/31] releasetools: skip MakeRecoveryPatch
+Subject: [PATCH 04/32] releasetools: skip MakeRecoveryPatch
 
 Change-Id: I981a9ef1f9e25fcdbebbd958d7bc93687ecaebc6
 ---

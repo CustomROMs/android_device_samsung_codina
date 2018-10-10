@@ -1,7 +1,7 @@
 From 2ac07e3f2da6fdcb137ea248668f732892a15766 Mon Sep 17 00:00:00 2001
 From: Wan Zhou <wanz@nvidia.com>
 Date: Sat, 4 Feb 2017 14:59:47 +0800
-Subject: [PATCH 15/42] Fix leak of file descriptors and memory.
+Subject: [PATCH 15/49] Fix leak of file descriptors and memory.
 
  1. fds must be explicitly closed if it is not retained by Flattenable::unflatten().
  2. must delete allocated handle before setting to NULL.

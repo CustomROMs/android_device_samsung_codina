@@ -1,7 +1,7 @@
 From 0e34a568f37064212e3c73124e36ec33a7aa0d83 Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <invisiblek@cyanogenmod.org>
 Date: Mon, 5 Sep 2016 18:17:44 -0500
-Subject: [PATCH 26/31] build: don't dex preopt by default on linux
+Subject: [PATCH 26/32] build: don't dex preopt by default on linux
 
 Change-Id: I56385d5ace074118ce6fad2081edd374a3e670f1
 ---

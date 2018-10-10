@@ -1,0 +1,37 @@
+From 67de14271c0b21b5c67534bfe5cb8161db0ab598 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 05:50:42 +0300
+Subject: [PATCH 11/11] graphics: switch to 32-bit usage
+
+Change-Id: I3e91f69ef0b507d3d5b1d3ac36ceacf48841f0ac
+---
+ graphics/common/1.0/types.hal | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/graphics/common/1.0/types.hal b/graphics/common/1.0/types.hal
+index 3369fad5..7c04706c 100644
+--- a/graphics/common/1.0/types.hal
++++ b/graphics/common/1.0/types.hal
+@@ -422,7 +422,7 @@ enum PixelFormat : int32_t {
+ /**
+  * Buffer usage definitions.
+  */
+-enum BufferUsage : uint64_t {
++enum BufferUsage : uint32_t {
+     /** bit 0-3 is an enum */
+     CPU_READ_MASK   = 0xfULL,
+     /** buffer is never read by CPU */
+@@ -497,10 +497,6 @@ enum BufferUsage : uint64_t {
+     /** bits 25-27 must be zero and are reserved for future versions */
+     /** bits 28-31 are reserved for vendor extensions */
+     VENDOR_MASK       = 0xfULL << 28,
+-
+-    /** bits 32-47 must be zero and are reserved for future versions */
+-    /** bits 48-63 are reserved for vendor extensions */
+-    VENDOR_MASK_HI    = 0xffffULL << 48,
+ };
+ 
+ /**
+-- 
+2.11.0
+

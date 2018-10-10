@@ -1,0 +1,25 @@
+From 8a13b76e65dbdf6922de36cb623b42e118a80d77 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 10/28] Adjust APP_SWITCH_DELAY_TIME
+
+---
+ services/core/java/com/android/server/am/ActivityManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 692d6063fc0..aa0fcb8cac9 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -572,7 +572,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+ 
+     // Amount of time after a call to stopAppSwitches() during which we will
+     // prevent further untrusted switches from happening.
+-    static final long APP_SWITCH_DELAY_TIME = 5*1000;
++    static final long APP_SWITCH_DELAY_TIME = 1*1000;
+ 
+     // How long we wait for a launched process to attach to the activity manager
+     // before we decide it's never going to come up for real.
+-- 
+2.11.0
+

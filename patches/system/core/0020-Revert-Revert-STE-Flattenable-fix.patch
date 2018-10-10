@@ -1,7 +1,7 @@
 From 6c5b0f4161bcaf285457bbf87bd4a9aa483f1873 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Thu, 13 Sep 2018 22:28:37 +0300
-Subject: [PATCH 20/24] Revert "Revert "STE Flattenable fix""
+Subject: [PATCH 20/30] Revert "Revert "STE Flattenable fix""
 
 This reverts commit 8ae5b5e0fc8c2323aa1ca02c26d4e008baf82cc1.
 

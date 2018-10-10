@@ -1,7 +1,7 @@
 From 7b6475f921f628197a5d250133edacd635f39283 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 18 Sep 2018 15:42:31 +0300
-Subject: [PATCH 39/42] Revert "gui, sf: use dummy captureScreen /
+Subject: [PATCH 39/49] Revert "gui, sf: use dummy captureScreen /
  captureLayers"
 
 This reverts commit 1bdcd5db5747e7b6c9f7bd8dc14c621306bd3bd7.

@@ -1,7 +1,7 @@
 From 8ec98069278b08b862b13a893fff0640563f40b8 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 02:36:47 +0300
-Subject: [PATCH 29/42] libnativewindow: fix build errors
+Subject: [PATCH 29/49] libnativewindow: fix build errors
 
 Change-Id: Idd994a57080142f8b15e2aff6dd64b5186e89562
 ---

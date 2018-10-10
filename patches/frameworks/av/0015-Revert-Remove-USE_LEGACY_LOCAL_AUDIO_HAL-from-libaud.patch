@@ -1,7 +1,7 @@
 From ff560626d9a1e61af8f6f449eda429d80c59a9f0 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 10 Sep 2018 09:55:20 +0300
-Subject: [PATCH 15/26] Revert "Remove USE_LEGACY_LOCAL_AUDIO_HAL from
+Subject: [PATCH 15/67] Revert "Remove USE_LEGACY_LOCAL_AUDIO_HAL from
  libaudiohal"
 
 This reverts commit 9e79c70529c07f2157f8077f024f42fa5c9e22f9.

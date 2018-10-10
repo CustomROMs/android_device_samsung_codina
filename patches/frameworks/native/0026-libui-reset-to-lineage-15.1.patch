@@ -1,7 +1,7 @@
 From bd6b1cea2f0c3cff88a247145e3ec39dde428085 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 01:35:09 +0300
-Subject: [PATCH 26/42] libui: reset to lineage-15.1
+Subject: [PATCH 26/49] libui: reset to lineage-15.1
 
 Change-Id: Iacf08590eed5975551f1a506dc33e45c17b3e8fa
 ---

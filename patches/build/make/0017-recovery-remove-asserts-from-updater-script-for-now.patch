@@ -1,7 +1,7 @@
 From 876805ae7e0bb7be1fe730b349bfcbea3cd1dd39 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 17/31] recovery: remove asserts from updater-script for now
+Subject: [PATCH 17/32] recovery: remove asserts from updater-script for now
 
 recovery: dont assert recovery for now
 

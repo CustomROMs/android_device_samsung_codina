@@ -1,7 +1,7 @@
 From a1854bfa161d0c3c0100917593f96d900ee7d5f1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 15 Sep 2018 18:56:44 +0300
-Subject: [PATCH 23/26] libaudiohal: fix build errors
+Subject: [PATCH 23/67] libaudiohal: fix build errors
 
 Change-Id: Icc4ea67a6f4ac30faa07c8c4574437ac7c11792c
 ---

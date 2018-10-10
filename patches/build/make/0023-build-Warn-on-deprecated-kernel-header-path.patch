@@ -1,7 +1,7 @@
 From 4ccc88358dfeac96250d7eaa9dca937cd59199bc Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mkbestas@lineageos.org>
 Date: Fri, 18 May 2018 18:04:45 +0300
-Subject: [PATCH 23/31] build: Warn on deprecated kernel header path
+Subject: [PATCH 23/32] build: Warn on deprecated kernel header path
 
 The build is switching to the target INSTALLED_KERNEL_HEADERS to
 declare dependencies on kernel headers.  Warn when the build

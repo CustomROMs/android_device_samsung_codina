@@ -1,7 +1,7 @@
 From 7d1593db6df0a4548f8ba39ff558e62ee029c9ba Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 2/6] Samsung GPS header
+Subject: [PATCH 2/7] Samsung GPS header
 
 ---
  include/hardware/gps.h | 11 +++++++++++

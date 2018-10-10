@@ -1,7 +1,7 @@
 From 4e24d63843f0c6d7807d1562607cafc110e4d739 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 02/24] Add init.kernel.rc
+Subject: [PATCH 02/30] Add init.kernel.rc
 
 ---
  rootdir/init.rc | 1 +
