@@ -1,4 +1,4 @@
-From e501d85213574ae66c85d4eca74f98eca9e60451 Mon Sep 17 00:00:00 2001
+From 58624b637cca483fc1e852ee92617c55cd6ba200 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 21 Sep 2018 21:43:15 +0300
 Subject: [PATCH 46/49] Revert "Sync mLastQueuedCrop with mLastQueuedSlot."

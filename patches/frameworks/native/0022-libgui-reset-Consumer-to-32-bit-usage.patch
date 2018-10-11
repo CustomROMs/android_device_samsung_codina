@@ -1,4 +1,4 @@
-From fd91dcd7bee8c43c53c9287ad93ed0dad42dc23a Mon Sep 17 00:00:00 2001
+From b357f69dfd58fb57550d8ebd10b7fd00ba3dbe77 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 22/49] libgui: reset Consumer to 32-bit usage

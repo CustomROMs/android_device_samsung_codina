@@ -1,7 +1,7 @@
-From 538d4c63a64217df5cabb3bec23bd4cd12bd4d48 Mon Sep 17 00:00:00 2001
+From 80151188b2ee81959e8c10d337824b93b7c74b72 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 10/67] Audioflinger MR0 fixes
+Subject: [PATCH 10/70] Audioflinger MR0 fixes
 
 ---
  media/libaudiohal/2.0/DevicesFactoryHalLocal.cpp | 3 +++

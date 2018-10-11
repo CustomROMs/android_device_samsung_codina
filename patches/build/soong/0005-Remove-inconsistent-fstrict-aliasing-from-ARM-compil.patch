@@ -1,0 +1,27 @@
+From 871f71198ea21b71ee55eb09d61b8494ba3d5035 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 5/6] Remove inconsistent -fstrict-aliasing from ARM compiler
+ configuration.
+
+Test: Build arm devices and run hwui/skia performance tests.
+Change-Id: I708c7bf7333e2c2684aab45f59faba9c1ad1699e
+---
+ cc/config/arm_device.go | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/cc/config/arm_device.go b/cc/config/arm_device.go
+index fdbe5228..8df80c28 100644
+--- a/cc/config/arm_device.go
++++ b/cc/config/arm_device.go
+@@ -83,7 +83,6 @@ var (
+ 	}
+ 
+ 	armArmCflags = []string{
+-		"-fstrict-aliasing",
+ 	}
+ 
+ 	armThumbCflags = []string{
+-- 
+2.11.0
+

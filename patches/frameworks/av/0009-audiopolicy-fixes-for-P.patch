@@ -1,7 +1,7 @@
-From 3b49c210dc8c6c25ae9f0748e80bbf96549db8bd Mon Sep 17 00:00:00 2001
+From 4f07a8b9776f4fcbcf06ec69405b8280605cac1f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 8 Sep 2018 19:02:23 +0300
-Subject: [PATCH 09/67] audiopolicy: fixes for P
+Subject: [PATCH 09/70] audiopolicy: fixes for P
 
 Change-Id: I08242be30c7ad714af6304fc2f23ae8a42c97fbe
 ---
@@ -10,10 +10,10 @@ Change-Id: I08242be30c7ad714af6304fc2f23ae8a42c97fbe
  2 files changed, 33 insertions(+), 29 deletions(-)
 
 diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
-index 7337f0412..d47cebe7b 100644
+index 0edec708f..0b49876a4 100644
 --- a/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
 +++ b/services/audiopolicy/service/AudioPolicyInterfaceImpl.cpp
-@@ -605,38 +605,27 @@ status_t AudioPolicyService::stopInput(audio_port_handle_t portId)
+@@ -625,38 +625,27 @@ status_t AudioPolicyService::stopInput(audio_port_handle_t portId)
      return mAudioPolicyManager->stopInput(client->input, client->session);
  }
  

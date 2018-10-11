@@ -1,4 +1,4 @@
-From ed6eb823946169ed3bb2b6b893948e848ab6ced4 Mon Sep 17 00:00:00 2001
+From 73b0386fa26abc21220e58003e1ed8698e69d6be Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 18/28] Catch egl errors when drawIntoSurfaces

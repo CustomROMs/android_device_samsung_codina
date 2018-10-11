@@ -1,4 +1,4 @@
-From 136f0f1b6b2c2646eb36a7e6cdf6b778ee4cd080 Mon Sep 17 00:00:00 2001
+From 5257476ec3b8aafcd261bf50b9784d3174ec16bd Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 02:36:04 +0300
 Subject: [PATCH 28/49] vulkan: fix usage-related build errors

@@ -1,4 +1,4 @@
-From 6bf68b96387fc8cf288d62e200c4e62af881ff6b Mon Sep 17 00:00:00 2001
+From af4d135a95195210d2a45ba7f361dc0bccfe7b1c Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Sat, 8 Sep 2018 23:55:36 +0200
 Subject: [PATCH 03/28] DisplayPowerController: Disable ColorFade for now
@@ -10,10 +10,10 @@ Change-Id: Ie1b866186188c08831c5efe0f0076ce49c419218
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
-index 99412c56b27..ecc2214d7f6 100644
+index 0b2f487840b..18a5b235924 100644
 --- a/services/core/java/com/android/server/display/DisplayPowerController.java
 +++ b/services/core/java/com/android/server/display/DisplayPowerController.java
-@@ -465,7 +465,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+@@ -470,7 +470,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
              }
          }
  

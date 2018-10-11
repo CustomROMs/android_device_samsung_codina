@@ -1,7 +1,7 @@
-From cb59f05b85b2b2e9f8b41b8dd55b5da6f8bc1498 Mon Sep 17 00:00:00 2001
+From 1ef9dc46b4cf1cde3e5d0fce49500c1f3a7acb9a Mon Sep 17 00:00:00 2001
 From: irii <iriijo@googlemail.com>
 Date: Sun, 11 Sep 2016 16:51:37 +0200
-Subject: [PATCH 31/67] *This fixes the torch light for cameras with hal 1
+Subject: [PATCH 31/70] *This fixes the torch light for cameras with hal 1
 
 *This fix works on the htc m7ul
 

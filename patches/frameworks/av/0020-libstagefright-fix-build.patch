@@ -1,7 +1,7 @@
-From 21efe25ccfd6896df86c8fc04e73541c3d6f2978 Mon Sep 17 00:00:00 2001
+From 4e3ffa39337bee5bb498027d8dadd5fa6cccec29 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 14 Sep 2018 01:00:29 +0300
-Subject: [PATCH 20/67] libstagefright: fix build
+Subject: [PATCH 20/70] libstagefright: fix build
 
 Change-Id: I4645e2a45891f21026b9896fb861f30b59685edf
 ---
@@ -13,7 +13,7 @@ Change-Id: I4645e2a45891f21026b9896fb861f30b59685edf
  5 files changed, 6 insertions(+), 41 deletions(-)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 7f39d109f..171ee3149 100644
+index 8949daecd..096876d09 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -6251,7 +6251,7 @@ void ACodec::BaseState::onOutputBufferDrained(const sp<AMessage> &msg) {
@@ -39,7 +39,7 @@ index 72eff946c..5f008483c 100644
                              }
  
 diff --git a/media/libstagefright/SurfaceUtils.cpp b/media/libstagefright/SurfaceUtils.cpp
-index 9e11a94a5..b7c1598ec 100644
+index cdc61ae90..2dd6df803 100644
 --- a/media/libstagefright/SurfaceUtils.cpp
 +++ b/media/libstagefright/SurfaceUtils.cpp
 @@ -18,8 +18,8 @@
@@ -52,7 +52,7 @@ index 9e11a94a5..b7c1598ec 100644
  #include <gui/Surface.h>
  
  namespace android {
-@@ -128,40 +128,6 @@ status_t setNativeWindowSizeFormatAndUsage(
+@@ -129,40 +129,6 @@ status_t setNativeWindowSizeFormatAndUsage(
      return NO_ERROR;
  }
  

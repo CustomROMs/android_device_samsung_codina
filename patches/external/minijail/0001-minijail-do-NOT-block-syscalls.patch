@@ -1,0 +1,110 @@
+From e7828306ab661b21b1d0ee9c36a7b1c7f8649b62 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 24 Sep 2017 23:10:04 +0300
+Subject: [PATCH] minijail: do NOT block syscalls
+
+Change-Id: I7e68030724077871854ffb28fc4242c02270c516
+---
+ Android.bp       | 7 ++++---
+ libminijail.c    | 6 ++++--
+ signal_handler.c | 4 ++++
+ 3 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index cdda3c8..fb01b1f 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -35,7 +35,8 @@ cc_defaults {
+     cflags: [
+         "-DHAVE_SECUREBITS_H",
+         "-Wall",
+-        "-Werror",
++        "-Wno-unused-parameter",
++        "-Wno-unused-function",
+     ],
+     target: {
+         darwin: {
+@@ -54,7 +55,7 @@ cc_object {
+         "-dD",
+         "-E",
+         "-Wall",
+-        "-Werror",
++        "-Wno-unused-parameter",
+     ],
+ }
+ 
+@@ -75,7 +76,7 @@ cc_object {
+         "-dD",
+         "-E",
+         "-Wall",
+-        "-Werror",
++        "-Wno-unused-parameter",
+     ],
+ }
+ 
+diff --git a/libminijail.c b/libminijail.c
+index f9fb0e9..9944f70 100644
+--- a/libminijail.c
++++ b/libminijail.c
+@@ -1812,8 +1812,8 @@ static void set_seccomp_filter(const struct minijail *j)
+ 			 * If logging seccomp filter failures,
+ 			 * install the SIGSYS handler first.
+ 			 */
+-			if (install_sigsys_handler())
+-				pdie("failed to install SIGSYS handler");
++			//if (install_sigsys_handler())
++			//	pdie("failed to install SIGSYS handler");
+ 			warn("logging seccomp filter failures");
+ 		} else if (j->flags.seccomp_filter_tsync) {
+ 			/*
+@@ -1922,6 +1922,7 @@ static void run_hooks_or_die(const struct minijail *j,
+ 
+ void API minijail_enter(const struct minijail *j)
+ {
++#if 0
+ 	/*
+ 	 * If we're dropping caps, get the last valid cap from /proc now,
+ 	 * since /proc can be unmounted before drop_caps() is called.
+@@ -2073,6 +2074,7 @@ void API minijail_enter(const struct minijail *j)
+ 		}
+ 		pdie("prctl(PR_SET_SECCOMP) failed");
+ 	}
++#endif
+ }
+ 
+ /* TODO(wad): will visibility affect this variable? */
+diff --git a/signal_handler.c b/signal_handler.c
+index 5a5ae9c..c6b91f2 100644
+--- a/signal_handler.c
++++ b/signal_handler.c
+@@ -28,6 +28,7 @@ struct local_sigsys {
+ 
+ void log_sigsys_handler(int nr, siginfo_t *info, void *void_context)
+ {
++#if 0
+ 	struct local_sigsys sigsys;
+ 	const char *syscall_name;
+ 	memcpy(&sigsys, &info->_sifields, sizeof(sigsys));
+@@ -46,10 +47,12 @@ void log_sigsys_handler(int nr, siginfo_t *info, void *void_context)
+ 	 */
+ 	for (;;)
+ 		_exit(1);
++#endif
+ }
+ 
+ int install_sigsys_handler()
+ {
++#if 0
+ 	int ret = 0;
+ 	struct sigaction act;
+ 	sigset_t mask;
+@@ -69,5 +72,6 @@ int install_sigsys_handler()
+ 	if (ret < 0)
+ 		return ret;
+ 
++#endif
+ 	return 0;
+ }
+-- 
+2.11.0
+

@@ -1,4 +1,4 @@
-From cfea27806883b3a867760cebd1d58b3a891791fd Mon Sep 17 00:00:00 2001
+From eacae6aae9ed214fb6b4e6f8a5a15de62c37b974 Mon Sep 17 00:00:00 2001
 From: Elektroschmock <elektroschmock78@googlemail.com>
 Date: Tue, 26 Jun 2018 22:04:57 +0200
 Subject: [PATCH 16/28] hwui: Remove deprecated compiler flag

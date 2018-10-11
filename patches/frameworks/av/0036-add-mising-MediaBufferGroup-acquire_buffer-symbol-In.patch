@@ -1,7 +1,7 @@
-From 090b969ab7dbcf3bb4d1a4bff17a796147fe5f61 Mon Sep 17 00:00:00 2001
+From 90b3c62938c1bcd044499a432bcc4c8898f4cf70 Mon Sep 17 00:00:00 2001
 From: DeckerSU <support@decker.su>
 Date: Mon, 12 Dec 2016 23:28:29 +0200
-Subject: [PATCH 36/67] add mising MediaBufferGroup::acquire_buffer symbol *
+Subject: [PATCH 36/70] add mising MediaBufferGroup::acquire_buffer symbol *
  Instead of implying false, use overloaded methods to set nonBlocking flag
  false * Fixes blobs that link against this
 

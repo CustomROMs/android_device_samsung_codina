@@ -1,7 +1,7 @@
-From 42f9dc18489aed8a9ab03bed4293f9227607d04a Mon Sep 17 00:00:00 2001
+From 1dde045bee33867b4a7082e89373e415e578d7f9 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Thu, 13 Sep 2018 22:01:18 +0300
-Subject: [PATCH 18/67] Revert "screenrecord: fixes for SurfaceControl changes"
+Subject: [PATCH 18/70] Revert "screenrecord: fixes for SurfaceControl changes"
 
 This reverts commit 7e5a629be5b3cf4cfefc54f9242108c638e96497.
 

@@ -1,7 +1,7 @@
-From 74f9aa4b8f5706cf27dce73012c236ad93b466f7 Mon Sep 17 00:00:00 2001
+From 087c6688cf78923780eb3e517c429fe5187c5193 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 39/67] Remove -Werror
+Subject: [PATCH 39/70] Remove -Werror
 
 Change-Id: I1f5e7f63ed7be71e99a71c0e1d12d5e9669fa7c9
 ---
@@ -23,7 +23,7 @@ index 48e351b59..9e0a21aba 100644
          "-Wall",
      ],
 diff --git a/media/mediaserver/Android.mk b/media/mediaserver/Android.mk
-index f7597db81..ebd93e9c0 100644
+index 72fd88749..fe065cdd7 100644
 --- a/media/mediaserver/Android.mk
 +++ b/media/mediaserver/Android.mk
 @@ -18,6 +18,7 @@ LOCAL_SHARED_LIBRARIES := \
@@ -35,7 +35,7 @@ index f7597db81..ebd93e9c0 100644
          libbinder \
          libicuuc \
 diff --git a/services/camera/libcameraservice/Android.mk b/services/camera/libcameraservice/Android.mk
-index 96261ab0e..36466976a 100644
+index b279c660f..cf8f1ed21 100644
 --- a/services/camera/libcameraservice/Android.mk
 +++ b/services/camera/libcameraservice/Android.mk
 @@ -76,6 +76,7 @@ LOCAL_SHARED_LIBRARIES:= \

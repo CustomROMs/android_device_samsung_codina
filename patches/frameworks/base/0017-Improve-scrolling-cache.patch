@@ -1,4 +1,4 @@
-From 5827bd1c4ba2de8ba40264b2c89132012da20da5 Mon Sep 17 00:00:00 2001
+From a5b9377786ab2e8e9606956e7ad96b93b18d6545 Mon Sep 17 00:00:00 2001
 From: Pawit Pornkitprasan <p.pawit@gmail.com>
 Date: Tue, 7 Feb 2012 23:25:51 +0700
 Subject: [PATCH 17/28] Improve scrolling cache

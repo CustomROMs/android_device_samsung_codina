@@ -1,0 +1,30 @@
+From f5c6ceedef67aafc63b92f3f78e140c4a6091866 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 13:52:35 +0300
+Subject: [PATCH 44/70] Revert "Allow kPortModeDynamicANWBuffer for
+ kBufferTypeANWBuffer in useBuffer"
+
+This reverts commit 29d991fac25b261a72ce73f96c9df594ea5b9242.
+
+Change-Id: Ie26cdea7d960fd0617de7d1a34d5b6a050e909ea
+---
+ media/libstagefright/omx/OMXNodeInstance.cpp | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 09f80ebfb..f3e61ff09 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -1080,8 +1080,7 @@ status_t OMXNodeInstance::useBuffer(
+         }
+ 
+         case OMXBuffer::kBufferTypeANWBuffer: {
+-            if (mPortMode[portIndex] != IOMX::kPortModePresetANWBuffer
+-                    && mPortMode[portIndex] != IOMX::kPortModeDynamicANWBuffer) {
++            if (mPortMode[portIndex] != IOMX::kPortModePresetANWBuffer) {
+                 break;
+             }
+             return useGraphicBuffer_l(portIndex, omxBuffer.mGraphicBuffer, buffer);
+-- 
+2.11.0
+

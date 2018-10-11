@@ -1,4 +1,4 @@
-From d187b91a97c0f7ef61315fc2b03e783415cacea1 Mon Sep 17 00:00:00 2001
+From bdf5935db26ec10a81a7fb087504f08ca7b0a68a Mon Sep 17 00:00:00 2001
 From: Romain Guy <romainguy@google.com>
 Date: Thu, 16 Mar 2017 18:39:20 +0000
 Subject: [PATCH 10/49] Native fix: get rid of IGraphicBufferAlloc use

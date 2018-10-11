@@ -1,4 +1,4 @@
-From ebfc1cb4ffb2f486e16138a45b03296dc43b183b Mon Sep 17 00:00:00 2001
+From 93514b977fe7da61d4494cf0df7414b7f1b69242 Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mikeioannina@cyanogenmod.org>
 Date: Sat, 15 Oct 2016 18:57:38 +0300
 Subject: [PATCH 11/28] Adjustments for M-compatible sensors ABI

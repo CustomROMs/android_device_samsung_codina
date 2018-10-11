@@ -1,0 +1,31 @@
+From 234b878b075cc8867f79a1374b69f2e400abedc8 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 13:58:14 +0300
+Subject: [PATCH 62/70] Revert "libstagefright: Support YVU420SemiPlanar camera
+ format"
+
+This reverts commit 206a948ed84ed4b7acd19b4117e28c8d22cf80bf.
+
+Change-Id: I538c3f28b3368ad2ca88f91eb73a8639a01e7dfa
+---
+ media/libstagefright/CameraSource.cpp | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
+index 5e2d43c43..71dd61c9e 100644
+--- a/media/libstagefright/CameraSource.cpp
++++ b/media/libstagefright/CameraSource.cpp
+@@ -168,10 +168,6 @@ static int32_t getColorFormat(const char* colorFormat) {
+         return OMX_COLOR_FormatAndroidOpaque;
+     }
+ 
+-    if (!strcmp(colorFormat, "YVU420SemiPlanar")) {
+-        return OMX_QCOM_COLOR_FormatYVU420SemiPlanar;
+-    }
+-
+     ALOGE("Uknown color format (%s), please add it to "
+          "CameraSource::getColorFormat", colorFormat);
+ 
+-- 
+2.11.0
+

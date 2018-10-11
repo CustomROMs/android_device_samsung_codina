@@ -1,7 +1,7 @@
-From 0977e9fcdcdd9108b5370508ea197d4935581d6f Mon Sep 17 00:00:00 2001
+From c1b70e26db1054bc4e3eb98be6a0a992a46996a1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 21 Sep 2018 11:19:47 +0300
-Subject: [PATCH 61/67] Revert "Removed unused class and its test"
+Subject: [PATCH 61/70] Revert "Removed unused class and its test"
 
 This reverts commit e885915204f252c93a072ba1a8802f5811e40b3d.
 

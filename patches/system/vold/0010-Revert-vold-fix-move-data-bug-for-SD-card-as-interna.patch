@@ -1,0 +1,69 @@
+From b7b81f536e526f1dd8c990b261074c2f197169db Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 14:09:05 +0300
+Subject: [PATCH 10/11] Revert "vold: fix move-data bug for SD card as internal
+ storage"
+
+This reverts commit 43f51451e17bfe0d7cbb4d369c1316478695c83a.
+
+Change-Id: I927d5da6580adb5bebf468285eed5f5959790c0c
+---
+ MoveStorage.cpp | 18 ++++--------------
+ 1 file changed, 4 insertions(+), 14 deletions(-)
+
+diff --git a/MoveStorage.cpp b/MoveStorage.cpp
+index 03b7625..4624026 100644
+--- a/MoveStorage.cpp
++++ b/MoveStorage.cpp
+@@ -44,7 +44,6 @@ static const int kMoveFailedInternalError = -6;
+ 
+ static const char* kCpPath = "/system/bin/cp";
+ static const char* kRmPath = "/system/bin/rm";
+-static const char* kShPath = "/system/bin/sh";
+ 
+ static const char* kWakeLock = "MoveTask";
+ 
+@@ -64,27 +63,17 @@ static status_t pushBackContents(const std::string& path, std::vector<std::strin
+     }
+     bool found = false;
+     struct dirent* ent;
+-    /*
+-     * -f (force): remove without confirmation, no error if it doesn't exist
+-     * -R (recursive): remove directory contents
+-     */
+-    std::string options("/system/bin/rm -f -R");
+-
+     while ((ent = readdir(dir)) != NULL) {
+         if ((!strcmp(ent->d_name, ".")) || (!strcmp(ent->d_name, ".."))) {
+             continue;
+         }
+         if (addWildcard) {
+-            options += StringPrintf(" %s/%s/*", path.c_str(), ent->d_name);
++            cmd.push_back(StringPrintf("%s/%s/*", path.c_str(), ent->d_name));
+         } else {
+             cmd.push_back(StringPrintf("%s/%s", path.c_str(), ent->d_name));
+         }
+         found = true;
+     }
+-
+-    if (addWildcard && found)
+-        cmd.push_back(options);
+-
+     closedir(dir);
+     return found ? OK : -1;
+ }
+@@ -97,8 +86,9 @@ static status_t execRm(const std::string& path, int startProgress, int stepProgr
+     uint64_t startFreeBytes = GetFreeBytes(path);
+ 
+     std::vector<std::string> cmd;
+-    cmd.push_back(kShPath);
+-    cmd.push_back("-c");
++    cmd.push_back(kRmPath);
++    cmd.push_back("-f"); /* force: remove without confirmation, no error if it doesn't exist */
++    cmd.push_back("-R"); /* recursive: remove directory contents */
+     if (pushBackContents(path, cmd, true) != OK) {
+         LOG(WARNING) << "No contents in " << path;
+         return OK;
+-- 
+2.11.0
+

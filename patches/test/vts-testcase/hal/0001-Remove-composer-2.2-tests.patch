@@ -1,0 +1,265 @@
+From 4c3c1e1ccab49ae10b197a038fbc08620a453dda Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 12:03:28 +0300
+Subject: [PATCH] Remove composer 2.2 tests
+
+Change-Id: I3a13f8cdfca2d6596920e3c76ec1365347e54f4f
+---
+ graphics/composer/V2_2/adapter/Android.mk      |  23 ------
+ graphics/composer/V2_2/adapter/AndroidTest.xml |  27 -------
+ graphics/composer/V2_2/build/Android.bp        | 108 -------------------------
+ graphics/composer/V2_2/target/Android.mk       |  23 ------
+ graphics/composer/V2_2/target/AndroidTest.xml  |  32 --------
+ 5 files changed, 213 deletions(-)
+ delete mode 100644 graphics/composer/V2_2/adapter/Android.mk
+ delete mode 100644 graphics/composer/V2_2/adapter/AndroidTest.xml
+ delete mode 100644 graphics/composer/V2_2/build/Android.bp
+ delete mode 100644 graphics/composer/V2_2/target/Android.mk
+ delete mode 100644 graphics/composer/V2_2/target/AndroidTest.xml
+
+diff --git a/graphics/composer/V2_2/adapter/Android.mk b/graphics/composer/V2_2/adapter/Android.mk
+deleted file mode 100644
+index 3717a187..00000000
+--- a/graphics/composer/V2_2/adapter/Android.mk
++++ /dev/null
+@@ -1,23 +0,0 @@
+-#
+-# Copyright (C) 2018 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-
+-LOCAL_PATH := $(call my-dir)
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_MODULE := VtsHalGraphicsComposerV2_2Adapter
+-VTS_CONFIG_SRC_DIR := testcases/hal/graphics/composer/V2_2/adapter
+-include test/vts/tools/build/Android.host_config.mk
+diff --git a/graphics/composer/V2_2/adapter/AndroidTest.xml b/graphics/composer/V2_2/adapter/AndroidTest.xml
+deleted file mode 100644
+index 0c90a5b8..00000000
+--- a/graphics/composer/V2_2/adapter/AndroidTest.xml
++++ /dev/null
+@@ -1,27 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2018 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-<configuration description="Config for VTS VtsHalGraphicsComposerV2_2Adapter test cases">
+-    <option key="plan" name="config-descriptor:metadata" value="vts-hal-adapter"/>
+-    <target_preparer class="com.android.tradefed.targetprep.VtsHalAdapterPreparer">
+-        <option name="adapter-binary-name" value="android.hardware.graphics.composer@2.1-adapter"/>
+-        <option name="hal-package-name" value="android.hardware.graphics.composer@2.2"/>
+-    </target_preparer>
+-    <test class="com.android.tradefed.testtype.AndroidJUnitTest">
+-        <option name="package" value="com.android.devicehealth.tests"/>
+-        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner"/>
+-    </test>
+-    <include name="CtsJniTestCases.config"/>
+-</configuration>
+diff --git a/graphics/composer/V2_2/build/Android.bp b/graphics/composer/V2_2/build/Android.bp
+deleted file mode 100644
+index 57efbf32..00000000
+--- a/graphics/composer/V2_2/build/Android.bp
++++ /dev/null
+@@ -1,108 +0,0 @@
+-// This file was auto-generated. Do not edit manually.
+-// Use launch_hal_test.py or update_makefiles.py in test/vts-testcase/hal/script/ to generate this file.
+-
+-// Generate .vts spec files.
+-hal2vts {
+-    name: "android.hardware.graphics.composer@2.2-vts.spec",
+-    hidl_gen_args: "-r android.hardware:hardware/interfaces",
+-    srcs: [
+-        ":android.hardware.graphics.composer@2.2_hal",
+-    ],
+-    out: [
+-        "android/hardware/graphics/composer/2.2/Composer.vts",
+-        "android/hardware/graphics/composer/2.2/ComposerClient.vts",
+-    ],
+-}
+-
+-// Build VTS driver.
+-genrule {
+-    name: "android.hardware.graphics.composer@2.2-vts.driver_genc++",
+-    tools: ["hidl-gen", "vtsc"],
+-    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -r android.hardware:hardware/interfaces android.hardware.graphics.composer@2.2 && $(location vtsc) -mDRIVER -tSOURCE -b$(genDir) android/hardware/graphics/composer/2.2/ $(genDir)/android/hardware/graphics/composer/2.2/",
+-    srcs: [
+-        ":android.hardware.graphics.composer@2.2_hal",
+-    ],
+-    out: [
+-        "android/hardware/graphics/composer/2.2/Composer.vts.cpp",
+-        "android/hardware/graphics/composer/2.2/ComposerClient.vts.cpp",
+-    ],
+-}
+-
+-genrule {
+-    name: "android.hardware.graphics.composer@2.2-vts.driver_genc++_headers",
+-    tools: ["hidl-gen", "vtsc"],
+-    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -r android.hardware:hardware/interfaces android.hardware.graphics.composer@2.2 && $(location vtsc) -mDRIVER -tHEADER -b$(genDir) android/hardware/graphics/composer/2.2/ $(genDir)/android/hardware/graphics/composer/2.2/",
+-    srcs: [
+-        ":android.hardware.graphics.composer@2.2_hal",
+-    ],
+-    out: [
+-        "android/hardware/graphics/composer/2.2/Composer.vts.h",
+-        "android/hardware/graphics/composer/2.2/ComposerClient.vts.h",
+-    ],
+-}
+-
+-cc_library_shared {
+-    name: "android.hardware.graphics.composer@2.2-vts.driver",
+-    generated_sources: ["android.hardware.graphics.composer@2.2-vts.driver_genc++"],
+-    generated_headers: ["android.hardware.graphics.composer@2.2-vts.driver_genc++_headers"],
+-    export_generated_headers: ["android.hardware.graphics.composer@2.2-vts.driver_genc++_headers"],
+-    defaults: ["VtsHalDriverDefaults"],
+-    shared_libs: [
+-        "android.hardware.graphics.common@1.0-vts.driver",
+-        "android.hardware.graphics.common@1.1-vts.driver",
+-        "android.hardware.graphics.composer@2.1-vts.driver",
+-    ],
+-    static_libs: [
+-        "android.hardware.graphics.common@1.0",
+-        "android.hardware.graphics.common@1.1",
+-        "android.hardware.graphics.composer@2.1",
+-        "android.hardware.graphics.composer@2.2",
+-    ],
+-}
+-
+-// Build VTS profiler.
+-genrule {
+-    name: "android.hardware.graphics.composer@2.2-vts.profiler_genc++",
+-    tools: ["hidl-gen", "vtsc"],
+-    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -r android.hardware:hardware/interfaces android.hardware.graphics.composer@2.2 && $(location vtsc) -mPROFILER -tSOURCE -b$(genDir) android/hardware/graphics/composer/2.2/ $(genDir)/android/hardware/graphics/composer/2.2/",
+-    srcs: [
+-        ":android.hardware.graphics.composer@2.2_hal",
+-    ],
+-    out: [
+-        "android/hardware/graphics/composer/2.2/Composer.vts.cpp",
+-        "android/hardware/graphics/composer/2.2/ComposerClient.vts.cpp",
+-    ],
+-}
+-
+-genrule {
+-    name: "android.hardware.graphics.composer@2.2-vts.profiler_genc++_headers",
+-    tools: ["hidl-gen", "vtsc"],
+-    cmd: "$(location hidl-gen) -o $(genDir) -Lvts -r android.hardware:hardware/interfaces android.hardware.graphics.composer@2.2 && $(location vtsc) -mPROFILER -tHEADER -b$(genDir) android/hardware/graphics/composer/2.2/ $(genDir)/android/hardware/graphics/composer/2.2/",
+-    srcs: [
+-        ":android.hardware.graphics.composer@2.2_hal",
+-    ],
+-    out: [
+-        "android/hardware/graphics/composer/2.2/Composer.vts.h",
+-        "android/hardware/graphics/composer/2.2/ComposerClient.vts.h",
+-    ],
+-}
+-
+-cc_library_shared {
+-    name: "android.hardware.graphics.composer@2.2-vts.profiler",
+-    generated_sources: ["android.hardware.graphics.composer@2.2-vts.profiler_genc++"],
+-    generated_headers: ["android.hardware.graphics.composer@2.2-vts.profiler_genc++_headers"],
+-    export_generated_headers: ["android.hardware.graphics.composer@2.2-vts.profiler_genc++_headers"],
+-    defaults: ["VtsHalProfilerDefaults"],
+-    shared_libs: [
+-        "android.hardware.graphics.common@1.0-vts.profiler",
+-        "android.hardware.graphics.common@1.1-vts.profiler",
+-        "android.hardware.graphics.composer@2.1-vts.profiler",
+-    ],
+-    static_libs: [
+-        "android.hardware.graphics.common@1.0",
+-        "android.hardware.graphics.common@1.1",
+-        "android.hardware.graphics.composer@2.1",
+-        "android.hardware.graphics.composer@2.2",
+-    ],
+-}
+-
+diff --git a/graphics/composer/V2_2/target/Android.mk b/graphics/composer/V2_2/target/Android.mk
+deleted file mode 100644
+index 538d80c9..00000000
+--- a/graphics/composer/V2_2/target/Android.mk
++++ /dev/null
+@@ -1,23 +0,0 @@
+-#
+-# Copyright (C) 2018 The Android Open Source Project
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#      http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-#
+-
+-LOCAL_PATH := $(call my-dir)
+-
+-include $(CLEAR_VARS)
+-
+-LOCAL_MODULE := VtsHalGraphicsComposerV2_2Target
+-VTS_CONFIG_SRC_DIR := testcases/hal/graphics/composer/V2_2/target
+-include test/vts/tools/build/Android.host_config.mk
+diff --git a/graphics/composer/V2_2/target/AndroidTest.xml b/graphics/composer/V2_2/target/AndroidTest.xml
+deleted file mode 100644
+index 82d9d069..00000000
+--- a/graphics/composer/V2_2/target/AndroidTest.xml
++++ /dev/null
+@@ -1,32 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!-- Copyright (C) 2018 The Android Open Source Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-<configuration description="Config for VTS VtsHalGraphicsComposerV2_2Target test cases">
+-    <option name="config-descriptor:metadata" key="plan" value="vts-hal" />
+-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.VtsFilePusher">
+-        <option name="abort-on-push-failure" value="false"/>
+-        <option name="push-group" value="HalHidlTargetTest.push"/>
+-    </target_preparer>
+-    <multi_target_preparer class="com.android.tradefed.targetprep.VtsPythonVirtualenvPreparer"/>
+-    <test class="com.android.tradefed.testtype.VtsMultiDeviceTest">
+-        <option name="test-module-name" value="VtsHalGraphicsComposerV2_2Target"/>
+-        <option name="binary-test-source" value="_32bit::DATA/nativetest/VtsHalGraphicsComposerV2_2TargetTest/VtsHalGraphicsComposerV2_2TargetTest"/>
+-        <option name="binary-test-source" value="_64bit::DATA/nativetest64/VtsHalGraphicsComposerV2_2TargetTest/VtsHalGraphicsComposerV2_2TargetTest"/>
+-        <option name="binary-test-type" value="hal_hidl_gtest"/>
+-        <option name="binary-test-disable-framework" value="true"/>
+-        <option name="binary-test-stop-native-servers" value="true"/>
+-        <option name="test-timeout" value="1m"/>
+-    </test>
+-</configuration>
+-- 
+2.11.0
+

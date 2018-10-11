@@ -1,4 +1,4 @@
-From bd26eecf11e599d0bdb9b6c9cbb98b7fa12a6141 Mon Sep 17 00:00:00 2001
+From 66689426d86f179204eac72ae822088bc48c9af7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 08/28] Adjust some timeouts

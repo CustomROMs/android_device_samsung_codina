@@ -1,0 +1,24 @@
+From 4dceac0da1e66f6b436a75bb33678b837c31bd0c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 26 Aug 2018 18:10:48 +0300
+Subject: [PATCH 6/6] Fixes for Pie
+
+Change-Id: I1105f20ba052a43ff65df345bb254c1e3c3770e5
+---
+ android/config.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/android/config.go b/android/config.go
+index d6a75e99..9a296110 100644
+--- a/android/config.go
++++ b/android/config.go
+@@ -861,5 +861,5 @@ func stringSlice(s *[]string) []string {
+ }
+ 
+ func (c *deviceConfig) TargetHeaderPathDir() string {
+-	return String(c.config.ProductVariables.TargetHeaderPath)
++	return String(c.config.productVariables.TargetHeaderPath)
+ }
+-- 
+2.11.0
+

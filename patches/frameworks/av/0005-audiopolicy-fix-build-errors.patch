@@ -1,7 +1,7 @@
-From 25a81e549f9e37b7d0aa5115e3b0abb00e67eb7f Mon Sep 17 00:00:00 2001
+From 6c06b61dc938a01dcf5a131a1814c31bba8428db Mon Sep 17 00:00:00 2001
 From: Pavan Chikkala <pavanc@codeaurora.org>
 Date: Fri, 4 Dec 2015 15:39:24 +0530
-Subject: [PATCH 05/67] audiopolicy: fix build errors
+Subject: [PATCH 05/70] audiopolicy: fix build errors
 
 ---
  .../service/AudioPolicyInterfaceImplLegacy.cpp     | 31 ++++++++++++----------

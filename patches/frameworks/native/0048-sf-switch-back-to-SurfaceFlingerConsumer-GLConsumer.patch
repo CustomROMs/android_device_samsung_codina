@@ -1,4 +1,4 @@
-From 5c7cd7b7600563fc3561573997d29c10f9be4af7 Mon Sep 17 00:00:00 2001
+From 8ab110def5c3fa3b7acb2c549cbba44aa55ffa33 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 21 Sep 2018 23:39:41 +0300
 Subject: [PATCH 48/49] sf: switch back to SurfaceFlingerConsumer (GLConsumer)

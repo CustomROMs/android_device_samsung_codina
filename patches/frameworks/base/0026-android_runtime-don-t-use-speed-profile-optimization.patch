@@ -1,4 +1,4 @@
-From e0ae7f1ed1e411ac301ecf61f768d6564f0d5e35 Mon Sep 17 00:00:00 2001
+From f92e596d93d38670c49532d7d52b95133b7b7c6b Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 30 Sep 2018 00:32:13 +0300
 Subject: [PATCH 26/28] android_runtime: don't use speed profile optimization

@@ -1,0 +1,51 @@
+From 50168b154e4a8f32d641046019eb633c25f6011d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 05/10] soong_config: Add BOARD_EGL_WORKAROUND_BUG_10194508
+ variable
+
+* Soong product variable 'Needs_egl_khr_workaround product variable'
+
+Change-Id: I40f1efef9d75de9e38e7bbe46498c1b132bfe7d9
+---
+ build/soong/android/variable.go | 4 ++++
+ build/soong/soong_config.mk     | 1 +
+ 2 files changed, 5 insertions(+)
+
+diff --git a/build/soong/android/variable.go b/build/soong/android/variable.go
+index f5716869..91b46342 100644
+--- a/build/soong/android/variable.go
++++ b/build/soong/android/variable.go
+@@ -9,6 +9,9 @@ type Product_variables struct {
+ 	Uses_non_treble_camera struct {
+ 		Cflags []string
+ 	}
++	Needs_egl_khr_workaround struct {
++		Cflags []string
++	}
+ 	Needs_text_relocations struct {
+ 		Cppflags []string
+ 	}
+@@ -39,6 +42,7 @@ type ProductVariables struct {
+ 	Uses_non_treble_camera  *bool `json:",omitempty"`
+ 	Java_Source_Overlays *string `json:",omitempty"`
+ 	Needs_text_relocations  *bool `json:",omitempty"`
++	Needs_egl_khr_workaround  *bool `json:",omitempty"`
+ 	Specific_camera_parameter_library  *string `json:",omitempty"`
+ 	Target_process_sdk_version_override *string `json:",omitempty"`
+ 	Target_shim_libs  *string `json:",omitempty"`
+diff --git a/build/soong/soong_config.mk b/build/soong/soong_config.mk
+index bf0f5d8b..40dfa096 100644
+--- a/build/soong/soong_config.mk
++++ b/build/soong/soong_config.mk
+@@ -6,6 +6,7 @@ _contents := $(_contents)    "Lineage":{$(newline)
+ $(call add_json_str_omitempty, Additional_gralloc_10_usage_bits, $(TARGET_ADDITIONAL_GRALLOC_10_USAGE_BITS))
+ $(call add_json_bool, Has_legacy_camera_hal1, $(filter true,$(TARGET_HAS_LEGACY_CAMERA_HAL1)))
+ $(call add_json_bool, Uses_non_treble_camera, $(filter true,$(TARGET_USES_NON_TREBLE_CAMERA)))
++$(call add_json_bool, Needs_egl_khr_workaround, $(filter true,$(BOARD_EGL_WORKAROUND_BUG_10194508)))
+ $(call add_json_str, Java_Source_Overlays, $(JAVA_SOURCE_OVERLAYS))
+ $(call add_json_bool, Needs_text_relocations, $(filter true,$(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)))
+ $(call add_json_str, Specific_camera_parameter_library, $(TARGET_SPECIFIC_CAMERA_PARAMETER_LIBRARY))
+-- 
+2.11.0
+

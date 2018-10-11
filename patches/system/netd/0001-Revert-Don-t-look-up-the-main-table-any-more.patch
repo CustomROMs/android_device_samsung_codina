@@ -1,4 +1,4 @@
-From 44659a61cbaa97bf3b3deed6fff6befe975e430c Mon Sep 17 00:00:00 2001
+From cf17a1c4de36bbb61d5b201a8ba1faa92a98b153 Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Tue, 9 Oct 2018 21:08:50 +0200
 Subject: [PATCH] Revert "Don't look up the main table any more."

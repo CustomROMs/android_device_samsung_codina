@@ -1,0 +1,26 @@
+From c9351bfc01aeae3cd8da22034b7d87ecdae61c9b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 20 Sep 2018 10:03:20 +0300
+Subject: [PATCH 59/70] add mising MediaBufferGroup::acquire_buffer symbol [2]
+
+Change-Id: Iffa0c460b5aa08c69de7c7c9a6281e7d0bccf5ab
+---
+ media/libmediaextractor/MediaBufferGroup.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/libmediaextractor/MediaBufferGroup.cpp b/media/libmediaextractor/MediaBufferGroup.cpp
+index 3863e606f..2f5b053e8 100644
+--- a/media/libmediaextractor/MediaBufferGroup.cpp
++++ b/media/libmediaextractor/MediaBufferGroup.cpp
+@@ -154,7 +154,7 @@ bool MediaBufferGroup::has_buffers() {
+ 
+ #ifdef ADD_LEGACY_ACQUIRE_BUFFER_SYMBOL
+ extern "C" status_t _ZN7android16MediaBufferGroup14acquire_bufferEPPNS_11MediaBufferE(
+-    MediaBufferGroup* group, MediaBuffer **out) {
++    MediaBufferGroup* group, MediaBufferBase **out) {
+     return group->acquire_buffer(out, false);
+ }
+ #endif
+-- 
+2.11.0
+

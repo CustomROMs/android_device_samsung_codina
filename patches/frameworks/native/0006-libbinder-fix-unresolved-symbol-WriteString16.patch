@@ -1,4 +1,4 @@
-From 258c8bdaeedf3360534e17bc537da700dc1ae282 Mon Sep 17 00:00:00 2001
+From 815897ed38a6a5d4049e1ef49b10bb3c61f97ad1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 06/49] libbinder: fix unresolved symbol WriteString16

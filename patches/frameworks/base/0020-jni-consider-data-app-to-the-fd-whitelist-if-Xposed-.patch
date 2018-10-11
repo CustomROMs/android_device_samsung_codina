@@ -1,4 +1,4 @@
-From 3986baa0a52a044e149ef24887e42654fd3763f6 Mon Sep 17 00:00:00 2001
+From 65a0c877c6360daef665175bd71c219494c322e6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 20/28] jni: consider /data/app to the fd whitelist if Xposed
@@ -15,10 +15,10 @@ Dynamically do this if XposedBridge.jar is detected.
  1 file changed, 10 insertions(+)
 
 diff --git a/core/jni/fd_utils.cpp b/core/jni/fd_utils.cpp
-index c5904e0e9e5..2d6880d8cf4 100644
+index 4ff1cacd953..e6c61d600f1 100644
 --- a/core/jni/fd_utils.cpp
 +++ b/core/jni/fd_utils.cpp
-@@ -114,6 +114,16 @@ bool FileDescriptorWhitelist::IsAllowed(const std::string& path) const {
+@@ -115,6 +115,16 @@ bool FileDescriptorWhitelist::IsAllowed(const std::string& path) const {
      return true;
    }
  

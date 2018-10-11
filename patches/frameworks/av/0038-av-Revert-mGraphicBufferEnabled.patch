@@ -1,7 +1,7 @@
-From f7be1a4105cfed8dff02f64e1490b6ce67ad507f Mon Sep 17 00:00:00 2001
+From 82408e66898b67d752b6243a6c28fa66a3976bd0 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 38/67] av: Revert mGraphicBufferEnabled
+Subject: [PATCH 38/70] av: Revert mGraphicBufferEnabled
 
 ---
  media/libstagefright/omx/OMXNodeInstance.cpp        | 21 ---------------------
@@ -9,7 +9,7 @@ Subject: [PATCH 38/67] av: Revert mGraphicBufferEnabled
  2 files changed, 22 deletions(-)
 
 diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
-index 0ea924c40..92397b440 100644
+index a192e140d..09f80ebfb 100644
 --- a/media/libstagefright/omx/OMXNodeInstance.cpp
 +++ b/media/libstagefright/omx/OMXNodeInstance.cpp
 @@ -372,8 +372,6 @@ OMXNodeInstance::OMXNodeInstance(
@@ -21,7 +21,7 @@ index 0ea924c40..92397b440 100644
      mIsSecure = AString(name).endsWith(".secure");
      mLegacyAdaptiveExperiment = ADebug::isExperimentEnabled("legacy-adaptive");
  }
-@@ -826,12 +824,6 @@ status_t OMXNodeInstance::enableNativeBuffers_l(
+@@ -829,12 +827,6 @@ status_t OMXNodeInstance::enableNativeBuffers_l(
              } else if (mSecureBufferType[portIndex] == kSecureBufferTypeUnknown) {
                  mSecureBufferType[portIndex] = kSecureBufferTypeOpaque;
              }
@@ -34,7 +34,7 @@ index 0ea924c40..92397b440 100644
          }
      } else {
          CLOG_ERROR_IF(enable, getExtensionIndex, err, "%s", name);
-@@ -1123,12 +1115,6 @@ status_t OMXNodeInstance::useBuffer_l(
+@@ -1127,12 +1119,6 @@ status_t OMXNodeInstance::useBuffer_l(
      OMX_ERRORTYPE err = OMX_ErrorNone;
      bool isMetadata = mMetadataType[portIndex] != kMetadataBufferTypeInvalid;
  
@@ -47,7 +47,7 @@ index 0ea924c40..92397b440 100644
      size_t paramsSize;
      void* paramsPointer;
      if (params != NULL && hParams != NULL) {
-@@ -1314,13 +1300,6 @@ status_t OMXNodeInstance::useGraphicBuffer_l(
+@@ -1318,13 +1304,6 @@ status_t OMXNodeInstance::useGraphicBuffer_l(
                  portIndex, graphicBuffer, buffer);
      }
  

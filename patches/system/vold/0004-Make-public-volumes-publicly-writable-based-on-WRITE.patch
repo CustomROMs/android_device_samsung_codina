@@ -1,0 +1,55 @@
+From 49fa7467540b6a72c9da59519072e533737819c2 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 04/11] Make public volumes publicly writable based on
+ WRITE_EXTERNAL_STORAGE
+
+---
+ model/PublicVolume.cpp | 31 ++++++++++---------------------
+ 1 file changed, 10 insertions(+), 21 deletions(-)
+
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index 3bdfd28..97df86e 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -190,27 +190,16 @@ status_t PublicVolume::doMount() {
+     dev_t before = GetDevice(mFuseWrite);
+ 
+     if (!(mFusePid = fork())) {
+-        if (getMountFlags() & MountFlags::kPrimary) {
+-            if (execl(kFusePath, kFusePath,
+-                    "-u", "1023", // AID_MEDIA_RW
+-                    "-g", "1023", // AID_MEDIA_RW
+-                    "-U", std::to_string(getMountUserId()).c_str(),
+-                    "-w",
+-                    mRawPath.c_str(),
+-                    stableName.c_str(),
+-                    NULL)) {
+-                PLOG(ERROR) << "Failed to exec";
+-            }
+-        } else {
+-            if (execl(kFusePath, kFusePath,
+-                    "-u", "1023", // AID_MEDIA_RW
+-                    "-g", "1023", // AID_MEDIA_RW
+-                    "-U", std::to_string(getMountUserId()).c_str(),
+-                    mRawPath.c_str(),
+-                    stableName.c_str(),
+-                    NULL)) {
+-                PLOG(ERROR) << "Failed to exec";
+-            }
++        if (execl(kFusePath, kFusePath,
++                  "-u", "1023", // AID_MEDIA_RW
++                  "-g", "1023", // AID_MEDIA_RW
++                  "-U", std::to_string(getMountUserId()).c_str(),
++                  "-m",
++                  "-w",
++                  mRawPath.c_str(),
++                  stableName.c_str(),
++                  NULL)) {
++            PLOG(ERROR) << "Failed to exec";
+         }
+ 
+         LOG(ERROR) << "FUSE exiting";
+-- 
+2.11.0
+

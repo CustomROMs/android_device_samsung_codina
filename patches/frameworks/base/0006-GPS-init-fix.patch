@@ -1,4 +1,4 @@
-From 9887c6af03c58dc0ef4127534ef0a53b912337af Mon Sep 17 00:00:00 2001
+From 6afb3f4af73cb4a1139a2f14ba2ccb205a0bc0b3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 06/28] GPS init fix

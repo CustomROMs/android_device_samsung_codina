@@ -1,0 +1,26 @@
+From 152398e5e9fe37f2b38c8749efdd1f84ae15c9b4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 02/30] releasetools: skip MakeRecoveryPatch
+
+Change-Id: I981a9ef1f9e25fcdbebbd958d7bc93687ecaebc6
+---
+ tools/releasetools/common.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index df077b18e..5f2244696 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1887,6 +1887,8 @@ def MakeRecoveryPatch(input_dir, output_sink, recovery_img, boot_img,
+     info_dict: A dict returned by common.LoadInfoDict() on the input
+         target_files. Will use OPTIONS.info_dict if None has been given.
+   """
++  pass
++
+   if info_dict is None:
+     info_dict = OPTIONS.info_dict
+ 
+-- 
+2.11.0
+

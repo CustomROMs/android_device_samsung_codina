@@ -1,4 +1,4 @@
-From 8f1feda3a76c9b927ce8cce60b9c55bbe51d9bda Mon Sep 17 00:00:00 2001
+From e03a8c57b135f291ba5c81877f6e0b67a03ff2e2 Mon Sep 17 00:00:00 2001
 From: ghepeu <ghepeu@gmail.com>
 Date: Sun, 14 Jul 2013 21:01:49 +0200
 Subject: [PATCH 12/28] Add support for Samsung extended AGPS

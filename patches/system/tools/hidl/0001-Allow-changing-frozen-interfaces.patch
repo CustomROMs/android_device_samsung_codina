@@ -1,4 +1,4 @@
-From 114cab6874949dbd665e9988d63b75a1bd4c1fa3 Mon Sep 17 00:00:00 2001
+From 2c14d434e051ebb10414cb31a63cbec5f236a504 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 30 Sep 2018 05:52:37 +0300
 Subject: [PATCH] Allow changing frozen interfaces

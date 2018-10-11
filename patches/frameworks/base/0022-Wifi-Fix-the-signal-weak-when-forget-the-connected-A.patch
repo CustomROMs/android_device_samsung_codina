@@ -1,4 +1,4 @@
-From 858a2970e28130ab3d0d6a8831300b1c7e4d3ead Mon Sep 17 00:00:00 2001
+From a9e3656f9a6c23ae1aa5b5c9974c02eb5291101a Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 22/28] Wifi: Fix the signal weak when forget the connected AP.

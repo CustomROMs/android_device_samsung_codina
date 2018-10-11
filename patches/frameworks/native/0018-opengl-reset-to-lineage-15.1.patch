@@ -1,4 +1,4 @@
-From 2d101ca4ac060f3cc4e87da5e54f033c0e90a78c Mon Sep 17 00:00:00 2001
+From 4663a12719ced0690293968321d19803f3f340c3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 18 Sep 2018 15:32:08 +0300
 Subject: [PATCH 18/49] opengl: reset to lineage-15.1
@@ -977,7 +977,7 @@ index 91a34558a..86b50efcc 100644
                      result = absolutePath;
                      return true;
 diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
-index e00de1f74..59bb53645 100644
+index f48ffdaa6..43cf717af 100644
 --- a/opengl/libs/EGL/eglApi.cpp
 +++ b/opengl/libs/EGL/eglApi.cpp
 @@ -80,7 +80,6 @@ extern char const * const gBuiltinExtensionString;
@@ -1563,7 +1563,7 @@ index e00de1f74..59bb53645 100644
  }
  
  void EGLAPI eglBeginFrame(EGLDisplay dpy, EGLSurface surface) {
-@@ -1378,7 +1348,7 @@ EGLBoolean eglSwapBuffersWithDamageKHR(EGLDisplay dpy, EGLSurface draw,
+@@ -1346,7 +1316,7 @@ EGLBoolean eglSwapBuffersWithDamageKHR(EGLDisplay dpy, EGLSurface draw,
      if (!_s.get())
          return setError(EGL_BAD_SURFACE, (EGLBoolean)EGL_FALSE);
  
@@ -1572,7 +1572,7 @@ index e00de1f74..59bb53645 100644
  
      if (CC_UNLIKELY(dp->traceGpuCompletion)) {
          EGLSyncKHR sync = eglCreateSyncKHR(dpy, EGL_SYNC_FENCE_KHR, NULL);
-@@ -1397,11 +1367,6 @@ EGLBoolean eglSwapBuffersWithDamageKHR(EGLDisplay dpy, EGLSurface draw,
+@@ -1365,11 +1335,6 @@ EGLBoolean eglSwapBuffersWithDamageKHR(EGLDisplay dpy, EGLSurface draw,
          }
      }
  
@@ -1584,7 +1584,7 @@ index e00de1f74..59bb53645 100644
      if (n_rects == 0) {
          return s->cnx->egl.eglSwapBuffers(dp->disp.dpy, s->surface);
      }
-@@ -1539,11 +1504,7 @@ EGLBoolean eglSurfaceAttrib(
+@@ -1507,11 +1472,7 @@ EGLBoolean eglSurfaceAttrib(
          return (err == 0) ? EGL_TRUE : setError(EGL_BAD_SURFACE, (EGLBoolean)EGL_FALSE);
      }
  
@@ -1597,7 +1597,7 @@ index e00de1f74..59bb53645 100644
          return s->cnx->egl.eglSurfaceAttrib(
                  dp->disp.dpy, s->surface, attribute, value);
      }
-@@ -1747,31 +1708,13 @@ EGLImageKHR eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+@@ -1715,31 +1676,13 @@ EGLImageKHR eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
      ContextRef _c(dp.get(), ctx);
      egl_context_t * const c = _c.get();
  
@@ -1630,7 +1630,7 @@ index e00de1f74..59bb53645 100644
      }
      return result;
  }
-@@ -1983,13 +1926,22 @@ EGLSurface eglCreateStreamProducerSurfaceKHR(EGLDisplay dpy, EGLConfig config,
+@@ -1951,13 +1894,22 @@ EGLSurface eglCreateStreamProducerSurfaceKHR(EGLDisplay dpy, EGLConfig config,
      egl_display_ptr dp = validate_display(dpy);
      if (!dp) return EGL_NO_SURFACE;
  

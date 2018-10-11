@@ -1,4 +1,4 @@
-From 37c3f6cae01e07f495937a6bcd1b1b2f7fc2f919 Mon Sep 17 00:00:00 2001
+From 135e355c706f5b1596c999a64d298d134deb95ee Mon Sep 17 00:00:00 2001
 From: Dmitry Grinberg <dmitrygr@gmail.com>
 Date: Wed, 4 Nov 2015 10:23:16 +0000
 Subject: [PATCH 13/28] pm: Increase timeout to allow slow CPUs to compile GMS
@@ -9,7 +9,7 @@ Subject: [PATCH 13/28] pm: Increase timeout to allow slow CPUs to compile GMS
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
-index 9ed2b9c1854..d93a2cc5ba1 100644
+index 2faf95d7709..35304b131d9 100644
 --- a/services/core/java/com/android/server/pm/PackageManagerService.java
 +++ b/services/core/java/com/android/server/pm/PackageManagerService.java
 @@ -524,7 +524,7 @@ public class PackageManagerService extends IPackageManager.Stub

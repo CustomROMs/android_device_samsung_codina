@@ -1,0 +1,29 @@
+From 8721523603027343e635d78329a52270e61b4da1 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 20 Sep 2018 09:47:43 +0300
+Subject: [PATCH 58/70] Revert "OMXNodeInstance: use a lock around
+ OMX::freeNode"
+
+This commit breaks the audio and/or video playback on STE devices.
+
+Change-Id: I6ed46c6061bc5437408e42e6412bf48c178f910e
+---
+ media/libstagefright/omx/OMXNodeInstance.cpp | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 63e13afe5..b4a1d2e5a 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -496,8 +496,6 @@ status_t OMXNodeInstance::freeNode() {
+             break;
+     }
+ 
+-    Mutex::Autolock _l(mLock);
+-
+     if (mActiveBuffers.size() > 0) {
+         freeActiveBuffers();
+     }
+-- 
+2.11.0
+

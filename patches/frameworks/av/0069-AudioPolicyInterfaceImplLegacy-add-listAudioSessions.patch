@@ -1,0 +1,32 @@
+From af0173a4cfc03dec1eeb635318c1b7c22996ea08 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 16:13:53 +0300
+Subject: [PATCH 69/70] AudioPolicyInterfaceImplLegacy: add listAudioSessions
+ stub method
+
+Change-Id: Iaa315995d4173332a0af853434c949ac1018a144
+---
+ services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+index fe6316ecb..86bc623cc 100644
+--- a/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
++++ b/services/audiopolicy/service/AudioPolicyInterfaceImplLegacy.cpp
+@@ -672,13 +672,11 @@ float AudioPolicyService::getStreamVolumeDB(
+     return NO_ERROR;
+ }
+ 
+-#if 0
+ status_t AudioPolicyService::listAudioSessions(audio_stream_type_t streams,
+                                                Vector< sp<AudioSessionInfo>> &sessions)
+ {
+     return NO_ERROR;
+ }
+-#endif
+ 
+ status_t AudioPolicyService::setSurroundFormatEnabled(audio_format_t audioFormat __unused, bool enabled __unused)
+ {
+-- 
+2.11.0
+

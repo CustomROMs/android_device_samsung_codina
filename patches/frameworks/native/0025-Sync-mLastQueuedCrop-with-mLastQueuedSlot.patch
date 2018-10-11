@@ -1,4 +1,4 @@
-From 278351d95ce0be4e17a024f5809d9aa2172db34b Mon Sep 17 00:00:00 2001
+From 0a01fa92e29441eaa951280216736133219e5965 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 25/49] Sync mLastQueuedCrop with mLastQueuedSlot.

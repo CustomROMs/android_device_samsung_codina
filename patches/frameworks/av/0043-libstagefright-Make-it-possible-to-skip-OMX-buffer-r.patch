@@ -1,7 +1,7 @@
-From 72c738adba966934f697396b97f222bee84e4997 Mon Sep 17 00:00:00 2001
+From 8b939512bad48d246570305ca7858cfa6130d1df Mon Sep 17 00:00:00 2001
 From: Michael Gernoth <michael@gernoth.net>
 Date: Wed, 11 Mar 2015 03:19:22 -0500
-Subject: [PATCH 43/67] libstagefright: Make it possible to skip OMX buffer
+Subject: [PATCH 43/70] libstagefright: Make it possible to skip OMX buffer
  reallocation
 
 Some devices don't like the call to setParameter() at this point, so
@@ -15,7 +15,7 @@ This is activated only for omap4 for now, but also has an opt-in via BOARD_CANT_
  2 files changed, 14 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index d79ad4fcc..d842a0e14 100755
+index 12e27ca1d..1733bf2bc 100755
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -1184,7 +1184,17 @@ status_t ACodec::configureOutputBuffersFromNativeWindow(

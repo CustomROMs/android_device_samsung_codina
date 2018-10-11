@@ -1,0 +1,27 @@
+From d1d16dc5bd6270ef91dbe06022060a66c48c9347 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 17/30] core: copy fstab before invoking ota_from_target_files
+
+That file is needed to manage partitions etc.
+---
+ core/Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 87825bfed..d5217e0a1 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -3170,6 +3170,9 @@ endif
+ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
+ 		build/make/tools/releasetools/ota_from_target_files
+ 	@echo "Package OTA: $@"
++	$(hide) mkdir -p $(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE))/RECOVERY/RAMDISK/etc/
++	$(hide) cp $(recovery_fstab) \
++		$(patsubst %.zip,%,$(BUILT_TARGET_FILES_PACKAGE))/RECOVERY/RAMDISK/etc/recovery.fstab
+ 	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH MKBOOTIMG=$(MKBOOTIMG) \
+ 	   build/make/tools/releasetools/ota_from_target_files -v \
+ 	   --block \
+-- 
+2.11.0
+

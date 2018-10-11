@@ -1,7 +1,7 @@
-From 6445e843d6da68c13f9dde1dbadbf43cb98de164 Mon Sep 17 00:00:00 2001
+From 0d74095b15cd7a35e494fb3632c069fe1f46bf1d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Wed, 19 Sep 2018 07:23:02 +0300
-Subject: [PATCH 27/67] audiopolicy: return NO_ERROR to silence log spamming
+Subject: [PATCH 27/70] audiopolicy: return NO_ERROR to silence log spamming
 
 Change-Id: Id3ff9766faac45a6bd6012aa74e9c9fa30640484
 ---

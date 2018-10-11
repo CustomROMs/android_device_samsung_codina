@@ -1,4 +1,4 @@
-From 77967e4850a164ab04b7218bab1ad1a44caa6cb4 Mon Sep 17 00:00:00 2001
+From 27c0afa30e141bb2407b904f297ee48add65221e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Wed, 19 Sep 2018 07:46:37 +0300
 Subject: [PATCH 43/49] disable dumpstate build

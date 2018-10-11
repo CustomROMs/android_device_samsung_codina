@@ -1,0 +1,26 @@
+From d6b7f2e9fdcae642c54b575e0b5278826206c61b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 11:53:13 +0300
+Subject: [PATCH] hostapd: set user to root
+
+Change-Id: Ifa7b21d97d0313921980e325af4ec58a7ebafa7a
+---
+ hostapd/hostapd.android.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hostapd/hostapd.android.rc b/hostapd/hostapd.android.rc
+index 37a95c22..4e4501dc 100644
+--- a/hostapd/hostapd.android.rc
++++ b/hostapd/hostapd.android.rc
+@@ -15,7 +15,7 @@ service hostapd /vendor/bin/hw/hostapd
+     interface android.hardware.wifi.hostapd@1.0::IHostapd default
+     class main
+     capabilities NET_ADMIN NET_RAW
+-    user wifi
++    user root
+     group wifi net_raw net_admin
+     disabled
+     oneshot
+-- 
+2.11.0
+

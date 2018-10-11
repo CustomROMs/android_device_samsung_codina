@@ -1,7 +1,7 @@
-From 33ec6a400981dd44221b7c523bbdfacfe3a43d44 Mon Sep 17 00:00:00 2001
+From f731479618a34b820127ff3695f165c6fa713668 Mon Sep 17 00:00:00 2001
 From: Simon Shields <simon@lineageos.org>
 Date: Thu, 24 Aug 2017 20:52:30 +1000
-Subject: [PATCH 01/32] releasetools: don't assert device
+Subject: [PATCH 01/30] releasetools: don't assert device
 
 this is broken on twrp
 
@@ -11,7 +11,7 @@ Change-Id: I50b52e711cea1a45327d537854c9cf299ea96f9c
  1 file changed, 1 insertion(+), 7 deletions(-)
 
 diff --git a/tools/releasetools/edify_generator.py b/tools/releasetools/edify_generator.py
-index 16e2fc9c4..80879b6f8 100644
+index 59f9d8831..cdd730174 100644
 --- a/tools/releasetools/edify_generator.py
 +++ b/tools/releasetools/edify_generator.py
 @@ -145,13 +145,7 @@ class EdifyGenerator(object):

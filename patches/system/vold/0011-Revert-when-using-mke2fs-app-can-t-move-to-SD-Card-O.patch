@@ -1,0 +1,30 @@
+From 82ff026ca2bc5981c4119d004fdfde15e579e9cf Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 14:09:18 +0300
+Subject: [PATCH 11/11] Revert "when using mke2fs, app can't move to SD Card On
+ AndroidO, if enable mke2fs for vold, when moving apps to Sd Card,it would
+ fail when creating Asec, because the param of block nums is wrong"
+
+This reverts commit 5114ab7b5b34b44ce9ada9e8a07b80ae6e9ca93a.
+
+Change-Id: I4eb473366cd2e096a251cb4311d7a4de0969c085
+---
+ fs/Ext4.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/Ext4.cpp b/fs/Ext4.cpp
+index 0311f1f..927d4a3 100644
+--- a/fs/Ext4.cpp
++++ b/fs/Ext4.cpp
+@@ -211,7 +211,7 @@ status_t Format(const std::string& source, unsigned long numSectors,
+     cmd.push_back(source);
+ 
+     if (numSectors) {
+-        cmd.push_back(StringPrintf("%lu", numSectors * 512 / 4096));
++        cmd.push_back(StringPrintf("%lu", numSectors * (4096 / 512)));
+     }
+ 
+     return ForkExecvp(cmd);
+-- 
+2.11.0
+

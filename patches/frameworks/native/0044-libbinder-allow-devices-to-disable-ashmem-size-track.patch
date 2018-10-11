@@ -1,4 +1,4 @@
-From ed67bf86d131e520237987986d1a6499ebdcb5ae Mon Sep 17 00:00:00 2001
+From 8b5287e8802cd0524fcde3ed78de3c8c8a8ef0fe Mon Sep 17 00:00:00 2001
 From: Simon Shields <keepcalm444@gmail.com>
 Date: Thu, 3 Dec 2015 20:34:15 +1100
 Subject: [PATCH 44/49] libbinder: allow devices to disable ashmem size

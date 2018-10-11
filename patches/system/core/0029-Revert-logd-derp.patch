@@ -1,0 +1,36 @@
+From cd76b85c021ea489213d5c7829f8c6a8b3725345 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sat, 22 Sep 2018 04:00:21 +0300
+Subject: [PATCH 29/31] Revert "logd: derp"
+
+This reverts commit 60bb7bd3bf9488a8b4ec8320792d3cdea57d2d62.
+
+Change-Id: I4c353887382d6a32be2307ec80d1e3216d8521e2
+---
+ logd/logd.rc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/logd/logd.rc b/logd/logd.rc
+index 4d7217884..bd303b72b 100644
+--- a/logd/logd.rc
++++ b/logd/logd.rc
+@@ -4,14 +4,14 @@ service logd /system/bin/logd
+     socket logdw dgram+passcred 0222 logd logd
+     file /proc/kmsg r
+     file /dev/kmsg w
+-    user root
++    user logd
+     group logd system package_info readproc
+     writepid /dev/cpuset/system-background/tasks
+ 
+ service logd-reinit /system/bin/logd --reinit
+     oneshot
+     disabled
+-    user root
++    user logd
+     group logd
+     writepid /dev/cpuset/system-background/tasks
+ 
+-- 
+2.11.0
+

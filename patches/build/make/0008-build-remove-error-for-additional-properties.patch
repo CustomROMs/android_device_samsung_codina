@@ -1,0 +1,26 @@
+From 33662e64650bb9a749a96705ec8dc88d68194d92 Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Mon, 21 Aug 2017 19:34:34 -0700
+Subject: [PATCH 08/30] build: remove error for additional properties
+
+Change-Id: I42ade0ea75dae2a5b819921e0a551e3ffc85392e
+---
+ core/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 7f89fd510..dde46c3f1 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -15,7 +15,7 @@ LOCAL_PATH := $(BUILD_SYSTEM)
+ #$(2): the dest
+ define check-product-copy-files
+ $(if $(filter-out $(TARGET_COPY_OUT_SYSTEM_OTHER)/%,$(2)), \
+-  $(if $(filter %.apk, $(2)),$(error \
++  $(if $(filter %.apk, $(2)),$(warning \
+      Prebuilt apk found in PRODUCT_COPY_FILES: $(1), use BUILD_PREBUILT instead!)))
+ endef
+ # filter out the duplicate <source file>:<dest file> pairs.
+-- 
+2.11.0
+

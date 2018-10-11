@@ -1,0 +1,132 @@
+From eef97a0eab637b310eb63864366a6e86431ce97d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 06:30:28 +0300
+Subject: [PATCH 65/70] Partially revert "Remove OMX dependency from
+ MediaPlayerService"
+
+Change-Id: I45854897647d32e882c98e36718c0c81c5614720
+---
+ media/libmedia/IMediaPlayerService.cpp             | 14 ++++++++++++++
+ media/libmedia/include/media/IMediaPlayerService.h |  1 +
+ media/libmediaplayerservice/Android.bp             |  1 +
+ media/libmediaplayerservice/MediaPlayerService.cpp | 13 +++++++++++++
+ media/libmediaplayerservice/MediaPlayerService.h   |  2 ++
+ 5 files changed, 31 insertions(+)
+
+diff --git a/media/libmedia/IMediaPlayerService.cpp b/media/libmedia/IMediaPlayerService.cpp
+index aca7ad997..d1358783d 100644
+--- a/media/libmedia/IMediaPlayerService.cpp
++++ b/media/libmedia/IMediaPlayerService.cpp
+@@ -38,6 +38,7 @@ enum {
+     CREATE = IBinder::FIRST_CALL_TRANSACTION,
+     CREATE_MEDIA_RECORDER,
+     CREATE_METADATA_RETRIEVER,
++    GET_OMX,
+     ADD_BATTERY_DATA,
+     PULL_BATTERY_DATA,
+     LISTEN_FOR_REMOTE_DISPLAY,
+@@ -80,6 +81,13 @@ public:
+         return interface_cast<IMediaRecorder>(reply.readStrongBinder());
+     }
+ 
++    virtual sp<IOMX> getOMX() {
++        Parcel data, reply;
++        data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
++        remote()->transact(GET_OMX, data, &reply);
++        return interface_cast<IOMX>(reply.readStrongBinder());
++    }
++
+     virtual void addBatteryData(uint32_t params) {
+         Parcel data, reply;
+         data.writeInterfaceToken(IMediaPlayerService::getInterfaceDescriptor());
+@@ -143,6 +151,12 @@ status_t BnMediaPlayerService::onTransact(
+             reply->writeStrongBinder(IInterface::asBinder(retriever));
+             return NO_ERROR;
+         } break;
++        case GET_OMX: {
++            CHECK_INTERFACE(IMediaPlayerService, data, reply);
++            sp<IOMX> omx = getOMX();
++            reply->writeStrongBinder(IInterface::asBinder(omx));
++            return NO_ERROR;
++        } break;
+         case ADD_BATTERY_DATA: {
+             CHECK_INTERFACE(IMediaPlayerService, data, reply);
+             uint32_t params = data.readInt32();
+diff --git a/media/libmedia/include/media/IMediaPlayerService.h b/media/libmedia/include/media/IMediaPlayerService.h
+index 217de14ee..398a8c7cd 100644
+--- a/media/libmedia/include/media/IMediaPlayerService.h
++++ b/media/libmedia/include/media/IMediaPlayerService.h
+@@ -48,6 +48,7 @@ public:
+     virtual sp<IMediaMetadataRetriever> createMetadataRetriever() = 0;
+     virtual sp<IMediaPlayer> create(const sp<IMediaPlayerClient>& client,
+             audio_session_t audioSessionId = AUDIO_SESSION_ALLOCATE) = 0;
++    virtual sp<IOMX>            getOMX() = 0;
+     virtual sp<IMediaCodecList> getCodecList() const = 0;
+ 
+     // Connects to a remote display.
+diff --git a/media/libmediaplayerservice/Android.bp b/media/libmediaplayerservice/Android.bp
+index a37973b8e..b418b2fc1 100644
+--- a/media/libmediaplayerservice/Android.bp
++++ b/media/libmediaplayerservice/Android.bp
+@@ -33,6 +33,7 @@ cc_library_shared {
+         "libstagefright",
+         "libstagefright_foundation",
+         "libstagefright_httplive",
++        "libstagefright_omx",
+         "libutils",
+     ],
+ 
+diff --git a/media/libmediaplayerservice/MediaPlayerService.cpp b/media/libmediaplayerservice/MediaPlayerService.cpp
+index d074d5763..b7610c317 100644
+--- a/media/libmediaplayerservice/MediaPlayerService.cpp
++++ b/media/libmediaplayerservice/MediaPlayerService.cpp
+@@ -78,6 +78,8 @@
+ #include "TestPlayerStub.h"
+ #include "nuplayer/NuPlayerDriver.h"
+ 
++#include <media/stagefright/omx/OMX.h>
++
+ #include "HTTPBase.h"
+ 
+ static const int kDumpLockRetries = 50;
+@@ -335,6 +337,17 @@ sp<IMediaCodecList> MediaPlayerService::getCodecList() const {
+     return MediaCodecList::getLocalInstance();
+ }
+ 
++sp<IOMX> MediaPlayerService::getOMX() {
++    ALOGI("MediaPlayerService::getOMX");
++    Mutex::Autolock autoLock(mLock);
++
++    if (mOMX.get() == NULL) {
++        mOMX = new OMX;
++    }
++
++    return mOMX;
++}
++
+ sp<IRemoteDisplay> MediaPlayerService::listenForRemoteDisplay(
+         const String16 &/*opPackageName*/,
+         const sp<IRemoteDisplayClient>& /*client*/,
+diff --git a/media/libmediaplayerservice/MediaPlayerService.h b/media/libmediaplayerservice/MediaPlayerService.h
+index bfb7cc257..ac1f4e66b 100644
+--- a/media/libmediaplayerservice/MediaPlayerService.h
++++ b/media/libmediaplayerservice/MediaPlayerService.h
+@@ -239,6 +239,7 @@ public:
+                                        audio_session_t audioSessionId);
+ 
+     virtual sp<IMediaCodecList> getCodecList() const;
++    virtual sp<IOMX>            getOMX();
+ 
+     virtual sp<IRemoteDisplay> listenForRemoteDisplay(const String16 &opPackageName,
+             const sp<IRemoteDisplayClient>& client, const String8& iface);
+@@ -525,6 +526,7 @@ private:
+                 SortedVector< wp<Client> >  mClients;
+                 SortedVector< wp<MediaRecorderClient> > mMediaRecorderClients;
+                 int32_t                     mNextConnId;
++                sp<IOMX>                    mOMX;
+ };
+ 
+ // ----------------------------------------------------------------------------
+-- 
+2.11.0
+

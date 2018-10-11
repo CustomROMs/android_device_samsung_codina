@@ -1,7 +1,7 @@
-From a83e465cedd2937f68d76af1d6f8c8d0c59361ff Mon Sep 17 00:00:00 2001
+From 3c769d002288ec1745a421970bfa6782f91f3cbc Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 00:08:32 +0300
-Subject: [PATCH 25/67] libaudiohal: fix crash
+Subject: [PATCH 25/70] libaudiohal: fix crash
 
 Change-Id: I3b1fa3382d08e2c88de713b1f20dd1e9752c7985
 ---

@@ -1,14 +1,14 @@
-From 4e24d63843f0c6d7807d1562607cafc110e4d739 Mon Sep 17 00:00:00 2001
+From 5ed34002b881839a547e23091662ea4f4ca2caa7 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 02/30] Add init.kernel.rc
+Subject: [PATCH 02/31] Add init.kernel.rc
 
 ---
  rootdir/init.rc | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index eb7a0abe8..02337116c 100644
+index 970b3f8d0..0558039e0 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
 @@ -10,6 +10,7 @@ import /init.${ro.hardware}.rc

@@ -1,7 +1,7 @@
-From a12dc96beae9977f711299c9ca669b989314b1a7 Mon Sep 17 00:00:00 2001
+From ac8d7977c8e0e8f89e4fb1eb754fb2db40fea64b Mon Sep 17 00:00:00 2001
 From: LuK1337 <priv.luk@gmail.com>
 Date: Fri, 11 Nov 2016 19:10:42 +0100
-Subject: [PATCH 30/67] OMXNodeInstance: Fix legacy HAL1 after merge of
+Subject: [PATCH 30/70] OMXNodeInstance: Fix legacy HAL1 after merge of
  android-7.1.0_r7
 
 [AdrianDC]
@@ -27,10 +27,10 @@ index 3e6942bc8..e9ad212d4 100644
  
      sanitize: {
 diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
-index 7d2c2dd9a..48b907b98 100644
+index a68f9c75f..45c9b398c 100644
 --- a/media/libstagefright/omx/OMXNodeInstance.cpp
 +++ b/media/libstagefright/omx/OMXNodeInstance.cpp
-@@ -1713,10 +1713,30 @@ status_t OMXNodeInstance::emptyBuffer_l(
+@@ -1717,10 +1717,30 @@ status_t OMXNodeInstance::emptyBuffer_l(
      BufferMeta *buffer_meta =
          static_cast<BufferMeta *>(header->pAppPrivate);
  

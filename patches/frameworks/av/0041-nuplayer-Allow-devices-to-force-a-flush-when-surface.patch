@@ -1,7 +1,7 @@
-From f396e23cda825ad4785a7e5e97e6dd462dfc5035 Mon Sep 17 00:00:00 2001
+From 7fa461e6144be7349f25df5e6c66d05e47b32cd4 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 41/67] nuplayer: Allow devices to force a flush when surface
+Subject: [PATCH 41/70] nuplayer: Allow devices to force a flush when surface
  changes
 
 This fixes some playback problems on the Zenfone2 (running on 5.0
@@ -41,7 +41,7 @@ index 645bb7a90..62ffc574b 100644
  
      product_variables: {
 diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
-index a5f5fc675..795bc3af2 100644
+index 3ece28b5e..6bb954cfc 100644
 --- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
 +++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
 @@ -771,7 +771,10 @@ void NuPlayer::onMessageReceived(const sp<AMessage> &msg) {

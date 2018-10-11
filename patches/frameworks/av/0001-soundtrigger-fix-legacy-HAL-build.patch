@@ -1,7 +1,7 @@
-From 07ea498c7b40859159bfb6f7f6e8d8bcc7d8ddb9 Mon Sep 17 00:00:00 2001
+From 56728393b9682de04292537b71a0aa3c8d9b2e1e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 00:53:44 +0300
-Subject: [PATCH 01/67] soundtrigger: fix legacy HAL build
+Subject: [PATCH 01/70] soundtrigger: fix legacy HAL build
 
 Change-Id: I973e78323156719ccaa42b4c11f601ffa081a09d
 ---
@@ -9,7 +9,7 @@ Change-Id: I973e78323156719ccaa42b4c11f601ffa081a09d
  1 file changed, 1 insertion(+)
 
 diff --git a/services/soundtrigger/SoundTriggerHalLegacy.cpp b/services/soundtrigger/SoundTriggerHalLegacy.cpp
-index 2b78818a2..33829eb5a 100644
+index 573c74590..6183c2be1 100644
 --- a/services/soundtrigger/SoundTriggerHalLegacy.cpp
 +++ b/services/soundtrigger/SoundTriggerHalLegacy.cpp
 @@ -15,6 +15,7 @@
@@ -18,8 +18,8 @@ index 2b78818a2..33829eb5a 100644
  #include <utils/Log.h>
 +#include <errno.h>
  #include "SoundTriggerHalLegacy.h"
+ #include <errno.h>
  
- namespace android {
 -- 
 2.11.0
 

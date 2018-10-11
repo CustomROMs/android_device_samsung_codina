@@ -1,7 +1,7 @@
-From 1383cd01ce150ebe9152b9192e42968f6aa04fc0 Mon Sep 17 00:00:00 2001
+From eaac5efba21d82c14b5519dcc5cc5ff91e0231de Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 21 Sep 2018 09:31:15 +0300
-Subject: [PATCH 60/67] Revert "Remove dependency on non-Treble OMX"
+Subject: [PATCH 60/70] Revert "Remove dependency on non-Treble OMX"
 
 This reverts commit e7b894297aebc24939ddfa632ea3dd2d405d9f93.
 
@@ -834,7 +834,7 @@ index 4206647c6..3c7811614 100644
      mAudioDeviceUpdatedNotifier = new AudioDeviceUpdatedNotifier(listener);
      mRecorder->setAudioDeviceCallback(mAudioDeviceUpdatedNotifier);
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index d842a0e14..8c8485ff4 100755
+index 1733bf2bc..ebc524843 100755
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -28,6 +28,8 @@
@@ -1116,7 +1116,7 @@ index d842a0e14..8c8485ff4 100755
      }
  
      notify = new AMessage(kWhatOMXMessageList, mCodec);
-@@ -7947,7 +8003,11 @@ bool ACodec::OutputPortSettingsChangedState::onOMXEvent(
+@@ -7948,7 +8004,11 @@ bool ACodec::OutputPortSettingsChangedState::onOMXEvent(
                              mCodec->mBuffers[kPortIndexOutput].size());
                      err = FAILED_TRANSACTION;
                  } else {
@@ -1129,7 +1129,7 @@ index d842a0e14..8c8485ff4 100755
                  }
  
                  if (err == OK) {
-@@ -8550,4 +8610,12 @@ status_t ACodec::getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE
+@@ -8551,4 +8611,12 @@ status_t ACodec::getOMXChannelMapping(size_t numChannels, OMX_AUDIO_CHANNELTYPE
      return OK;
  }
  
@@ -1855,7 +1855,7 @@ index 000000000..2bd0f3fe4
 +
 +}  // namespace android
 diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
-index aa5ca3f09..f1066145d 100644
+index b4a1d2e5a..df99c0ef2 100644
 --- a/media/libstagefright/omx/OMXNodeInstance.cpp
 +++ b/media/libstagefright/omx/OMXNodeInstance.cpp
 @@ -344,7 +344,7 @@ bool OMXNodeInstance::CallbackDispatcherThread::threadLoop() {

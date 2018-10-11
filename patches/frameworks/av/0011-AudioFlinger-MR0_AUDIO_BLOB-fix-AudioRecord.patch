@@ -1,7 +1,7 @@
-From 1ffd6b91a076e52f9d176a686041e08272c13ec4 Mon Sep 17 00:00:00 2001
+From cf88f406e0502a8bfa9c22bc553ff6533c6cdd83 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 11/67] AudioFlinger: MR0_AUDIO_BLOB: fix AudioRecord
+Subject: [PATCH 11/70] AudioFlinger: MR0_AUDIO_BLOB: fix AudioRecord
 
 Our old audio library does not support hardware timestamps
 and return an incorrect value. This causes libaudioflinger crashes when

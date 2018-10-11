@@ -1,4 +1,4 @@
-From 4070b0a869b78570e122fbdb006f5f5123ba0ac4 Mon Sep 17 00:00:00 2001
+From 2059f86d6542ef2ed4ce74ceafbd9b90a9a60a11 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 14:27:46 +0300
 Subject: [PATCH 30/49] nativewindow: fix build

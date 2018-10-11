@@ -1,7 +1,7 @@
-From fac864fa6f111de8f3d1bb9bc6519dd375f40900 Mon Sep 17 00:00:00 2001
+From a2222a830c5644b249179615d5baee9d0ce29873 Mon Sep 17 00:00:00 2001
 From: Meticulus <theonejohnnyd@gmail.com>
 Date: Fri, 10 Oct 2014 16:25:16 -0500
-Subject: [PATCH 34/67] STE-OMX Fix Streaming Video
+Subject: [PATCH 34/70] STE-OMX Fix Streaming Video
 
  -Don't store metadata in buffers. We don't support that at all.
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 34/67] STE-OMX Fix Streaming Video
  1 file changed, 4 insertions(+)
 
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index b5c17dd7a..d79ad4fcc 100755
+index 59ad3475b..12e27ca1d 100755
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -858,11 +858,15 @@ status_t ACodec::allocateBuffersOnPort(OMX_U32 portIndex) {

@@ -1,0 +1,43 @@
+From 90dbd3dce4ff79d2a509dbb601c99b38fc4221f4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 30 Sep 2018 03:51:48 +0300
+Subject: [PATCH 68/70] libcameraservice: HACK: make isUidActive always return
+ true
+
+Change-Id: Ifca04fb988b9e59d533c698e7da23376ba54d46c
+---
+ services/camera/libcameraservice/CameraService.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index c9dcbe821..984ce06ac 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -928,6 +928,7 @@ Status CameraService::validateClientPermissionsLocked(const String8& cameraId,
+     originalClientPid = clientPid;
+     clientPid = callingPid;
+ 
++#if 0
+     userid_t clientUserId = multiuser_get_user_id(clientUid);
+ 
+     // Only allow clients who are being used by the current foreground device user, unless calling
+@@ -940,7 +941,7 @@ Status CameraService::validateClientPermissionsLocked(const String8& cameraId,
+                 "Callers from device user %d are not currently allowed to connect to camera \"%s\"",
+                 clientUserId, cameraId.string());
+     }
+-
++#endif
+     return Status::ok();
+ }
+ 
+@@ -2446,6 +2447,7 @@ bool CameraService::UidPolicy::isUidActive(uid_t uid, String16 callingPackage) {
+ static const int kPollUidActiveTimeoutMillis = 50;
+ 
+ bool CameraService::UidPolicy::isUidActiveLocked(uid_t uid, String16 callingPackage) {
++    return true;
+     // Non-app UIDs are considered always active
+     // If activity manager is unreachable, assume everything is active
+     if (uid < FIRST_APPLICATION_UID || !mRegistered) {
+-- 
+2.11.0
+

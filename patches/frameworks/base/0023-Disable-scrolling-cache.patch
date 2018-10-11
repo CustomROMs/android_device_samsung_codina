@@ -1,4 +1,4 @@
-From 21864623428eb2ce5a96545efa79738002e7b818 Mon Sep 17 00:00:00 2001
+From 3c59da4f9172db03ce295eb7c40a42950767a437 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 23/28] Disable scrolling cache

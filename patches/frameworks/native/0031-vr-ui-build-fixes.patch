@@ -1,4 +1,4 @@
-From b94bfaf16944672c61a547aaa60e49e810ee1c11 Mon Sep 17 00:00:00 2001
+From 294127ff9e390dbada812cbddd3d3a9f61839f74 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 17 Sep 2018 14:31:16 +0300
 Subject: [PATCH 31/49] vr, ui: build fixes

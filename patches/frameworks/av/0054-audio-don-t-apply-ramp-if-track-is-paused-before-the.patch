@@ -1,0 +1,30 @@
+From a9360c1f3e222a2da4fb026d04960c7e8bfff89b Mon Sep 17 00:00:00 2001
+From: Weiyin Jiang <wjiang@codeaurora.org>
+Date: Mon, 14 Aug 2017 14:19:40 +0800
+Subject: [PATCH 54/70] audio: don't apply ramp if track is paused before the
+ first mix
+
+If a track is paused right after start before it gets a chance to mix
+the first frame. Don't apply volume ramp if it resumes later.
+---
+ services/audioflinger/Threads.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.cpp
+index f5e66a338..5707e0a4a 100644
+--- a/services/audioflinger/Threads.cpp
++++ b/services/audioflinger/Threads.cpp
+@@ -4532,7 +4532,9 @@ AudioFlinger::PlaybackThread::mixer_state AudioFlinger::MixerThread::prepareTrac
+                 track->mFillingUpStatus = Track::FS_ACTIVE;
+                 if (track->mState == TrackBase::RESUMING) {
+                     track->mState = TrackBase::ACTIVE;
+-                    param = AudioMixer::RAMP_VOLUME;
++                    if (cblk->mServer != 0) {
++                        param = AudioMixer::RAMP_VOLUME;
++                    }
+                 }
+                 mAudioMixer->setParameter(name, AudioMixer::RESAMPLE, AudioMixer::RESET, NULL);
+                 mLeftVolFloat = -1.0;
+-- 
+2.11.0
+

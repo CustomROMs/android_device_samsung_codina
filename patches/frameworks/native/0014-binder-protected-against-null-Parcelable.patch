@@ -1,4 +1,4 @@
-From a78a7e59ba2426df1ec164567d5d9d5d26da83d2 Mon Sep 17 00:00:00 2001
+From c736893c25541270f8ecb392276689ef9ca94852 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 14/49] binder: protected against null Parcelable

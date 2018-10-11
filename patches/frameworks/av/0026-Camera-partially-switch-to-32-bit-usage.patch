@@ -1,7 +1,7 @@
-From 57417622c61d8e6c4e2bb26f495fa744e3af5723 Mon Sep 17 00:00:00 2001
+From c354d5eede78ed7511b1ae16cfe289aca1a2b20f Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 26/67] Camera: partially switch to 32-bit usage
+Subject: [PATCH 26/70] Camera: partially switch to 32-bit usage
 
 Change-Id: I7c97cdc774e763bc71ccdf642f9179e02ac8cdd3
 ---
@@ -108,10 +108,10 @@ index 0ba74038c..47c76a9c9 100644
      /**
       * Create an input stream of width, height, and format.
 diff --git a/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp b/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
-index 522d521b5..befb91b27 100644
+index 498485430..b3c6a563e 100644
 --- a/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
 +++ b/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
-@@ -382,7 +382,7 @@ CameraHardwareInterface::setUsage(hardware::graphics::common::V1_0::BufferUsage
+@@ -403,7 +403,7 @@ CameraHardwareInterface::setUsage(hardware::graphics::common::V1_0::BufferUsage
          ALOGE("%s: preview window is null", __FUNCTION__);
          return s;
      }
@@ -121,10 +121,10 @@ index 522d521b5..befb91b27 100644
      if (rc == OK) {
          cleanupCirculatingBuffers();
 diff --git a/services/camera/libcameraservice/device1/CameraHardwareInterface.h b/services/camera/libcameraservice/device1/CameraHardwareInterface.h
-index e519b04cd..2fbb3a1aa 100644
+index 4a20b6a59..e258bb43a 100644
 --- a/services/camera/libcameraservice/device1/CameraHardwareInterface.h
 +++ b/services/camera/libcameraservice/device1/CameraHardwareInterface.h
-@@ -435,7 +435,7 @@ private:
+@@ -448,7 +448,7 @@ private:
      int mPreviewWidth;
      int mPreviewHeight;
      int mPreviewFormat;

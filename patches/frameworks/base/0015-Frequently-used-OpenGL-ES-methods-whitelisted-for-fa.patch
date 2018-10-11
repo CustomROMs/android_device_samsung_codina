@@ -1,4 +1,4 @@
-From 225f972c458be9013be43ad731ca09db89e0e735 Mon Sep 17 00:00:00 2001
+From b30d2b27b99090128352784b59716729aec38b80 Mon Sep 17 00:00:00 2001
 From: Daniil Sokolov <dysokolo@intel.com>
 Date: Wed, 26 Aug 2015 12:39:36 -0700
 Subject: [PATCH 15/28] Frequently used OpenGL ES methods whitelisted for fast

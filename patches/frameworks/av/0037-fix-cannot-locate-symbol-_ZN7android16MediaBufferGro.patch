@@ -1,7 +1,7 @@
-From 38244625c086442dd841c624b8a661681bdd91e2 Mon Sep 17 00:00:00 2001
+From f2ef9a1c14b645d73837a0517c18434674df98a1 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 37/67] fix "cannot locate symbol
+Subject: [PATCH 37/70] fix "cannot locate symbol
  "_ZN7android16MediaBufferGroupC1Ev" referenced by
  "/system/vendor/lib/libwvm.so
 

@@ -1,4 +1,4 @@
-From 1db477da7aeb9a1db8a657d0d7e5002db2e4678e Mon Sep 17 00:00:00 2001
+From c975936f2b0b1284f812f5f8c0081903455af6aa Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 30 Sep 2018 00:34:01 +0300
 Subject: [PATCH 27/28] hwui: don't pass null pointer to Mali blobs

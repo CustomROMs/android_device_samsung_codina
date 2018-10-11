@@ -1,0 +1,49 @@
+From 129f43d2b0108709fcaff4c63f456a68ba07e2ed Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Mon, 21 Aug 2017 19:34:34 -0700
+Subject: [PATCH 30/30] build: remove error for additional properties
+
+Change-Id: I42ade0ea75dae2a5b819921e0a551e3ffc85392e
+---
+ core/main.mk | 25 -------------------------
+ 1 file changed, 25 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index ebfa4615f..05a3b3cf4 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -132,31 +132,6 @@ endif
+ 
+ #
+ # -----------------------------------------------------------------
+-# Validate ADDITIONAL_DEFAULT_PROPERTIES.
+-ifneq ($(ADDITIONAL_DEFAULT_PROPERTIES),)
+-$(error ADDITIONAL_DEFAULT_PROPERTIES must not be set before here: $(ADDITIONAL_DEFAULT_PROPERTIES))
+-endif
+-
+-#
+-# -----------------------------------------------------------------
+-# Validate ADDITIONAL_BUILD_PROPERTIES.
+-ifneq ($(ADDITIONAL_BUILD_PROPERTIES),)
+-$(error ADDITIONAL_BUILD_PROPERTIES must not be set before here: $(ADDITIONAL_BUILD_PROPERTIES))
+-endif
+-
+-ADDITIONAL_BUILD_PROPERTIES :=
+-
+-#
+-# -----------------------------------------------------------------
+-# Validate ADDITIONAL_PRODUCT_PROPERTIES.
+-ifneq ($(ADDITIONAL_PRODUCT_PROPERTIES),)
+-$(error ADDITIONAL_PRODUCT_PROPERTIES must not be set before here: $(ADDITIONAL_PRODUCT_PROPERTIES))
+-endif
+-
+-ADDITIONAL_PRODUCT_PROPERTIES :=
+-
+-#
+-# -----------------------------------------------------------------
+ # Add the product-defined properties to the build properties.
+ ifdef PRODUCT_SHIPPING_API_LEVEL
+ ADDITIONAL_BUILD_PROPERTIES += \
+-- 
+2.11.0
+

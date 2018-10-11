@@ -1,4 +1,4 @@
-From 60fcfc1fca16d27518da82601b1af593cb881fc3 Mon Sep 17 00:00:00 2001
+From 2dde1e6f5153c0be5dc76257428e2a3ea7f7bbf5 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Tue, 18 Sep 2018 15:35:52 +0300
 Subject: [PATCH 01/49] ste fixes
@@ -63,7 +63,7 @@ index 44f4dbc92..4cd3169c2 100644
  #ifndef EGL_TIZEN_image_native_buffer
  #define EGL_TIZEN_image_native_buffer 1
 diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
-index c65bddfbb..e00de1f74 100644
+index 3312b031a..f48ffdaa6 100644
 --- a/opengl/libs/EGL/eglApi.cpp
 +++ b/opengl/libs/EGL/eglApi.cpp
 @@ -168,11 +168,13 @@ static const extention_map_t sExtensionMap[] = {
@@ -80,7 +80,7 @@ index c65bddfbb..e00de1f74 100644
  
      // EGL_KHR_wait_sync
      { "eglWaitSyncKHR",
-@@ -2152,6 +2154,7 @@ EGLClientBuffer eglGetNativeClientBufferANDROID(const AHardwareBuffer *buffer) {
+@@ -2120,6 +2122,7 @@ EGLClientBuffer eglGetNativeClientBufferANDROID(const AHardwareBuffer *buffer) {
  // ----------------------------------------------------------------------------
  // NVIDIA extensions
  // ----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ index c65bddfbb..e00de1f74 100644
  EGLuint64NV eglGetSystemTimeFrequencyNV()
  {
      clearError();
-@@ -2187,6 +2190,7 @@ EGLuint64NV eglGetSystemTimeNV()
+@@ -2155,6 +2158,7 @@ EGLuint64NV eglGetSystemTimeNV()
  
      return setErrorQuiet(EGL_BAD_DISPLAY, (EGLuint64NV)0);
  }

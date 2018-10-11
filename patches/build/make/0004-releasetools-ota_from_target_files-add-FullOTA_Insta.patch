@@ -1,0 +1,44 @@
+From 05c2be78ec914a37383449cf7545afa65a35ab13 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Mon, 20 Aug 2018 22:57:43 +0300
+Subject: [PATCH 04/30] releasetools: ota_from_target_files: add
+ FullOTA_InstallNew
+
+---
+ tools/releasetools/common.py                | 5 +++++
+ tools/releasetools/ota_from_target_files.py | 3 +++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 5f2244696..87a56508a 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1369,6 +1369,11 @@ class DeviceSpecificParams(object):
+     used to resize the system partition after a block based installation."""
+     return self._DoCall("FullOTA_PostValidate")
+ 
++  def FullOTA_InstallNew(self):
++    """Called after installing and validating /ramdisk; typically this is
++    used to resize the ramdisk partition after a recovery installation."""
++    return self._DoCall("FullOTA_InstallNew")
++
+   def IncrementalOTA_Assertions(self):
+     """Called after emitting the block of assertions at the top of an
+     incremental OTA package.  Implementations can add whatever
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index d02261ac6..46f11bfa5 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -874,6 +874,9 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+ 
+   device_specific.FullOTA_PostValidate()
+ 
++  script.ShowProgress(0.2, 10)
++  device_specific.FullOTA_InstallNew()
++
+   if OPTIONS.backuptool:
+     script.ShowProgress(0.02, 10)
+     script.Mount("/system")
+-- 
+2.11.0
+

@@ -1,0 +1,41 @@
+From 5bf96168c3e58e5a846896f6a2bf652af2a5444a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Thu, 11 Oct 2018 17:14:45 +0300
+Subject: [PATCH 70/70] Fix build
+
+Change-Id: I5306e5e317cdcfffc60ac4287e338bc0f838d198
+---
+ media/libaudiohal/Android.mk     | 7 +++++++
+ services/audioflinger/Android.mk | 1 -
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/media/libaudiohal/Android.mk b/media/libaudiohal/Android.mk
+index 0e9e0f435..3d0275643 100644
+--- a/media/libaudiohal/Android.mk
++++ b/media/libaudiohal/Android.mk
+@@ -70,3 +70,10 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+ LOCAL_MODULE := libaudiohal
+ 
+ include $(BUILD_SHARED_LIBRARY)
++
++include $(CLEAR_VARS)
++
++LOCAL_SRC_FILES :=
++LOCAL_MODULE := libaudiohal@2.0
++
++include $(BUILD_SHARED_LIBRARY)
+diff --git a/services/audioflinger/Android.mk b/services/audioflinger/Android.mk
+index d0ec2d0c8..7419e648c 100644
+--- a/services/audioflinger/Android.mk
++++ b/services/audioflinger/Android.mk
+@@ -40,7 +40,6 @@ LOCAL_C_INCLUDES := \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+     libaudiohal \
+-    libaudiohal@2.0 \
+     libaudioprocessing \
+     libaudiospdif \
+     libaudioutils \
+-- 
+2.11.0
+

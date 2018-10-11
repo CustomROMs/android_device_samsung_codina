@@ -1,14 +1,14 @@
-From eaaeaecb520940006da3ea1cbe4b7dba0883ce2c Mon Sep 17 00:00:00 2001
+From f01e2f1d45a7b8939d43b2ff224fb89a175fe75d Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 03/30] Remove flash recovery service
+Subject: [PATCH 03/31] Remove flash recovery service
 
 ---
  rootdir/init.rc | 9 ---------
  1 file changed, 9 deletions(-)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index 02337116c..c3e47d323 100644
+index 0558039e0..3da576af8 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
 @@ -765,12 +765,3 @@ on property:ro.debuggable=1

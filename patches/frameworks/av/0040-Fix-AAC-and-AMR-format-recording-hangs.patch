@@ -1,7 +1,7 @@
-From 027711fd038bb2472953a57c4d8b989c461c16d7 Mon Sep 17 00:00:00 2001
+From 7116d8f574a49a3c0d37f687d010194c90b5dd67 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 40/67] Fix AAC and AMR format recording hangs
+Subject: [PATCH 40/70] Fix AAC and AMR format recording hangs
 
  Fix AAC and AMR format recording hangs
  When using AAC and AMR encoder, stops recording during pause

@@ -1,4 +1,4 @@
-From d6012a76bc3775a6f956eed158fdbd08fadc28b1 Mon Sep 17 00:00:00 2001
+From c570e62ae7110e79399453181603ea4c0ab7366e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 27 Aug 2018 00:51:40 +0300
 Subject: [PATCH] Remove sepolicy_tests

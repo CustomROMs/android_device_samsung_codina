@@ -1,4 +1,4 @@
-From 546b164f952debb6c23c6208eda1b6a3bca629d7 Mon Sep 17 00:00:00 2001
+From 42c585d088767f12760e22abc2bd2d293d4a4cde Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 24/28] GnssLocationProvider: Set callback for AGPS/AGNSS

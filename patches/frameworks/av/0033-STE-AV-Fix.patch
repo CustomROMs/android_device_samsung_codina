@@ -1,7 +1,7 @@
-From dfc9cec59276bd06c40dd151184518604fda4be2 Mon Sep 17 00:00:00 2001
+From 02c36ab3ccd8693e61a8996279fc2fc4b65545e3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 33/67] STE AV Fix
+Subject: [PATCH 33/70] STE AV Fix
 
 Change-Id: I158bbda51207269428a8cab7e0a3214d5c98416e
 ---
@@ -22,7 +22,7 @@ Change-Id: I158bbda51207269428a8cab7e0a3214d5c98416e
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
 old mode 100644
 new mode 100755
-index 171ee3149..b5c17dd7a
+index 096876d09..59ad3475b
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -1111,7 +1111,11 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
@@ -105,7 +105,7 @@ index 171ee3149..b5c17dd7a
      int32_t videoBitrate;
      if (params->findInt32("video-bitrate", &videoBitrate)) {
 diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
-index db37021c6..71dd61c9e 100644
+index 429e3a8bd..5e2d43c43 100644
 --- a/media/libstagefright/CameraSource.cpp
 +++ b/media/libstagefright/CameraSource.cpp
 @@ -158,6 +158,12 @@ static int32_t getColorFormat(const char* colorFormat) {
@@ -121,7 +121,7 @@ index db37021c6..71dd61c9e 100644
      if (!strcmp(colorFormat, CameraParameters::PIXEL_FORMAT_ANDROID_OPAQUE)) {
          return OMX_COLOR_FormatAndroidOpaque;
      }
-@@ -693,13 +699,22 @@ status_t CameraSource::initWithCameraAccess(
+@@ -697,13 +703,22 @@ status_t CameraSource::initWithCameraAccess(
  
      // XXX: query camera for the stride and slice height
      // when the capability becomes available.

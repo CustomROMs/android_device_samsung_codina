@@ -1,4 +1,4 @@
-From f0eb90533a113f4ff11abbb16931fbe2c93aed4a Mon Sep 17 00:00:00 2001
+From c0f7fb324542a7575b01d3045c4cf784d6cbbf3c Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 22 Sep 2018 00:26:33 +0300
 Subject: [PATCH 25/28] libandroid_servers: fix for libsuspend

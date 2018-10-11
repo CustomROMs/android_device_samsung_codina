@@ -1,0 +1,38 @@
+From 27bde898bf7ada1a8dbf10c35041718d8fd58779 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 14:04:10 +0300
+Subject: [PATCH 08/31] Revert "init: don't skip starting a service with no
+ domain if permissive"
+
+This reverts commit a961ab9962ba9a1c9bb7ba2e199e2edf0d2d78a6.
+
+Change-Id: Id67cd398f6d16af96634a068c204539d5b269dd9
+---
+ init/service.cpp | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index c9cd5213b..37d3a8807 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -90,16 +90,11 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+         free(new_con);
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
+-        std::ostringstream file_label_err;
+-        file_label_err << "File " << service_path << "(labeled \"" << filecon.get()
++        return Error() << "File " << service_path << "(labeled \"" << filecon.get()
+                        << "\") has incorrect label or no domain transition from " << mycon.get()
+                        << " to another SELinux domain defined. Have you configured your "
+                           "service correctly? https://source.android.com/security/selinux/"
+                           "device-policy#label_new_services_and_address_denials";
+-        if (selinux_status_getenforce() > 0) {
+-            return Error() << file_label_err.str();
+-        }
+-        LOG(ERROR) << file_label_err.str();
+     }
+     if (rc < 0) {
+         return Error() << "Could not get process context";
+-- 
+2.11.0
+

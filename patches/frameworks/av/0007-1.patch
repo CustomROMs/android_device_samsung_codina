@@ -1,7 +1,7 @@
-From 51b3605104a9abbe711f019ea2edde6413b42484 Mon Sep 17 00:00:00 2001
+From fb692b990abd5bfe71fc099a0ee8dd8a0d9b21c5 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sat, 8 Sep 2018 18:03:00 +0300
-Subject: [PATCH 07/67] 1
+Subject: [PATCH 07/70] 1
 
 Change-Id: I0f84b0d05058bd783bd9e8376a283e1b1016112f
 ---
@@ -14,10 +14,10 @@ Change-Id: I0f84b0d05058bd783bd9e8376a283e1b1016112f
  6 files changed, 65 insertions(+), 8 deletions(-)
 
 diff --git a/media/libaudioclient/AudioSystem.cpp b/media/libaudioclient/AudioSystem.cpp
-index c072901a4..82ce7d8f2 100644
+index fc0f9f31d..2bdfe788f 100644
 --- a/media/libaudioclient/AudioSystem.cpp
 +++ b/media/libaudioclient/AudioSystem.cpp
-@@ -853,11 +853,16 @@ audio_policy_forced_cfg_t AudioSystem::getForceUse(audio_policy_force_use_t usag
+@@ -865,11 +865,16 @@ audio_policy_forced_cfg_t AudioSystem::getForceUse(audio_policy_force_use_t usag
  }
  
  
@@ -37,10 +37,10 @@ index c072901a4..82ce7d8f2 100644
  
  status_t AudioSystem::getOutputForAttr(const audio_attributes_t *attr,
 diff --git a/media/libaudioclient/IAudioPolicyService.cpp b/media/libaudioclient/IAudioPolicyService.cpp
-index a1236e738..f03f60363 100644
+index 3bc06ef67..ed1098f59 100644
 --- a/media/libaudioclient/IAudioPolicyService.cpp
 +++ b/media/libaudioclient/IAudioPolicyService.cpp
-@@ -164,11 +164,28 @@ public:
+@@ -165,11 +165,28 @@ public:
          return static_cast <audio_policy_forced_cfg_t> (reply.readInt32());
      }
  
@@ -70,7 +70,7 @@ index a1236e738..f03f60363 100644
          remote()->transact(GET_OUTPUT, data, &reply);
          return static_cast <audio_io_handle_t> (reply.readInt32());
      }
-@@ -1032,14 +1049,29 @@ status_t BnAudioPolicyService::onTransact(
+@@ -1056,14 +1073,29 @@ status_t BnAudioPolicyService::onTransact(
              CHECK_INTERFACE(IAudioPolicyService, data, reply);
              audio_stream_type_t stream =
                      static_cast <audio_stream_type_t>(data.readInt32());
@@ -103,10 +103,10 @@ index a1236e738..f03f60363 100644
              if (hasAttributes) {
                  data.read(&attr, sizeof(audio_attributes_t));
 diff --git a/media/libaudioclient/include/media/AudioSystem.h b/media/libaudioclient/include/media/AudioSystem.h
-index 4c0f796f5..0e1af546c 100644
+index b7be5abce..e42bac419 100644
 --- a/media/libaudioclient/include/media/AudioSystem.h
 +++ b/media/libaudioclient/include/media/AudioSystem.h
-@@ -214,6 +214,14 @@ public:
+@@ -217,6 +217,14 @@ public:
      static status_t setForceUse(audio_policy_force_use_t usage, audio_policy_forced_cfg_t config);
      static audio_policy_forced_cfg_t getForceUse(audio_policy_force_use_t usage);
  
@@ -121,7 +121,7 @@ index 4c0f796f5..0e1af546c 100644
      static status_t getOutputForAttr(const audio_attributes_t *attr,
                                       audio_io_handle_t *output,
                                       audio_session_t session,
-@@ -459,7 +467,6 @@ private:
+@@ -466,7 +474,6 @@ private:
          Vector <sp <AudioPortCallback> >    mAudioPortCallbacks;
      };
  
@@ -130,7 +130,7 @@ index 4c0f796f5..0e1af546c 100644
      static sp<AudioIoDescriptor> getIoDescriptor(audio_io_handle_t ioHandle);
  
 diff --git a/media/libaudioclient/include/media/IAudioPolicyService.h b/media/libaudioclient/include/media/IAudioPolicyService.h
-index c3876afc4..fd43f2ac2 100644
+index 5b58db3e5..ab3c96623 100644
 --- a/media/libaudioclient/include/media/IAudioPolicyService.h
 +++ b/media/libaudioclient/include/media/IAudioPolicyService.h
 @@ -55,7 +55,12 @@ public:
@@ -165,7 +165,7 @@ index 70ce30973..f8576d1b3 100644
  
  }; // namespace android
 diff --git a/services/audiopolicy/service/AudioPolicyService.h b/services/audiopolicy/service/AudioPolicyService.h
-index 45e7e3dc9..d2e483100 100644
+index ab14e8a81..1ca43fd4e 100644
 --- a/services/audiopolicy/service/AudioPolicyService.h
 +++ b/services/audiopolicy/service/AudioPolicyService.h
 @@ -76,7 +76,13 @@ public:

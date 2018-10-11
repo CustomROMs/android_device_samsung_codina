@@ -1,4 +1,4 @@
-From f52fe06d48b2e83b9fe6d89b79cb2288b2c6c772 Mon Sep 17 00:00:00 2001
+From 0582cc7acda065e0be61fceb33444569c4fb920e Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Sun, 30 Sep 2018 02:04:14 +0300
 Subject: [PATCH 28/28] DisplayPowerController: control ColorFade with property
@@ -9,10 +9,10 @@ Change-Id: I64ba72c36a445f75dc23b14fd59ea162daa28a99
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
-index ecc2214d7f6..ff58a6f727c 100644
+index 18a5b235924..bc8d4b6011c 100644
 --- a/services/core/java/com/android/server/display/DisplayPowerController.java
 +++ b/services/core/java/com/android/server/display/DisplayPowerController.java
-@@ -46,6 +46,7 @@ import android.os.Message;
+@@ -47,6 +47,7 @@ import android.os.Message;
  import android.os.PowerManager;
  import android.os.RemoteException;
  import android.os.SystemClock;
@@ -20,7 +20,7 @@ index ecc2214d7f6..ff58a6f727c 100644
  import android.os.Trace;
  import android.os.UserHandle;
  import android.provider.Settings;
-@@ -465,7 +466,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+@@ -470,7 +471,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
              }
          }
  

@@ -1,0 +1,27 @@
+From 43519680072fda6db058b085015288a39736733b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Wed, 10 Oct 2018 11:52:07 +0300
+Subject: [PATCH 29/30] Add janice blobs to ROM zip
+
+Change-Id: Idf8ff8c8b6296493206de3551f8e6de07aba814c
+---
+ tools/releasetools/ota_from_target_files.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index c720b1c96..4bb7b53a6 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -1092,7 +1092,9 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+   CopyInstallTools(output_zip, d_in = os.path.join(OPTIONS.input_tmp, "INSTALL"), d_out = "install")
+   obj = os.getenv("OUT", "")
+   codina_path = os.path.join(obj, "codina")
++  janice_path = os.path.join(obj, "janice")
+   CopyInstallTools(output_zip, d_in = codina_path, d_out = "codina")
++  CopyInstallTools(output_zip, d_in = janice_path, d_out = "janice")
+   script.UnpackPackageDir("install", "/tmp/install")
+   script.UnpackPackageDir("codina/system", "/system")
+   script.SetPermissionsRecursive("/tmp/install", 0, 0, 0755, 0644, None, None)
+-- 
+2.11.0
+

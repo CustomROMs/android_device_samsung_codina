@@ -1,7 +1,7 @@
-From c84fa2e2520912f4d812521a39e9842ea2989690 Mon Sep 17 00:00:00 2001
+From 004b081950964e59bcc8a2408e7f6798d2d167d3 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 14 Sep 2018 00:52:01 +0300
-Subject: [PATCH 19/67] native fix
+Subject: [PATCH 19/70] native fix
 
 Change-Id: I99848ea91364349b040598c4ea3a541640a8bf5f
 ---

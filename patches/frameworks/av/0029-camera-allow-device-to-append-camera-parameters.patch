@@ -1,7 +1,7 @@
-From aa2661976625b78fc8f239d42a6240a11bfef658 Mon Sep 17 00:00:00 2001
+From 130d2a05efd435839ec25100ba30cb05d03cf7c5 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 29/67] camera: allow device to append camera parameters
+Subject: [PATCH 29/70] camera: allow device to append camera parameters
 
 Overload using include/camera/CameraParametersExtra.h in device
 tree to add device specific camera parameters.
@@ -15,7 +15,7 @@ tree to add device specific camera parameters.
  create mode 100644 camera/include/camera/CameraParametersExtraDurationTimer.h
 
 diff --git a/camera/CameraParameters.cpp b/camera/CameraParameters.cpp
-index 68969cf64..590ff4a73 100644
+index de8ac2ffc..11f2fd176 100644
 --- a/camera/CameraParameters.cpp
 +++ b/camera/CameraParameters.cpp
 @@ -21,6 +21,7 @@

@@ -1,7 +1,7 @@
-From 4379388b9c6ef3304df7149aaa9663663ed66ca3 Mon Sep 17 00:00:00 2001
+From cffbb08a06cde4cc7985602bea44175ff866534b Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 42/67] Add load legacy plugins from /vendor/lib/drm
+Subject: [PATCH 42/70] Add load legacy plugins from /vendor/lib/drm
 
 Only the OMA forward lock plugin remains and it is
 loaded from system/lib/drm.

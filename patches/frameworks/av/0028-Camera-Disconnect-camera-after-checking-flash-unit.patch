@@ -1,7 +1,7 @@
-From 8505ef29b0e2ddb6ce1c6c16050eaf304b0f9033 Mon Sep 17 00:00:00 2001
+From c52eeb774ded63ab526ab14e70acdc1ba1d154d9 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 28/67] Camera: Disconnect camera after checking flash unit
+Subject: [PATCH 28/70] Camera: Disconnect camera after checking flash unit
 
 Disconnect camera device after opening it just to check if
 it has a flash unit. Leave it open if torch is being turned on.

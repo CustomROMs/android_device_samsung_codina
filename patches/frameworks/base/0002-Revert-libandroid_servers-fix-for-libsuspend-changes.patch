@@ -1,4 +1,4 @@
-From 0ae13f1a0ce90563a34ddabbf7f61843f7e1c3cc Mon Sep 17 00:00:00 2001
+From 8d680da25881f72ba6d5f401ce32b4d9affa8135 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Fri, 14 Sep 2018 00:12:24 +0300
 Subject: [PATCH 02/28] Revert "libandroid_servers: fix for libsuspend changes"

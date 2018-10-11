@@ -1,17 +1,17 @@
-From a1d333e44998c8487a12066ba503c19de7b9962d Mon Sep 17 00:00:00 2001
+From bffd816cd415e0488259e690202aee0b94bf15e6 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
-Subject: [PATCH 35/67] useGraphicBuffer optimization
+Subject: [PATCH 35/70] useGraphicBuffer optimization
 
 ---
  media/libstagefright/omx/OMXNodeInstance.cpp | 9 ++++++++-
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
-index 48b907b98..0ea924c40 100644
+index 45c9b398c..a192e140d 100644
 --- a/media/libstagefright/omx/OMXNodeInstance.cpp
 +++ b/media/libstagefright/omx/OMXNodeInstance.cpp
-@@ -1323,13 +1323,20 @@ status_t OMXNodeInstance::useGraphicBuffer_l(
+@@ -1327,13 +1327,20 @@ status_t OMXNodeInstance::useGraphicBuffer_l(
  
      // See if the newer version of the extension is present.
      OMX_INDEXTYPE index;

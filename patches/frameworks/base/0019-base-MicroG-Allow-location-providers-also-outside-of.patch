@@ -1,4 +1,4 @@
-From b382354bdf8cb8a3fcf773d266c0568cbaebf0f8 Mon Sep 17 00:00:00 2001
+From 165a134f6a5d72bab2206377c872bb0662c17d90 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <chrono.monochrome@gmail.com>
 Date: Mon, 20 Aug 2018 22:57:43 +0300
 Subject: [PATCH 19/28] base: [MicroG] Allow location providers also outside of
