@@ -107,6 +107,9 @@ endif
 PRODUCT_PACKAGES += \
     audio.usb.default \
     audio.a2dp.default \
+    camera.montblanc \
+    libasound \
+    libomxil-bellagio \
     libaudioutils \
     libtinyalsa \
     libstagefrighthw
