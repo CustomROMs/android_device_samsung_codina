@@ -1,0 +1,25 @@
+Subject: [PATCH] rild: Allow RIL_Init to be run before switching to radio user
+
+Some older blobs need this to properly setup their modem.
+
+diff --git a/rild/rild.c b/rild/rild.c
+index b32afe4..f089c5e 100644
+--- a/rild/rild.c
++++ b/rild/rild.c
+@@ -308,7 +308,6 @@ int main(int argc, char **argv) {
+     }
+ OpenLib:
+ #endif
+-    switchUser();
+ 
+     dlHandle = dlopen(rilLibPath, RTLD_NOW);
+ 
+@@ -386,6 +385,8 @@ OpenLib:
+ 
+     RLOGD("RIL_register_socket completed");
+ 
++    switchUser();
++
+ done:
+ 
+     RLOGD("RIL_Init starting sleep loop");

@@ -1,0 +1,64 @@
+Subject: [PATCH] healthd: charger: Draw battery capacity in charging animation
+
+Draw a text to show the battery capacity value in charging animation.
+
+diff --git a/healthd/Android.mk b/healthd/Android.mk
+index ce83b63..97d3460 100644
+--- a/healthd/Android.mk
++++ b/healthd/Android.mk
+@@ -56,6 +56,10 @@
+ LOCAL_CFLAGS += -DNO_CHARGER_LED
+ endif
+ 
++ifeq ($(strip $(BOARD_CHARGER_SHOW_PERCENTAGE)),true)
++LOCAL_CFLAGS += -DCHARGER_SHOW_PERCENTAGE
++endif
++
+ LOCAL_C_INCLUDES := bootable/recovery
+ 
+ LOCAL_STATIC_LIBRARIES := libbatteryservice libbinder libminui libpng libz libutils libstdc++ libcutils liblog libm libc
+diff --git a/healthd/healthd_mode_charger.cpp b/healthd/healthd_mode_charger.cpp
+index 709ec12..c390f1e 100644
+--- a/healthd/healthd_mode_charger.cpp
++++ b/healthd/healthd_mode_charger.cpp
+@@ -431,6 +431,23 @@
+     healthd_board_mode_charger_draw_battery(batt_prop);
+ }
+ 
++#ifdef CHARGER_SHOW_PERCENTAGE
++#define STR_LEN    64
++static void draw_capacity(struct charger *charger)
++{
++    char cap_str[STR_LEN];
++    int x, y;
++    int str_len_px;
++
++    snprintf(cap_str, (STR_LEN - 1), "%d%%", charger->batt_anim->capacity);
++    str_len_px = gr_measure(cap_str);
++    x = (gr_fb_width() - str_len_px) / 2;
++    y = (gr_fb_height() + char_height) / 2;
++    android_green();
++    gr_text(x, y, cap_str, 0);
++}
++#endif
++
+ static void redraw_screen(struct charger *charger)
+ {
+     struct animation *batt_anim = charger->batt_anim;
+@@ -438,10 +455,14 @@
+     clear_screen();
+ 
+     /* try to display *something* */
+-    if (batt_anim->capacity < 0 || batt_anim->num_frames == 0)
++    if (batt_anim->capacity < 0 || batt_anim->num_frames == 0) {
+         draw_unknown(charger);
+-    else
++    } else {
+         draw_battery(charger);
++#ifdef CHARGER_SHOW_PERCENTAGE
++        draw_capacity(charger);
++#endif
++    }
+     gr_flip();
+ }
+ 

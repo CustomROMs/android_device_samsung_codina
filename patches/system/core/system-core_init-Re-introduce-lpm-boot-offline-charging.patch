@@ -1,0 +1,62 @@
+diff --git a/init/Android.mk b/init/Android.mk
+index f3bb7d6..a5e0d0e 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -52,7 +52,10 @@ endif
+ 
+ SYSTEM_CORE_INIT_DEFINES := BOARD_CHARGING_MODE_BOOTING_LPM \
+     BOARD_CHARGING_CMDLINE_NAME \
+-    BOARD_CHARGING_CMDLINE_VALUE
++    BOARD_CHARGING_CMDLINE_VALUE \
++    BOARD_LPM_BOOT_ARGUMENT_NAME \
++    BOARD_LPM_BOOT_ARGUMENT_VALUE
++
+ 
+ $(foreach system_core_init_define,$(SYSTEM_CORE_INIT_DEFINES), \
+   $(if $($(system_core_init_define)), \
+diff --git a/init/init.cpp b/init/init.cpp
+index a9577af..79726e7 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -75,6 +75,11 @@ static int   bootchart_count;
+ #define BOARD_CHARGING_CMDLINE_VALUE "true"
+ #endif
+ 
++#ifndef BOARD_LPM_BOOT_ARGUMENT_NAME
++#define BOARD_LPM_BOOT_ARGUMENT_NAME "lpm_boot"
++#define BOARD_LPM_BOOT_ARGUMENT_VALUE "1"
++#endif
++
+ static char qemu[32];
+ static char battchg_pause[32];
+ 
+@@ -87,6 +92,8 @@ static time_t process_needs_restart;
+ 
+ static const char *ENV[32];
+ 
++static unsigned lpm_bootmode = 0;
++
+ bool waiting_for_exec = false;
+ 
+ static int epoll_fd = -1;
+@@ -793,5 +800,11 @@
+     if (!strcmp(name,"qemu")) {
+         strlcpy(qemu, value, sizeof(qemu));
++#ifdef BOARD_LPM_BOOT_ARGUMENT_NAME
++    } else if (!strcmp(name,BOARD_LPM_BOOT_ARGUMENT_NAME)) {
++        if (!strcmp(value,BOARD_LPM_BOOT_ARGUMENT_VALUE)) {
++            lpm_bootmode = 1;
++        }
++#endif
+     } else if (!strcmp(name,BOARD_CHARGING_CMDLINE_NAME)) {
+         strlcpy(battchg_pause, value, sizeof(battchg_pause));
+     } else if (!strncmp(name, "androidboot.", 12) && name_len > 12) {
+@@ -1004,7 +1017,7 @@ static void selinux_initialize(void)
+ 
+ static int charging_mode_booting(void) {
+ #ifndef BOARD_CHARGING_MODE_BOOTING_LPM
+-    return 0;
++    return lpm_bootmode;
+ #else
+     int f;
+     char cmb;

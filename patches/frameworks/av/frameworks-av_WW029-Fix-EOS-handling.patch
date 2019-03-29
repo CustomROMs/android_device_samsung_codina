@@ -1,0 +1,150 @@
+ Codecs: Fix EOS handling in soft codecs
+
+When EOS is sent along with non-zero length input buffer and if decoder
+was still not producing output, due to initial latency, then decoder
+would not produce any output. For eg. When only one input buffer with EOS
+set is sent to the decoder, decoder was not producing any output.
+
+Applies for SoftHEVC, SoftAVC and SoftMpeg2 decoders.
+
+diff --git a/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp b/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
+index d159bb7..653e812 100644
+--- a/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
++++ b/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
+@@ -492,16 +492,6 @@
+     List<BufferInfo *> &inQueue = getPortQueue(kInputPortIndex);
+     List<BufferInfo *> &outQueue = getPortQueue(kOutputPortIndex);
+ 
+-    /* If input EOS is seen and decoder is not in flush mode,
+-     * set the decoder in flush mode.
+-     * There can be a case where EOS is sent along with last picture data
+-     * In that case, only after decoding that input data, decoder has to be
+-     * put in flush. This case is handled here  */
+-
+-    if (mReceivedEOS && !mIsInFlush) {
+-        setFlushMode();
+-    }
+-
+     while (!outQueue.empty()) {
+         BufferInfo *inInfo;
+         OMX_BUFFERHEADERTYPE *inHeader;
+@@ -664,7 +654,7 @@
+                 outInfo = NULL;
+                 notifyFillBufferDone(outHeader);
+                 outHeader = NULL;
+-            } else {
++            } else if (mIsInFlush) {
+                 /* If in flush mode and no output is returned by the codec,
+                  * then come out of flush mode */
+                 mIsInFlush = false;
+@@ -685,6 +675,16 @@
+             }
+         }
+ 
++        /* If input EOS is seen and decoder is not in flush mode,
++         * set the decoder in flush mode.
++         * There can be a case where EOS is sent along with last picture data
++         * In that case, only after decoding that input data, decoder has to be
++         * put in flush. This case is handled here  */
++
++        if (mReceivedEOS && !mIsInFlush) {
++            setFlushMode();
++        }
++
+         if (inHeader != NULL) {
+             inInfo->mOwnedByUs = false;
+             inQueue.erase(inQueue.begin());
+diff --git a/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp b/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp
+index 8ac7ead..6a9f17c 100644
+--- a/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp
++++ b/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp
+@@ -451,16 +451,6 @@
+     List<BufferInfo *> &inQueue = getPortQueue(kInputPortIndex);
+     List<BufferInfo *> &outQueue = getPortQueue(kOutputPortIndex);
+ 
+-    /* If input EOS is seen and decoder is not in flush mode,
+-     * set the decoder in flush mode.
+-     * There can be a case where EOS is sent along with last picture data
+-     * In that case, only after decoding that input data, decoder has to be
+-     * put in flush. This case is handled here  */
+-
+-    if (mReceivedEOS && !mIsInFlush) {
+-        setFlushMode();
+-    }
+-
+     while (!outQueue.empty()) {
+         BufferInfo *inInfo;
+         OMX_BUFFERHEADERTYPE *inHeader;
+@@ -590,7 +580,7 @@
+                 outInfo = NULL;
+                 notifyFillBufferDone(outHeader);
+                 outHeader = NULL;
+-            } else {
++            } else if (mIsInFlush) {
+                 /* If in flush mode and no output is returned by the codec,
+                  * then come out of flush mode */
+                 mIsInFlush = false;
+@@ -611,6 +601,16 @@
+             }
+         }
+ 
++        /* If input EOS is seen and decoder is not in flush mode,
++         * set the decoder in flush mode.
++         * There can be a case where EOS is sent along with last picture data
++         * In that case, only after decoding that input data, decoder has to be
++         * put in flush. This case is handled here  */
++
++        if (mReceivedEOS && !mIsInFlush) {
++            setFlushMode();
++        }
++
+         // TODO: Handle more than one picture data
+         if (inHeader != NULL) {
+             inInfo->mOwnedByUs = false;
+diff --git a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
+index bbd46b5..49bf42f 100644
+--- a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
++++ b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
+@@ -553,16 +553,6 @@
+         setParams(mStride);
+     }
+ 
+-    /* If input EOS is seen and decoder is not in flush mode,
+-     * set the decoder in flush mode.
+-     * There can be a case where EOS is sent along with last picture data
+-     * In that case, only after decoding that input data, decoder has to be
+-     * put in flush. This case is handled here  */
+-
+-    if (mReceivedEOS && !mIsInFlush) {
+-        setFlushMode();
+-    }
+-
+     while (!outQueue.empty()) {
+         BufferInfo *inInfo;
+         OMX_BUFFERHEADERTYPE *inHeader;
+@@ -742,7 +732,7 @@
+                     notifyFillBufferDone(outHeader);
+                     outHeader = NULL;
+                 }
+-            } else {
++            } else if (mIsInFlush) {
+                 /* If in flush mode and no output is returned by the codec,
+                  * then come out of flush mode */
+                 mIsInFlush = false;
+@@ -763,6 +753,16 @@
+             }
+         }
+ 
++        /* If input EOS is seen and decoder is not in flush mode,
++         * set the decoder in flush mode.
++         * There can be a case where EOS is sent along with last picture data
++         * In that case, only after decoding that input data, decoder has to be
++         * put in flush. This case is handled here  */
++
++        if (mReceivedEOS && !mIsInFlush) {
++            setFlushMode();
++        }
++
+         // TODO: Handle more than one picture data
+         if (inHeader != NULL) {
+             inInfo->mOwnedByUs = false;

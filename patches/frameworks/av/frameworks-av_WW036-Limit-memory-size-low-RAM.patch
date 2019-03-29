@@ -1,0 +1,38 @@
+Subject: [PATCH] Limit memory size for low RAM devices
+
+set limit mememory size for media extractor process to
+avoid low memory issue.
+set lower memory limit to 256M, or 20% RAM.
+It considers for low memory device.
+
+diff --git a/media/libmedia/MediaUtils.cpp b/media/libmedia/MediaUtils.cpp
+index bcdc3bd..60bd3cc 100644
+--- a/media/libmedia/MediaUtils.cpp
++++ b/media/libmedia/MediaUtils.cpp
+@@ -23,6 +23,10 @@
+ #include <unistd.h>
+ 
+ #include "MediaUtils.h"
++#include <string.h>
++#ifndef UINT32_256M
++#define UINT32_256M (262144000U)
++#endif
+ 
+ namespace android {
+ 
+@@ -53,6 +57,15 @@
+         ALOGW("couldn't determine total RAM");
+     }
+ 
++    if (maxMem < UINT32_256M && !strcmp(property, "ro.media.maxmem")) {
++        /* Add by mtk: Consideration of gmo 512M project low mem:
++         * set limit 256M for media.extractor process when necessary
++         * Note: 256M maybe have risk for gmo 512M, it can adjust 256M to smaller
++         * if media.extractor process allow
++         */
++        maxMem = UINT32_256M;
++        ALOGV("maxMem: %zu too small, set to fixed 256M Bytes", maxMem);
++    }
+     int64_t propVal = property_get_int64(property, maxMem);
+     if (propVal > 0 && uint64_t(propVal) <= SIZE_MAX) {
+         maxMem = propVal;

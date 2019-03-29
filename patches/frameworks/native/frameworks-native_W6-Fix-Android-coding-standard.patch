@@ -1,0 +1,47 @@
+ 5 Binder: Add log output in IPCThreadState::self()
+   In the failure case, and on shutdown, add log output. It's highly
+   likely the client will crash when a null value is returned. Displaying
+   a possible root cause helps diagnosing issues.
+   Bug: 26865304
+
+diff --git a/libs/binder/IPCThreadState.cpp b/libs/binder/IPCThreadState.cpp
+index 90e5b04..9634db7 100644
+--- a/libs/binder/IPCThreadState.cpp
++++ b/libs/binder/IPCThreadState.cpp
+@@ -287,12 +287,18 @@ IPCThreadState* IPCThreadState::self()
+         return new IPCThreadState;
+     }
+     
+-    if (gShutdown) return NULL;
++    if (gShutdown) {
++        ALOGW("Calling IPCThreadState::self() during shutdown is dangerous, expect a crash.\n");
++        return NULL;
++    }
+     
+     pthread_mutex_lock(&gTLSMutex);
+     if (!gHaveTLS) {
+-        if (pthread_key_create(&gTLS, threadDestructor) != 0) {
++        int key_create_value = pthread_key_create(&gTLS, threadDestructor);
++        if (key_create_value != 0) {
+             pthread_mutex_unlock(&gTLSMutex);
++            ALOGW("IPCThreadState::self() unable to create TLS key, expect a crash: %s\n",
++                    strerror(key_create_value));
+             return NULL;
+         }
+         gHaveTLS = true;
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 90e5b00..9634db7 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -53,9 +53,9 @@
+ #endif
+ 
+ #define LOG_REFS(...)
+-//#define LOG_REFS(...) ALOG(LOG_DEBUG, "Parcel", __VA_ARGS__)
++//#define LOG_REFS(...) ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+ #define LOG_ALLOC(...)
+-//#define LOG_ALLOC(...) ALOG(LOG_DEBUG, "Parcel", __VA_ARGS__)
++//#define LOG_ALLOC(...) ALOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+ 
+ // ---------------------------------------------------------------------------
+ 

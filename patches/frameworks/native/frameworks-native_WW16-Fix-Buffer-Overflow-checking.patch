@@ -1,0 +1,61 @@
+ Atrace: Fix Buffer Overflow when checking kernel function
+
+Since wildcard support was added to atrace, it can happen
+very easilly that the 4096 bytes buffer is overflowed
+resulting in bad status that atrace cannot find kernel function
+This patch makes a dynamic allocation of the buffer used to check
+the validity of the kernel function
+
+diff --git a/cmds/atrace/atrace.cpp b/cmds/atrace/atrace.cpp
+index 00122da..064e105 100644
+--- a/cmds/atrace/atrace.cpp
++++ b/cmds/atrace/atrace.cpp
+@@ -513,16 +513,30 @@ static bool verifyKernelTraceFuncs(const char* funcs)
+         return false;
+     }
+ 
+-    char buf[4097];
+-    ssize_t n = read(fd, buf, 4096);
+-    close(fd);
+-    if (n == -1) {
+-        fprintf(stderr, "error reading %s: %s (%d)\n", k_ftraceFilterPath,
+-            strerror(errno), errno);
+-        return false;
++    // read back the filter
++    ssize_t n = 0;
++    ssize_t len = 0;
++    char *r;
++    char *buf = NULL;
++    do {
++        len += n;
++        r = (char *) realloc(buf, len + 4096);
++        if (r == NULL)
++            break;
++        buf = r;
++    } while ( (n = read(fd, (void *)(buf + len), 4095)) > 0 );
++
++    if ( ( n == -1 ) || ( r == NULL ) ) {
++            fprintf(stderr, "error reading %s: %s (%d)\n", k_ftraceFilterPath,
++                strerror(errno), errno);
++            close(fd);
++            free(buf);
++            return false;
+     }
+ 
+-    buf[n] = '\0';
++    buf[len] = '\0';
++    close(fd);
++
+     String8 funcList = String8::format("\n%s", buf);
+ 
+     // Make sure that every function listed in funcs is in the list we just
+@@ -540,8 +554,8 @@ static bool verifyKernelTraceFuncs(const char* funcs)
+         }
+         func = strtok(NULL, ",");
+     }
++    free(buf);
+     free(myFuncs);
+-
+     return ok;
+ }
+ 

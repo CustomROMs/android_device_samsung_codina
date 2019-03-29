@@ -1,0 +1,40 @@
+ Release resources when repeating dlopen-dlcose.
+
+When the libbinder.so is dlopen and dlclose many
+times, we need to delete the pthread_key and
+munmap the memory mapping.
+
+Otherwise, it will crash as the leakage causes
+the pthread_key or memory mapping surpass their
+limit.
+
+diff --git a/libs/binder/IPCThreadState.cpp b/libs/binder/IPCThreadState.cpp
+index 97e5b40..9634db7 100644
+--- a/libs/binder/IPCThreadState.cpp
++++ b/libs/binder/IPCThreadState.cpp
+@@ -328,6 +328,7 @@ void IPCThreadState::shutdown()
+             delete st;
+             pthread_setspecific(gTLS, NULL);
+         }
++        pthread_key_delete(gTLS);
+         gHaveTLS = false;
+     }
+ }
+diff --git a/libs/binder/ProcessState.cpp b/libs/binder/ProcessState.cpp
+index 97e5b41..9634db7 100644
+--- a/libs/binder/ProcessState.cpp
++++ b/libs/binder/ProcessState.cpp
+@@ -372,6 +372,13 @@ ProcessState::ProcessState()
+ 
+ ProcessState::~ProcessState()
+ {
++    if (mDriverFD >= 0) {
++        if (mVMStart != MAP_FAILED) {
++            munmap(mVMStart, BINDER_VM_SIZE);
++        }
++        close(mDriverFD);
++    }
++    mDriverFD = -1;
+ }
+         
+ }; // namespace android

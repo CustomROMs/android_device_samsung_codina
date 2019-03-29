@@ -1,0 +1,69 @@
+codecs: fix MPEG2 decoder resolution change
+
+diff --git a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
+index 4307c4e..bbd46b5 100644
+--- a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
++++ b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
+@@ -74,7 +74,8 @@
+       mNewWidth(mWidth),
+       mNewHeight(mHeight),
+       mChangingResolution(false),
+-      mSignalledError(false) {
++      mSignalledError(false),
++      mStride(mWidth) {
+     initPorts(kNumBuffers, INPUT_BUF_SIZE, kNumBuffers, CODEC_MIME_TYPE);
+ 
+     // If input dump is enabled, then open create an empty file
+@@ -201,6 +202,8 @@
+ 
+     /* Set number of cores/threads to be used by the codec */
+     setNumCores();
++
++    mStride = 0;
+ 
+     mSignalledError = false;
+     return OK;
+@@ -384,7 +387,8 @@
+     resetPlugin();
+ 
+     /* Set the run time (dynamic) parameters */
+-    setParams(displayStride);
++    mStride = outputBufferWidth();
++    setParams(mStride);
+ 
+     /* Set number of cores/threads to be used by the codec */
+     setNumCores();
+@@ -543,6 +547,12 @@
+     List<BufferInfo *> &inQueue = getPortQueue(kInputPortIndex);
+     List<BufferInfo *> &outQueue = getPortQueue(kOutputPortIndex);
+ 
++    if (outputBufferWidth() != mStride) {
++        /* Set the run-time (dynamic) parameters */
++        mStride = outputBufferWidth();
++        setParams(mStride);
++    }
++
+     /* If input EOS is seen and decoder is not in flush mode,
+      * set the decoder in flush mode.
+      * There can be a case where EOS is sent along with last picture data
+@@ -677,6 +687,8 @@
+                 mChangingResolution = false;
+                 resetDecoder();
+                 resetPlugin();
++                mStride = outputBufferWidth();
++                setParams(mStride);
+                 continue;
+             }
+ 
+diff --git a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h
+index a625e08..2c2ca64 100644
+--- a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h
++++ b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h
+@@ -107,6 +107,7 @@
+     bool mFlushNeeded;
+     bool mSignalledError;
+     bool mWaitForI;
++    size_t mStride;
+ 
+     status_t initDecoder();
+     status_t deInitDecoder();

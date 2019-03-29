@@ -1,0 +1,100 @@
+#
+# system.prop for GT-I8160
+#
+rild.libargs=-d /dev/ttyS0
+# rild.libpath=/system/lib/libsec-ril.so
+rild.libpath=/system/lib/libsecril-shim.so
+ro.telephony.call_ring.multiple=false
+ro.sf.lcd_density=240
+ro.lcd_min_brightness=30
+ste.cam.back.orientation=90
+ste.cam.front.orientation=270
+ste.cam.ext.cfg.path.secondary=/system/usr/share/camera/config_file/aptina_mt9v113.dat
+ste.omx.ctx=0
+ste.nmf.autoidle=1
+ste.video.dec.mpeg4.in.size=8192
+ste.video.dec.recycle.delay=1
+ste.video.enc.out.buffercnt=5
+ste.special_fast_dormancy=false
+
+# Hardware info
+ro.device.chipset=ST-Ericsson NovaThor U8500 (45nm)
+ro.device.cpu=ARMv7 800MHz Dual-core ARM Cortex-A9
+ro.device.gpu=Mali-400MP Single Core
+ro.device.rear_cam=5 Mpix (2592x1944)
+ro.device.front_cam=VGA (640x480)
+ro.device.screen_res=3,8' 800x480 pixels ( ~246 ppi)
+
+# Enable mtp
+persist.sys.usb.config=mtp,adb
+
+# DriveDroid fix
+# sys.config.sd0_optdevice=/dev/null
+
+# sdcardfs
+ro.sdcardfs.enable=true
+
+# Default primary storage
+ro.vold.primary_physical=1
+ro.vold.primary_emulated=0
+
+# test low ram
+# persist.sys.force_highendgfx=true
+# ro.config.low_ram=true
+
+# fix Camera
+# camera.disable_zsl_mode=1
+
+# fix audio
+# af.thread.throttle=false
+
+# wifi
+# ro.disableWifiApFirmwareReload=true
+net.tethering.noprovisioning=true
+wifi.supplicant_scan_interval=150
+
+# fix Hardware
+ro.profile.header=0
+# ste.use_google_h264_encoder=true
+# ro.systemui.burn_in_protection=true
+# persist.sys.doze_powersave=true
+persist.sys.lock_screenhints=true
+ro.power_profile=/system/etc/power_profile.xml
+
+# Hardware
+camera2.portability.force_api=1
+# debug.composition.type=gpu
+debug.composition.type=dyn
+ro.telephony.call_ring.delay=1000
+# persist.sys.dalvik.multithread=true
+persist.sys.strictmode.disable=true
+persist.sys.recovery_update=false
+
+# RAM optimizations
+persist.sys.ram_minfree=138240
+config.disable_atlas=true
+# ro.sys.fw.trim_enable_memory=805306368
+ro.sys.fw.trim_enable_memory=536870912
+ro.sys.fw.use_trim_settings=true
+ro.sys.fw.empty_app_percent=25
+ro.sys.fw.trim_empty_percent=50
+ro.sys.fw.trim_cache_percent=50
+ro.sys.fw.bg_apps_limit=16
+ro.sys.fw.bservice_limit=3
+ro.sys.fw.bservice_age=3000
+ro.sys.fw.bservice_enable=true
+# ro.am.reschedule_service=true
+
+# art optimization
+dalvik.vm.image-dex2oat-filter=speed
+dalvik.vm.dex2oat-filter=interpret-only
+# dalvik.vm.image-dex2oat-filter=everything
+# dalvik.vm.dex2oat-filter=everything
+
+# hwui
+ro.hwui.drop_shadow_cache_size=1
+ro.hwui.gradient_cache_size=0.2
+ro.hwui.layer_cache_size=6
+ro.hwui.path_cache_size=2
+ro.hwui.r_buffer_cache_size=1
+ro.hwui.texture_cache_size=8

@@ -1,0 +1,32 @@
+Subject: [PATCH] releasetools: ota_from_target_files: add FullOTA_InstallNew
+
+diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
+index 2cb9ae5..d49eb91 100644
+--- a/tools/releasetools/common.py
++++ b/tools/releasetools/common.py
+@@ -1120,6 +1120,11 @@ class DeviceSpecificParams(object):
+     used to install the image for the device's baseband processor."""
+     return self._DoCall("FullOTA_InstallEnd")
+ 
++  def FullOTA_InstallNew(self):
++    """Called after installing and validating /ramdisk; typically this is
++    used to resize the ramdisk partition after a recovery installation."""
++    return self._DoCall("FullOTA_InstallNew")
++
+   def FullOTA_PostValidate(self):
+     """Called after installing and validating /system; typically this is
+     used to resize the system partition after a block based installation."""
+diff --git a/tools/releasetools/ota_from_target_files.py b/tools/releasetools/ota_from_target_files.py
+index 8ec14f1..e6eff6a 100755
+--- a/tools/releasetools/ota_from_target_files.py
++++ b/tools/releasetools/ota_from_target_files.py
+@@ -712,6 +712,9 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
+ 
+   device_specific.FullOTA_PostValidate()
+ 
++  script.ShowProgress(0.2, 10)
++  device_specific.FullOTA_InstallNew()
++
+   if OPTIONS.backuptool:
+     script.ShowProgress(0.02, 10)
+     if block_based:

@@ -1,0 +1,68 @@
+Subject: [PATCH] Fix graphic buffer Play Movies
+
+diff --git a/media/libstagefright/include/OMXNodeInstance.h b/media/libstagefright/include/OMXNodeInstance.h
+index 5ba0e8f..466463b 100644
+--- a/media/libstagefright/include/OMXNodeInstance.h
++++ b/media/libstagefright/include/OMXNodeInstance.h
+@@ -170,7 +170,6 @@
+     KeyedVector<OMX::buffer_id, OMX_BUFFERHEADERTYPE *> mBufferIDToBufferHeader;
+     KeyedVector<OMX_BUFFERHEADERTYPE *, OMX::buffer_id> mBufferHeaderToBufferID;
+     MetadataBufferType mMetadataType[2];
+-    bool mGraphicBufferEnabled[2];
+ 
+     // For debug support
+     char *mName;
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 8d7ffb9..04d0b25 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -235,8 +235,6 @@
+     mDebugLevelBumpPendingBuffers[1] = 0;
+     mMetadataType[0] = kMetadataBufferTypeInvalid;
+     mMetadataType[1] = kMetadataBufferTypeInvalid;
+-    mGraphicBufferEnabled[0] = false;
+-    mGraphicBufferEnabled[1] = false;
+     mIsSecure = AString(name).endsWith(".secure");
+     atomic_store(&mDying, false);
+ }
+@@ -582,11 +580,6 @@
+     err = OMX_SetParameter(mHandle, index, &params);
+     CLOG_IF_ERROR(setParameter, err, "%s(%#x): %s:%u en=%d", name, index,
+             portString(portIndex), portIndex, enable);
+-    if (err == OMX_ErrorNone) {
+-        mGraphicBufferEnabled[portIndex] = enable;
+-    } else if (enable) {
+-        mGraphicBufferEnabled[portIndex] = false;
+-    }
+     return StatusFromOMXError(err);
+ }
+ 
+@@ -790,13 +783,6 @@
+         return BAD_VALUE;
+     }
+ 
+-    if (mMetadataType[portIndex] == kMetadataBufferTypeInvalid
+-            && mGraphicBufferEnabled[portIndex]) {
+-        ALOGE("b/62948670");
+-        android_errorWriteLog(0x534e4554, "62948670");
+-        return INVALID_OPERATION;
+-    }
+-
+     // metadata buffers are not connected cross process
+     BufferMeta *buffer_meta;
+     bool isMeta = mMetadataType[portIndex] != kMetadataBufferTypeInvalid;
+@@ -908,14 +894,6 @@
+         OMX::buffer_id *buffer) {
+     Mutex::Autolock autoLock(mLock);
+ 
+-    if (!mGraphicBufferEnabled[portIndex]
+-            || mMetadataType[portIndex] != kMetadataBufferTypeInvalid) {
+-        // Report error if this is not in graphic buffer mode.
+-        ALOGE("b/62948670");
+-        android_errorWriteLog(0x534e4554, "62948670");
+-        return INVALID_OPERATION;
+-    }
+-
+     // See if the newer version of the extension is present.
+     OMX_INDEXTYPE index;
+ #ifndef STE_HARDWARE

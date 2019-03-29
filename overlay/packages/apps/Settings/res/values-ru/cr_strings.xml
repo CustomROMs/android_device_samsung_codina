@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2012-2015 SergeyL Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Changelog -->
+    <string name="changelog_crdroid_title">Список изменений</string>
+    <string name="changelog_crdroid_error">Не удаётся загрузить список изменений</string>
+
+    <!-- Superuser indicator on status bar -->
+    <string name="su_indicator">Индикатор суперпользователя</string>
+    <string name="su_indicator_summary_on">Отображается при активной сессии</string>
+    <string name="su_indicator_summary_off">Выберите, если нужно показывать при активной сессии</string>
+
+    <!-- Option to enable/disable scrolling cache -->
+    <string name="pref_scrollingcache_title">Кэш прокрутки</string>
+    <string name="pref_scrollingcache_summary">Отключение кэша прокрутки может улучшить производительность за счет памяти</string>
+    <string name="pref_scrollingcache_force_enable">Включить принудительно</string>
+    <string name="pref_scrollingcache_default_enable">Включить по умолчанию</string>
+    <string name="pref_scrollingcache_default_disable">Выключить по умолчанию</string>
+    <string name="pref_scrollingcache_force_disable">Выключить принудительно</string>
+    <string name="animation_settings_title">Расширенные функции</string>
+
+    <!-- MediaScanner behavior on boot -->
+    <string name="media_scanner_on_boot_title">Поведение MediaScanner при загрузке</string>
+    <string name="media_scanner_on_boot_enabled">Сканировать медиа</string>
+    <string name="media_scanner_on_boot_ask">По запросу (уведомление)</string>
+    <string name="media_scanner_on_boot_disabled">Не сканировать медиа</string>
+
+    <!-- tap-to-wake -->
+    <string name="double_tap_to_wake_title">Включение при двойном нажатии</string>
+    <string name="double_tap_to_wake_summary">Дважды коснитесь экрана, чтобы вывести устройство из спящего режима</string>
+
+    <!-- SuperSU -->
+    <string name="supersu_title">SuperSU</string>
+
+    <!-- Text for forcing expanded notifications -->
+    <string name="disable_fc_notifications_title">Отключить уведомления об ошибках</string>
+    <string name="disable_fc_notifications_summary">Скрывать уведомления об ошибках</string>
+
+     <!-- Advanced storage settings -->
+    <string name="storage_advanced_titlebar">Настройки подключения USB</string>
+    <string name="storage_menu_advanced">Продвинутые настройки</string>
+    <!-- USB data automatic unlock -->
+    <string name="usb_data_auto_unlock_title">Разблокировать доступ по USB</string>
+    <string name="usb_data_auto_unlock_summary">Разрешать передачу данных по USB (MTP, PTP)</string>
+    <string name="usb_data_auto_unlock_warning_summary">Соединение с ПК будет создавать незащищённые каналы связи. Пароль на экране блокировки отключает эту функцию.\n\nЭто всё ещё экспериментальная функция, используйте с осторожностью.</string>
+
+    <!-- transferring files via UMS -->
+    <string name="usb_use_UMS">"Передача файлов (UMS)"</string>
+    <string name="usb_use_UMS_desc">"Передача файлов на компьютер Windows или Mac (UMS)"</string>
+
+    <!-- Notification sound timeout -->
+    <string name="app_notification_sound_timeout_title">Время между сигналами уведомлений</string>
+    <string name="app_notification_sound_timeout_summary_template">Разрешить звукам или вибраций не больше, чем один раз в <xliff:g id="duration">%1$s</xliff:g></string>
+    <string name="app_notification_sound_timeout_value_none">без ограничений</string>
+    <string name="app_notification_sound_timeout_value_10_seconds">10 секунд</string>
+    <string name="app_notification_sound_timeout_value_30_seconds">30 секунд</string>
+    <string name="app_notification_sound_timeout_value_1_minute">1 минута</string>
+    <string name="app_notification_sound_timeout_value_5_minutes">5 минут</string>
+    <string name="app_notification_sound_timeout_value_15_minutes">10 минут</string>
+    <string name="app_notification_sound_timeout_value_30_minutes">30 минут</string>
+
+    <!-- Allow fake signature checkbox in developer settings -->
+    <string name="allow_signature_fake">Разрешить подмену подписи</string>
+    <string name="allow_signature_fake_summary">Разрешать приложениям обходить систему безопасности, выдавая себя за другое приложение</string>
+    <string name="allow_signature_fake_warning">Внимание! Данное разрешение может привести к серьезным проблемам безопасности и конфиденциальности! Включайте только для проверенных приложений</string>
+
+</resources>

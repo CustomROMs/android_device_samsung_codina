@@ -1,0 +1,31 @@
+Subject: [PATCH] sensorservice: Report accurate minimum delay for SensorFusion
+
+* SensorFusion sensors formerly reported the minimum delay of the
+  accelerometer sensor, however this is inaccurate for cases where
+  non-accelerometer sensors have lower maximum rates, causing sensor
+  performance to fall below CTS mandated minimums.
+
+diff --git a/services/sensorservice/SensorFusion.cpp b/services/sensorservice/SensorFusion.cpp
+index 6d93009..daba6b7 100644
+--- a/services/sensorservice/SensorFusion.cpp
++++ b/services/sensorservice/SensorFusion.cpp
+@@ -14,6 +14,8 @@
+  * limitations under the License.
+  */
+ 
++#include <algorithm>
++
+ #include "SensorDevice.h"
+ #include "SensorFusion.h"
+ #include "SensorService.h"
+@@ -134,7 +136,9 @@
+ }
+ 
+ int32_t SensorFusion::getMinDelay() const {
+-    return mAcc.getMinDelay();
++    int32_t minDelay = std::max(std::max(mAcc.getMinDelay(),
++                mGyro.getMinDelay()), mMag.getMinDelay());
++    return minDelay;
+ }
+ 
+ void SensorFusion::dump(String8& result) {

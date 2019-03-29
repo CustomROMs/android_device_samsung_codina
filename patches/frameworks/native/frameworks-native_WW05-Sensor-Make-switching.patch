@@ -1,0 +1,36 @@
+Subject: [PATCH] Sensor: Make switching from data injection mode to normal mode more productive
+
+Currently, when sensor service mode is switched back to normal mode from data
+injection mode, request to enable the sensors is passed first to HAL and then
+request to change mode is passed. With this, request to enable the sensors is
+actually non-effective because sensor service is still in data injection mode
+so HAL could not pass the request further to driver as otherwise real and
+recorded data gets mixed up.
+Therefore, lets first make request to set mode and then make request to enable
+the earlier enabled sensors.
+
+For example: Testing Auto Rotation algorithm,
+ - Auto Rotation enabled --> real data production
+ - Sensor service mode changed to data injection --> real data stopped
+ - Played recorded data --> AR algorithm tested with recorded data
+ - Sensor service mode changed to normal --> mode changed succesffuly,
+   but auto rotation not working again although expected to work in normal mode.
+
+diff --git a/services/sensorservice/SensorService.cpp b/services/sensorservice/SensorService.cpp
+index fb83eff..319f4d4 100644
+--- a/services/sensorservice/SensorService.cpp
++++ b/services/sensorservice/SensorService.cpp
+@@ -779,9 +779,11 @@
+ 
+ status_t SensorService::resetToNormalModeLocked() {
+     SensorDevice& dev(SensorDevice::getInstance());
+-    dev.enableAllSensors();
+     status_t err = dev.setMode(NORMAL);
+-    mCurrentOperatingMode = NORMAL;
++    if (err == NO_ERROR) {
++        mCurrentOperatingMode = NORMAL;
++        dev.enableAllSensors();
++    }
+     return err;
+ }
+ 

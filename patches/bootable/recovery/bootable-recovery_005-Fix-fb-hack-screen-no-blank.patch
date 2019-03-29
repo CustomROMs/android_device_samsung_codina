@@ -1,0 +1,33 @@
+Samsung-STE: fb hack screen no blank
+Samsung-STE: offline charging hack screen no blank
+ 
+diff --git a/minuitwrp/graphics_fbdev.cpp b/minuitwrp/graphics_fbdev.cpp
+index 47325d0..cd9e9f7 100644
+--- a/minuitwrp/graphics_fbdev.cpp
++++ b/minuitwrp/graphics_fbdev.cpp
+@@ -274,8 +274,10 @@ static GRSurface* fbdev_init(minui_backend* backend) {
+ 
+     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+ 
++#ifndef TW_NO_SCREEN_BLANK
+     fbdev_blank(backend, true);
+     fbdev_blank(backend, false);
++#endif
+ 
+     smem_len = fi.smem_len;
+ 
+diff --git a/minui/graphics_fbdev.cpp b/minui/graphics_fbdev.cpp
+index eceaeee..eb454c8 100644
+--- a/minui/graphics_fbdev.cpp
++++ b/minui/graphics_fbdev.cpp
+@@ -182,8 +182,10 @@ static GRSurface* fbdev_init(minui_backend* backend) {
+ 
+     printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width, gr_draw->height);
+ 
++#ifndef TW_NO_SCREEN_BLANK
+     fbdev_blank(backend, true);
+     fbdev_blank(backend, false);
++#endif
+ 
+     return gr_draw;
+ }
