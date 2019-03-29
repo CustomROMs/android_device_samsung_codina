@@ -108,7 +108,8 @@ PRODUCT_PACKAGES += \
     audio.usb.default \
     audio.a2dp.default \
     libaudioutils \
-    libtinyalsa
+    libtinyalsa \
+    libstagefrighthw
 
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
