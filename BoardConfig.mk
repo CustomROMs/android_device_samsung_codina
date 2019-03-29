@@ -15,10 +15,12 @@
 # limitations under the License.
 #
 
-LOCAL_PATH := device/samsung/codina
+-include vendor/st-ericsson/u8500/BoardConfig.mk
 
-TARGET_SPECIFIC_HEADER_PATH := $(LOCAL_PATH)/include
-PRODUCT_VENDOR_KERNEL_HEADERS := $(LOCAL_PATH)/kernel-headers
+THIS_PATH := device/samsung/codina
+
+TARGET_SPECIFIC_HEADER_PATH := $(THIS_PATH)/include
+PRODUCT_VENDOR_KERNEL_HEADERS := $(THIS_PATH)/kernel-headers
 
 BOARD_PROVIDES_LIBRIL := true
 
@@ -102,7 +104,7 @@ USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
 COMMON_GLOBAL_CFLAGS += -DFORCE_SCREENSHOT_CPU_PATH -DBOARD_CANT_REALLOCATE_OMX_BUFFERS
-#BOARD_EGL_CFG := $(LOCAL_PATH)/configs/egl.cfg
+#BOARD_EGL_CFG := $(THIS_PATH)/configs/egl.cfg
 HWUI_COMPILE_FOR_PERF := true
 
 # Wifi
@@ -130,7 +132,7 @@ BOARD_NO_APSME_ATTR              := true
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
-BOARD_BLUEDROID_VENDOR_CONF := $(LOCAL_PATH)/configs/bluetooth/vnd_u8500.txt
+BOARD_BLUEDROID_VENDOR_CONF := $(THIS_PATH)/configs/bluetooth/vnd_u8500.txt
 
 # RIL
 BOARD_RIL_CLASS := ../../../device/samsung/codina/configs/ril
@@ -173,13 +175,13 @@ BOARD_CANT_BUILD_RECOVERY_FROM_BOOT_PATCH := true
 # SELinux
 BOARD_SEPOLICY_DIRS := \
     $(BOARD_SEPOLICY_DIRS) \
-    $(LOCAL_PATH)/sepolicy
+    $(THIS_PATH)/sepolicy
 
 # Delete the line below when SELinux is enabled on all devices
 COMMON_GLOBAL_CFLAGS += -DRECOVERY_CANT_USE_CONFIG_EXT4_FS_XATTR
 
 # Releasetools
-TARGET_RELEASETOOLS_EXTENSIONS := $(LOCAL_PATH)/releasetools
+TARGET_RELEASETOOLS_EXTENSIONS := $(THIS_PATH)/releasetools
 
 # Blobs
 COMMON_GLOBAL_CFLAGS += -DNEEDS_VECTORIMPL_SYMBOLS -DADD_LEGACY_ACQUIRE_BUFFER_SYMBOL
@@ -202,10 +204,10 @@ TARGET_KERNEL_CONFIG := codina_defconfig
 PLATFORM_LINARO_4.9 := true
 
 # Bluetooth
-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(LOCAL_PATH)/configs/bluetooth/include
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(THIS_PATH)/configs/bluetooth/include
 
 # Recovery
-TARGET_RECOVERY_FSTAB := $(LOCAL_PATH)/rootdir/fstab.samsungcodina
+TARGET_RECOVERY_FSTAB := $(THIS_PATH)/rootdir/fstab.samsungcodina
 
 # Boot Animation
 TARGET_BOOTANIMATION_PRELOAD := true
@@ -214,9 +216,9 @@ TARGET_BOOTANIMATION_USE_RGB565 := true
 
 # Charging mode Twrp
 ifneq ($(strip $(wildcard $(TOP)/bootable/recovery/variables.h)),)
--include $(LOCAL_PATH)/twrp.mk
+-include $(THIS_PATH)/twrp.mk
 else
--include $(LOCAL_PATH)/cwm.mk
+-include $(THIS_PATH)/cwm.mk
 endif
 
 # Charging mode
