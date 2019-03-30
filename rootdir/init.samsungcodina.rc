@@ -11,14 +11,6 @@ on init
     mkdir /preload 0771 system system
     mkdir /mnt/.lfs 0755 root root
 
-    # See storage config details at http://source.android.com/tech/storage/
-    mkdir /mnt/media_rw/sdcard0 0700 media_rw media_rw
-    mkdir /mnt/media_rw/sdcard1 0700 media_rw media_rw
-
-    export EXTERNAL_STORAGE /sdcard
-    export SECONDARY_STORAGE /storage/sdcard1
-    mkdir /storage/sdcard1 0555 root root
-
     # Support legacy paths
     symlink /sdcard /mnt/sdcard
     symlink /sdcard /storage/sdcard
@@ -26,9 +18,6 @@ on init
     # map "real" external storages paths also in same way. backwards compatibility.
     symlink /storage/sdcard0 /mnt/sdcard0
     symlink /storage/sdcard1 /mnt/sdcard1
-
-    mkdir /storage/sdcard0 0700 root root
-    mkdir /storage/sdcard1 0700 root root
 
     # By default, primary storage is physical
     # setprop ro.vold.primary_physical 1
@@ -245,6 +234,8 @@ on post-fs-data
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
     mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
     mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+    chown wifi root /dev/rfkill
 
     # for TRP/TIS
     write /data/.psm.info 1
@@ -387,7 +378,8 @@ on charger
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor conservative
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor conservative
 
-service charger /sbin/charger
+# service charger /sbin/charger
+service charger /sbin/healthd -c
     class charger
     critical
     seclabel u:r:healthd:s0
@@ -422,20 +414,12 @@ service admsrv /system/bin/admsrv
     ioprio rt 4
     capability NET_ADMIN NET_RAW SYS_NICE
 
-service geomagneticd /system/bin/geomagneticd6x
-    user compass
-    group system input
-
-service orientationd /system/bin/orientationd6x
-    user compass
-    group system input
-
-service gpsd /system/bin/gpsd -c /system/etc/gps.xml
-    class main
-    user gps
-    group system net_raw
-    ioprio be 0
-    seclabel u:r:gpsd:s0
+#service gpsd /system/bin/gpsd -c /system/etc/gps.xml
+#    class main
+#    user gps
+#    group system net_raw
+#    ioprio be 0
+#    seclabel u:r:gpsd:s0
 
 # AT daemon
 service atd /system/bin/at_core -mode normal -serial ttyAMA2
@@ -447,11 +431,6 @@ service atd /system/bin/at_core -mode normal -serial ttyAMA2
 service ta_load /system/bin/ta_loader
     user root
     group radio
-
-# AT Distributor for factory test
-service at_distributor /system/bin/at_distributor
-    user root
-    group radio log
 
 service usbid_init /system/bin/usbid_init.sh
     class main
@@ -476,7 +455,7 @@ service p2p_supplicant /system/bin/wpa_supplicant \
    -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
    -I/system/etc/wifi/wpa_supplicant_overlay.conf -N \
    -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf \
-   -I/system/etc/wifi/wpa_supplicant_overlay.conf \
+   -I/system/etc/wifi/p2p_supplicant_overlay.conf \
    -puse_p2p_group_interface=1 \
    -e/data/misc/wifi/entropy.bin -g@android:wpa_wlan0
     class main

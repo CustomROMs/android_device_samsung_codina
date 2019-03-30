@@ -414,20 +414,12 @@ service admsrv /system/bin/admsrv
     ioprio rt 4
     capability NET_ADMIN NET_RAW SYS_NICE
 
-service geomagneticd /system/bin/geomagneticd6x
-    user compass
-    group system input
-
-service orientationd /system/bin/orientationd6x
-    user compass
-    group system input
-
-service gpsd /system/bin/gpsd -c /system/etc/gps.xml
-    class main
-    user gps
-    group system net_raw
-    ioprio be 0
-    seclabel u:r:gpsd:s0
+#service gpsd /system/bin/gpsd -c /system/etc/gps.xml
+#    class main
+#    user gps
+#    group system net_raw
+#    ioprio be 0
+#    seclabel u:r:gpsd:s0
 
 # AT daemon
 service atd /system/bin/at_core -mode normal -serial ttyAMA2
@@ -439,11 +431,6 @@ service atd /system/bin/at_core -mode normal -serial ttyAMA2
 service ta_load /system/bin/ta_loader
     user root
     group radio
-
-# AT Distributor for factory test
-service at_distributor /system/bin/at_distributor
-    user root
-    group radio log
 
 service usbid_init /system/bin/usbid_init.sh
     class main
