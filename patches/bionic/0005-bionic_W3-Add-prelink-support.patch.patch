@@ -1,0 +1,147 @@
+From 6b33b19fdcbf553af8d8b1b92706b546d193fd54 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:44:02 +0300
+Subject: [PATCH 5/5] bionic_W3-Add-prelink-support.patch
+
+Change-Id: I51fc2ddeec3def42a3b16fef8435d4d936749488
+---
+ linker/Android.mk      | 10 ++++++++--
+ linker/linker_phdr.cpp | 49 +++++++++++++++++++++++++++++++++++++++++++++++++
+ linker/linker_phdr.h   |  8 ++++++++
+ 3 files changed, 65 insertions(+), 2 deletions(-)
+
+diff --git a/linker/Android.mk b/linker/Android.mk
+index 9f578c9ba..933ff6887 100644
+--- a/linker/Android.mk
++++ b/linker/Android.mk
+@@ -41,9 +41,15 @@ LOCAL_CFLAGS_x86 += -D__work_around_b_19059885__
+ LOCAL_CONLYFLAGS += \
+     -std=gnu99 \
+ 
++ifneq ($(TARGET_NEEDS_PRELINK_SUPPORT),true)
+ LOCAL_CPPFLAGS += \
+-    -std=gnu++11 \
+-    -Wold-style-cast \
++    -Wold-style-cast
++else
++  LOCAL_CFLAGS += -DENABLE_PRELINK_SUPPORT
++endif
++
++LOCAL_CPPFLAGS += \
++    -std=gnu++11
+ 
+ ifeq ($(TARGET_IS_64_BIT),true)
+ LOCAL_CPPFLAGS += -DTARGET_IS_64_BIT
+diff --git a/linker/linker_phdr.cpp b/linker/linker_phdr.cpp
+index 30118e363..3f2b64b97 100644
+--- a/linker/linker_phdr.cpp
++++ b/linker/linker_phdr.cpp
+@@ -136,7 +136,11 @@ static int GetTargetElfMachine() {
+ ElfReader::ElfReader(const char* name, int fd, off64_t file_offset, off64_t file_size)
+     : name_(name), fd_(fd), file_offset_(file_offset), file_size_(file_size),
+       phdr_num_(0), phdr_mmap_(nullptr), phdr_table_(nullptr), phdr_size_(0),
++#ifdef ENABLE_PRELINK_SUPPORT
++      load_start_(nullptr), load_size_(0), load_bias_(0), required_base_(0),
++#else
+       load_start_(nullptr), load_size_(0), load_bias_(0),
++#endif
+       loaded_phdr_(nullptr) {
+ }
+ 
+@@ -301,6 +305,38 @@ size_t phdr_table_get_load_size(const ElfW(Phdr)* phdr_table, size_t phdr_count,
+   return max_vaddr - min_vaddr;
+ }
+ 
++#ifdef ENABLE_PRELINK_SUPPORT
++typedef struct {
++    long mmap_addr;
++    char tag[4]; /* 'P', 'R', 'E', ' ' */
++} prelink_info_t;
++
++/* Returns the requested base address if the library is prelinked,
++ * and 0 otherwise.  */
++static ElfW(Addr) is_prelinked(int fd, const char *name)
++{
++    off_t sz = lseek(fd, -sizeof(prelink_info_t), SEEK_END);
++    if (sz < 0) {
++        DL_ERR("lseek() failed!");
++        return 0;
++    }
++
++    prelink_info_t info;
++    int rc = TEMP_FAILURE_RETRY(read(fd, &info, sizeof(info)));
++    if (rc != sizeof(info)) {
++        DL_ERR("Could not read prelink_info_t structure for `%s`\n", name);
++        return 0;
++    }
++
++    if (memcmp(info.tag, "PRE ", 4)) {
++        DL_ERR("`%s` is not a prelinked library\n", name);
++        return 0;
++    }
++
++    return (unsigned long)info.mmap_addr;
++}
++#endif
++
+ // Reserve a virtual address range big enough to hold all loadable
+ // segments of a program header table. This is done by creating a
+ // private anonymous mmap() with PROT_NONE.
+@@ -338,7 +374,16 @@ bool ElfReader::ReserveAddressSpace(const android_dlextinfo* extinfo) {
+              reserved_size - load_size_, load_size_, name_);
+       return false;
+     }
++#ifdef ENABLE_PRELINK_SUPPORT
++    required_base_ = is_prelinked(fd_, name_);
++#endif
+     int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
++#ifdef ENABLE_PRELINK_SUPPORT
++    if (required_base_ != 0) {
++      mmap_flags |= MAP_FIXED;
++      mmap_hint = (uint8_t*) required_base_;
++    }
++#endif
+     start = mmap(mmap_hint, load_size_, PROT_NONE, mmap_flags, -1, 0);
+     if (start == MAP_FAILED) {
+       DL_ERR("couldn't reserve %zd bytes of address space for \"%s\"", load_size_, name_);
+@@ -349,7 +394,11 @@ bool ElfReader::ReserveAddressSpace(const android_dlextinfo* extinfo) {
+   }
+ 
+   load_start_ = start;
++#ifdef ENABLE_PRELINK_SUPPORT
++  load_bias_ = reinterpret_cast<uint8_t*>(start) - reinterpret_cast<uint8_t*>(min_vaddr);
++#else
+   load_bias_ = reinterpret_cast<uint8_t*>(start) - addr;
++#endif
+   return true;
+ }
+ 
+diff --git a/linker/linker_phdr.h b/linker/linker_phdr.h
+index 3affa66cd..f93f99cba 100644
+--- a/linker/linker_phdr.h
++++ b/linker/linker_phdr.h
+@@ -48,6 +48,9 @@ class ElfReader {
+   ElfW(Addr) load_start() { return reinterpret_cast<ElfW(Addr)>(load_start_); }
+   size_t load_size() { return load_size_; }
+   ElfW(Addr) load_bias() { return load_bias_; }
++#ifdef ENABLE_PRELINK_SUPPORT
++  ElfW(Addr) required_base() { return required_base_; }
++#endif
+   const ElfW(Phdr)* loaded_phdr() { return loaded_phdr_; }
+ 
+  private:
+@@ -77,6 +80,11 @@ class ElfReader {
+   size_t load_size_;
+   // Load bias.
+   ElfW(Addr) load_bias_;
++#ifdef ENABLE_PRELINK_SUPPORT
++  // For prelinked libraries, mandatory load address of the first
++  // loadable segment. 0 otherwise.
++  ElfW(Addr) required_base_;
++#endif
+ 
+   // Loaded phdr.
+   const ElfW(Phdr)* loaded_phdr_;
+-- 
+2.11.0
+

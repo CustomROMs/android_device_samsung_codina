@@ -1,0 +1,53 @@
+From 48e77c9e32d5aae8d57ae79663556e8ed8e2cf6e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:39 +0300
+Subject: [PATCH 32/45] frameworks-av_WW023-Fix-for-tone-ToneGenerator.patch
+
+Change-Id: I02097bf7537be6e84b89681afb7226337e93dd3a
+---
+ include/media/ToneGenerator.h    | 2 +-
+ media/libmedia/ToneGenerator.cpp | 8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/include/media/ToneGenerator.h b/include/media/ToneGenerator.h
+index 0043bdcff..7deefcdb8 100644
+--- a/include/media/ToneGenerator.h
++++ b/include/media/ToneGenerator.h
+@@ -306,7 +306,7 @@ private:
+ 
+         short mA1_Q14;  // Q14 coefficient
+         // delay line of full amplitude generator
+-        short mS1, mS2;  // delay line S2 oldest
++        long mS1, mS2;  // delay line S2 oldest
+         short mS2_0;  // saved value for reinitialisation
+         short mAmplitude_Q15;  // Q15 amplitude
+     };
+diff --git a/media/libmedia/ToneGenerator.cpp b/media/libmedia/ToneGenerator.cpp
+index 2a661a203..4544b0773 100644
+--- a/media/libmedia/ToneGenerator.cpp
++++ b/media/libmedia/ToneGenerator.cpp
+@@ -1578,8 +1578,8 @@ void ToneGenerator::WaveGenerator::getSamples(short *outBuffer,
+         lS1 = (long)0;
+         lS2 = (long)mS2_0;
+     } else {
+-        lS1 = (long)mS1;
+-        lS2 = (long)mS2;
++        lS1 = mS1;
++        lS2 = mS2;
+     }
+     lA1 = (long)mA1_Q14;
+     lAmplitude = (long)mAmplitude_Q15;
+@@ -1615,8 +1615,8 @@ void ToneGenerator::WaveGenerator::getSamples(short *outBuffer,
+     }
+ 
+     // save status
+-    mS1 = (short)lS1;
+-    mS2 = (short)lS2;
++    mS1 = lS1;
++    mS2 = lS2;
+ }
+ 
+ }  // end namespace android
+-- 
+2.11.0
+

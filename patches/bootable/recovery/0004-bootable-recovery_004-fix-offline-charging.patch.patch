@@ -1,0 +1,52 @@
+From 967b85939a5ad65f52f150ad131aeb5c48e27b0e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:48:11 +0300
+Subject: [PATCH 4/6] bootable-recovery_004-fix-offline-charging.patch
+
+Change-Id: Ia07127d71f8758fe966da36e97192df136e6caef
+---
+ minui/graphics.cpp | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/minui/graphics.cpp b/minui/graphics.cpp
+index 93b70da2..94b86d58 100644
+--- a/minui/graphics.cpp
++++ b/minui/graphics.cpp
+@@ -472,7 +472,7 @@ void gr_flip() {
+     gr_draw = gr_backend->flip(gr_backend);
+ }
+ 
+-int gr_init(void)
++int gr_init_real(void)
+ {
+     gr_init_font();
+     gr_draw = NULL;
+@@ -526,6 +526,25 @@ int gr_init(void)
+     return 0;
+ }
+ 
++/*
++ * FIXME: This is a total hack.
++ *
++ * Round 1
++ * framebuffer: fd 4 (480 x 800)
++ *
++ * Round 2
++ * framebuffer: fd 6 (480 x 800)
++ *
++*/
++int gr_init(void) {
++    int ret;
++    // Round 1
++    gr_init_real();
++    // Return the result of round 2
++    ret = gr_init_real();
++    return ret;
++}
++
+ void gr_exit(void)
+ {
+     gr_backend->exit(gr_backend);
+-- 
+2.11.0
+

@@ -1,0 +1,48 @@
+From b5928c5a181afe3a112a3619f298658f0bd89e11 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:20 +0300
+Subject: [PATCH 20/20] 
+ system-core_WW009-Use-android-blue-charge-percentage.patch
+
+Change-Id: Id5501ce1e7febee86fa1804544417114c82cbc3a
+---
+ healthd/healthd_mode_charger.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/healthd/healthd_mode_charger.cpp b/healthd/healthd_mode_charger.cpp
+index e365db6dc..9d01b8331 100644
+--- a/healthd/healthd_mode_charger.cpp
++++ b/healthd/healthd_mode_charger.cpp
+@@ -382,9 +382,9 @@ static int draw_text(const char *str, int x, int y)
+     return y + char_height;
+ }
+ 
+-static void android_green(void)
++static void android_blue(void)
+ {
+-    gr_color(0xa4, 0xc6, 0x39, 255);
++    gr_color(0, 191, 255, 255);
+ }
+ 
+ /* returns the last y-offset of where the surface ends */
+@@ -411,7 +411,7 @@ static void draw_unknown(struct charger *charger)
+     if (charger->surf_unknown) {
+         draw_surface_centered(charger, charger->surf_unknown);
+     } else {
+-        android_green();
++        android_blue();
+         y = draw_text("Charging!", -1, -1);
+         draw_text("?\?/100", -1, y + 25);
+     }
+@@ -443,7 +443,7 @@ static void draw_capacity(struct charger *charger)
+     str_len_px = gr_measure(cap_str);
+     x = (gr_fb_width() - str_len_px) / 2;
+     y = (gr_fb_height() + char_height) / 2;
+-    android_green();
++    android_blue();
+     gr_text(x, y, cap_str, 0);
+ }
+ #endif
+-- 
+2.11.0
+

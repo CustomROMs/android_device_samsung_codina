@@ -1,0 +1,29 @@
+From 70aeefff1e530a5006959a3e77a04f2320b26902 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:20 +0300
+Subject: [PATCH 10/20] system-core_W6-adapt-to-our-sdcardfs.patch
+
+Change-Id: I28e2b6488d38502b7245bfe8b73eb9175cb4ef84
+---
+ sdcard/sdcard.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/sdcard/sdcard.c b/sdcard/sdcard.c
+index 227982c05..7cfa9e5f4 100644
+--- a/sdcard/sdcard.c
++++ b/sdcard/sdcard.c
+@@ -1792,10 +1792,7 @@ static int fuse_setup(struct fuse* fuse, gid_t gid, mode_t mask, bool use_sdcard
+ 
+     if (use_sdcardfs) {
+         snprintf(opts, sizeof(opts),
+-                "%sfsuid=%u,fsgid=%u,userid=%d,gid=%u,mask=%u,reserved_mb=20",
+-                (fuse->global->multi_user ? "multiuser," : ""),
+-                fuse->global->uid, fuse->global->gid,
+-                fuse->global->root.userid, gid, mask);
++                "uid=1023,gid=1023,wgid=1023,derive=unified");
+         if (mount(fuse->global->source_path, fuse->dest_path, "sdcardfs",
+                     MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_NOATIME, opts) != 0) {
+             ERROR("failed to mount sdcardfs filesystem: %s\n",  strerror(errno));
+-- 
+2.11.0
+

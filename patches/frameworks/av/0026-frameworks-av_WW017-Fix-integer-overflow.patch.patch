@@ -1,0 +1,26 @@
+From 97aeee20bab8b25d4e17623ccf2120d92bc206fe Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:38 +0300
+Subject: [PATCH 26/45] frameworks-av_WW017-Fix-integer-overflow.patch
+
+Change-Id: I731f89db5fff10b4ec26f5c9f128a069d1631738
+---
+ media/libstagefright/MPEG4Writer.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/MPEG4Writer.cpp b/media/libstagefright/MPEG4Writer.cpp
+index 623b7c490..8c94830f8 100644
+--- a/media/libstagefright/MPEG4Writer.cpp
++++ b/media/libstagefright/MPEG4Writer.cpp
+@@ -620,7 +620,7 @@ int64_t MPEG4Writer::estimateMoovBoxSize(int32_t bitRate) {
+     if (mMaxFileDurationLimitUs != 0) {
+         if (bitRate > 0) {
+             int64_t size2 =
+-                ((mMaxFileDurationLimitUs * bitRate * 6) / 1000 / 8000000);
++                ((mMaxFileDurationLimitUs / 1000) * bitRate * 6) / 8000000;
+             if (mMaxFileSizeLimitBytes != 0 && mIsFileSizeLimitExplicitlyRequested) {
+                 // When both file size and duration limits are set,
+                 // we use the smaller limit of the two.
+-- 
+2.11.0
+

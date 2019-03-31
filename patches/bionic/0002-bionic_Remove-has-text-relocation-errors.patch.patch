@@ -1,0 +1,30 @@
+From 7dce3b3a29df546148eb07e3b94714d94f8d2540 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:44:02 +0300
+Subject: [PATCH 2/5] bionic_Remove-has-text-relocation-errors.patch
+
+Change-Id: Ia993ece5a8d58661f3324fd677248a84f62d6d46
+---
+ linker/linker.cpp | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index 6fd2a4a44..ebf8792b6 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -3082,12 +3082,6 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t&
+ #endif
+     // Make segments writable to allow text relocations to work properly. We will later call
+     // phdr_table_protect_segments() after all of them are applied and all constructors are run.
+-#if defined(USE_LEGACY_BLOBS)
+-    DEBUG("%s has text relocations. This is wasting memory and prevents "
+-#else
+-    DL_WARN("%s has text relocations. This is wasting memory and prevents "
+-#endif
+-            "security hardening. Please fix.", get_realpath());
+     if (phdr_table_unprotect_segments(phdr, phnum, load_bias) < 0) {
+       DL_ERR("can't unprotect loadable segments for \"%s\": %s",
+              get_realpath(), strerror(errno));
+-- 
+2.11.0
+

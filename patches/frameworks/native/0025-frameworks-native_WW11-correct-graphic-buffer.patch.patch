@@ -1,0 +1,41 @@
+From ba8e7b9a604f4d6c7c7958f56446338e0d8eaf2c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:47 +0300
+Subject: [PATCH 25/30] frameworks-native_WW11-correct-graphic-buffer.patch
+
+Change-Id: I0e232fd53fadd9d077bba7f4f3c1284a28719045
+---
+ libs/gui/BufferQueueProducer.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 93daac2d0..6059ee730 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -1015,6 +1015,13 @@ void BufferQueueProducer::allocateBuffers(bool async, uint32_t width,
+             allocFormat = format != 0 ? format : mCore->mDefaultBufferFormat;
+             allocUsage = usage | mCore->mConsumerUsageBits;
+ 
++            // If mTransformHint is set, the EGL implementation will request buffers
++            // with pre-rotated size. So here we need to swap the width and height
++            // to avoid the buffers being freed and reallocated when dequeueBuffer()
++            // gets called later.
++            if (mCore->mTransformHint != 0) {
++                std::swap(allocWidth, allocHeight);
++            }
+             mCore->mIsAllocating = true;
+         } // Autolock scope
+ 
+@@ -1038,6 +1045,9 @@ void BufferQueueProducer::allocateBuffers(bool async, uint32_t width,
+             Mutex::Autolock lock(mCore->mMutex);
+             uint32_t checkWidth = width > 0 ? width : mCore->mDefaultWidth;
+             uint32_t checkHeight = height > 0 ? height : mCore->mDefaultHeight;
++            if (mCore->mTransformHint != 0) {
++                std::swap(checkWidth, checkHeight);
++            }
+             PixelFormat checkFormat = format != 0 ?
+                     format : mCore->mDefaultBufferFormat;
+             uint32_t checkUsage = usage | mCore->mConsumerUsageBits;
+-- 
+2.11.0
+

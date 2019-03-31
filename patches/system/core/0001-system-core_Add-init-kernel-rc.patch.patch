@@ -1,0 +1,25 @@
+From 5a129fea0778a677d2d7aca77150beac3c2305f7 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:19 +0300
+Subject: [PATCH 01/20] system-core_Add-init-kernel-rc.patch
+
+Change-Id: I308fcfb85040d0c1c40526b95a975b765e815c02
+---
+ rootdir/init.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index cfcab625a..91d49d2b0 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -10,6 +10,7 @@ import /init.${ro.hardware}.rc
+ import /init.usb.configfs.rc
+ import /init.${ro.zygote}.rc
+ import /init.trace.rc
++import /init.kernel.rc
+ # Include CM's extra init file
+ import /init.cm.rc
+ 
+-- 
+2.11.0
+

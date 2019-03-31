@@ -1,0 +1,38 @@
+From 3ead5bfdd8a6d3736446390383fa71e1b02fd002 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:46 +0300
+Subject: [PATCH 18/30] 
+ frameworks-native_WW03-Report-accurate-minimum-delay.patch
+
+Change-Id: Ia2f5938c28737358e242eec31ce0bec1137f93f0
+---
+ services/sensorservice/SensorFusion.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/services/sensorservice/SensorFusion.cpp b/services/sensorservice/SensorFusion.cpp
+index 6d9300917..daba6b7e1 100644
+--- a/services/sensorservice/SensorFusion.cpp
++++ b/services/sensorservice/SensorFusion.cpp
+@@ -14,6 +14,8 @@
+  * limitations under the License.
+  */
+ 
++#include <algorithm>
++
+ #include "SensorDevice.h"
+ #include "SensorFusion.h"
+ #include "SensorService.h"
+@@ -134,7 +136,9 @@ float SensorFusion::getPowerUsage() const {
+ }
+ 
+ int32_t SensorFusion::getMinDelay() const {
+-    return mAcc.getMinDelay();
++    int32_t minDelay = std::max(std::max(mAcc.getMinDelay(),
++                mGyro.getMinDelay()), mMag.getMinDelay());
++    return minDelay;
+ }
+ 
+ void SensorFusion::dump(String8& result) {
+-- 
+2.11.0
+

@@ -1,0 +1,37 @@
+From cf74b84c5fd895c312139c61fd2c9ec15f132e54 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:54:27 +0300
+Subject: [PATCH 3/7] hardware-libhardware_STE-Audio-header.patch
+
+Change-Id: I9cbc6a1b724429393020fc55b184554cd370bc40
+---
+ include/hardware/audio.h | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/include/hardware/audio.h b/include/hardware/audio.h
+index 22e7419..daf564b 100644
+--- a/include/hardware/audio.h
++++ b/include/hardware/audio.h
+@@ -593,6 +593,19 @@ struct audio_hw_device {
+     void (*close_output_stream)(struct audio_hw_device *dev,
+                                 struct audio_stream_out* stream_out);
+ 
++#ifdef STE_SAMSUNG_HARDWARE
++    /** This method creates and opens the audio hardware output
++     *  for broadcast stream */
++    int (*open_broadcast_stream)(struct audio_hw_device *dev, uint32_t devices,
++                                 int format, uint32_t channels,
++                                 uint32_t sample_rate,
++                                 uint32_t audio_source,
++                                 struct audio_broadcast_stream **out);
++
++    void (*close_broadcast_stream)(struct audio_hw_device *dev,
++                                   struct audio_broadcast_stream *out);
++#endif
++
+     /** This method creates and opens the audio hardware input stream */
+     int (*open_input_stream)(struct audio_hw_device *dev,
+                              audio_io_handle_t handle,
+-- 
+2.11.0
+

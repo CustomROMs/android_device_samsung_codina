@@ -1,0 +1,49 @@
+From d41c4929ee107139b6e97ccb9a1a43fd6c1a73ed Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:20 +0300
+Subject: [PATCH 13/20] system-core_WW002-Check-socket-return-value.patch
+
+Change-Id: I6b2744d15856fd8ee2de04f011bdfac2f009d70f
+---
+ libnetutils/ifc_utils.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/libnetutils/ifc_utils.c b/libnetutils/ifc_utils.c
+index 0bd76286b..3445ccd3a 100644
+--- a/libnetutils/ifc_utils.c
++++ b/libnetutils/ifc_utils.c
+@@ -253,6 +253,7 @@ int ifc_act_on_address(int action, const char *name, const char *address,
+                        int prefixlen) {
+     int ifindex, s, len, ret;
+     struct sockaddr_storage ss;
++    int saved_errno;
+     void *addr;
+     size_t addrlen;
+     struct {
+@@ -317,15 +318,21 @@ int ifc_act_on_address(int action, const char *name, const char *address,
+     memcpy(RTA_DATA(rta), addr, addrlen);
+ 
+     s = socket(PF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
++    if (s < 0) {
++        return -errno;
++    }
++
+     if (send(s, &req, req.n.nlmsg_len, 0) < 0) {
++        saved_errno = errno;
+         close(s);
+-        return -errno;
++        return -saved_errno;
+     }
+ 
+     len = recv(s, buf, sizeof(buf), 0);
++    saved_errno = errno;
+     close(s);
+     if (len < 0) {
+-        return -errno;
++        return -saved_errno;
+     }
+ 
+     // Parse the acknowledgement to find the return code.
+-- 
+2.11.0
+

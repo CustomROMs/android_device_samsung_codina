@@ -1,0 +1,25 @@
+From 3a9686091104326b392d405e3a94fb9d737cadfa Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:38 +0300
+Subject: [PATCH 16/45] frameworks-av_WW006-clear-mMixerBuffer.patch
+
+Change-Id: If781cac850b004ddc77a9345c424d15e83ec21b5
+---
+ services/audioflinger/FastMixer.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/services/audioflinger/FastMixer.cpp b/services/audioflinger/FastMixer.cpp
+index 2bc80662f..9291f5b1c 100644
+--- a/services/audioflinger/FastMixer.cpp
++++ b/services/audioflinger/FastMixer.cpp
+@@ -392,6 +392,7 @@ void FastMixer::onWork()
+                     underruns.mBitFields.mEmpty++;
+                     underruns.mBitFields.mMostRecent = UNDERRUN_EMPTY;
+                     mMixer->disable(name);
++                    memset(mMixerBuffer, 0, mMixerBufferSize);
+                 } else {
+                     // allow mixing partial buffer
+                     underruns.mBitFields.mPartial++;
+-- 
+2.11.0
+

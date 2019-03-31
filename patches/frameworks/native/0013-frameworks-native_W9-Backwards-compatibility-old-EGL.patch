@@ -1,0 +1,44 @@
+From be5048961cbf02182b67aaad7bcf092b0d406f23 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:46 +0300
+Subject: [PATCH 13/30] 
+ frameworks-native_W9-Backwards-compatibility-old-EGL.patch
+
+Change-Id: I317d8538df9870b7aea54b9dd8e21c59793353c5
+---
+ include/ui/FramebufferNativeWindow.h | 4 ----
+ libs/ui/FramebufferNativeWindow.cpp  | 2 --
+ 2 files changed, 6 deletions(-)
+
+diff --git a/include/ui/FramebufferNativeWindow.h b/include/ui/FramebufferNativeWindow.h
+index 4ebb43ca1..22bbf67a6 100644
+--- a/include/ui/FramebufferNativeWindow.h
++++ b/include/ui/FramebufferNativeWindow.h
+@@ -14,10 +14,6 @@
+  * limitations under the License.
+  */
+ 
+-#ifndef INCLUDED_FROM_FRAMEBUFFER_NATIVE_WINDOW_CPP
+-#warning "FramebufferNativeWindow is deprecated"
+-#endif
+-
+ #ifndef ANDROID_FRAMEBUFFER_NATIVE_WINDOW_H
+ #define ANDROID_FRAMEBUFFER_NATIVE_WINDOW_H
+ 
+diff --git a/libs/ui/FramebufferNativeWindow.cpp b/libs/ui/FramebufferNativeWindow.cpp
+index 0ce3e2b70..4dc62eae0 100644
+--- a/libs/ui/FramebufferNativeWindow.cpp
++++ b/libs/ui/FramebufferNativeWindow.cpp
+@@ -29,9 +29,7 @@
+ 
+ #include <ui/ANativeObjectBase.h>
+ #include <ui/Fence.h>
+-#define INCLUDED_FROM_FRAMEBUFFER_NATIVE_WINDOW_CPP
+ #include <ui/FramebufferNativeWindow.h>
+-#undef INCLUDED_FROM_FRAMEBUFFER_NATIVE_WINDOW_CPP
+ #include <ui/Rect.h>
+ 
+ #include <EGL/egl.h>
+-- 
+2.11.0
+

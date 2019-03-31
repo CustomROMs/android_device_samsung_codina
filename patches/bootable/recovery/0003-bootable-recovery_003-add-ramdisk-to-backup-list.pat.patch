@@ -1,0 +1,61 @@
+From 0dc900f7f35f257f5f261c921e0b63b586709ae5 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:48:11 +0300
+Subject: [PATCH 3/6] bootable-recovery_003-add-ramdisk-to-backup-list.patch
+
+Change-Id: Idf7750fa37441396aa66eead27c26d4f3a350e78
+---
+ data.cpp               | 2 +-
+ openrecoveryscript.cpp | 6 +++---
+ partition.cpp          | 5 +++++
+ 3 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/data.cpp b/data.cpp
+index 553c9a4c..664a454c 100644
+--- a/data.cpp
++++ b/data.cpp
+@@ -671,7 +671,7 @@ void DataManager::SetDefaultValues()
+ #ifdef TW_HAS_NO_BOOT_PARTITION
+ 	mPersist.SetValue("tw_backup_list", "/system;/data;");
+ #else
+-	mPersist.SetValue("tw_backup_list", "/system;/data;/boot;");
++	mPersist.SetValue("tw_backup_list", "/system;/data;/boot;/ramdisk;");
+ #endif
+ 	mConst.SetValue(TW_MIN_SYSTEM_VAR, TW_MIN_SYSTEM_SIZE);
+ 	mData.SetValue(TW_BACKUP_NAME, "(Auto Generate)");
+diff --git a/openrecoveryscript.cpp b/openrecoveryscript.cpp
+index f9c610a7..b94e56a2 100644
+--- a/openrecoveryscript.cpp
++++ b/openrecoveryscript.cpp
+@@ -264,9 +264,9 @@ int OpenRecoveryScript::run_script_file(void) {
+ 						} else if ((value2[i] == 'C' || value2[i] == 'c') && Partition_List.find("/cache;") != string::npos) {
+ 							Restore_List += "/cache;";
+ 							gui_msg("cache=Cache");
+-						} else if ((value2[i] == 'R' || value2[i] == 'r') && Partition_List.find("/recovery;") != string::npos) {
+-							Restore_List += "/recovery;";
+-							gui_msg("recovery=Recovery");
++						} else if ((value2[i] == 'R' || value2[i] == 'r') && Partition_List.find("/ramdisk;") != string::npos) {
++							Restore_List += "/ramdisk;";
++							gui_msg("ramdisk=Ramdisk");
+ 						} else if ((value2[i] == 'B' || value2[i] == 'b') && Partition_List.find("/boot;") != string::npos) {
+ 							Restore_List += "/boot;";
+ 							gui_msg("boot=Boot");
+diff --git a/partition.cpp b/partition.cpp
+index f22a283d..92b1864a 100644
+--- a/partition.cpp
++++ b/partition.cpp
+@@ -376,6 +376,11 @@ bool TWPartition::Process_Fstab_Line(const char *fstab_line, bool Display_Error)
+ 			Backup_Display_Name = Display_Name;
+ 			DataManager::SetValue("tw_boot_is_mountable", 1);
+ 			Can_Be_Backed_Up = true;
++		} else if (Mount_Point == "/ramdisk") {
++			Display_Name = "ramdisk";
++			Backup_Display_Name = Display_Name;
++			Wipe_Available_in_GUI = true;
++			Can_Be_Backed_Up = true;
+ 		} else if (Mount_Point == "/vendor") {
+ 			Display_Name = "Vendor";
+ 			Backup_Display_Name = Display_Name;
+-- 
+2.11.0
+

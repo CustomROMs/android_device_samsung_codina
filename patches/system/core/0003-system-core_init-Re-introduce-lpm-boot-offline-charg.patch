@@ -1,0 +1,78 @@
+From 966a0e1ffbf4fe25d02abc08f52f6f579d763a4b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:19 +0300
+Subject: [PATCH 03/20] 
+ system-core_init-Re-introduce-lpm-boot-offline-charging.patch
+
+Change-Id: If9d7084b24b21d46772a33059f5cc84b6feaa8fc
+---
+ init/Android.mk |  5 ++++-
+ init/init.cpp   | 15 ++++++++++++++-
+ 2 files changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/init/Android.mk b/init/Android.mk
+index 85dfbfc9f..2a9604dff 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -52,7 +52,10 @@ LOCAL_SRC_FILES:= \
+ 
+ SYSTEM_CORE_INIT_DEFINES := BOARD_CHARGING_MODE_BOOTING_LPM \
+     BOARD_CHARGING_CMDLINE_NAME \
+-    BOARD_CHARGING_CMDLINE_VALUE
++    BOARD_CHARGING_CMDLINE_VALUE \
++    BOARD_LPM_BOOT_ARGUMENT_NAME \
++    BOARD_LPM_BOOT_ARGUMENT_VALUE
++
+ 
+ $(foreach system_core_init_define,$(SYSTEM_CORE_INIT_DEFINES), \
+   $(if $($(system_core_init_define)), \
+diff --git a/init/init.cpp b/init/init.cpp
+index 8ea42ca74..4333aebf9 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -75,6 +75,11 @@ static int property_triggers_enabled = 0;
+ #define BOARD_CHARGING_CMDLINE_VALUE "true"
+ #endif
+ 
++#ifndef BOARD_LPM_BOOT_ARGUMENT_NAME
++#define BOARD_LPM_BOOT_ARGUMENT_NAME "lpm_boot"
++#define BOARD_LPM_BOOT_ARGUMENT_VALUE "1"
++#endif
++
+ static char qemu[32];
+ static char battchg_pause[32];
+ 
+@@ -87,6 +92,8 @@ static time_t process_needs_restart;
+ 
+ static const char *ENV[32];
+ 
++static unsigned lpm_bootmode = 0;
++
+ bool waiting_for_exec = false;
+ 
+ static int epoll_fd = -1;
+@@ -792,6 +799,12 @@ static void import_kernel_nv(char *name, bool for_emulator)
+ 
+     if (!strcmp(name,"qemu")) {
+         strlcpy(qemu, value, sizeof(qemu));
++#ifdef BOARD_LPM_BOOT_ARGUMENT_NAME
++    } else if (!strcmp(name,BOARD_LPM_BOOT_ARGUMENT_NAME)) {
++        if (!strcmp(value,BOARD_LPM_BOOT_ARGUMENT_VALUE)) {
++            lpm_bootmode = 1;
++        }
++#endif
+     } else if (!strcmp(name,BOARD_CHARGING_CMDLINE_NAME)) {
+         strlcpy(battchg_pause, value, sizeof(battchg_pause));
+     } else if (!strncmp(name, "androidboot.", 12) && name_len > 12) {
+@@ -1004,7 +1017,7 @@ static void selinux_initialize(bool in_kernel_domain) {
+ 
+ static int charging_mode_booting(void) {
+ #ifndef BOARD_CHARGING_MODE_BOOTING_LPM
+-    return 0;
++    return lpm_bootmode;
+ #else
+     int f;
+     char cmb;
+-- 
+2.11.0
+

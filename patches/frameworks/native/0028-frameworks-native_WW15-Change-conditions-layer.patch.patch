@@ -1,0 +1,32 @@
+From e45e3338bda9284ffeef68cb091b13e532becbbd Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:47 +0300
+Subject: [PATCH 28/30] frameworks-native_WW15-Change-conditions-layer.patch
+
+Change-Id: I252b3b2a3b69db464dd1dc880f117b50bd70fcc1
+---
+ services/surfaceflinger/Layer.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 services/surfaceflinger/Layer.cpp
+
+diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
+old mode 100644
+new mode 100755
+index 8ab0db4be..44a9e85e5
+--- a/services/surfaceflinger/Layer.cpp
++++ b/services/surfaceflinger/Layer.cpp
+@@ -901,9 +901,9 @@ void Layer::computeGeometry(const sp<const DisplayDevice>& hw, Mesh& mesh,
+ 
+ bool Layer::isOpaque(const Layer::State& s) const
+ {
+-    // if we don't have a buffer yet, we're translucent regardless of the
++    // if we don't have a buffer or sidebandStream yet, we're translucent regardless of the
+     // layer's opaque flag.
+-    if (mActiveBuffer == 0) {
++    if ((mSidebandStream == nullptr) && (mActiveBuffer == nullptr)) {
+         return false;
+     }
+ 
+-- 
+2.11.0
+

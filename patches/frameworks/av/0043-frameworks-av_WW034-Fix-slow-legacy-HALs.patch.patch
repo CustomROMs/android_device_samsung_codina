@@ -1,0 +1,29 @@
+From 6c901b3f1129d2b85740a09acfe48c60f3270a10 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:40 +0300
+Subject: [PATCH 43/45] frameworks-av_WW034-Fix-slow-legacy-HALs.patch
+
+Change-Id: I192490d83c78013fa27d159a13090494b0d6bd07
+---
+ services/camera/libcameraservice/device1/CameraHardwareInterface.h | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/services/camera/libcameraservice/device1/CameraHardwareInterface.h b/services/camera/libcameraservice/device1/CameraHardwareInterface.h
+index 35947a92f..73caa460c 100644
+--- a/services/camera/libcameraservice/device1/CameraHardwareInterface.h
++++ b/services/camera/libcameraservice/device1/CameraHardwareInterface.h
+@@ -108,6 +108,11 @@ public:
+                                      (hw_device_t **)&mDevice);
+         } else {
+             rc = module->open(mName.string(), (hw_device_t **)&mDevice);
++            if (rc != OK) {
++                // sleep for a second and retry
++                sleep(1);
++                rc = module->open(mName.string(), (hw_device_t **)&mDevice);
++            }
+         }
+         if (rc != OK) {
+             ALOGE("Could not open camera %s: %d", mName.string(), rc);
+-- 
+2.11.0
+

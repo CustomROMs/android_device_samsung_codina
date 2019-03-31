@@ -1,0 +1,26 @@
+From 76b899ebb14a4f63018653e9abddf91c24dbbfbb Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:39 +0300
+Subject: [PATCH 28/45] frameworks-av_WW019-argument-warning-messages.patch
+
+Change-Id: I4db55b144755dcb195590e023eb837a68b9c94c1
+---
+ media/common_time/cc_helper.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/common_time/cc_helper.cpp b/media/common_time/cc_helper.cpp
+index 8d8556cb7..6a7de74ac 100644
+--- a/media/common_time/cc_helper.cpp
++++ b/media/common_time/cc_helper.cpp
+@@ -80,7 +80,7 @@ CCHelper::~CCHelper() {
+     }
+ }
+ 
+-void CCHelper::CommonClockListener::onTimelineChanged(uint64_t timelineID) {
++void CCHelper::CommonClockListener::onTimelineChanged(uint64_t /*timelineID*/) {
+     // do nothing; listener is only really used as a token so the server can
+     // find out when clients die.
+ }
+-- 
+2.11.0
+

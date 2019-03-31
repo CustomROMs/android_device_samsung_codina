@@ -1,0 +1,26 @@
+From 73a46d13cb59f3f093473be2ae54b4d43b118357 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:38 +0300
+Subject: [PATCH 23/45] frameworks-av_WW014-Don't-print-both-current.patch
+
+Change-Id: Ib41c9b71a1ac24dc2ef66915ac70613fe02f37d0
+---
+ media/libstagefright/httplive/LiveSession.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/httplive/LiveSession.cpp b/media/libstagefright/httplive/LiveSession.cpp
+index 1b0b1c5c3..aa317fa28 100644
+--- a/media/libstagefright/httplive/LiveSession.cpp
++++ b/media/libstagefright/httplive/LiveSession.cpp
+@@ -1176,7 +1176,7 @@ static double uniformRand() {
+ #endif
+ 
+ bool LiveSession::UriIsSameAsIndex(const AString &uri, int32_t i, bool newUri) {
+-    ALOGI("[timed_id3] i %d UriIsSameAsIndex newUri %s, %s", i,
++    ALOGV("[timed_id3] i %d UriIsSameAsIndex newUri %s, %s", i,
+             newUri ? "true" : "false",
+             newUri ? mStreams[i].mNewUri.c_str() : mStreams[i].mUri.c_str());
+     return i >= 0
+-- 
+2.11.0
+

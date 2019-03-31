@@ -1,0 +1,30 @@
+From 5d7fdb83c2769d1b3a47eb53b79e7ff6d65d0d7a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:39 +0300
+Subject: [PATCH 33/45] frameworks-av_WW024-Avoid-scanning-sources.patch
+
+Change-Id: I62d4dae8946bc3f114173cb07e839a8e0bb64ee7
+---
+ media/libmediaplayerservice/nuplayer/NuPlayer.cpp | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index ef2e6ec29..d9887f1f8 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -1773,8 +1773,10 @@ void NuPlayer::flushDecoder(bool audio, bool needShutdown) {
+     // Make sure we don't continue to scan sources until we finish flushing.
+     ++mScanSourcesGeneration;
+     if (mScanSourcesPending) {
+-        mDeferredActions.push_back(
+-                new SimpleAction(&NuPlayer::performScanSources));
++        if (!needShutdown) {
++            mDeferredActions.push_back(
++                    new SimpleAction(&NuPlayer::performScanSources));
++        }
+         mScanSourcesPending = false;
+     }
+ 
+-- 
+2.11.0
+

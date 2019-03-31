@@ -1,0 +1,32 @@
+From 2fd85dc2bbc55edc92a383fb25eef9ce371956f9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:05 +0300
+Subject: [PATCH 8/9] system-vold_W07-Avoid-closing-invalid-fds.patch
+
+Change-Id: I5a6de5ebdcaabf8a0ca4c1e959440e2023cb17d6
+---
+ VolumeManager.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index ccfcff5..c702fb2 100755
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -622,8 +622,12 @@ int VolumeManager::remountUid(uid_t uid, const std::string& mode) {
+         }
+ 
+ next:
+-        close(nsFd);
+-        close(pidFd);
++        if (nsFd >= 0) {
++            close(nsFd);
++        }
++        if (pidFd >= 0) {
++            close(pidFd);
++        }
+     }
+     closedir(dir);
+     return 0;
+-- 
+2.11.0
+

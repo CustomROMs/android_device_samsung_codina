@@ -1,0 +1,34 @@
+From bcded847144ef82a5bb261741ee4c04039bc9208 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:54:38 +0300
+Subject: [PATCH 4/4] hardware-ril_003-Allow-run-switching-radio-user.patch
+
+Change-Id: I1aba9cf9fb0eeff50edab0735a23aa64340c3849
+---
+ rild/rild.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/rild/rild.c b/rild/rild.c
+index 2471003..ab72bfd 100644
+--- a/rild/rild.c
++++ b/rild/rild.c
+@@ -300,7 +300,6 @@ int main(int argc, char **argv)
+     }
+ OpenLib:
+ #endif
+-    switchUser();
+ 
+     dlHandle = dlopen(rilLibPath, RTLD_NOW);
+ 
+@@ -358,6 +357,8 @@ OpenLib:
+ 
+     RLOGD("RIL_Init RIL_register completed");
+ 
++    switchUser();
++
+ done:
+ 
+     RLOGD("RIL_Init starting sleep loop");
+-- 
+2.11.0
+

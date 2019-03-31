@@ -1,0 +1,47 @@
+From 6945f92c90e9d3cfeac4d0e8ccceb25275d19c07 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:54:28 +0300
+Subject: [PATCH 7/7] hardware-libhardware_W02-double-tap-wake-gesture.patch
+
+Change-Id: I0282758fafcc6e7c18a7b4d56db2179da2be7e18
+---
+ modules/power/Android.mk | 4 ++--
+ modules/power/power.c    | 2 ++
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/modules/power/Android.mk b/modules/power/Android.mk
+index c868ded..f795a1e 100644
+--- a/modules/power/Android.mk
++++ b/modules/power/Android.mk
+@@ -18,8 +18,8 @@ include $(CLEAR_VARS)
+ 
+ LOCAL_MODULE := power.default
+ LOCAL_MODULE_RELATIVE_PATH := hw
+-LOCAL_SRC_FILES := power.c
+-LOCAL_SHARED_LIBRARIES := liblog
++LOCAL_SRC_FILES := power.c feature.c
++LOCAL_SHARED_LIBRARIES := liblog libcutils
+ LOCAL_MODULE_TAGS := optional
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/modules/power/power.c b/modules/power/power.c
+index 7cacc09..f38de0f 100644
+--- a/modules/power/power.c
++++ b/modules/power/power.c
+@@ -24,6 +24,7 @@
+ 
+ #include <hardware/hardware.h>
+ #include <hardware/power.h>
++#include "feature.h"
+ 
+ static void power_init(struct power_module *module)
+ {
+@@ -59,4 +60,5 @@ struct power_module HAL_MODULE_INFO_SYM = {
+     .init = power_init,
+     .setInteractive = power_set_interactive,
+     .powerHint = power_hint,
++    .setFeature = set_feature,
+ };
+-- 
+2.11.0
+

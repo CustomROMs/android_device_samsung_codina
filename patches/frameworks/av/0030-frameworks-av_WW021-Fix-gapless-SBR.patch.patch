@@ -1,0 +1,64 @@
+From 40971607137932429fd1f97afb3744b8912c9373 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:39 +0300
+Subject: [PATCH 30/45] frameworks-av_WW021-Fix-gapless-SBR.patch
+
+Change-Id: Ice6f453c54f71c0658f0d605b00f17c420f53f32
+---
+ include/media/stagefright/ACodec.h |  1 +
+ media/libstagefright/ACodec.cpp    | 12 ++++++++++--
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/include/media/stagefright/ACodec.h b/include/media/stagefright/ACodec.h
+index 0ac13b97c..788f3aae4 100644
+--- a/include/media/stagefright/ACodec.h
++++ b/include/media/stagefright/ACodec.h
+@@ -220,6 +220,7 @@ protected:
+     sp<IdleToLoadedState> mIdleToLoadedState;
+     sp<FlushingState> mFlushingState;
+     sp<SkipCutBuffer> mSkipCutBuffer;
++    int32_t mSampleRate;
+ 
+     AString mComponentName;
+     uint32_t mFlags;
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 7322887ff..62cf610fc 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -500,7 +500,8 @@ void ACodec::BufferInfo::checkReadFence(const char *dbg) {
+ ////////////////////////////////////////////////////////////////////////////////
+ 
+ ACodec::ACodec()
+-    : mQuirks(0),
++    : mSampleRate(0),
++      mQuirks(0),
+       mNode(0),
+       mNativeWindowUsageBits(0),
+       mSentFormat(false),
+@@ -2567,6 +2568,7 @@ status_t ACodec::setupAACCodec(
+     } else {
+         ALOGW("did not set AudioAndroidAacPresentation due to error %d when setting AudioAac", res);
+     }
++    mSampleRate = sampleRate;
+     return res;
+ }
+ 
+@@ -4630,8 +4632,14 @@ void ACodec::sendFormatChange(const sp<AMessage> &reply) {
+         reply->setRect("crop", left, top, right + 1, bottom + 1);
+     } else if (mime == MEDIA_MIMETYPE_AUDIO_RAW &&
+                (mEncoderDelay || mEncoderPadding)) {
+-        int32_t channelCount;
++        int32_t channelCount, sampleRate;
+         CHECK(notify->findInt32("channel-count", &channelCount));
++        CHECK(mOutputFormat->findInt32("sample-rate", &sampleRate));
++        if (mSampleRate != 0 && sampleRate != 0) {
++            mEncoderDelay = mEncoderDelay * sampleRate / mSampleRate;
++            mEncoderPadding = mEncoderPadding * sampleRate / mSampleRate;
++            mSampleRate = sampleRate;
++        }
+         if (mSkipCutBuffer != NULL) {
+             size_t prevbufsize = mSkipCutBuffer->size();
+             if (prevbufsize != 0) {
+-- 
+2.11.0
+

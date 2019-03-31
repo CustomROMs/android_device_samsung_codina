@@ -1,0 +1,27 @@
+From 2a3a81555b0703182899b156385f4aac784ddd3b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:05 +0300
+Subject: [PATCH 1/9] system-vold_W00-Fix-encrtypt-unused-blocks.patch
+
+Change-Id: Id6ba56611c93bdaf7d097b61526178ec07405207
+---
+ cryptfs.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/cryptfs.c b/cryptfs.c
+index c898666..7a5c80e 100644
+--- a/cryptfs.c
++++ b/cryptfs.c
+@@ -2649,7 +2649,8 @@ static int encrypt_groups(struct encryptGroupsData* data)
+         data->count = 0;
+ 
+         for (block = 0; block < block_count; block++) {
+-            int used = bitmap_get_bit(block_bitmap, block);
++            int used = (aux_info.bg_desc[i].bg_flags & EXT4_BG_BLOCK_UNINIT) ?
++                    0 : bitmap_get_bit(block_bitmap, block);
+             update_progress(data, used);
+             if (used) {
+                 if (data->count == 0) {
+-- 
+2.11.0
+

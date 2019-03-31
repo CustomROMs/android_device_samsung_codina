@@ -1,0 +1,43 @@
+From 3eadcc5ab9ff0b942c38542898e32733dae2f234 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:47 +0300
+Subject: [PATCH 30/30] 
+ frameworks-native_WW17-Ensure-synchronisation-copyBlt.patch
+
+Change-Id: Ia5d2d0f604638b83efa9774de8bb4fc91fb42d01
+---
+ libs/gui/Surface.cpp | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
+index 2e78a6b6f..f0e59f4c8 100644
+--- a/libs/gui/Surface.cpp
++++ b/libs/gui/Surface.cpp
+@@ -20,6 +20,8 @@
+ 
+ #include <android/native_window.h>
+ 
++#include <sync/sync.h>
++
+ #include <binder/Parcel.h>
+ 
+ #include <utils/Log.h>
+@@ -1048,8 +1050,14 @@ status_t Surface::lock(
+                 }
+             }
+             const Region copyback(oldDirtyRegion.subtract(newDirtyRegion));
+-            if (!copyback.isEmpty())
++            if (!copyback.isEmpty()) {
++                if (fenceFd >= 0) {
++                    sync_wait(fenceFd, -1);
++                    close(fenceFd);
++                    fenceFd = -1;
++                }
+                 copyBlt(backBuffer, frontBuffer, copyback);
++            }
+         } else {
+             // if we can't copy-back anything, modify the user's dirty
+             // region to make sure they redraw the whole buffer
+-- 
+2.11.0
+

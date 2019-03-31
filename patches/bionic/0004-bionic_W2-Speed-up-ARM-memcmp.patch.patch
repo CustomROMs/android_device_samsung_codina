@@ -1,0 +1,26 @@
+From a337173656cc821c2d0f972a5f5a27c9f36ae876 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:44:02 +0300
+Subject: [PATCH 4/5] bionic_W2-Speed-up-ARM-memcmp.patch
+
+Change-Id: I7bb692804277747a027035c7d85d7d27e5528bf0
+---
+ libc/arch-arm/generic/bionic/memcmp.S | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libc/arch-arm/generic/bionic/memcmp.S b/libc/arch-arm/generic/bionic/memcmp.S
+index 6643d5515..886d89923 100644
+--- a/libc/arch-arm/generic/bionic/memcmp.S
++++ b/libc/arch-arm/generic/bionic/memcmp.S
+@@ -63,7 +63,7 @@ ENTRY(memcmp)
+  * Neon optimization
+  * Comparing 32 bytes at a time
+  */
+-#if defined(__ARM_NEON__) && defined(NEON_UNALIGNED_ACCESS)
++#if defined(__ARM_NEON__) && defined(__ARM_FEATURE_UNALIGNED)
+         subs        r2, r2, #32
+         blo         3f
+ 
+-- 
+2.11.0
+

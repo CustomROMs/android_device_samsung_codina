@@ -1,0 +1,67 @@
+From 193e7351a1c6a8c0bf035a1543e4ef32a419990d Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:47 +0300
+Subject: [PATCH 29/30] 
+ frameworks-native_WW16-Fix-Buffer-Overflow-checking.patch
+
+Change-Id: Ifcd1e612d8cf537705da5ca50dfad313a5f0dfbe
+---
+ cmds/atrace/atrace.cpp | 32 +++++++++++++++++++++++---------
+ 1 file changed, 23 insertions(+), 9 deletions(-)
+
+diff --git a/cmds/atrace/atrace.cpp b/cmds/atrace/atrace.cpp
+index 7201e77ca..b1f893ff2 100644
+--- a/cmds/atrace/atrace.cpp
++++ b/cmds/atrace/atrace.cpp
+@@ -513,16 +513,30 @@ static bool verifyKernelTraceFuncs(const char* funcs)
+         return false;
+     }
+ 
+-    char buf[4097];
+-    ssize_t n = read(fd, buf, 4096);
+-    close(fd);
+-    if (n == -1) {
+-        fprintf(stderr, "error reading %s: %s (%d)\n", k_ftraceFilterPath,
+-            strerror(errno), errno);
+-        return false;
++    // read back the filter
++    ssize_t n = 0;
++    ssize_t len = 0;
++    char *r;
++    char *buf = NULL;
++    do {
++        len += n;
++        r = (char *) realloc(buf, len + 4096);
++        if (r == NULL)
++            break;
++        buf = r;
++    } while ( (n = read(fd, (void *)(buf + len), 4095)) > 0 );
++
++    if ( ( n == -1 ) || ( r == NULL ) ) {
++            fprintf(stderr, "error reading %s: %s (%d)\n", k_ftraceFilterPath,
++                strerror(errno), errno);
++            close(fd);
++            free(buf);
++            return false;
+     }
+ 
+-    buf[n] = '\0';
++    buf[len] = '\0';
++    close(fd);
++
+     String8 funcList = String8::format("\n%s", buf);
+ 
+     // Make sure that every function listed in funcs is in the list we just
+@@ -540,8 +554,8 @@ static bool verifyKernelTraceFuncs(const char* funcs)
+         }
+         func = strtok(NULL, ",");
+     }
++    free(buf);
+     free(myFuncs);
+-
+     return ok;
+ }
+ 
+-- 
+2.11.0
+

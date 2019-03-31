@@ -1,0 +1,30 @@
+From 93a7b3243c8995126ea4bdd44ed6b89faebcd94c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:43:46 +0300
+Subject: [PATCH 1/5] frameworks-base_Drop-call-fix.patch
+
+Change-Id: Ic6e65d2716f57b36ef8431dabbc587c831df74a5
+---
+ libs/hwui/LayerRenderer.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/libs/hwui/LayerRenderer.cpp b/libs/hwui/LayerRenderer.cpp
+index 00add290337..41ceb3285b9 100644
+--- a/libs/hwui/LayerRenderer.cpp
++++ b/libs/hwui/LayerRenderer.cpp
+@@ -194,6 +194,12 @@ Layer* LayerRenderer::createRenderLayer(RenderState& renderState, uint32_t width
+         return nullptr;
+     }
+ 
++    if (width == 0 && height == 0) {
++        ALOGW("Trying to obtain a zero-size layer, setting fall-back size 512x768");
++        width = 512;
++        height = 768;
++    }
++
+     caches.textureState().activateTexture(0);
+     Layer* layer = caches.layerCache.get(renderState, width, height);
+     if (!layer) {
+-- 
+2.11.0
+

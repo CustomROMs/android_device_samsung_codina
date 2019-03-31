@@ -1,0 +1,24 @@
+From a2992909c89b6d967e9fcdc2008e42c83087da0a Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:45 +0300
+Subject: [PATCH 04/30] 
+ frameworks-native_W1-fix-unresolved-symbol-WriteString16.patch
+
+Change-Id: Ib2847ba51b79d63ee488f22bde058dda3b1f4fcc
+---
+ libs/binder/Parcel.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libs/binder/Parcel.cpp b/libs/binder/Parcel.cpp
+index 280cd4577..d794fde16 100644
+--- a/libs/binder/Parcel.cpp
++++ b/libs/binder/Parcel.cpp
+@@ -2142,3 +2142,5 @@ void Parcel::Blob::clear() {
+ }
+ 
+ }; // namespace android
++
++__strong_alias(_ZN7android6Parcel13writeString16EPKtj,_ZN7android6Parcel13writeString16EPKDsj);
+-- 
+2.11.0
+

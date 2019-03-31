@@ -1,0 +1,27 @@
+From 4e11c9d74b0b0257848a990011f5ab2ea563ddaf Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:47 +0300
+Subject: [PATCH 26/30] frameworks-native_WW13-Fix-play-video-with-HWC.patch
+
+Change-Id: I6c485d1d30688ad405d82444fbd3ecd1f055d3e3
+---
+ services/surfaceflinger/Layer.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
+index 12f591ea7..8ab0db4be 100644
+--- a/services/surfaceflinger/Layer.cpp
++++ b/services/surfaceflinger/Layer.cpp
+@@ -561,7 +561,8 @@ void Layer::setPerFrameData(const sp<const DisplayDevice>& hw,
+     // Apply this display's projection's viewport to the visible region
+     // before giving it to the HWC HAL.
+     const Transform& tr = hw->getTransform();
+-    Region visible = tr.transform(visibleRegion.intersect(hw->getViewport()));
++    Region visible = tr.transform(visibleNonTransparentRegion.intersect(
++                                   hw->getViewport()));
+     layer.setVisibleRegionScreen(visible);
+ #ifndef TARGET_NEEDS_HWC_V0
+     layer.setSurfaceDamage(surfaceDamageRegion);
+-- 
+2.11.0
+

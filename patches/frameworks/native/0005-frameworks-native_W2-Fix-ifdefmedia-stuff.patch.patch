@@ -1,0 +1,30 @@
+From 54120ab080aef0e7ca7b5990def1ef67c5d082cc Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:45 +0300
+Subject: [PATCH 05/30] frameworks-native_W2-Fix-ifdefmedia-stuff.patch
+
+Change-Id: I573e3df758e1757e915b102130b1eaf8bd37f095
+---
+ libs/gui/BufferQueueProducer.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/libs/gui/BufferQueueProducer.cpp b/libs/gui/BufferQueueProducer.cpp
+index 4226906f4..93daac2d0 100644
+--- a/libs/gui/BufferQueueProducer.cpp
++++ b/libs/gui/BufferQueueProducer.cpp
+@@ -193,7 +193,12 @@ status_t BufferQueueProducer::waitForFreeSlotThenRelock(const char* caller,
+             const int newUndequeuedCount =
+                 maxBufferCount - (dequeuedCount + 1);
+             const int minUndequeuedCount =
++#ifdef STE_HARDWARE
++                // HACK: for some reason, we need to reduce min undequeue for screen recording
++                mCore->getMinUndequeuedBufferCountLocked(false);
++#else
+                 mCore->getMinUndequeuedBufferCountLocked(async);
++#endif
+             if (newUndequeuedCount < minUndequeuedCount) {
+                 BQ_LOGE("%s: min undequeued buffer count (%d) exceeded "
+                         "(dequeued=%d undequeued=%d)",
+-- 
+2.11.0
+

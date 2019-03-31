@@ -1,0 +1,57 @@
+From 19dc5866d9a66f65ef242daad49af251c946d6c4 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:48:11 +0300
+Subject: [PATCH 1/6] bootable-recovery_001-Fix-minui-graphics-cpp.patch
+
+Change-Id: Ibfb218694ab54fd8c1ab99861e859cdfe5a2f7b1
+---
+ minuitwrp/graphics.cpp | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/minuitwrp/graphics.cpp b/minuitwrp/graphics.cpp
+index c8ea5cb7..b8ad8519 100644
+--- a/minuitwrp/graphics.cpp
++++ b/minuitwrp/graphics.cpp
+@@ -292,7 +292,11 @@ static void get_memory_surface(GGLSurface* ms) {
+     ms->format = gr_draw->format;
+ }
+ 
++#ifdef STE_HARDWARE
++int gr_init_real(void)
++#else
+ int gr_init(void)
++#endif
+ {
+     gr_draw = NULL;
+ 
+@@ -369,6 +373,27 @@ int gr_init(void)
+     return 0;
+ }
+ 
++#ifdef STE_HARDWARE
++/*
++ * FIXME: This is a total hack.
++ *
++ * Round 1
++ * framebuffer: fd 4 (480 x 800)
++ *
++ * Round 2
++ * framebuffer: fd 6 (480 x 800)
++ *
++*/
++int gr_init(void) {
++    int ret;
++    // Round 1
++    gr_init_real();
++    // Return the result of round 2
++    ret = gr_init_real();
++    return ret;
++}
++#endif
++
+ void gr_exit(void)
+ {
+     gr_backend->exit(gr_backend);
+-- 
+2.11.0
+

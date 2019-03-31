@@ -1,0 +1,28 @@
+From 30fd9ab741a8938d1098465eb719d0354bbacf4c Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:55:20 +0300
+Subject: [PATCH 18/20] system-core_WW007-fix-null-pointer-memory-leak.patch
+
+Change-Id: Iba1b1fe2006fab241d0d7659787e0a57ee6d7b70
+---
+ libsysutils/src/SocketClient.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libsysutils/src/SocketClient.cpp b/libsysutils/src/SocketClient.cpp
+index bb9b6a164..b71bed381 100644
+--- a/libsysutils/src/SocketClient.cpp
++++ b/libsysutils/src/SocketClient.cpp
+@@ -112,6 +112,10 @@ int SocketClient::sendCode(int code) {
+ }
+ 
+ char *SocketClient::quoteArg(const char *arg) {
++    // caller should check the return value
++    if (arg == NULL) {
++        return NULL;
++    }
+     int len = strlen(arg);
+     char *result = (char *)malloc(len * 2 + 3);
+     char *current = result;
+-- 
+2.11.0
+

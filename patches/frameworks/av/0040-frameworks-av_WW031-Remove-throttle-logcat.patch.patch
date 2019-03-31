@@ -1,0 +1,28 @@
+From ef6fa212c0e807645b9b1207d72961a77f220bfe Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:40 +0300
+Subject: [PATCH 40/45] frameworks-av_WW031-Remove-throttle-logcat.patch
+
+Change-Id: I451d207bf174aad480799dd7a896344ebad5157b
+---
+ services/audioflinger/Threads.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/audioflinger/Threads.cpp b/services/audioflinger/Threads.cpp
+index 21b2a7e3b..164bb31e8 100644
+--- a/services/audioflinger/Threads.cpp
++++ b/services/audioflinger/Threads.cpp
+@@ -3070,7 +3070,9 @@ bool AudioFlinger::PlaybackThread::threadLoop()
+                             uint32_t diff = mThreadThrottleTimeMs - mThreadThrottleEndMs;
+                             if (diff > 0) {
+                                 // notify of throttle end on debug log
+-                                ALOGD("mixer(%p) throttle end: throttle time(%u)", this, diff);
++                                // but prevent spamming for bluetooth
++                                ALOGD_IF(!audio_is_a2dp_out_device(outDevice()),
++                                        "mixer(%p) throttle end: throttle time(%u)", this, diff);
+                                 mThreadThrottleEndMs = mThreadThrottleTimeMs;
+                             }
+                         }
+-- 
+2.11.0
+

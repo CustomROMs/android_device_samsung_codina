@@ -1,0 +1,41 @@
+From 5a0a0cf1f697951db534002bc0fb9c6827cfa67e Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:43:47 +0300
+Subject: [PATCH 5/5] frameworks-base_WW107-Fix-OK-Google.patch
+
+Change-Id: Ifb66c72233a85623e094ce0f1d9a7169bb0d00e6
+---
+ core/jni/Android.mk                    | 2 +-
+ core/jni/android_media_AudioRecord.cpp | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/Android.mk b/core/jni/Android.mk
+index 42b10c4fe5c..8088e6f977d 100644
+--- a/core/jni/Android.mk
++++ b/core/jni/Android.mk
+@@ -271,7 +271,7 @@ LOCAL_MODULE:= libandroid_runtime
+ 
+ # -Wno-unknown-pragmas: necessary for Clang as the GL bindings need to turn
+ #                       off a GCC warning that Clang doesn't know.
+-LOCAL_CFLAGS += -Wall -Werror -Wno-error=deprecated-declarations -Wunused -Wunreachable-code \
++LOCAL_CFLAGS += -Wall -Wno-error=deprecated-declarations -Wunused -Wunreachable-code \
+         -Wno-unknown-pragmas
+ 
+ # -Wno-c++11-extensions: Clang warns about Skia using the C++11 override keyword, but this project
+diff --git a/core/jni/android_media_AudioRecord.cpp b/core/jni/android_media_AudioRecord.cpp
+index 6c2bbd45ea5..df48c442999 100644
+--- a/core/jni/android_media_AudioRecord.cpp
++++ b/core/jni/android_media_AudioRecord.cpp
+@@ -257,6 +257,9 @@ android_media_AudioRecord_setup(JNIEnv *env, jobject thiz, jobject weak_this,
+     paa->flags = (audio_flags_mask_t)env->GetIntField(jaa, javaAudioAttrFields.fieldFlags);
+     ALOGV("AudioRecord_setup for source=%d tags=%s flags=%08x", paa->source, paa->tags, paa->flags);
+ 
++    if (paa->source == 1999)
++        paa->source == (audio_source_t)1;
++
+     audio_input_flags_t flags = AUDIO_INPUT_FLAG_NONE;
+     if (paa->flags & AUDIO_FLAG_HW_HOTWORD) {
+         flags = AUDIO_INPUT_FLAG_HW_HOTWORD;
+-- 
+2.11.0
+

@@ -1,0 +1,26 @@
+From f7ab110055700ceceb2f585710742490ad607a95 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Fri, 29 Mar 2019 22:51:38 +0300
+Subject: [PATCH 15/45] frameworks-av_WW005-Fix-warning-list-conflicting.patch
+
+Change-Id: I84fe7e0defa0695de0b53b1fa14ec25e329fca4d
+---
+ services/camera/libcameraservice/CameraService.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/camera/libcameraservice/CameraService.cpp b/services/camera/libcameraservice/CameraService.cpp
+index 3c9fd1690..2e563ae80 100644
+--- a/services/camera/libcameraservice/CameraService.cpp
++++ b/services/camera/libcameraservice/CameraService.cpp
+@@ -2362,7 +2362,7 @@ status_t CameraService::dump(int fd, const Vector<String16>& args) {
+                 result.appendFormat("  Resource Cost: %d\n", state.second->getCost());
+                 result.appendFormat("  Conflicting Devices:");
+                 for (auto& id : conflicting) {
+-                    result.appendFormat(" %s", cameraId.string());
++                    result.appendFormat(" %s", id.string());
+                 }
+                 if (conflicting.size() == 0) {
+                     result.appendFormat(" NONE");
+-- 
+2.11.0
+
