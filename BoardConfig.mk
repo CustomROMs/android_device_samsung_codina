@@ -99,10 +99,6 @@ KERNEL_TOOLCHAIN := /media/system2/root/LOS13/prebuilts/gcc/linux-x86/arm/arm-ea
 KERNEL_TOOLCHAIN_PREFIX := arm-eabi-
 endif
 
-# Bionic
-TARGET_LD_SHIM_LIBS := \
-    /system/lib/libsec-ril.so|libsymbols.so
-
 # Graphics
 USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
