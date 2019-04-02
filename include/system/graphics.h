@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#pragma GCC diagnostic ignored "-Wc99-extensions"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -505,9 +507,9 @@ struct android_ycbcr {
  * measurement is correct. It is between 0.f and 1.f, inclusive, with 1.f ==
  * 100% confidence.
  *
- * @num_points is the number of points in the list
+ * num_points is the number of points in the list
  *
- * @xyz_points is the flexible array of floating-point values.
+ * xyz_points is the flexible array of floating-point values.
  *   It contains (num_points) * 4 floats.
  *
  *   For example:
