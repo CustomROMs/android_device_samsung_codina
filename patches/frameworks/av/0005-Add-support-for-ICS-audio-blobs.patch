@@ -1,0 +1,125 @@
+From 8130a90cd9440c10126abb7b9496179967de84b2 Mon Sep 17 00:00:00 2001
+From: Meticulus <theonejohnnyd@gmail.com>
+Date: Thu, 7 Jul 2016 12:07:23 -0500
+Subject: [PATCH 05/10] Add support for ICS audio blobs
+
+Change-Id: Ica85f88cd7fef83c80364e96dd59d84678a60fbe
+---
+ include/media/nbaio/AudioStreamOutSink.h |  2 ++
+ media/libnbaio/Android.mk                |  4 ++++
+ media/libnbaio/AudioStreamOutSink.cpp    |  2 ++
+ services/audioflinger/AudioFlinger.cpp   | 12 ++++++++++++
+ 4 files changed, 20 insertions(+)
+
+diff --git a/include/media/nbaio/AudioStreamOutSink.h b/include/media/nbaio/AudioStreamOutSink.h
+index 9949b8892..b78c4e425 100644
+--- a/include/media/nbaio/AudioStreamOutSink.h
++++ b/include/media/nbaio/AudioStreamOutSink.h
+@@ -52,7 +52,9 @@ public:
+     // implementation of GNWT (if any)
+     virtual status_t getNextWriteTimestamp(int64_t *timestamp);
+ 
++#ifndef HAVE_PRE_KITKAT_AUDIO_BLOB
+     virtual status_t getTimestamp(AudioTimestamp& timestamp);
++#endif
+ 
+     // NBAIO_Sink end
+ 
+diff --git a/media/libnbaio/Android.mk b/media/libnbaio/Android.mk
+index 1353f2810..43030d924 100644
+--- a/media/libnbaio/Android.mk
++++ b/media/libnbaio/Android.mk
+@@ -35,4 +35,8 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ LOCAL_C_INCLUDES := $(call include-path-for, audio-utils)
+ 
++ifeq ($(BOARD_HAVE_PRE_KITKAT_AUDIO_BLOB),true)
++    LOCAL_CFLAGS += -DHAVE_PRE_KITKAT_AUDIO_BLOB
++endif
++
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/media/libnbaio/AudioStreamOutSink.cpp b/media/libnbaio/AudioStreamOutSink.cpp
+index 0d5f935ec..dc54887b9 100644
+--- a/media/libnbaio/AudioStreamOutSink.cpp
++++ b/media/libnbaio/AudioStreamOutSink.cpp
+@@ -78,6 +78,7 @@ status_t AudioStreamOutSink::getNextWriteTimestamp(int64_t *timestamp) {
+     return mStream->get_next_write_timestamp(mStream, timestamp);
+ }
+ 
++#ifndef HAVE_PRE_KITKAT_AUDIO_BLOB
+ status_t AudioStreamOutSink::getTimestamp(AudioTimestamp& timestamp)
+ {
+     if (mStream->get_presentation_position == NULL) {
+@@ -92,5 +93,6 @@ status_t AudioStreamOutSink::getTimestamp(AudioTimestamp& timestamp)
+     timestamp.mPosition = position64;
+     return OK;
+ }
++#endif
+ 
+ }   // namespace android
+diff --git a/services/audioflinger/AudioFlinger.cpp b/services/audioflinger/AudioFlinger.cpp
+index 9d435e96c..2cf36a7a4 100644
+--- a/services/audioflinger/AudioFlinger.cpp
++++ b/services/audioflinger/AudioFlinger.cpp
+@@ -184,11 +184,14 @@ static int load_audio_interface(const char *if_name, audio_hw_device_t **dev)
+     if (rc) {
+         goto out;
+     }
++#ifndef MR0_AUDIO_BLOB
+     if ((*dev)->common.version < AUDIO_DEVICE_API_VERSION_MIN) {
+         ALOGE("%s wrong audio hw device version %04x", __func__, (*dev)->common.version);
+         rc = BAD_VALUE;
+         goto out;
+     }
++#endif
++
+     return 0;
+ 
+ out:
+@@ -1655,6 +1658,7 @@ audio_module_handle_t AudioFlinger::loadHwModule_l(const char *name)
+     {  // scope for auto-lock pattern
+         AutoMutex lock(mHardwareLock);
+ 
++#ifndef MR0_AUDIO_BLOB
+         if (0 == mAudioHwDevs.size()) {
+             mHardwareStatus = AUDIO_HW_GET_MASTER_VOLUME;
+             if (NULL != dev->get_master_volume) {
+@@ -1672,6 +1676,7 @@ audio_module_handle_t AudioFlinger::loadHwModule_l(const char *name)
+                 }
+             }
+         }
++#endif
+ 
+         mHardwareStatus = AUDIO_HW_SET_MASTER_VOLUME;
+         if ((NULL != dev->set_master_volume) &&
+@@ -1680,12 +1685,14 @@ audio_module_handle_t AudioFlinger::loadHwModule_l(const char *name)
+                     AudioHwDevice::AHWD_CAN_SET_MASTER_VOLUME);
+         }
+ 
++#ifndef MR0_AUDIO_BLOB
+         mHardwareStatus = AUDIO_HW_SET_MASTER_MUTE;
+         if ((NULL != dev->set_master_mute) &&
+             (OK == dev->set_master_mute(dev, mMasterMute))) {
+             flags = static_cast<AudioHwDevice::Flags>(flags |
+                     AudioHwDevice::AHWD_CAN_SET_MASTER_MUTE);
+         }
++#endif
+ 
+         mHardwareStatus = AUDIO_HW_IDLE;
+     }
+@@ -1929,7 +1936,12 @@ status_t AudioFlinger::openOutput(audio_module_handle_t module,
+         thread->ioConfigChanged(AUDIO_OUTPUT_OPENED);
+ 
+         // the first primary output opened designates the primary hw device
++#ifdef STE_HARDWARE
++        if ( mPrimaryHardwareDev == NULL ) {
++#else
+         if ((mPrimaryHardwareDev == NULL) && (flags & AUDIO_OUTPUT_FLAG_PRIMARY)) {
++#endif
++
+             ALOGI("Using module %d has the primary audio interface", module);
+             mPrimaryHardwareDev = thread->getOutput()->audioHwDev;
+ 
+-- 
+2.11.0
+

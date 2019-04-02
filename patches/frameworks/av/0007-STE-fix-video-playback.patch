@@ -1,0 +1,82 @@
+From e8eecdd26e79c9ce920f950211e84cd1d0ca0455 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Mon, 1 Apr 2019 02:02:32 +0300
+Subject: [PATCH 07/10] STE: fix video playback
+
+credits to @SergeyL1976
+
+Change-Id: Ib63939095bfaf271f2da381d975e9090a5e4f10d
+---
+ media/libstagefright/include/OMXNodeInstance.h |  1 -
+ media/libstagefright/omx/OMXNodeInstance.cpp   | 22 ----------------------
+ 2 files changed, 23 deletions(-)
+
+diff --git a/media/libstagefright/include/OMXNodeInstance.h b/media/libstagefright/include/OMXNodeInstance.h
+index 466463b91..5ba0e8f86 100644
+--- a/media/libstagefright/include/OMXNodeInstance.h
++++ b/media/libstagefright/include/OMXNodeInstance.h
+@@ -170,7 +170,6 @@ private:
+     KeyedVector<OMX::buffer_id, OMX_BUFFERHEADERTYPE *> mBufferIDToBufferHeader;
+     KeyedVector<OMX_BUFFERHEADERTYPE *, OMX::buffer_id> mBufferHeaderToBufferID;
+     MetadataBufferType mMetadataType[2];
+-    bool mGraphicBufferEnabled[2];
+ 
+     // For debug support
+     char *mName;
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 6f1ba9b6b..d1cfcf1b8 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -235,8 +235,6 @@ OMXNodeInstance::OMXNodeInstance(
+     mDebugLevelBumpPendingBuffers[1] = 0;
+     mMetadataType[0] = kMetadataBufferTypeInvalid;
+     mMetadataType[1] = kMetadataBufferTypeInvalid;
+-    mGraphicBufferEnabled[0] = false;
+-    mGraphicBufferEnabled[1] = false;
+     mIsSecure = AString(name).endsWith(".secure");
+     atomic_store(&mDying, false);
+ }
+@@ -582,11 +580,6 @@ status_t OMXNodeInstance::enableGraphicBuffers(
+     err = OMX_SetParameter(mHandle, index, &params);
+     CLOG_IF_ERROR(setParameter, err, "%s(%#x): %s:%u en=%d", name, index,
+             portString(portIndex), portIndex, enable);
+-    if (err == OMX_ErrorNone) {
+-        mGraphicBufferEnabled[portIndex] = enable;
+-    } else if (enable) {
+-        mGraphicBufferEnabled[portIndex] = false;
+-    }
+     return StatusFromOMXError(err);
+ }
+ 
+@@ -790,13 +783,6 @@ status_t OMXNodeInstance::useBuffer(
+         return BAD_VALUE;
+     }
+ 
+-    if (mMetadataType[portIndex] == kMetadataBufferTypeInvalid
+-            && mGraphicBufferEnabled[portIndex]) {
+-        ALOGE("b/62948670");
+-        android_errorWriteLog(0x534e4554, "62948670");
+-        return INVALID_OPERATION;
+-    }
+-
+     // metadata buffers are not connected cross process
+     BufferMeta *buffer_meta;
+     bool isMeta = mMetadataType[portIndex] != kMetadataBufferTypeInvalid;
+@@ -908,14 +894,6 @@ status_t OMXNodeInstance::useGraphicBuffer(
+         OMX::buffer_id *buffer) {
+     Mutex::Autolock autoLock(mLock);
+ 
+-    if (!mGraphicBufferEnabled[portIndex]
+-            || mMetadataType[portIndex] != kMetadataBufferTypeInvalid) {
+-        // Report error if this is not in graphic buffer mode.
+-        ALOGE("b/62948670");
+-        android_errorWriteLog(0x534e4554, "62948670");
+-        return INVALID_OPERATION;
+-    }
+-
+     // See if the newer version of the extension is present.
+     OMX_INDEXTYPE index;
+     if (OMX_GetExtensionIndex(
+-- 
+2.11.0
+

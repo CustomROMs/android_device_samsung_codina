@@ -1,0 +1,55 @@
+From cdb6b2c150c8437695d551704ef6198062c0e3c9 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <chrono.monochrome@gmail.com>
+Date: Sun, 27 May 2018 22:17:01 +0300
+Subject: [PATCH 09/10] STE: fix video recording
+
+Change-Id: I6b0886bde34011968766f11a62625d76f0017dc4
+---
+ media/libstagefright/ACodec.cpp | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 785fa4407..a2b792a7c 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1811,11 +1811,13 @@ status_t ACodec::configureCodec(
+             && msg->findInt32("store-metadata-in-buffers-output", &storeMeta)
+             && storeMeta != 0);
+ 
++#ifndef STE_HARDWARE
+         err = mOMX->storeMetaDataInBuffers(mNode, kPortIndexOutput, enable, &mOutputMetadataType);
+         if (err != OK) {
+             ALOGE("[%s] storeMetaDataInBuffers (output) failed w/ err %d",
+                 mComponentName.c_str(), err);
+         }
++#endif
+ 
+         if (!msg->findInt64(
+                     "repeat-previous-frame-after",
+@@ -5557,6 +5559,23 @@ ACodec::UninitializedState::UninitializedState(ACodec *codec)
+ void ACodec::UninitializedState::stateEntered() {
+     ALOGV("Now uninitialized");
+ 
++#ifdef STE_HARDWARE
++    int err;
++
++    if (!mCodec->mComponentName.compare("OMX.ST.VFM.MPEG4Enc") ||
++            !mCodec->mComponentName.compare("OMX.ST.VFM.H264Enc")) {
++
++        ALOGI("%s: chrono: storing metadata before idle", mCodec->mComponentName.c_str());
++        err = mCodec->mOMX->storeMetaDataInBuffers(mCodec->mNode,
++                  kPortIndexOutput, (OMX_BOOL)true, &mCodec->mOutputMetadataType);
++
++        if (err != OK) {
++            ALOGE("[%s] storeMetaDataInBuffers (output) failed w/ err %d",
++                mCodec->mComponentName.c_str(), err);
++        }
++    }
++#endif
++
+     if (mDeathNotifier != NULL) {
+         IInterface::asBinder(mCodec->mOMX)->unlinkToDeath(mDeathNotifier);
+         mDeathNotifier.clear();
+-- 
+2.11.0
+

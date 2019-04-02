@@ -1,7 +1,7 @@
 From 30ce42c80b6286f457ca84f4b6b03a0d82349c78 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <radicaldreamer00001@gmail.com>
 Date: Fri, 29 Mar 2019 22:55:12 +0300
-Subject: [PATCH 1/2] system-media_Audio-MR0-header-new.patch
+Subject: [PATCH] system-media_Audio-MR0-header-new.patch
 
 Change-Id: I1412d415b3fa6d582c600c86e4bc9edd194c9472
 ---

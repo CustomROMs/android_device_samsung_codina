@@ -1,0 +1,38 @@
+From dc672d72e6c388eb12712b55e873b1c96df2d463 Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Mon, 1 Apr 2019 02:49:09 +0300
+Subject: [PATCH 3/3] build fixes
+
+Change-Id: I2486c479fefb824fd11b236e2fe38fed4695b3d8
+---
+ services/surfaceflinger/DisplayDevice.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+index 3c8f3f3b3..d049a94ab 100755
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -27,6 +27,7 @@
+ #include <ui/DisplayInfo.h>
+ #include <ui/PixelFormat.h>
+ #ifdef STE_HARDWARE
++#pragma GCC diagnostic ignored "-W#warnings"
+ #include <ui/FramebufferNativeWindow.h>
+ #endif
+ 
+@@ -91,10 +92,11 @@ DisplayDevice::DisplayDevice(
+       mPowerMode(HWC_POWER_MODE_OFF),
+       mActiveConfig(0)
+ {
+-    Surface* surface;
+ #ifdef STE_HARDWARE
+     ANativeWindow* const window = new FramebufferNativeWindow();
++    (void)producer;
+ #else
++    Surface* surface;
+     mNativeWindow = surface = new Surface(producer, false);
+     ANativeWindow* const window = mNativeWindow.get();
+ #endif
+-- 
+2.11.0
+

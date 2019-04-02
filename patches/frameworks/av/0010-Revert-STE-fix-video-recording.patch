@@ -1,0 +1,57 @@
+From 51c8966ad487257ec4382ff5e5f74228a426801b Mon Sep 17 00:00:00 2001
+From: Shilin Victor <radicaldreamer00001@gmail.com>
+Date: Tue, 2 Apr 2019 19:53:17 +0300
+Subject: [PATCH 10/10] Revert "STE: fix video recording"
+
+This reverts commit cdb6b2c150c8437695d551704ef6198062c0e3c9.
+
+Change-Id: Ifc2e7416fc1433684e3f8009111b7638ecaff91f
+---
+ media/libstagefright/ACodec.cpp | 19 -------------------
+ 1 file changed, 19 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index a2b792a7c..785fa4407 100755
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -1811,13 +1811,11 @@ status_t ACodec::configureCodec(
+             && msg->findInt32("store-metadata-in-buffers-output", &storeMeta)
+             && storeMeta != 0);
+ 
+-#ifndef STE_HARDWARE
+         err = mOMX->storeMetaDataInBuffers(mNode, kPortIndexOutput, enable, &mOutputMetadataType);
+         if (err != OK) {
+             ALOGE("[%s] storeMetaDataInBuffers (output) failed w/ err %d",
+                 mComponentName.c_str(), err);
+         }
+-#endif
+ 
+         if (!msg->findInt64(
+                     "repeat-previous-frame-after",
+@@ -5559,23 +5557,6 @@ ACodec::UninitializedState::UninitializedState(ACodec *codec)
+ void ACodec::UninitializedState::stateEntered() {
+     ALOGV("Now uninitialized");
+ 
+-#ifdef STE_HARDWARE
+-    int err;
+-
+-    if (!mCodec->mComponentName.compare("OMX.ST.VFM.MPEG4Enc") ||
+-            !mCodec->mComponentName.compare("OMX.ST.VFM.H264Enc")) {
+-
+-        ALOGI("%s: chrono: storing metadata before idle", mCodec->mComponentName.c_str());
+-        err = mCodec->mOMX->storeMetaDataInBuffers(mCodec->mNode,
+-                  kPortIndexOutput, (OMX_BOOL)true, &mCodec->mOutputMetadataType);
+-
+-        if (err != OK) {
+-            ALOGE("[%s] storeMetaDataInBuffers (output) failed w/ err %d",
+-                mCodec->mComponentName.c_str(), err);
+-        }
+-    }
+-#endif
+-
+     if (mDeathNotifier != NULL) {
+         IInterface::asBinder(mCodec->mOMX)->unlinkToDeath(mDeathNotifier);
+         mDeathNotifier.clear();
+-- 
+2.11.0
+
