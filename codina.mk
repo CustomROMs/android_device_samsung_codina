@@ -105,6 +105,7 @@ PRODUCT_COPY_FILES += \
 endif
 
 PRODUCT_PACKAGES += \
+    audio.primary.montblanc \
     audio.usb.default \
     audio.a2dp.default \
     camera.montblanc \
@@ -112,6 +113,7 @@ PRODUCT_PACKAGES += \
     libomxil-bellagio \
     libaudioutils \
     libtinyalsa \
+    tinyplay \
     libstagefrighthw
 
 # U8500 Hardware
