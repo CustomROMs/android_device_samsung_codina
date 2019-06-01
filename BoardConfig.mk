@@ -93,15 +93,12 @@ TARGET_GLOBAL_CPPFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_KERNEL_BASE := 0x40000000
 BOARD_CUSTOM_BOOTIMG_MK := device/samsung/codina/shbootimg.mk
-
-ifeq ($(DEVICE_ENABLE_TOOLCHAIN),true)
-KERNEL_TOOLCHAIN := /media/system2/root/LOS13/prebuilts/gcc/linux-x86/arm/arm-eabi-4.8/bin
-KERNEL_TOOLCHAIN_PREFIX := arm-eabi-
-endif
+KERNEL_TOOLCHAIN := $(ANDROID_BUILD_TOP)/prebuilts/gcc/$(HOST_OS)-x86/arm/arm-eabi-4.8/bin
+TARGET_KERNEL_CROSS_COMPILE_PREFIX := arm-eabi-
 
 # Bionic
 TARGET_LD_SHIM_LIBS := \
-    /system/lib/libsec-ril.so|libsamsung_symbols.so
+    /system/lib/libsec-ril.so|libsamsung_symbols.so:/system/lib/libshim_gps.so|gpsd
 
 # Graphics
 USE_OPENGL_RENDERER := true

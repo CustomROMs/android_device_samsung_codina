@@ -116,6 +116,11 @@ PRODUCT_PACKAGES += \
     tinyplay \
     libstagefrighthw
 
+# Shims
+PRODUCT_PACKAGES += \
+    libLog \
+    libshim_gps
+
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
 
