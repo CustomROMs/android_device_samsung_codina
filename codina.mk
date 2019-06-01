@@ -214,9 +214,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libstlport
 
-# Snap Camera
+# Open Camera
 PRODUCT_PACKAGES += \
-    Snap
+    OpenCamera
 
 ifeq ($(DEVICE_AUDIO_MOD),true)
 # DSPManager
