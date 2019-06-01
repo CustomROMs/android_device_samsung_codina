@@ -237,6 +237,10 @@ PRODUCT_PACKAGES += \
 # We have enough storage space to hold precise GC data
 PRODUCT_TAGS += dalvik.gc.type-precise
 
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    dalvik.vm.dex2oat-threads=1 \
+    dalvik.vm.image-dex2oat-threads=1
+
 # Use the non-open-source parts, if they're present
 include vendor/samsung/u8500-common/vendor-common.mk
 
