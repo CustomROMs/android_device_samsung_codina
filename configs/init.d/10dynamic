@@ -1,0 +1,50 @@
+#/system/bin/sh
+
+set -x
+
+curr_profile="performance"
+#curr_profile="default"
+
+wd=/sys/devices/system/cpu/cpufreq/dynamic
+
+profile_list=("default" "performance")
+input_boost_ms=( 100             250 )
+input_boost_freq=( 400000     600000 )
+oc_freq_boost_ms=( 1500         4000 )
+max_non_oc_freq=( 1000000     1200000 ) 
+power_optimal_freq=( 800000     1000000 )
+
+len=${#profile_list[@]}
+
+get_index()
+{
+
+    for i in $( seq 0 $len )
+    do
+        if [ "${profile_list[$i]}" == "$1" ] ; then
+             echo $i
+             return
+        fi
+    done
+
+    echo -1
+}
+
+set_profile()
+{
+    local index=$( get_index $1 )
+
+    if [ $index == -1 ] || [ $index -eq $len ] ; then
+         echo "wrong index, bailing out"
+         return
+    fi
+
+    echo ${input_boost_ms[$index]} > $wd/input_boost_ms
+    echo ${input_boost_freq[$index]} > $wd/input_boost_freq
+    echo ${oc_freq_boost_ms[$index]} > $wd/oc_freq_boost_ms
+    echo ${max_non_oc_freq[$index]} > $wd/max_non_oc_freq
+    echo ${power_optimal_freq[$index]} > $wd/power_optimal_freq
+    
+}
+
+set_profile $curr_profile

@@ -1,0 +1,5 @@
+#!/system/bin/sh
+
+# echo 2458 > /sys/module/zram/parameters/max_zpage_size
+echo 0 > /sys/module/abb_chargalg/parameters/eoc_blink
+echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6

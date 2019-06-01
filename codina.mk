@@ -121,6 +121,19 @@ PRODUCT_PACKAGES += \
     libLog \
     libshim_gps
 
+# init.d
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/init.d/roguegms:/system/etc/init.d/roguegms \
+    $(LOCAL_PATH)/configs/init.d/999j4fs:/system/etc/init.d/999j4fs \
+    $(LOCAL_PATH)/configs/init.d/10dynamic:/system/etc/init.d/10dynamic \
+    $(LOCAL_PATH)/configs/init.d/60zram:/system/etc/init.d/60zram \
+    $(LOCAL_PATH)/configs/init.d/999powerhal:/system/etc/init.d/999powerhal \
+    $(LOCAL_PATH)/configs/init.d/00banner:/system/etc/init.d/00banner \
+    $(LOCAL_PATH)/configs/init.d/00autoload:/system/etc/init.d/00autoload \
+    $(LOCAL_PATH)/configs/init.d/90userinit:/system/etc/init.d/90userinit \
+    $(LOCAL_PATH)/configs/init.d/65tweaks:/system/etc/init.d/65tweaks \
+    $(LOCAL_PATH)/configs/init.d/00userinit:/system/etc/init.d/00userinit
+
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
 

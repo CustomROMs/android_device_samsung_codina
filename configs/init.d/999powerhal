@@ -1,0 +1,48 @@
+SP=setprop
+
+# performance by default
+PROFILE=2
+
+# power save profile
+$SP powerhal.0.cpu0_gov dynamic
+$SP powerhal.0.cpu0_freq_min 200000
+$SP powerhal.0.cpu0_freq_max 800000
+$SP powerhal.0.ddr_boost_dur_ms 0
+$SP powerhal.0.ddr_boost 0 
+$SP powerhal.0.gpu_boost_dur_ms 0
+$SP powerhal.0.gpu_boost 0
+$SP powerhal.0.arm_khz_boost_freq 200000
+$SP powerhal.0.arm_khz_boost 0
+$SP powerhal.0.arm_khz_boost_dur_ms 0
+$SP powerhal.0.gpu.min 256000
+$SP powerhal.0.gpu.max 399360
+
+# balanced profile
+$SP powerhal.1.cpu0_gov dynamic
+$SP powerhal.1.cpu0_freq_min 200000
+$SP powerhal.1.cpu0_freq_max 800000
+$SP powerhal.1.ddr_boost_dur_ms 0
+$SP powerhal.1.ddr_boost 0
+$SP powerhal.1.gpu_boost_dur_ms 400
+$SP powerhal.1.gpu_boost 1
+$SP powerhal.1.arm_khz_boost_freq 400000
+$SP powerhal.1.arm_khz_boost 1
+$SP powerhal.1.arm_khz_boost_dur_ms 400
+$SP powerhal.1.gpu.min 399360
+$SP powerhal.1.gpu.max 399360
+
+# performance profile
+$SP powerhal.2.cpu0_gov dynamic 
+$SP powerhal.2.cpu0_freq_min 200000
+$SP powerhal.2.cpu0_freq_max 800000
+$SP powerhal.2.ddr_boost_dur_ms 800
+$SP powerhal.2.ddr_boost 1
+$SP powerhal.2.gpu_boost_dur_ms 800
+$SP powerhal.2.gpu_boost 1
+$SP powerhal.2.arm_khz_boost_freq 800000
+$SP powerhal.2.arm_khz_boost 1
+$SP powerhal.2.arm_khz_boost_dur_ms 800
+$SP powerhal.2.gpu.min 399360
+$SP powerhal.2.gpu.max 499200
+
+sleep 60 && profile $PROFILE &

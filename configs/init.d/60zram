@@ -1,0 +1,23 @@
+#!/system/bin/sh
+
+set -x
+
+SIZE=300
+NUMBLOCKS=1
+echo $NUMBLOCKS > /sys/module/zram_num_devices_ctl/parameters/zram_num_devices
+echo 0 > /proc/sys/vm/page-cluster
+echo 60 > /proc/sys/vm/swappiness
+
+if ! test -d /sys/module/zram; then
+       insmod /system/lib/modules/zram.ko
+fi
+
+let "NUMBLOCKS=$NUMBLOCKS - 1"
+
+for i in $(seq 0 "$NUMBLOCKS")
+do
+    echo $(( $SIZE * 1024 * 1024 )) > /sys/devices/virtual/block/zram$i/disksize 
+    echo 1 > /sys/devices/virtual/block/zram$i/max_comp_streams
+    mkswap /dev/block/zram$i
+    swapon -p $(( $i * 100 )) /dev/block/zram$i
+done

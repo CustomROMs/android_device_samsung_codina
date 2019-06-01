@@ -1,0 +1,1 @@
+busybox mount -t j4fs /dev/block/mmcblk0p1 /mnt/.lfs
