@@ -28,6 +28,13 @@ on early-fs
 on boot
     service adbd /sbin/adbd recovery
     disabled
+    exec u:r:healthd:s0 -- /sbin/sh /charger.sh
+
+# service charger /sbin/charger
+service charger /sbin/charger
+    class charger
+    critical
+    seclabel u:r:healthd:s0
 
 # Always start adbd on userdebug and eng builds
 # In recovery, always run adbd as root.

@@ -23,7 +23,27 @@ uncompressed_ramdisk := $(PRODUCT_OUT)/ramdisk.cpio
 $(uncompressed_ramdisk): $(INSTALLED_RAMDISK_TARGET)
 	zcat $< > $@
 
-TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL) $(recovery_uncompressed_ramdisk) $(uncompressed_ramdisk)
+$(PRODUCT_OUT)/recovery.cpio.gz: $(recovery_uncompressed_ramdisk)
+	mkdir -p $(PRODUCT_OUT)/recovery/root/res/images/charger
+	cp $(LOCAL_PATH)/prebuilt/charger.sh $(PRODUCT_OUT)/recovery/root/charger.sh
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_0.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_0.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_1.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_1.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_2.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_2.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_3.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_3.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_4.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_4.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_5.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_5.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_charge.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_charge.png
+	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_fail.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_fail.png
+	mkdir -p $(PRODUCT_OUT)/u8500_initramfs_files
+	cp $(LOCAL_PATH)/prebuilt/u8500_initramfs_files/busybox $(PRODUCT_OUT)/u8500_initramfs_files/busybox
+	cp $(LOCAL_PATH)/prebuilt/u8500_initramfs_files/init $(PRODUCT_OUT)/u8500_initramfs_files/init
+	cp $(LOCAL_PATH)/prebuilt/u8500_initramfs.list $(PRODUCT_OUT)/u8500_initramfs.list
+	#cp $(LOCAL_PATH)/prebuilt/charger.cpio.gz $(PRODUCT_OUT)/charger.cpio.gz
+	cp $(LOCAL_PATH)/prebuilt/prebuilt-recovery.cpio.gz $(PRODUCT_OUT)/prebuilt-recovery.cpio.gz
+	cp $(recovery_uncompressed_ramdisk) $(PRODUCT_OUT)/recovery.cpio
+	gzip -9f $(PRODUCT_OUT)/recovery.cpio
+
+TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL) $(recovery_uncompressed_ramdisk) $(uncompressed_ramdisk) $(PRODUCT_OUT)/recovery.cpio.gz
 	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
 	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules
 	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules_install
