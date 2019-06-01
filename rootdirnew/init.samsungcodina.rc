@@ -23,6 +23,8 @@ on init
     # setprop ro.vold.primary_physical 1
 
     # Setup the global environment
+    export LD_PRELOAD "/system/lib/libsamsung_symbols.so"
+    export LD_SHIM_LIBS /system/lib/libgui.so|libshim_gps.so:/system/lib/libssl.so|libshim_gps.so:/system/bin/gpsd|libshim_gps.so
     export LD_LIBRARY_PATH /vendor/lib:/system/lib:/system/lib/ste_omxcomponents
     export OMX_STE_ENS_COMPONENTS_DIR /system/lib/ste_omxcomponents/
     export OMX_BELLAGIO_LOADER_REGISTRY /system/etc/omxloaders
