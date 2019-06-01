@@ -32,7 +32,7 @@ persist.sys.usb.config=mtp,adb
 # sys.config.sd0_optdevice=/dev/null
 
 # sdcardfs
-ro.sdcardfs.enable=true
+#ro.sdcardfs.enable=true
 
 # Default primary storage
 ro.vold.primary_physical=1
