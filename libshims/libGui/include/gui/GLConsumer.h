@@ -20,11 +20,11 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "include/gui/IGraphicBufferProducer.h"
-#include "include/gui/BufferQueue.h"
-#include "include/gui/ConsumerBase.h"
+#include <gui/IGraphicBufferProducer.h>
+#include <gui/BufferQueue.h>
+#include <gui/ConsumerBase.h>
 
-#include "include/ui/GraphicBuffer.h"
+#include <ui/GraphicBuffer.h>
 
 #include <utils/String8.h>
 #include <utils/Vector.h>

@@ -14,7 +14,9 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-commonSources:= Flattenable.cpp
+commonSources:= \
+	Flattenable.cpp \
+	String8.cpp
 
 # For the device, static
 # =====================================================
@@ -31,7 +33,7 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES := \
         libbacktrace \
-        libLog \
+        liblog \
         libdl
 
 LOCAL_MODULE:= libUtils

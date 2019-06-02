@@ -17,10 +17,10 @@
 #ifndef ANDROID_GUI_BUFFERQUEUE_H
 #define ANDROID_GUI_BUFFERQUEUE_H
 
-#include "include/gui/BufferItem.h"
+#include <gui/BufferItem.h>
 #include <gui/BufferQueueDefs.h>
 #include <gui/IGraphicBufferConsumer.h>
-#include "include/gui/IGraphicBufferProducer.h"
+#include <gui/IGraphicBufferProducer.h>
 #include <gui/IConsumerListener.h>
 
 // These are only required to keep other parts of the framework with incomplete

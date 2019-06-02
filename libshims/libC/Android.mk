@@ -1,4 +1,4 @@
-# Copyright (C) 2009 The Android Open Source Project
+# Copyright (C) 2008 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,24 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# we have the common sources, plus some device-specific stuff
-sources := \
-    Parcel.cpp \
-    MemoryBase.cpp
-
 LOCAL_PATH:= $(call my-dir)
 
+# =====================================================
 include $(CLEAR_VARS)
+LOCAL_MODULE:= libC
+LOCAL_SHARED_LIBRARIES := liblog
 
-LOCAL_MODULE := libBinder
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libUtils/include
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
-LOCAL_SHARED_LIBRARIES += libLog libcutils libutils libbinder
-LOCAL_SRC_FILES := $(sources)
-ifneq ($(TARGET_USES_64_BIT_BINDER),true)
-ifneq ($(TARGET_IS_64_BIT),true)
-LOCAL_CFLAGS += -DBINDER_IPC_32BIT=1
-endif
-endif
-LOCAL_CFLAGS += -Werror
+LOCAL_SRC_FILES := strstr.c
+LOCAL_CFLAGS := -Werror
+
 include $(BUILD_SHARED_LIBRARY)

@@ -25,6 +25,7 @@ on init
     # Setup the global environment
     export LD_PRELOAD "/system/lib/libsamsung_symbols.so"
     export LD_SHIM_LIBS /system/bin/gpsd|libshim_gps.so
+    #/system/lib/libcamera_client.so|libUtils.so:/system/lib/libcamera_client.so|libBinder.so:/system/lib/libcamera_client.so|libUi.so:/system/lib/libcamera_client.so|libGui.so:/system/lib/libcameraservice.so|libUtils.so:/system/lib/libcameraservice.so|libBinder.so:/system/lib/libcameraservice.so|libUi.so:/system/lib/libcameraservice.so|libGui.so:/system/bin/mediaserver|libUtils.so:/system/bin/mediaserver|libBinder.so:/system/bin/mediaserver|libUi.so:/system/bin/mediaserver|libGui.so
     export LD_LIBRARY_PATH /vendor/lib:/system/lib:/system/lib/ste_omxcomponents
     export OMX_STE_ENS_COMPONENTS_DIR /system/lib/ste_omxcomponents/
     export OMX_BELLAGIO_LOADER_REGISTRY /system/etc/omxloaders

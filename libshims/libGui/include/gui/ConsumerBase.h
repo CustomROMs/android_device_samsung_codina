@@ -17,9 +17,9 @@
 #ifndef ANDROID_GUI_CONSUMERBASE_H
 #define ANDROID_GUI_CONSUMERBASE_H
 
-#include "include/gui/BufferQueue.h"
+#include <gui/BufferQueue.h>
 
-#include "include/ui/GraphicBuffer.h"
+#include <ui/GraphicBuffer.h>
 
 #include <utils/String8.h>
 #include <utils/Vector.h>

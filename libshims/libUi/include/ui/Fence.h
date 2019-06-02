@@ -21,7 +21,7 @@
 #include <sys/types.h>
 
 #include <ui/ANativeObjectBase.h>
-#include "include/ui/PixelFormat.h"
+#include <ui/PixelFormat.h>
 #include <ui/Rect.h>
 #include <utils/Flattenable.h>
 #include <utils/String8.h>
@@ -36,7 +36,11 @@ namespace android {
 // ===========================================================================
 
 class Fence
+#ifdef STE_HARDWARE
+    : public LightRefBase<Fence>, public Flattenable
+#else
     : public LightRefBase<Fence>, public Flattenable<Fence>
+#endif
 {
 public:
     static const sp<Fence> NO_FENCE;

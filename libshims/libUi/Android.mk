@@ -54,6 +54,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libLog \
 	liblog
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libUtils/include
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../libBinder/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
 
 ifneq ($(BOARD_FRAMEBUFFER_FORCE_FORMAT),)

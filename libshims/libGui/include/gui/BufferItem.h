@@ -20,12 +20,12 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "include/ui/Rect.h"
-#include "include/ui/Region.h"
+#include <ui/Rect.h>
+#include <ui/Region.h>
 
 #include <system/graphics.h>
 
-#include "../libUtils/include/utils/Flattenable.h"
+#include <utils/Flattenable.h>
 #include <utils/StrongPointer.h>
 
 namespace android {
@@ -33,8 +33,8 @@ namespace android {
 class Fence;
 class GraphicBuffer;
 
-class BufferItem : public Flattenable<BufferItem> {
-    friend class Flattenable<BufferItem>;
+class BufferItem : public Flattenable {
+    friend class Flattenable;
     size_t getPodSize() const;
     size_t getFlattenedSize() const;
     size_t getFdCount() const;
