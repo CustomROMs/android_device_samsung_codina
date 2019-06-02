@@ -27,3 +27,5 @@ LOCAL_MODULE := libshim_gps
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
+
+include $(call first-makefiles-under,$(LOCAL_PATH))

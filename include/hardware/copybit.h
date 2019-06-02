@@ -167,33 +167,33 @@ struct copybit_device_t {
     /**
      * Set a copybit parameter.
      *
-     * @param dev from open
-     * @param name one for the COPYBIT_NAME_xxx
-     * @param value one of the COPYBIT_VALUE_xxx
+     * param dev from open
+     * param name one for the COPYBIT_NAME_xxx
+     * param value one of the COPYBIT_VALUE_xxx
      *
-     * @return 0 if successful
+     * return 0 if successful
      */
     int (*set_parameter)(struct copybit_device_t *dev, int name, int value);
 
     /**
      * Get a static copybit information.
      *
-     * @param dev from open
-     * @param name one of the COPYBIT_STATIC_xxx
+     * param dev from open
+     * param name one of the COPYBIT_STATIC_xxx
      *
-     * @return value or -EINVAL if error
+     * return value or -EINVAL if error
      */
     int (*get)(struct copybit_device_t *dev, int name);
 
     /**
      * Execute the bit blit copy operation
      *
-     * @param dev from open
-     * @param dst is the destination image
-     * @param src is the source image
-     * @param region the clip region
+     * param dev from open
+     * param dst is the destination image
+     * param src is the source image
+     * param region the clip region
      *
-     * @return 0 if successful
+     * return 0 if successful
      */
     int (*blit)(struct copybit_device_t *dev,
                 struct copybit_image_t const *dst,
@@ -203,14 +203,14 @@ struct copybit_device_t {
     /**
      * Execute the stretch bit blit copy operation
      *
-     * @param dev from open
-     * @param dst is the destination image
-     * @param src is the source image
-     * @param dst_rect is the destination rectangle
-     * @param src_rect is the source rectangle
-     * @param region the clip region
+     * param dev from open
+     * param dst is the destination image
+     * param src is the source image
+     * param dst_rect is the destination rectangle
+     * param src_rect is the source rectangle
+     * param region the clip region
      *
-     * @return 0 if successful
+     * return 0 if successful
      */
     int (*stretch)(struct copybit_device_t *dev,
                    struct copybit_image_t const *dst,
@@ -222,11 +222,11 @@ struct copybit_device_t {
     /**
      * Execute the fill bit blit operation
      *
-     * @param dev from open
-     * @param dst is the destination image
-     * @param rect is the destination rectangle
-     * @param color is the fill color
-     * @param region the clip region
+     * param dev from open
+     * param dst is the destination image
+     * param rect is the destination rectangle
+     * param color is the fill color
+     * param region the clip region
      */
     int (*fill)(struct copybit_device_t *dev,
                 struct copybit_image_t *dst,
