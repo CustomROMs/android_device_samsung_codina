@@ -25,6 +25,8 @@ $(uncompressed_ramdisk): $(INSTALLED_RAMDISK_TARGET)
 
 $(PRODUCT_OUT)/recovery.cpio.gz: $(recovery_uncompressed_ramdisk)
 	mkdir -p $(PRODUCT_OUT)/recovery/root/res/images/charger
+	mkdir -p $(PRODUCT_OUT)/install/janice/system
+	cp $(LOCAL_PATH)/prebuilt/build.prop_janice $(PRODUCT_OUT)/install/janice/system/build.prop
 	cp $(LOCAL_PATH)/prebuilt/charger.sh $(PRODUCT_OUT)/recovery/root/charger.sh
 	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_0.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_0.png
 	cp $(LOCAL_PATH)/prebuilt/charger/images/battery_1.png $(PRODUCT_OUT)/recovery/root/res/images/charger/battery_1.png
