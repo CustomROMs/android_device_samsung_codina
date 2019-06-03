@@ -11,12 +11,18 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/device_tunables.rc:root/device_tunables.rc \
     $(LOCAL_PATH)/rootdir/init.kernel.rc:root/init.kernel.rc \
     $(LOCAL_PATH)/rootdir/init.samsungcodina.rc:root/init.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungjanice.rc:root/init.samsungjanice.rc \
     $(LOCAL_PATH)/rootdirnew/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdirnew/init.recovery.samsungjanice.rc:root/init.recovery.samsungjanice.rc \
     $(LOCAL_PATH)/rootdir/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc \
-    $(LOCAL_PATH)/rootdir/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc
+    $(LOCAL_PATH)/rootdir/ueventd.samsungjanice.rc:root/ueventd.samsungjanice.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungjanice.usb.rc:root/init.samsungjanice.usb.rc
+
 
 ifeq ($(DEVICE_DISABLE_F2FS),true)
 # fstab
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/fstab.samsungcodina:root/fstab.samsungcodina
+    $(LOCAL_PATH)/rootdir/fstab.samsungcodina:root/fstab.samsungcodina \
+    $(LOCAL_PATH)/rootdir/fstab.samsungjanice:root/fstab.samsungjanice
 endif

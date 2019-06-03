@@ -37,19 +37,30 @@ $(PRODUCT_OUT)/recovery.cpio.gz: $(recovery_uncompressed_ramdisk)
 	mkdir -p $(PRODUCT_OUT)/u8500_initramfs_files
 	cp $(LOCAL_PATH)/prebuilt/u8500_initramfs_files/busybox $(PRODUCT_OUT)/u8500_initramfs_files/busybox
 	cp $(LOCAL_PATH)/prebuilt/u8500_initramfs_files/init $(PRODUCT_OUT)/u8500_initramfs_files/init
-	cp $(LOCAL_PATH)/prebuilt/u8500_initramfs.list $(PRODUCT_OUT)/u8500_initramfs.list
+	cp $(LOCAL_PATH)/prebuilt/codina_initramfs.list $(PRODUCT_OUT)/codina_initramfs.list
+	cp $(LOCAL_PATH)/prebuilt/janice_initramfs.list $(PRODUCT_OUT)/janice_initramfs.list
 	#cp $(LOCAL_PATH)/prebuilt/charger.cpio.gz $(PRODUCT_OUT)/charger.cpio.gz
-	cp $(LOCAL_PATH)/prebuilt/prebuilt-recovery.cpio.gz $(PRODUCT_OUT)/prebuilt-recovery.cpio.gz
+	cp $(LOCAL_PATH)/prebuilt/prebuilt-recovery-codina.cpio.gz $(PRODUCT_OUT)/prebuilt-recovery-codina.cpio.gz
+	cp $(LOCAL_PATH)/prebuilt/prebuilt-recovery-janice.cpio.gz $(PRODUCT_OUT)/prebuilt-recovery-janice.cpio.gz
 	cp $(recovery_uncompressed_ramdisk) $(PRODUCT_OUT)/recovery.cpio
 	gzip -9f $(PRODUCT_OUT)/recovery.cpio
 
 TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL) $(recovery_uncompressed_ramdisk) $(uncompressed_ramdisk) $(PRODUCT_OUT)/recovery.cpio.gz
-	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
-	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules
-	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(TARGET_ARCH) $(ARM_CROSS_COMPILE) modules_install
+	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules
+	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules_install
 
-$(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET)
-	$(ACP) -fp $< $@
+$(PRODUCT_OUT)/install/janice/boot.img:
+	mkdir -p $(PRODUCT_OUT)/obj/KERNEL_OBJ_janice
+	mkdir -p $(PRODUCT_OUT)/install/janice
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) janice_defconfig
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+	cp $(PRODUCT_OUT)/obj/KERNEL_OBJ_janice/arch/arm/boot/zImage $(PRODUCT_OUT)/install/janice/boot.img
+
+$(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET) $(PRODUCT_OUT)/install/janice/boot.img
+	mkdir -p $(PRODUCT_OUT)/install/codina
+	cp $< $(PRODUCT_OUT)/install/codina/boot.img
+	touch $@
 
 $(INSTALLED_RECOVERYIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET)
 	$(ACP) -fp $< $@

@@ -32,6 +32,10 @@ DEVICE_ENABLE_SUBMIX := true
 DEVICE_ENABLE_CHANGER_CM := true
 DEVICE_AUDIO_MOD := true
 
+# Unified ROM support
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/fixup.sh:install/bin/fixup.sh
+
 # Media
 ifeq ($(DEVICE_ENABLE_LOV),true)
 PRODUCT_COPY_FILES += \
@@ -261,6 +265,7 @@ include vendor/samsung/u8500-common/vendor-common.mk
 
 # For better compatibility with ROMs (like Slim, PAC)
 $(call inherit-product, vendor/samsung/u8500-common/codina/codina-vendor-blobs.mk)
+$(call inherit-product, vendor/samsung/u8500-common/janice/janice-vendor-blobs.mk)
 
 # STE Modem
 PRODUCT_COPY_FILES += \

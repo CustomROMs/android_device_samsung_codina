@@ -50,40 +50,50 @@ endif
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/device_tunables.rc:root/device_tunables.rc \
     $(LOCAL_PATH)/rootdir/init.kernel.rc:root/init.kernel.rc \
-    $(LOCAL_PATH)/rootdir/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc
+    $(LOCAL_PATH)/rootdir/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/init.recovery.samsungjanice.rc:root/init.recovery.samsungjanice.rc
+
 
 ifeq ($(DEVICE_WLAN_ON_NEW),true)
 # Init files new
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdirnew/init.samsungcodina.rc:root/init.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdirnew/init.samsungjanice.rc:root/init.samsungjanice.rc \
+    $(LOCAL_PATH)/rootdirnew/ueventd.samsungjanice.rc:root/ueventd.samsungjanice.rc \
     $(LOCAL_PATH)/rootdirnew/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc
 else
 # Init files old
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/init.samsungcodina.rc:root/init.samsungcodina.rc \
-    $(LOCAL_PATH)/rootdir/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc
+    $(LOCAL_PATH)/rootdir/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungjanice.rc:root/init.samsungjanice.rc \
+    $(LOCAL_PATH)/rootdir/ueventd.samsungjanice.rc:root/ueventd.samsungjanice.rc
 endif
 
 # fstab
 ifeq ($(DEVICE_SDCARD_ON_SWIPE),true)
 # fstab swipe
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdirnew/fstab.samsungcodina:root/fstab.samsungcodina
+    $(LOCAL_PATH)/rootdirnew/fstab.samsungcodina:root/fstab.samsungcodina \
+    $(LOCAL_PATH)/rootdirnew/fstab.samsungjanice:root/fstab.samsungjanice
 else
 # fstab codina
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/fstab.samsungcodina:root/fstab.samsungcodina
+    $(LOCAL_PATH)/rootdir/fstab.samsungcodina:root/fstab.samsungcodina\
+    $(LOCAL_PATH)/rootdir/fstab.samsungjanice:root/fstab.samsungjanice
 endif
 
 ifeq ($(DEVICE_UMS_ON_NEW),true)
 # UMS config
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdirnew/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc \
+    $(LOCAL_PATH)/rootdirnew/init.samsungjanice.usb.rc:root/init.samsungjanice.usb.rc \
     $(LOCAL_PATH)/rootdirnew/ums_init.sh:system/bin/ums_init.sh
 else
 # Old config
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc
+    $(LOCAL_PATH)/rootdir/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungjanice.usb.rc:root/init.samsungjanice.usb.rc
 endif
 
 # TWRP
