@@ -69,6 +69,7 @@ on property:sys.usb.config=mass_storage
     write /sys/class/android_usb/android0/idProduct 685B
     write /sys/class/android_usb/android0/functions ${sys.usb.config}
     write /sys/class/android_usb/android0/enable 1
+    start umsservice
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=mass_storage,adb
@@ -78,6 +79,7 @@ on property:sys.usb.config=mass_storage,adb
     write /sys/class/android_usb/android0/functions ${sys.usb.config}
     write /sys/class/android_usb/android0/enable 1
     start adbd
+    start umsservice
     setprop sys.usb.state ${sys.usb.config}
 
 on property:sys.usb.config=rndis
@@ -113,3 +115,7 @@ on property:sys.usb.config=rndis,acm,dm
     write /sys/class/android_usb/android0/f_acm/instances 1
     write /sys/class/android_usb/android0/enable 1
     setprop sys.usb.state ${sys.usb.config}
+
+service umsservice /system/bin/ums_init.sh
+    class main
+    disabled

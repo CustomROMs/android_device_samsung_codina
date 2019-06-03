@@ -46,6 +46,9 @@
 # Modem storage pipe
 /dev/rpc                  0600   radio      radio
 
+# wlan
+/dev/rfkill               0660   root       wifi
+
 # Trusted Eexecution Engine
 /dev/tee                  0666   root       system
 

@@ -138,6 +138,21 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/init.d/65tweaks:/system/etc/init.d/65tweaks \
     $(LOCAL_PATH)/configs/init.d/00userinit:/system/etc/init.d/00userinit
 
+# ramdisk
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/fstab.samsungjanice:root/fstab.samsungjanice \
+    $(LOCAL_PATH)/rootdir/init.recovery.samsungcodina.rc:root/init.recovery.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/ueventd.samsungjanice.rc:root/ueventd.samsungjanice.rc \
+    $(LOCAL_PATH)/rootdir/fstab.samsungcodina:root/fstab.samsungcodina \
+    $(LOCAL_PATH)/rootdir/init.samsungjanice.rc:root/init.samsungjanice.rc \
+    $(LOCAL_PATH)/rootdir/device_tunables.rc:root/device_tunables.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungcodina.rc:root/init.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungcodina.usb.rc:root/init.samsungcodina.usb.rc \
+    $(LOCAL_PATH)/rootdir/init.recovery.samsungjanice.rc:root/init.recovery.samsungjanice.rc \
+    $(LOCAL_PATH)/rootdir/init.samsungjanice.usb.rc:root/init.samsungjanice.usb.rc \
+    $(LOCAL_PATH)/rootdir/ueventd.samsungcodina.rc:root/ueventd.samsungcodina.rc \
+    $(LOCAL_PATH)/rootdir/init.kernel.rc:root/init.kernel.rc
+
 # U8500 Hardware
 $(call inherit-product, hardware/u8500/u8500.mk)
 
