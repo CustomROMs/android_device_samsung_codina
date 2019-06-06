@@ -9,15 +9,11 @@ if [ "$PATCHES" == "" ] ; then
 frameworks/base \
 frameworks/av \
 frameworks/native \
-build \
 bootable/recovery \
 packages/services/Telecomm \
 bionic \
-hardware/libhardware \
 hardware/ril \
-system/vold \
-system/media \
-system/core"
+system/media"
 fi
 
 export CL_RED="\033[31m"
