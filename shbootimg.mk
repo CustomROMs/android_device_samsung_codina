@@ -70,10 +70,14 @@ $(PRODUCT_OUT)/install/codina/boot.img:
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina INSTALL_MOD_PATH=../../install/codina/system ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules_install
 	cp $(PRODUCT_OUT)/obj/KERNEL_OBJ_codina/arch/arm/boot/zImage $(PRODUCT_OUT)/install/codina/boot.img
 
+$(RECOVERY_PATCH_INSTALL):
+	touch $(PRODUCT_OUT)/ota_temp/SYSTEM/bin/install-recovery.sh
+	touch $(PRODUCT_OUT)/system/bin/recovery.sh
+
 $(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET) $(PRODUCT_OUT)/install/codina/boot.img $(PRODUCT_OUT)/install/janice/boot.img
 	touch $@
 
 $(INSTALLED_RECOVERYIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET)
-	$(ACP) -fp $< $@
+	touch $@
 
 .PHONY: $(PRODUCT_OUT)/install/codina/boot.img $(PRODUCT_OUT)/install/janice/boot.img
