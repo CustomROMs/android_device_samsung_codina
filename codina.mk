@@ -238,13 +238,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/power_profile.xml:system/etc/power_profile.xml
 
-# Filesystem management tools
-PRODUCT_PACKAGES += \
-    make_ext4fs \
-    resize2fs_static \
-    setup_fs \
-    static_busybox
-
 # Live Wallpapers
 PRODUCT_PACKAGES += \
     librs_jni
