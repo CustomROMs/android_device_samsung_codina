@@ -55,14 +55,23 @@ TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL)
 $(PRODUCT_OUT)/install/janice/boot.img:
 	mkdir -p $(PRODUCT_OUT)/obj/KERNEL_OBJ_janice
 	mkdir -p $(PRODUCT_OUT)/install/janice
+	rm -f $(PRODUCT_OUT)/install/janice/boot.img
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) janice_defconfig
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
 	cp $(PRODUCT_OUT)/obj/KERNEL_OBJ_janice/arch/arm/boot/zImage $(PRODUCT_OUT)/install/janice/boot.img
 
-$(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET) $(PRODUCT_OUT)/install/janice/boot.img
+$(PRODUCT_OUT)/install/codina/boot.img:
+	mkdir -p $(PRODUCT_OUT)/obj/KERNEL_OBJ_codina
 	mkdir -p $(PRODUCT_OUT)/install/codina
-	cp $< $(PRODUCT_OUT)/install/codina/boot.img
+	rm -f $(PRODUCT_OUT)/install/codina/boot.img
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) codina_defconfig
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+	cp $(PRODUCT_OUT)/obj/KERNEL_OBJ_codina/arch/arm/boot/zImage $(PRODUCT_OUT)/install/codina/boot.img
+
+$(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET) $(PRODUCT_OUT)/install/codina/boot.img $(PRODUCT_OUT)/install/janice/boot.img
 	touch $@
 
 $(INSTALLED_RECOVERYIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET)
 	$(ACP) -fp $< $@
+
+.PHONY: $(PRODUCT_OUT)/install/codina/boot.img $(PRODUCT_OUT)/install/janice/boot.img
