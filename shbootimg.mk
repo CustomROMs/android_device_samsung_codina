@@ -48,9 +48,7 @@ $(PRODUCT_OUT)/recovery.cpio.gz: $(recovery_uncompressed_ramdisk)
 	gzip -9f $(PRODUCT_OUT)/recovery.cpio
 
 TARGET_KERNEL_BINARIES: $(KERNEL_OUT) $(KERNEL_CONFIG) $(KERNEL_HEADERS_INSTALL) $(recovery_uncompressed_ramdisk) $(uncompressed_ramdisk) $(PRODUCT_OUT)/recovery.cpio.gz
-	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
-	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules
-	$(MAKE) -C $(KERNEL_SRC) O=$(KERNEL_OUT) INSTALL_MOD_PATH=../../$(KERNEL_MODULES_INSTALL) ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules_install
+	echo
 
 $(PRODUCT_OUT)/install/janice/boot.img:
 	mkdir -p $(PRODUCT_OUT)/obj/KERNEL_OBJ_janice
@@ -58,6 +56,8 @@ $(PRODUCT_OUT)/install/janice/boot.img:
 	rm -f $(PRODUCT_OUT)/install/janice/boot.img
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) janice_defconfig
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_janice INSTALL_MOD_PATH=../../install/janice/system ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules_install
 	cp $(PRODUCT_OUT)/obj/KERNEL_OBJ_janice/arch/arm/boot/zImage $(PRODUCT_OUT)/install/janice/boot.img
 
 $(PRODUCT_OUT)/install/codina/boot.img:
@@ -66,6 +66,8 @@ $(PRODUCT_OUT)/install/codina/boot.img:
 	rm -f $(PRODUCT_OUT)/install/codina/boot.img
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) codina_defconfig
 	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) $(TARGET_PREBUILT_INT_KERNEL_TYPE)
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules
+	$(MAKE) -C $(KERNEL_SRC) O=$(PRODUCT_OUT)/obj/KERNEL_OBJ_codina INSTALL_MOD_PATH=../../install/codina/system ARCH=$(TARGET_ARCH) $(KERNEL_CROSS_COMPILE) modules_install
 	cp $(PRODUCT_OUT)/obj/KERNEL_OBJ_codina/arch/arm/boot/zImage $(PRODUCT_OUT)/install/codina/boot.img
 
 $(INSTALLED_BOOTIMAGE_TARGET): $(INSTALLED_KERNEL_TARGET) $(PRODUCT_OUT)/install/codina/boot.img $(PRODUCT_OUT)/install/janice/boot.img
