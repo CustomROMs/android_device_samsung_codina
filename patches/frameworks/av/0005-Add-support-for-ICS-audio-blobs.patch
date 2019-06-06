@@ -1,7 +1,7 @@
 From 8130a90cd9440c10126abb7b9496179967de84b2 Mon Sep 17 00:00:00 2001
 From: Meticulus <theonejohnnyd@gmail.com>
 Date: Thu, 7 Jul 2016 12:07:23 -0500
-Subject: [PATCH 05/10] Add support for ICS audio blobs
+Subject: [PATCH 5/7] Add support for ICS audio blobs
 
 Change-Id: Ica85f88cd7fef83c80364e96dd59d84678a60fbe
 ---

@@ -1,16 +1,30 @@
-From e8eecdd26e79c9ce920f950211e84cd1d0ca0455 Mon Sep 17 00:00:00 2001
+From 5071787f99fecade7062e53a5884af3b3bc52240 Mon Sep 17 00:00:00 2001
 From: Shilin Victor <radicaldreamer00001@gmail.com>
 Date: Mon, 1 Apr 2019 02:02:32 +0300
-Subject: [PATCH 07/10] STE: fix video playback
+Subject: [PATCH 7/7] STE: fix video playback
 
 credits to @SergeyL1976
 
 Change-Id: Ib63939095bfaf271f2da381d975e9090a5e4f10d
 ---
- media/libstagefright/include/OMXNodeInstance.h |  1 -
- media/libstagefright/omx/OMXNodeInstance.cpp   | 22 ----------------------
- 2 files changed, 23 deletions(-)
+ .../libmediaplayerservice/StagefrightRecorder.cpp  |  2 +-
+ media/libstagefright/include/OMXNodeInstance.h     |  1 -
+ media/libstagefright/omx/OMXNodeInstance.cpp       | 22 ----------------------
+ 3 files changed, 1 insertion(+), 24 deletions(-)
 
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index 3ed6f2d6c..31c423ca9 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -1607,7 +1607,7 @@ status_t StagefrightRecorder::setupCameraSource(
+ }
+ 
+ bool StagefrightRecorder::setCustomVideoEncoderMime(const video_encoder videoEncoder,
+-        sp<AMessage> format) {
++        sp<AMessage> format __unused) {
+     sp<MetaData> enc_meta = new MetaData;
+ 
+     if (videoEncoder == VIDEO_ENCODER_H265) {
 diff --git a/media/libstagefright/include/OMXNodeInstance.h b/media/libstagefright/include/OMXNodeInstance.h
 index 466463b91..5ba0e8f86 100644
 --- a/media/libstagefright/include/OMXNodeInstance.h

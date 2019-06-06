@@ -1,7 +1,7 @@
 From ead5b732c74d0a71ea8b23b085680017c68db618 Mon Sep 17 00:00:00 2001
 From: Marcin Chojnacki <marcinch7@gmail.com>
 Date: Sun, 23 Mar 2014 13:11:26 +0100
-Subject: [PATCH 01/10] ste: multimedia patch
+Subject: [PATCH 1/7] ste: multimedia patch
 
 Change-Id: I70f25f053583ebed00d907720705c0cb66c130d4
 ---

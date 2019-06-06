@@ -1,7 +1,7 @@
 From ed2d72fac92c7fffa6afa10bf4b3bbb3a2958135 Mon Sep 17 00:00:00 2001
 From: Meticulus <theonejohnnyd@gmail.com>
 Date: Fri, 10 Oct 2014 16:25:16 -0500
-Subject: [PATCH 04/10] No VoIP audio
+Subject: [PATCH 4/7] No VoIP audio
 
 Change-Id: I8cafed3e425d822e710d97971b2501ee75bbd069
 ---
