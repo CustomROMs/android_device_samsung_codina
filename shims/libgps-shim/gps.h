@@ -15,6 +15,8 @@
  */
 #include <hardware/gps.h>
 
+typedef uint16_t AGpsRefLocationType;
+
 /* CellID for 2G, 3G and LTE, used in AGPS. */
 typedef struct {
     AGpsRefLocationType type;
