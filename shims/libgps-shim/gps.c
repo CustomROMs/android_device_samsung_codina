@@ -24,26 +24,38 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "gps.h"
 #define REAL_GPS_PATH "/system/lib/hw/gps.montblanc.vendor.so"
 
 const GpsInterface* (*vendor_get_gps_interface)(struct gps_device_t* dev);
 const void* (*vendor_get_extension)(const char* name);
-void (*vendor_set_ref_location)(const AGpsRefLocationNoLTE *agps_reflocation, size_t sz_struct);
+void (*vendor_set_ref_location)(const AGpsRefLocationSamsung *agps_reflocation, size_t sz_struct);
 
-void shim_set_ref_location(const AGpsRefLocation *agps_reflocation, size_t sz_struct) {
+void shim_set_ref_location(const AGpsRefLocationSamsung *agps_reflocation, size_t sz_struct) {
 	// this is mildly ugly
-	AGpsRefLocationNoLTE vendor_ref;
-	if (sizeof(AGpsRefLocationNoLTE) < sz_struct) {
-		ALOGE("%s: AGpsRefLocation is too small, bailing out!", __func__);
+	AGpsRefLocationSamsung backup_ref;
+	char *backup_ref_ptr = &backup_ref;
+
+	memcpy(backup_ref_ptr, agps_reflocation, sizeof(AGpsRefLocationSamsung));
+
+	AGpsRefLocation asus_ref;
+	char *asus_ref_ptr = &asus_ref;
+	if (sizeof(AGpsRefLocationSamsung) < sz_struct) {
+		ALOGE("%s: AGpsRefLocationSamsung is too small, bailing out!", __func__);
 		return;
 	}
 	ALOGE("%s: shimming AGpsRefLocation", __func__);
-	// the two structs are identical, so this is ok
-	memcpy(&vendor_ref, agps_reflocation, sizeof(AGpsRefLocationNoLTE));
-	vendor_set_ref_location(&vendor_ref, sizeof(AGpsRefLocationNoLTE));
-	// copy it back
-	memcpy(agps_reflocation, &vendor_ref, sizeof(AGpsRefLocationNoLTE));
+	// copy everything but psc and cid
+	memcpy(asus_ref_ptr, agps_reflocation, 12);
+
+	// copy cid
+	memcpy(asus_ref_ptr + 12, agps_reflocation + 16, 4);
+	vendor_set_ref_location(asus_ref_ptr, sizeof(AGpsRefLocation));
+	// copy it back - everything but cid
+	memcpy(agps_reflocation, asus_ref_ptr, sizeof(AGpsRefLocation) - 4);
+	// copy psc
+	memcpy(agps_reflocation + sizeof(AGpsRefLocation) - 4, backup_ref_ptr + 12, 4);
+	// copy cid
+	memcpy(agps_reflocation + sizeof(AGpsRefLocation), asus_ref_ptr + sizeof(AGpsRefLocation) - 4, 4);
 }
 
 const void* shim_get_extension(const char* name) {

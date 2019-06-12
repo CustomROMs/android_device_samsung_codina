@@ -15,37 +15,47 @@
  */
 #include <hardware/gps.h>
 
-typedef uint16_t AGpsRefLocationType;
 
-/* CellID for 2G, 3G and LTE, used in AGPS. */
+/* 2G and 3G */
+/* In 3G lac is discarded */
 typedef struct {
-    AGpsRefLocationType type;
-    /** Mobile Country Code. */
+    uint16_t type;
     uint16_t mcc;
-    /** Mobile Network Code .*/
     uint16_t mnc;
-    /** Location Area Code in 2G, 3G and LTE. In 3G lac is discarded. In LTE,
-     * lac is populated with tac, to ensure that we don't break old clients that
-     * might rely in the old (wrong) behavior.
-     */
     uint16_t lac;
-    /** Cell id in 2G. Utran Cell id in 3G. Cell Global Id EUTRA in LTE. */
+    uint16_t psc;
     uint32_t cid;
-#if 0 // introduced in N.
-    /** Tracking Area Code in LTE. */
-    uint16_t tac;
-    /** Physical Cell id in LTE (not used in 2G and 3G) */
-    uint16_t pcid;
-#endif
-} AGpsRefLocationCellIDNoLTE;
+} AGpsRefLocationCellIDSamsung;
+
+typedef struct {
+    uint8_t mac[6];
+} AGpsRefLocationMac;
 
 /** Represents ref locations */
 typedef struct {
-    AGpsRefLocationType type;
+    uint16_t type;
     union {
-        AGpsRefLocationCellIDNoLTE	cellID;
-		AGpsRefLocationMac			mac;
+        AGpsRefLocationCellIDSamsung   cellID;
+        AGpsRefLocationMac      mac;
     } u;
-} AGpsRefLocationNoLTE;
+} AGpsRefLocationSamsung;
 
 
+/* 2G and 3G */
+/* In 3G lac is discarded */
+typedef struct {
+    uint16_t type;
+    uint16_t mcc;
+    uint16_t mnc;
+    uint16_t lac;
+    uint32_t cid;
+} AGpsRefLocationCellID;
+
+/** Represents ref locations */
+typedef struct {
+    uint16_t type;
+    union {
+        AGpsRefLocationCellID   cellID;
+        AGpsRefLocationMac      mac;
+    } u;
+} AGpsRefLocation;
