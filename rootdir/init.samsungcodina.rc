@@ -298,6 +298,12 @@ on boot
     mkdir /data/gps 771 system system
     chown system system /data/gps
 
+    # GPS init
+    write /sys/class/sec/gps/GPS_ON_OFF/export 162
+    write /sys/class/sec/gps/GPS_ON_OFF/value 0
+    write /sys/class/sec/gps/GPS_ON_OFF/direction out
+
+
     # Permissions for bluetooth
     # UART device
     chown bluetooth bluetooth /dev/ttyAMA0
@@ -415,7 +421,7 @@ service admsrv /system/bin/admsrv
     ioprio rt 4
     capability NET_ADMIN NET_RAW SYS_NICE
 
-service gpsd /system/bin/gpsd -c /system/etc/gps.xml
+service gpsd /system/bin/gpsd
     class main
     user gps
     group system net_raw
