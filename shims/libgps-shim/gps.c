@@ -32,30 +32,39 @@ void (*vendor_set_ref_location)(const AGpsRefLocationSamsung *agps_reflocation, 
 
 void shim_set_ref_location(const AGpsRefLocationSamsung *agps_reflocation, size_t sz_struct) {
 	// this is mildly ugly
-	AGpsRefLocationSamsung backup_ref;
-	char *backup_ref_ptr = &backup_ref;
-
-	memcpy(backup_ref_ptr, agps_reflocation, sizeof(AGpsRefLocationSamsung));
-
-	AGpsRefLocation asus_ref;
-	char *asus_ref_ptr = &asus_ref;
+	AGpsRefLocationSamsung backup;
+	ALOGE("%s: sizeof(AGpsRefLocationSamsung)=%d, sz_struct=%d", __func__, sizeof(AGpsRefLocationSamsung), sz_struct);
 	if (sizeof(AGpsRefLocationSamsung) < sz_struct) {
 		ALOGE("%s: AGpsRefLocationSamsung is too small, bailing out!", __func__);
 		return;
 	}
 	ALOGE("%s: shimming AGpsRefLocation", __func__);
-	// copy everything but psc and cid
-	memcpy(asus_ref_ptr, agps_reflocation, 12);
 
-	// copy cid
-	memcpy(asus_ref_ptr + 12, agps_reflocation + 16, 4);
-	vendor_set_ref_location(asus_ref_ptr, sizeof(AGpsRefLocation));
-	// copy it back - everything but cid
-	memcpy(agps_reflocation, asus_ref_ptr, sizeof(AGpsRefLocation) - 4);
-	// copy psc
-	memcpy(agps_reflocation + sizeof(AGpsRefLocation) - 4, backup_ref_ptr + 12, 4);
-	// copy cid
-	memcpy(agps_reflocation + sizeof(AGpsRefLocation), asus_ref_ptr + sizeof(AGpsRefLocation) - 4, 4);
+	AGpsRefLocation asusRefLoc;
+	memcpy(&backup, agps_reflocation, sizeof(AGpsRefLocationSamsung));
+
+	asusRefLoc.type = backup.type;
+	asusRefLoc.u.cellID.type = backup.u.cellID.type;
+	asusRefLoc.u.cellID.mcc = backup.u.cellID.mcc;
+	asusRefLoc.u.cellID.mnc = backup.u.cellID.mnc;
+	asusRefLoc.u.cellID.lac = backup.u.cellID.lac;
+	asusRefLoc.u.cellID.cid = backup.u.cellID.cid;
+
+	vendor_set_ref_location(&asusRefLoc, sizeof(AGpsRefLocation));
+	// copy it back
+
+	AGpsRefLocationSamsung tmp;
+	memcpy(&tmp, agps_reflocation, sizeof(AGpsRefLocationSamsung));
+
+	tmp.type = asusRefLoc.type;
+	tmp.u.cellID.type = asusRefLoc.u.cellID.type;
+	tmp.u.cellID.mcc = asusRefLoc.u.cellID.mcc;
+	tmp.u.cellID.mnc = asusRefLoc.u.cellID.mnc;
+	tmp.u.cellID.lac = asusRefLoc.u.cellID.lac;
+	tmp.u.cellID.psc = backup.u.cellID.psc;
+	tmp.u.cellID.cid = asusRefLoc.u.cellID.cid;
+
+	memcpy(agps_reflocation, &tmp, sizeof(AGpsRefLocationSamsung));
 }
 
 const void* shim_get_extension(const char* name) {
