@@ -411,12 +411,12 @@ typedef uint16_t NavigationMessageStatus;
  */
 #define GPS_GEOFENCING_INTERFACE   "gps_geofencing"
 
-#ifdef STE_SAMSUNG_HARDWARE
+//#ifdef STE_SAMSUNG_HARDWARE
 /**
  * The GPS chipset can use Psc for AGPS.
  */
-#define AGPS_USE_PSC
-#endif
+//#define AGPS_USE_PSC
+//#endif
 
 /**
  * Name of the GPS Measurements interface.

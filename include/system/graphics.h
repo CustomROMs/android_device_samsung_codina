@@ -19,8 +19,6 @@
 
 #include <stdint.h>
 
-#pragma GCC diagnostic ignored "-Wc99-extensions"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
