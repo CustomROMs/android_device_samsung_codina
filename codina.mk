@@ -266,6 +266,11 @@ endif
 PRODUCT_PACKAGES += \
     su
 
+# shims
+PRODUCT_PACKAGES += \
+    libshim_gps \
+    libsamsung_symbols
+
 # We have enough storage space to hold precise GC data
 PRODUCT_TAGS += dalvik.gc.type-precise
 
